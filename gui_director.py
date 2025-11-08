@@ -119,35 +119,35 @@ class AdastreaDirectorApp:
         
         tk.Label(font_frame, text="Font:", bg=self.bg_color, fg=self.fg_color, font=("Segoe UI", 9)).pack(side=tk.LEFT, padx=(0, 5))
         
+        small_button_style = {
+            "font": ("Segoe UI", 9),
+            "bg": self.button_bg,
+            "fg": self.fg_color,
+            "activebackground": self.button_active,
+            "activeforeground": self.fg_color,
+            "relief": tk.FLAT,
+            "padx": 8,
+            "pady": 4,
+            "cursor": "hand2"
+        }
+        
         self.decrease_font_button = tk.Button(
             font_frame,
             text="A-",
             command=self.decrease_font,
-            font=("Segoe UI", 9),
-            bg=self.button_bg,
-            fg=self.fg_color,
-            activebackground=self.button_active,
-            relief=tk.FLAT,
-            padx=8,
-            pady=4,
-            cursor="hand2"
+            **small_button_style
         )
         self.decrease_font_button.pack(side=tk.LEFT, padx=(0, 5))
+        self.create_tooltip(self.decrease_font_button, "Decrease font size (min 8pt)")
         
         self.increase_font_button = tk.Button(
             font_frame,
             text="A+",
             command=self.increase_font,
-            font=("Segoe UI", 9),
-            bg=self.button_bg,
-            fg=self.fg_color,
-            activebackground=self.button_active,
-            relief=tk.FLAT,
-            padx=8,
-            pady=4,
-            cursor="hand2"
+            **small_button_style
         )
         self.increase_font_button.pack(side=tk.LEFT)
+        self.create_tooltip(self.increase_font_button, "Increase font size (max 20pt)")
 
         # --- Response Display Area ---
         response_frame = tk.Frame(main_frame, bg=self.bg_color)
@@ -244,7 +244,7 @@ class AdastreaDirectorApp:
         
         # --- Status Bar ---
         self.status_var = tk.StringVar()
-        self.status_var.set("Ready. Please set your OpenAI API Key if you haven't.")
+        self.status_var.set("✓ Ready. Please set your OpenAI API Key if you haven't.")
         status_bar = tk.Label(
             root,
             textvariable=self.status_var,
@@ -268,19 +268,22 @@ class AdastreaDirectorApp:
         self.check_api_key_on_startup()
 
     def create_menu_bar(self):
-        """Create the application menu bar."""
-        menubar = Menu(self.root, bg=self.button_bg, fg=self.fg_color)
+        """Create the application menu bar with dark theme styling."""
+        menubar = Menu(self.root, bg=self.button_bg, fg=self.fg_color, 
+                      activebackground=self.button_active, activeforeground=self.fg_color)
         self.root.config(menu=menubar)
         
         # File menu
-        file_menu = Menu(menubar, tearoff=0, bg=self.button_bg, fg=self.fg_color)
+        file_menu = Menu(menubar, tearoff=0, bg=self.button_bg, fg=self.fg_color,
+                        activebackground=self.button_active, activeforeground=self.fg_color)
         menubar.add_cascade(label="File", menu=file_menu)
         file_menu.add_command(label="Export Conversation...", command=self.export_conversation, accelerator="Ctrl+E")
         file_menu.add_separator()
         file_menu.add_command(label="Exit", command=self.root.quit, accelerator="Alt+F4")
         
         # Edit menu
-        edit_menu = Menu(menubar, tearoff=0, bg=self.button_bg, fg=self.fg_color)
+        edit_menu = Menu(menubar, tearoff=0, bg=self.button_bg, fg=self.fg_color,
+                        activebackground=self.button_active, activeforeground=self.fg_color)
         menubar.add_cascade(label="Edit", menu=edit_menu)
         edit_menu.add_command(label="Copy Response", command=self.copy_response, accelerator="Ctrl+C")
         edit_menu.add_command(label="Clear Conversation", command=self.clear_conversation, accelerator="Ctrl+L")
@@ -288,22 +291,43 @@ class AdastreaDirectorApp:
         edit_menu.add_command(label="Set API Key", command=self.set_api_key, accelerator="Ctrl+K")
         
         # Help menu
-        help_menu = Menu(menubar, tearoff=0, bg=self.button_bg, fg=self.fg_color)
+        help_menu = Menu(menubar, tearoff=0, bg=self.button_bg, fg=self.fg_color,
+                        activebackground=self.button_active, activeforeground=self.fg_color)
         menubar.add_cascade(label="Help", menu=help_menu)
         help_menu.add_command(label="Keyboard Shortcuts", command=self.show_shortcuts)
         help_menu.add_command(label="About", command=self.show_about)
     
     def create_tooltip(self, widget, text):
-        """Create a tooltip for a widget."""
-        def on_enter(event):
+        """Create a tooltip for a widget that appears after a delay."""
+        tooltip_id = None
+        
+        def show_tooltip(event):
+            nonlocal tooltip_id
+            # Cancel any pending tooltip
+            if tooltip_id:
+                widget.after_cancel(tooltip_id)
+            # Schedule tooltip to appear after 500ms delay
+            tooltip_id = widget.after(500, lambda: display_tooltip(event))
+        
+        def display_tooltip(event):
+            nonlocal tooltip_id
+            tooltip_id = None
+            
+            # Create tooltip window
             tooltip = tk.Toplevel()
             tooltip.wm_overrideredirect(True)
-            tooltip.wm_geometry(f"+{event.x_root+10}+{event.y_root+10}")
+            
+            # Position tooltip below and slightly to the right of cursor
+            x = event.widget.winfo_rootx() + 10
+            y = event.widget.winfo_rooty() + event.widget.winfo_height() + 5
+            tooltip.wm_geometry(f"+{x}+{y}")
+            
+            # Create tooltip label with dark theme styling per design spec
             label = tk.Label(
                 tooltip,
                 text=text,
-                background="#ffffe0",
-                foreground="#000000",
+                background="#2d2d30",  # Dark background per design spec
+                foreground="#e0e0e0",  # Light text per design spec
                 relief=tk.SOLID,
                 borderwidth=1,
                 font=("Segoe UI", 9),
@@ -311,15 +335,25 @@ class AdastreaDirectorApp:
                 pady=3
             )
             label.pack()
+            
+            # Configure border color
+            tooltip.configure(bg="#3e3e42", highlightthickness=1, highlightbackground="#3e3e42")
+            
             widget.tooltip = tooltip
         
-        def on_leave(event):
+        def hide_tooltip(event):
+            nonlocal tooltip_id
+            # Cancel pending tooltip
+            if tooltip_id:
+                widget.after_cancel(tooltip_id)
+                tooltip_id = None
+            # Destroy existing tooltip
             if hasattr(widget, 'tooltip'):
                 widget.tooltip.destroy()
                 delattr(widget, 'tooltip')
         
-        widget.bind("<Enter>", on_enter)
-        widget.bind("<Leave>", on_leave)
+        widget.bind("<Enter>", show_tooltip)
+        widget.bind("<Leave>", hide_tooltip)
     
     def bind_shortcuts(self):
         """Bind keyboard shortcuts."""
@@ -387,11 +421,15 @@ Type your question below to get started! 🚀
         
         key_entry = tk.Entry(
             dialog,
-            show='*',
+            show='•',  # Use bullet character for masking per design spec
             font=("Segoe UI", 10),
             bg=self.text_bg,
             fg=self.fg_color,
             insertbackground=self.fg_color,
+            relief=tk.FLAT,
+            highlightthickness=1,
+            highlightbackground=self.button_bg,
+            highlightcolor=self.accent_color,
             width=40
         )
         key_entry.pack(pady=10, padx=20)
@@ -422,6 +460,8 @@ Type your question below to get started! 🚀
             command=on_ok,
             bg=self.accent_color,
             fg="white",
+            activebackground="#005a9e",  # Darker blue on hover
+            activeforeground="white",
             relief=tk.FLAT,
             padx=20,
             pady=6,
@@ -435,6 +475,8 @@ Type your question below to get started! 🚀
             command=on_cancel,
             bg=self.button_bg,
             fg=self.fg_color,
+            activebackground=self.button_active,  # Lighter on hover
+            activeforeground=self.fg_color,
             relief=tk.FLAT,
             padx=20,
             pady=6,
@@ -449,15 +491,25 @@ Type your question below to get started! 🚀
 
     def run_ingestion(self):
         """Runs the ingest.py script in a separate thread."""
-        self.run_script_in_thread('ingest.py', "Ingesting documents...")
+        self.run_script_in_thread('ingest.py', "🤔 Ingesting documents...")
 
     def clear_conversation(self):
-        """Clear the conversation display."""
+        """Clear the conversation display with confirmation."""
+        # Only ask for confirmation if there's actual conversation content
+        if self.conversation_history:
+            result = messagebox.askyesno(
+                "Clear Conversation",
+                "Are you sure you want to clear the entire conversation history?\n\nThis action cannot be undone.",
+                icon='warning'
+            )
+            if not result:
+                return
+        
         self.response_text.config(state=tk.NORMAL)
         self.response_text.delete(1.0, tk.END)
         self.response_text.config(state=tk.DISABLED)
         self.conversation_history = []
-        self.status_var.set("Conversation cleared.")
+        self.status_var.set("✓ Conversation cleared.")
         self.show_welcome_message()
     
     def copy_response(self):
