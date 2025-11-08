@@ -142,6 +142,7 @@ Adastrea-Director/
 - [GDD Template](GDD_TEMPLATE.md) - Template for creating game design documents
 
 ### UI/UX Design Documentation
+- **[Design Documentation Index](DESIGN_INDEX.md)** - Start here! Complete guide to all design documentation
 - [UI/UX Design System](UI_UX_DESIGN_SYSTEM.md) - Complete design system with principles, colors, typography, and components
 - [Visual Design Guide](DESIGN_GUIDE.md) - Visual specifications, mockups, and implementation examples
 - [Component Library](COMPONENT_LIBRARY.md) - Reusable UI components with code examples
