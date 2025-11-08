@@ -62,6 +62,8 @@ export OPENAI_API_KEY="your-api-key-here"
 
 ### Usage
 
+#### Command-Line Interface (CLI)
+
 1. **Ingest your project documents:**
 ```bash
 python ingest.py --docs-dir /path/to/your/docs
@@ -79,6 +81,22 @@ python main.py
 > What are the performance requirements?
 ```
 
+#### Graphical User Interface (GUI)
+
+For a more user-friendly experience on Windows, you can use the GUI application:
+
+```bash
+python gui_director.py
+```
+
+The GUI provides:
+- **Easy API Key Management**: Set your OpenAI API key through a dialog
+- **Knowledge Base Updates**: Update the knowledge base with a button click
+- **Interactive Q&A**: Ask questions and see responses in a scrollable text area
+- **Status Feedback**: Real-time status updates on operations
+
+**Note**: The GUI application requires tkinter, which is included with most Python installations on Windows.
+
 ## Project Structure
 
 ```
@@ -89,6 +107,7 @@ Adastrea-Director/
 ├── requirements.txt       # Python dependencies
 ├── ingest.py             # Document ingestion script
 ├── main.py               # CLI entry point
+├── gui_director.py       # GUI application (Windows)
 ├── GDD_TEMPLATE.md       # Game design document template
 └── SAMPLE_GDD.md         # Example game design document
 ```
