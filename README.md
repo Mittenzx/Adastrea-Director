@@ -83,40 +83,70 @@ python main.py
 
 #### Graphical User Interface (GUI)
 
-For a more user-friendly experience on Windows, you can use the GUI application:
+For a more user-friendly experience, you can use the enhanced GUI application:
 
 ```bash
 python gui_director.py
 ```
 
-The GUI provides:
-- **Easy API Key Management**: Set your OpenAI API key through a dialog
-- **Knowledge Base Updates**: Update the knowledge base with a button click
-- **Interactive Q&A**: Ask questions and see responses in a scrollable text area
-- **Status Feedback**: Real-time status updates on operations
+The improved GUI provides:
+- **Modern Dark Theme**: Professional appearance with reduced eye strain
+- **Easy API Key Management**: Styled dialog for OpenAI API key configuration
+- **Knowledge Base Updates**: One-click knowledge base updates
+- **Conversation History**: Full conversation display with timestamps and color-coding
+- **Keyboard Shortcuts**: Fast workflow with comprehensive keyboard support (Ctrl+K, Ctrl+U, Ctrl+L, etc.)
+- **Copy & Export**: One-click copy to clipboard and export conversations to file
+- **Font Size Controls**: Adjustable text size for better accessibility
+- **Menu Bar**: File, Edit, and Help menus with full functionality
+- **Tooltips**: Helpful hints on all interactive elements
+- **Status Feedback**: Real-time status updates with visual indicators
 
-**Note**: The GUI application requires tkinter, which is included with most Python installations on Windows.
+**Keyboard Shortcuts:**
+- `Enter` or `Ctrl+Enter` - Send question
+- `Ctrl+K` - Set API Key
+- `Ctrl+U` - Update knowledge base
+- `Ctrl+L` - Clear conversation
+- `Ctrl+C` - Copy last response (from menu)
+- `Ctrl+E` - Export conversation
+
+See [GUI_IMPROVEMENTS.md](GUI_IMPROVEMENTS.md) for detailed documentation of all enhancements.
+
+**Note**: The GUI application requires tkinter, which is included with most Python installations on Windows and can be installed on Linux/Mac.
 
 ## Project Structure
 
 ```
 Adastrea-Director/
-├── README.md              # This file
-├── PROJECT_PLAN.md        # Detailed project roadmap
-├── AGENTS.md              # Agent system architecture
-├── requirements.txt       # Python dependencies
-├── ingest.py             # Document ingestion script
-├── main.py               # CLI entry point
-├── gui_director.py       # GUI application (Windows)
-├── GDD_TEMPLATE.md       # Game design document template
-└── SAMPLE_GDD.md         # Example game design document
+├── README.md                      # This file
+├── PROJECT_PLAN.md                # Detailed project roadmap
+├── AGENTS.md                      # Agent system architecture
+├── requirements.txt               # Python dependencies
+├── ingest.py                      # Document ingestion script
+├── main.py                        # CLI entry point
+├── gui_director.py                # GUI application (enhanced)
+├── GDD_TEMPLATE.md                # Game design document template
+├── SAMPLE_GDD.md                  # Example game design document
+└── GUI Documentation/
+    ├── GUI_IMPROVEMENTS.md        # Detailed feature documentation
+    ├── GUI_VISUAL_COMPARISON.md   # Before/after comparison
+    ├── GUI_SCREENSHOT_DESCRIPTION.md  # Visual description
+    ├── GUI_QUICK_START.md         # User quick start guide
+    └── GUI_CHANGES_SUMMARY.md     # Complete changes summary
 ```
 
 ## Documentation
 
+### Project Documentation
 - [Project Plan](PROJECT_PLAN.md) - Detailed breakdown of all four phases
 - [Agent System](AGENTS.md) - Architecture and design of the agent system
 - [GDD Template](GDD_TEMPLATE.md) - Template for creating game design documents
+
+### GUI Documentation
+- [GUI Improvements](GUI_IMPROVEMENTS.md) - Comprehensive feature documentation
+- [Visual Comparison](GUI_VISUAL_COMPARISON.md) - Before/after comparison with visuals
+- [Visual Description](GUI_SCREENSHOT_DESCRIPTION.md) - Detailed interface description
+- [Quick Start Guide](GUI_QUICK_START.md) - User quick start and tips
+- [Changes Summary](GUI_CHANGES_SUMMARY.md) - Complete summary of all changes
 
 ## Contributing
 
