@@ -119,18 +119,23 @@ class AdastreaDirectorApp:
         
         tk.Label(font_frame, text="Font:", bg=self.bg_color, fg=self.fg_color, font=("Segoe UI", 9)).pack(side=tk.LEFT, padx=(0, 5))
         
+        small_button_style = {
+            "font": ("Segoe UI", 9),
+            "bg": self.button_bg,
+            "fg": self.fg_color,
+            "activebackground": self.button_active,
+            "activeforeground": self.fg_color,
+            "relief": tk.FLAT,
+            "padx": 8,
+            "pady": 4,
+            "cursor": "hand2"
+        }
+        
         self.decrease_font_button = tk.Button(
             font_frame,
             text="A-",
             command=self.decrease_font,
-            font=("Segoe UI", 9),
-            bg=self.button_bg,
-            fg=self.fg_color,
-            activebackground=self.button_active,
-            relief=tk.FLAT,
-            padx=8,
-            pady=4,
-            cursor="hand2"
+            **small_button_style
         )
         self.decrease_font_button.pack(side=tk.LEFT, padx=(0, 5))
         self.create_tooltip(self.decrease_font_button, "Decrease font size (min 8pt)")
@@ -139,14 +144,7 @@ class AdastreaDirectorApp:
             font_frame,
             text="A+",
             command=self.increase_font,
-            font=("Segoe UI", 9),
-            bg=self.button_bg,
-            fg=self.fg_color,
-            activebackground=self.button_active,
-            relief=tk.FLAT,
-            padx=8,
-            pady=4,
-            cursor="hand2"
+            **small_button_style
         )
         self.increase_font_button.pack(side=tk.LEFT)
         self.create_tooltip(self.increase_font_button, "Increase font size (max 20pt)")
@@ -493,10 +491,20 @@ Type your question below to get started! 🚀
 
     def run_ingestion(self):
         """Runs the ingest.py script in a separate thread."""
-        self.run_script_in_thread('ingest.py', "Ingesting documents...")
+        self.run_script_in_thread('ingest.py', "🤔 Ingesting documents...")
 
     def clear_conversation(self):
-        """Clear the conversation display."""
+        """Clear the conversation display with confirmation."""
+        # Only ask for confirmation if there's actual conversation content
+        if self.conversation_history:
+            result = messagebox.askyesno(
+                "Clear Conversation",
+                "Are you sure you want to clear the entire conversation history?\n\nThis action cannot be undone.",
+                icon='warning'
+            )
+            if not result:
+                return
+        
         self.response_text.config(state=tk.NORMAL)
         self.response_text.delete(1.0, tk.END)
         self.response_text.config(state=tk.DISABLED)
