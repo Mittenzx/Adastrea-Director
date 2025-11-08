@@ -117,22 +117,36 @@ See [GUI_IMPROVEMENTS.md](GUI_IMPROVEMENTS.md) for detailed documentation of all
 
 ```
 Adastrea-Director/
-├── README.md              # This file
-├── PROJECT_PLAN.md        # Detailed project roadmap
-├── AGENTS.md              # Agent system architecture
-├── requirements.txt       # Python dependencies
-├── ingest.py             # Document ingestion script
-├── main.py               # CLI entry point
-├── gui_director.py       # GUI application (Windows)
-├── GDD_TEMPLATE.md       # Game design document template
-└── SAMPLE_GDD.md         # Example game design document
+├── README.md                      # This file
+├── PROJECT_PLAN.md                # Detailed project roadmap
+├── AGENTS.md                      # Agent system architecture
+├── requirements.txt               # Python dependencies
+├── ingest.py                      # Document ingestion script
+├── main.py                        # CLI entry point
+├── gui_director.py                # GUI application (enhanced)
+├── GDD_TEMPLATE.md                # Game design document template
+├── SAMPLE_GDD.md                  # Example game design document
+└── GUI Documentation/
+    ├── GUI_IMPROVEMENTS.md        # Detailed feature documentation
+    ├── GUI_VISUAL_COMPARISON.md   # Before/after comparison
+    ├── GUI_SCREENSHOT_DESCRIPTION.md  # Visual description
+    ├── GUI_QUICK_START.md         # User quick start guide
+    └── GUI_CHANGES_SUMMARY.md     # Complete changes summary
 ```
 
 ## Documentation
 
+### Project Documentation
 - [Project Plan](PROJECT_PLAN.md) - Detailed breakdown of all four phases
 - [Agent System](AGENTS.md) - Architecture and design of the agent system
 - [GDD Template](GDD_TEMPLATE.md) - Template for creating game design documents
+
+### GUI Documentation
+- [GUI Improvements](GUI_IMPROVEMENTS.md) - Comprehensive feature documentation
+- [Visual Comparison](GUI_VISUAL_COMPARISON.md) - Before/after comparison with visuals
+- [Visual Description](GUI_SCREENSHOT_DESCRIPTION.md) - Detailed interface description
+- [Quick Start Guide](GUI_QUICK_START.md) - User quick start and tips
+- [Changes Summary](GUI_CHANGES_SUMMARY.md) - Complete summary of all changes
 
 ## Contributing
 
