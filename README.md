@@ -83,19 +83,35 @@ python main.py
 
 #### Graphical User Interface (GUI)
 
-For a more user-friendly experience on Windows, you can use the GUI application:
+For a more user-friendly experience, you can use the enhanced GUI application:
 
 ```bash
 python gui_director.py
 ```
 
-The GUI provides:
-- **Easy API Key Management**: Set your OpenAI API key through a dialog
-- **Knowledge Base Updates**: Update the knowledge base with a button click
-- **Interactive Q&A**: Ask questions and see responses in a scrollable text area
-- **Status Feedback**: Real-time status updates on operations
+The improved GUI provides:
+- **Modern Dark Theme**: Professional appearance with reduced eye strain
+- **Easy API Key Management**: Styled dialog for OpenAI API key configuration
+- **Knowledge Base Updates**: One-click knowledge base updates
+- **Conversation History**: Full conversation display with timestamps and color-coding
+- **Keyboard Shortcuts**: Fast workflow with comprehensive keyboard support (Ctrl+K, Ctrl+U, Ctrl+L, etc.)
+- **Copy & Export**: One-click copy to clipboard and export conversations to file
+- **Font Size Controls**: Adjustable text size for better accessibility
+- **Menu Bar**: File, Edit, and Help menus with full functionality
+- **Tooltips**: Helpful hints on all interactive elements
+- **Status Feedback**: Real-time status updates with visual indicators
 
-**Note**: The GUI application requires tkinter, which is included with most Python installations on Windows.
+**Keyboard Shortcuts:**
+- `Enter` or `Ctrl+Enter` - Send question
+- `Ctrl+K` - Set API Key
+- `Ctrl+U` - Update knowledge base
+- `Ctrl+L` - Clear conversation
+- `Ctrl+C` - Copy last response (from menu)
+- `Ctrl+E` - Export conversation
+
+See [GUI_IMPROVEMENTS.md](GUI_IMPROVEMENTS.md) for detailed documentation of all enhancements.
+
+**Note**: The GUI application requires tkinter, which is included with most Python installations on Windows and can be installed on Linux/Mac.
 
 ## Project Structure
 
