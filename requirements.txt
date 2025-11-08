@@ -1,0 +1,40 @@
+# Core dependencies for Adastrea Director - Phase 1
+# Python 3.8+ required
+
+# LangChain for LLM orchestration and RAG
+langchain==0.1.0
+langchain-openai==0.0.2
+langchain-community==0.0.10
+
+# OpenAI API for embeddings and LLM
+openai==1.6.1
+
+# Vector database for document storage and retrieval
+chromadb==0.4.22
+
+# Document loading and processing
+pypdf==3.17.4
+python-docx==1.1.0
+markdown==3.5.1
+beautifulsoup4==4.12.2
+
+# Text processing and embeddings
+sentence-transformers==2.2.2
+tiktoken==0.5.2
+
+# CLI and utilities
+click==8.1.7
+python-dotenv==1.0.0
+rich==13.7.0
+pydantic==2.5.3
+
+# Data processing
+numpy==1.24.3
+pandas==2.0.3
+
+# Development and testing
+pytest==7.4.3
+pytest-cov==4.1.0
+black==23.12.1
+flake8==7.0.0
+mypy==1.8.0
