@@ -1,40 +1,40 @@
 # Core dependencies for Adastrea Director - Phase 1
-# Python 3.8+ required
+# Python 3.9+ required (3.12+ recommended)
 
-# LangChain for LLM orchestration and RAG
-langchain==0.1.0
-langchain-openai==0.0.2
-langchain-community==0.0.10
+# Data processing - Updated for numpy 2.0 compatibility
+numpy>=2.0.0,<3.0.0
+pandas>=2.2.0,<3.0.0
+
+# LangChain for LLM orchestration and RAG - Updated to support numpy 2.0
+langchain>=0.3.19,<0.4.0
+langchain-openai>=0.3.0,<0.4.0
+langchain-community>=0.3.27,<0.4.0
 
 # OpenAI API for embeddings and LLM
-openai==1.6.1
+openai>=1.57.0,<2.0.0
 
-# Vector database for document storage and retrieval
-chromadb==0.4.22
+# Vector database for document storage and retrieval - Updated for numpy 2.0 compatibility
+chromadb>=0.5.23,<0.6.0
 
 # Document loading and processing
-pypdf==3.17.4
-python-docx==1.1.0
-markdown==3.5.1
-beautifulsoup4==4.12.2
+pypdf>=5.1.0,<6.0.0
+python-docx>=1.1.0,<2.0.0
+markdown>=3.7,<4.0.0
+beautifulsoup4>=4.12.3,<5.0.0
 
-# Text processing and embeddings
-sentence-transformers==2.2.2
-tiktoken==0.5.2
+# Text processing and embeddings - Updated for numpy 2.0 and Python 3.12 compatibility
+sentence-transformers>=3.3.0,<4.0.0
+tiktoken>=0.8.0,<1.0.0
 
 # CLI and utilities
-click==8.1.7
-python-dotenv==1.0.0
-rich==13.7.0
-pydantic==2.5.3
-
-# Data processing
-numpy==1.24.3
-pandas==2.0.3
+click>=8.1.7,<9.0.0
+python-dotenv>=1.0.1,<2.0.0
+rich>=13.9.4,<14.0.0
+pydantic>=2.10.3,<3.0.0
 
 # Development and testing
-pytest==7.4.3
-pytest-cov==4.1.0
-black==23.12.1
-flake8==7.0.0
-mypy==1.8.0
+pytest>=8.3.4,<9.0.0
+pytest-cov>=6.0.0,<7.0.0
+black>=24.10.0,<25.0.0
+flake8>=7.1.1,<8.0.0
+mypy>=1.13.0,<2.0.0

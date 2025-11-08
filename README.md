@@ -39,7 +39,7 @@ Phase 1 focuses on creating a context-aware assistant using Retrieval-Augmented 
 
 ### Prerequisites
 
-- Python 3.8 or higher
+- Python 3.9 or higher (Python 3.12+ recommended for best compatibility)
 - pip package manager
 
 ### Installation
