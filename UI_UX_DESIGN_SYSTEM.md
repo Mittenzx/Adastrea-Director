@@ -4,6 +4,8 @@
 
 This document defines the comprehensive UI/UX design system for Adastrea Director, an AI-powered game development assistant. The design system ensures consistency, accessibility, and a professional user experience across all interfaces.
 
+**Version 1.1 Update (2025-11-09):** The design system has been updated to incorporate Unreal Engine 5's visual aesthetic, creating a more cohesive experience for game developers. The color palette now features blue-gray undertones and vibrant accent colors inspired by the UE5 editor, making Adastrea Director feel like a natural part of the Unreal Engine ecosystem.
+
 ---
 
 ## Design Principles
@@ -38,52 +40,54 @@ This document defines the comprehensive UI/UX design system for Adastrea Directo
 
 ## Color System
 
+**Updated to Unreal Engine 5 Style (2025-11-09)**
+
 ### Primary Palette
 
 #### Background Colors
 ```
-Dark Background:     #1e1e1e  (Primary background)
-Text Background:     #252526  (Input fields, text areas)
-Button Background:   #2d2d30  (Buttons, controls)
-Button Active:       #3e3e42  (Active/hover state)
+Dark Background:     #20232b  (Primary background - UE5 inspired blueish-gray)
+Text Background:     #2a2d35  (Input fields, text areas - subtle blue tint)
+Button Background:   #343843  (Buttons, controls - UE5 button default)
+Button Active:       #4a4e5a  (Active/hover state - lighter blue-gray)
 ```
 
 #### Foreground Colors
 ```
-Primary Text:        #e0e0e0  (Main text color)
-Accent Color:        #007acc  (Brand color, links, emphasis)
-White Text:          #ffffff  (High contrast text on accent)
+Primary Text:        #e3e4e8  (Main text color - UE5 warm light gray)
+Accent Color:        #40a9ff  (Brand color - UE5 vibrant blue)
+Dark Text:           #20232b  (Text on bright accent buttons)
 ```
 
 #### Semantic Colors
 
-**Success/Positive:**
+**Interactive/User:**
 ```
-Green:               #4ec9b0  (User messages, success states)
+Bright Blue:         #40a9ff  (User messages, active elements - UE5 style)
 ```
 
-**Warning/Information:**
+**Information/Assistant:**
 ```
-Orange:              #ce9178  (Assistant messages, info states)
-Cyan:                #4ec9b0  (User input, interactive elements)
+Light Blue-Gray:     #a5b8c8  (Assistant messages, info states - softer tone)
 ```
 
 **Error/Danger:**
 ```
-Red:                 #f48771  (Error messages, warnings)
+Bright Red:          #ff5555  (Error messages, warnings - high visibility)
 ```
 
 **Neutral/Secondary:**
 ```
-Gray:                #858585  (Timestamps, secondary text)
+Muted Blue-Gray:     #6a7080  (Timestamps, secondary text - UE5 inspired)
 ```
 
 ### Color Usage Guidelines
 
-1. **Text on Dark Background**: Use `#e0e0e0` for primary text
-2. **Emphasis**: Use `#007acc` for important elements
-3. **Interactive Elements**: Use hover states with `#3e3e42`
-4. **Status Indicators**: Use semantic colors (green for success, red for error)
+1. **Text on Dark Background**: Use `#e3e4e8` for primary text (warm, less harsh)
+2. **Emphasis**: Use `#40a9ff` for important elements (vibrant UE5 blue)
+3. **Interactive Elements**: Use hover states with `#4a4e5a` (blue-gray)
+4. **Status Indicators**: Use semantic colors (bright blue for user, bright red for error)
+5. **Accent Buttons**: Use dark text (`#20232b`) on bright backgrounds for UE5 style
 
 ### Contrast Requirements
 
@@ -173,21 +177,21 @@ XXL:  60px  (3rem)     - Maximum spacing
 
 #### Primary Button
 - **Purpose**: Main call-to-action
-- **Background**: `#007acc` (accent color)
-- **Text**: `#ffffff` (white)
+- **Background**: `#40a9ff` (UE5 vibrant blue)
+- **Text**: `#20232b` (dark text for high contrast)
 - **Font**: Segoe UI, 11pt, bold
 - **Padding**: 25px horizontal, 8px vertical
 - **Border Radius**: 0px (flat design)
-- **Hover**: `#005a9e` (darker blue)
+- **Hover**: `#5bb8ff` (lighter blue)
 - **Example**: "Ask" button
 
 ```python
 {
     "font": ("Segoe UI", 11, "bold"),
-    "bg": "#007acc",
-    "fg": "white",
-    "activebackground": "#005a9e",
-    "activeforeground": "white",
+    "bg": "#40a9ff",
+    "fg": "#20232b",
+    "activebackground": "#5bb8ff",
+    "activeforeground": "#20232b",
     "relief": tk.FLAT,
     "padx": 25,
     "pady": 8,
@@ -197,21 +201,21 @@ XXL:  60px  (3rem)     - Maximum spacing
 
 #### Secondary Button
 - **Purpose**: Supporting actions
-- **Background**: `#2d2d30` (button background)
-- **Text**: `#e0e0e0` (primary text)
+- **Background**: `#343843` (UE5 button default)
+- **Text**: `#e3e4e8` (UE5 text color)
 - **Font**: Segoe UI, 10pt
 - **Padding**: 15px horizontal, 8px vertical
 - **Border Radius**: 0px (flat design)
-- **Hover**: `#3e3e42` (button active)
+- **Hover**: `#4a4e5a` (lighter blue-gray)
 - **Example**: "Update Knowledge Base", "Set API Key"
 
 ```python
 {
     "font": ("Segoe UI", 10),
-    "bg": "#2d2d30",
-    "fg": "#e0e0e0",
-    "activebackground": "#3e3e42",
-    "activeforeground": "#e0e0e0",
+    "bg": "#343843",
+    "fg": "#e3e4e8",
+    "activebackground": "#4a4e5a",
+    "activeforeground": "#e3e4e8",
     "relief": tk.FLAT,
     "padx": 15,
     "pady": 8,
@@ -235,24 +239,24 @@ XXL:  60px  (3rem)     - Maximum spacing
 ### Input Fields
 
 #### Text Entry Field
-- **Background**: `#252526` (text background)
-- **Text**: `#e0e0e0` (primary text)
+- **Background**: `#2a2d35` (UE5 text background with blue tint)
+- **Text**: `#e3e4e8` (UE5 primary text)
 - **Font**: Segoe UI, 11pt
-- **Border**: 1px, `#2d2d30` (button background)
-- **Focus Border**: 1px, `#007acc` (accent color)
+- **Border**: 1px, `#343843` (UE5 button background)
+- **Focus Border**: 1px, `#40a9ff` (UE5 accent color)
 - **Padding**: 8px vertical, 5px horizontal
 - **Border Radius**: 0px (flat design)
 
 ```python
 {
     "font": ("Segoe UI", 11),
-    "bg": "#252526",
-    "fg": "#e0e0e0",
-    "insertbackground": "#e0e0e0",
+    "bg": "#2a2d35",
+    "fg": "#e3e4e8",
+    "insertbackground": "#e3e4e8",
     "relief": tk.FLAT,
     "highlightthickness": 1,
-    "highlightbackground": "#2d2d30",
-    "highlightcolor": "#007acc"
+    "highlightbackground": "#343843",
+    "highlightcolor": "#40a9ff"
 }
 ```
 
@@ -266,8 +270,8 @@ XXL:  60px  (3rem)     - Maximum spacing
 ### Text Display Areas
 
 #### Scrolled Text Area
-- **Background**: `#252526` (text background)
-- **Text**: `#e0e0e0` (primary text)
+- **Background**: `#2a2d35` (UE5 text background)
+- **Text**: `#e3e4e8` (UE5 primary text)
 - **Font**: Consolas, 10pt (monospace)
 - **Padding**: 10px internal padding
 - **Border**: None (flat design)
@@ -277,9 +281,9 @@ XXL:  60px  (3rem)     - Maximum spacing
 {
     "wrap": tk.WORD,
     "state": tk.DISABLED,
-    "bg": "#252526",
-    "fg": "#e0e0e0",
-    "insertbackground": "#e0e0e0",
+    "bg": "#2a2d35",
+    "fg": "#e3e4e8",
+    "insertbackground": "#e3e4e8",
     "font": ("Consolas", 10),
     "relief": tk.FLAT,
     "padx": 10,
@@ -290,29 +294,29 @@ XXL:  60px  (3rem)     - Maximum spacing
 #### Text Tags (for formatted content)
 ```python
 user_tag = {
-    "foreground": "#4ec9b0",
+    "foreground": "#40a9ff",  # UE5 vibrant blue
     "font": ("Segoe UI", 10, "bold")
 }
 
 assistant_tag = {
-    "foreground": "#ce9178"
+    "foreground": "#a5b8c8"  # Light blue-gray (UE5 inspired)
 }
 
 timestamp_tag = {
-    "foreground": "#858585",
+    "foreground": "#6a7080",  # Muted blue-gray
     "font": ("Segoe UI", 8)
 }
 
 error_tag = {
-    "foreground": "#f48771"
+    "foreground": "#ff5555"  # Brighter error red
 }
 ```
 
 ### Status Bar
 
 #### Design
-- **Background**: `#2d2d30` (button background)
-- **Text**: `#e0e0e0` (primary text)
+- **Background**: `#343843` (UE5 button background)
+- **Text**: `#e3e4e8` (UE5 primary text)
 - **Font**: Segoe UI, 9pt
 - **Height**: Auto (based on content)
 - **Padding**: 10px horizontal, 5px vertical
@@ -333,10 +337,10 @@ error_tag = {
 ### Tooltips
 
 #### Design
-- **Background**: `#2d2d30` with slight transparency
-- **Text**: `#e0e0e0`
+- **Background**: `#343843` (UE5 button color)
+- **Text**: `#e3e4e8` (UE5 text color)
 - **Font**: Segoe UI, 9pt
-- **Border**: 1px solid `#3e3e42`
+- **Border**: 1px solid `#40a9ff` (bright blue accent)
 - **Padding**: 5px
 - **Border Radius**: 3px (slightly rounded)
 
@@ -354,9 +358,9 @@ error_tag = {
 ### Dialogs
 
 #### Modal Dialog
-- **Background**: `#2d2d30` (button background)
-- **Text**: `#e0e0e0` (primary text)
-- **Border**: 1px solid `#3e3e42`
+- **Background**: `#343843` (UE5 button background)
+- **Text**: `#e3e4e8` (UE5 primary text)
+- **Border**: 1px solid `#4a4e5a`
 - **Title Bar**: Accent color bar or bold title
 - **Padding**: 20px
 - **Buttons**: Standard button styles
@@ -391,9 +395,9 @@ error_tag = {
 ### Menu Bar
 
 #### Design
-- **Background**: `#2d2d30` (button background)
-- **Text**: `#e0e0e0` (primary text)
-- **Active Background**: `#3e3e42` (button active)
+- **Background**: `#343843` (UE5 button background)
+- **Text**: `#e3e4e8` (UE5 primary text)
+- **Active Background**: `#4a4e5a` (UE5 lighter blue-gray)
 - **Font**: Segoe UI, 10pt
 
 #### Menu Structure
@@ -669,14 +673,14 @@ The application supports window resizing with these behaviors:
 ### Code Implementation
 
 ```python
-# Define color scheme
+# Define Unreal Engine inspired color scheme
 colors = {
-    "bg": "#1e1e1e",
-    "fg": "#e0e0e0",
-    "accent": "#007acc",
-    "button_bg": "#2d2d30",
-    "button_active": "#3e3e42",
-    "text_bg": "#252526"
+    "bg": "#20232b",           # UE5 background panel
+    "fg": "#e3e4e8",           # UE5 text color
+    "accent": "#40a9ff",       # UE5 vibrant blue
+    "button_bg": "#343843",    # UE5 button default
+    "button_active": "#4a4e5a", # UE5 hover state
+    "text_bg": "#2a2d35"       # UE5 input areas
 }
 
 # Define typography
@@ -768,6 +772,7 @@ As the project evolves, consider:
 | Version | Date       | Changes                                    |
 |---------|------------|-------------------------------------------|
 | 1.0     | 2025-11-08 | Initial design system documentation       |
+| 1.1     | 2025-11-09 | Updated to Unreal Engine 5 inspired colors|
 
 ---
 
@@ -780,5 +785,6 @@ For design system questions or suggestions:
 
 ---
 
-*Last Updated: 2025-11-08*
+*Last Updated: 2025-11-09*
 *Maintained by: Adastrea Director Team*
+*Version 1.1 - Unreal Engine Style*
