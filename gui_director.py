@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import scrolledtext, messagebox, simpledialog, Menu, font, ttk
+from tkinter import scrolledtext, messagebox, Menu, font
 import subprocess
 import threading
 import sys
@@ -205,7 +205,7 @@ class AdastreaDirectorApp:
         
         self.decrease_font_button = tk.Button(
             font_frame,
-            text="A−",
+            text="A-",
             command=self.decrease_font,
             **small_button_style
         )
@@ -346,13 +346,8 @@ class AdastreaDirectorApp:
         self.ask_button.pack(side=tk.RIGHT)
         self.create_tooltip(self.ask_button, "Send your question (Enter or Ctrl+Enter)")
         
-        # Add hover effect to primary button
-        def ask_button_enter(e):
-            self.ask_button.config(bg=self.accent_hover)
-        def ask_button_leave(e):
-            self.ask_button.config(bg=self.accent_color)
-        self.ask_button.bind("<Enter>", ask_button_enter)
-        self.ask_button.bind("<Leave>", ask_button_leave)
+        # Add hover effect to primary button with custom accent color
+        self.add_button_hover_effect(self.ask_button, hover_color=self.accent_hover)
         
         # Add focus effect to entry
         def entry_focus_in(e):
@@ -476,12 +471,18 @@ class AdastreaDirectorApp:
         help_menu.add_command(label="Keyboard Shortcuts", command=self.show_shortcuts)
         help_menu.add_command(label="About", command=self.show_about)
     
-    def add_button_hover_effect(self, button):
-        """Add smooth hover effect to buttons for better visual feedback."""
+    def add_button_hover_effect(self, button, hover_color=None):
+        """Add smooth hover effect to buttons for better visual feedback.
+        
+        Args:
+            button: The button widget to add hover effect to
+            hover_color: Optional custom hover color. If None, uses self.button_hover
+        """
         original_bg = button.cget("background")
+        hover_bg = hover_color if hover_color else self.button_hover
         
         def on_enter(e):
-            button.config(background=self.button_hover)
+            button.config(background=hover_bg)
         
         def on_leave(e):
             button.config(background=original_bg)
