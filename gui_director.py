@@ -44,7 +44,7 @@ class AdastreaDirectorApp:
 
         # --- Header Frame with UE5-style border separator ---
         header_frame = tk.Frame(main_frame, bg=self.bg_color)
-        header_frame.pack(fill=tk.X, pady=(0, 10))
+        header_frame.pack(fill=tk.X, pady=(0, 8))
         
         title_label = tk.Label(
             header_frame,
@@ -64,9 +64,9 @@ class AdastreaDirectorApp:
         )
         subtitle_label.pack(side=tk.LEFT, padx=(10, 0))
         
-        # UE5-style separator line below header
+        # UE5-style separator line below header (7px bottom padding maintains original 15px total)
         header_separator = tk.Frame(main_frame, height=1, bg=self.accent_color)
-        header_separator.pack(fill=tk.X, pady=(0, 15))
+        header_separator.pack(fill=tk.X, pady=(0, 7))
 
         # --- Top Frame for Buttons ---
         top_frame = tk.Frame(main_frame, bg=self.bg_color)
@@ -216,6 +216,7 @@ class AdastreaDirectorApp:
         query_frame = tk.Frame(main_frame, bg=self.bg_color)
         query_frame.pack(fill=tk.X, pady=(0, 0))
         
+        # Increased bottom padding from 5px to 8px for UE5-style spacing and improved visual alignment
         query_header = tk.Frame(query_frame, bg=self.bg_color)
         query_header.pack(fill=tk.X, pady=(0, 8))
         
