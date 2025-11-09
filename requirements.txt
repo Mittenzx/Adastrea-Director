@@ -1,5 +1,11 @@
 # Core dependencies for Adastrea Director - Phase 1
 # Python 3.9+ required (3.12+ recommended)
+#
+# INSTALLATION HELP:
+# - For most platforms (Windows/Linux x86_64): pip install -r requirements.txt
+# - For Apple Silicon Macs (M1/M2/M3): python install_dependencies.py
+# - For ARM Linux/Windows: See INSTALLATION.md for platform-specific instructions
+# - If you get onnxruntime errors: See INSTALLATION.md for solutions
 
 # Data processing - Updated for numpy 2.0 compatibility
 numpy>=2.0.0,<3.0.0
@@ -14,6 +20,8 @@ langchain-community>=0.3.27,<0.4.0
 openai>=1.57.0,<2.0.0
 
 # Vector database for document storage and retrieval - Updated for numpy 2.0 compatibility
+# NOTE: chromadb requires onnxruntime, which may not be available on some platforms
+# (Apple Silicon, Linux/Windows ARM). See INSTALLATION.md for platform-specific solutions.
 chromadb>=0.5.23,<0.6.0
 
 # Document loading and processing

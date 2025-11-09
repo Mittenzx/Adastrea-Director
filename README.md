@@ -51,9 +51,19 @@ cd Adastrea-Director
 ```
 
 2. Install dependencies:
+
+**Option A: Smart Installer (Recommended)**
+```bash
+python install_dependencies.py
+```
+This script will detect your platform and guide you through any platform-specific setup needed.
+
+**Option B: Direct Installation**
 ```bash
 pip install -r requirements.txt
 ```
+
+**📝 Note**: If you encounter issues (especially on Apple Silicon Macs or ARM systems), use the smart installer or see [INSTALLATION.md](INSTALLATION.md) for platform-specific instructions and troubleshooting.
 
 3. Set up your OpenAI API key (or other LLM provider):
 ```bash
