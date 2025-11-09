@@ -202,6 +202,17 @@ venv\Scripts\activate.bat
 
 **Long path names**: Enable long path support in Windows settings.
 
+**Unicode/Emoji encoding errors** (cp1252 encoding issue):
+- **Symptom**: `UnicodeEncodeError: 'charmap' codec can't encode character`
+- **Cause**: Windows console using cp1252 encoding instead of UTF-8
+- **Solution**: This is now fixed in the code (v1.1+). If you still encounter this:
+  ```powershell
+  # Set environment variable before running
+  $env:PYTHONIOENCODING="utf-8"
+  python ingest.py
+  ```
+- **Alternative**: Use Windows Terminal (instead of cmd.exe) which has better Unicode support
+
 ---
 
 ## Verification Commands
