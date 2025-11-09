@@ -21,32 +21,28 @@ class AdastreaDirectorApp:
         self.root.geometry("1000x700")
         self.root.minsize(800, 600)
         
-        # Enhanced color scheme - Professional dark theme with better contrast
-        self.bg_color = "#1e1e1e"           # Primary background
-        self.bg_secondary = "#252526"       # Secondary background (panels)
-        self.bg_tertiary = "#2d2d30"        # Tertiary background (cards)
-        self.fg_color = "#e0e0e0"           # Primary text
-        self.fg_secondary = "#cccccc"       # Secondary text
-        self.fg_muted = "#858585"           # Muted/disabled text
-        self.accent_color = "#007acc"       # Primary accent (blue)
-        self.accent_hover = "#1e8ad6"       # Accent hover state (lighter blue)
-        self.accent_active = "#005a9e"      # Accent active state (darker blue)
-        self.button_bg = "#2d2d30"          # Button background
-        self.button_hover = "#3e3e42"       # Button hover
-        self.button_active = "#4e4e52"      # Button active/pressed
-        self.text_bg = "#252526"            # Input/text areas
-        self.border_color = "#3e3e42"       # Border color
-        self.success_color = "#4ec9b0"      # Success/positive
-        self.warning_color = "#ce9178"      # Warning/info
-        self.error_color = "#f48771"        # Error/danger
-        self.highlight_bg = "#094771"       # Selection/highlight background
-        # Unreal Engine inspired color scheme
+        # Enhanced color scheme - Unreal Engine 5 inspired with card-based design support
+        # Base UE5 colors
         self.bg_color = "#20232b"  # UE5 background panel (darker, blueish)
         self.fg_color = "#e3e4e8"  # UE5 text color (light gray, slightly warm)
         self.accent_color = "#40a9ff"  # UE5 toolbar/button highlight (bright blue)
         self.button_bg = "#343843"  # UE5 button default (medium gray-blue)
         self.button_active = "#4a4e5a"  # Lighter variant for hover
         self.text_bg = "#2a2d35"  # Slightly lighter than background for input areas
+        
+        # Additional colors for card-based design from PR #13
+        self.bg_secondary = "#252526"       # Secondary background (panels)
+        self.bg_tertiary = "#2d2d30"        # Tertiary background (cards)
+        self.fg_secondary = "#cccccc"       # Secondary text
+        self.fg_muted = "#858585"           # Muted/disabled text
+        self.accent_hover = "#5bb8ff"       # Accent hover state (lighter blue, UE5 style)
+        self.accent_active = "#005a9e"      # Accent active state (darker blue)
+        self.button_hover = "#4a4e5a"       # Button hover (same as button_active for UE5)
+        self.border_color = "#3e3e42"       # Border color
+        self.success_color = "#4ec9b0"      # Success/positive
+        self.warning_color = "#ce9178"      # Warning/info
+        self.error_color = "#f48771"        # Error/danger
+        self.highlight_bg = "#094771"       # Selection/highlight background
         
         # Configure root window
         self.root.configure(bg=self.bg_color)
@@ -72,9 +68,6 @@ class AdastreaDirectorApp:
         # Title with icon
         title_frame = tk.Frame(header_inner, bg=self.bg_tertiary)
         title_frame.pack(side=tk.LEFT)
-        # --- Header Frame with UE5-style border separator ---
-        header_frame = tk.Frame(main_frame, bg=self.bg_color)
-        header_frame.pack(fill=tk.X, pady=(0, 8))
         
         title_label = tk.Label(
             title_frame,
@@ -128,17 +121,8 @@ class AdastreaDirectorApp:
             fg=self.fg_muted
         )
         actions_label.pack(side=tk.LEFT, padx=(0, 15))
-        subtitle_label.pack(side=tk.LEFT, padx=(10, 0))
-        
-        # UE5-style separator line below header (7px bottom padding maintains original 15px total)
-        header_separator = tk.Frame(main_frame, height=1, bg=self.accent_color)
-        header_separator.pack(fill=tk.X, pady=(0, 7))
 
-        # --- Top Frame for Buttons ---
-        top_frame = tk.Frame(main_frame, bg=self.bg_color)
-        top_frame.pack(fill=tk.X, pady=(0, 15))
-
-        # Enhanced button style with better visual hierarchy
+        # Enhanced button style with better visual hierarchy (UE5 style with card design)
         button_style = {
             "font": ("Segoe UI", 10),
             "bg": self.button_bg,
@@ -146,13 +130,8 @@ class AdastreaDirectorApp:
             "activebackground": self.button_hover,
             "activeforeground": self.fg_color,
             "relief": tk.FLAT,
-            "padx": 15,
-            "pady": 8,
-            "cursor": "hand2",
-            "borderwidth": 1,
-            "highlightthickness": 0
-            "padx": 18,  # Slightly more padding for UE5 style
-            "pady": 9,   # Slightly more vertical padding
+            "padx": 18,  # UE5 style padding
+            "pady": 9,   # UE5 style padding
             "cursor": "hand2",
             "borderwidth": 1,
             "highlightthickness": 1,
@@ -223,13 +202,10 @@ class AdastreaDirectorApp:
             "activebackground": self.button_hover,
             "activeforeground": self.fg_color,
             "relief": tk.FLAT,
-            "padx": 10,
-            "pady": 6,
+            "padx": 10,  # UE5 style padding
+            "pady": 6,   # Balanced padding
             "cursor": "hand2",
-            "width": 3
-            "padx": 10,  # Slightly more padding
-            "pady": 5,   # Better vertical alignment
-            "cursor": "hand2",
+            "width": 3,
             "borderwidth": 1,
             "highlightthickness": 1,
             "highlightbackground": self.button_bg
@@ -312,12 +288,10 @@ class AdastreaDirectorApp:
             insertbackground=self.accent_color,
             font=self.response_font,
             relief=tk.FLAT,
-            padx=15,
-            pady=15,
+            padx=15,  # PR #13 padding
+            pady=15,  # PR #13 padding
             selectbackground=self.highlight_bg,
-            selectforeground=self.fg_color
-            padx=12,
-            pady=12,
+            selectforeground=self.fg_color,
             borderwidth=0
         )
         self.response_text.pack(fill=tk.BOTH, expand=True)
@@ -357,22 +331,17 @@ class AdastreaDirectorApp:
         )
         query_label.pack(anchor=tk.W, pady=(0, 8))
         
-        # Input frame with enhanced styling
+        # Input frame with enhanced styling (combines card design and UE5 style)
         input_container = tk.Frame(query_inner, bg=self.bg_tertiary)
         input_container.pack(fill=tk.X)
         
-        # Entry field container with border
+        # Entry field container with border (card design from PR #13)
         entry_frame = tk.Frame(input_container, bg=self.text_bg, highlightthickness=2,
                               highlightbackground=self.border_color)
         entry_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 10))
         
-        # Container with border for input field (UE5 style)
-        entry_container = tk.Frame(input_frame, bg=self.button_bg, padx=1, pady=1)
-        entry_container.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 10))
-        
         self.query_entry = tk.Entry(
             entry_frame,
-            entry_container,
             font=("Segoe UI", 11),
             bg=self.text_bg,
             fg=self.fg_color,
@@ -382,35 +351,23 @@ class AdastreaDirectorApp:
             borderwidth=0
         )
         self.query_entry.pack(fill=tk.BOTH, expand=True, padx=12, pady=10)
-            highlightthickness=1,
-            highlightbackground=self.button_bg,
-            highlightcolor=self.accent_color,
-            borderwidth=0
-        )
-        self.query_entry.pack(fill=tk.BOTH, expand=True, ipady=8, ipadx=10)
         self.query_entry.bind("<Return>", self.run_query_event)
         self.query_entry.bind("<Control-Return>", self.run_query_event)
         self.query_entry.focus()
 
-        # Enhanced Ask button with better styling
+        # Enhanced Ask button with UE5 style (combines card design and UE5 colors)
         self.ask_button = tk.Button(
             input_container,
             text="Send ▶",
             command=self.run_query,
             font=("Segoe UI", 11, "bold"),
             bg=self.accent_color,
-            fg="white",
-            activebackground=self.accent_active,
-            activeforeground="white",
-            relief=tk.FLAT,
-            padx=30,
-            pady=12,
             fg="#20232b",  # Dark text on bright button for UE5 style
-            activebackground="#5bb8ff",  # Lighter blue on hover
+            activebackground=self.accent_hover,  # Lighter blue on hover (UE5 style)
             activeforeground="#20232b",
             relief=tk.FLAT,
-            padx=28,  # More padding for prominence
-            pady=10,  # Better vertical padding
+            padx=30,  # PR #13 padding
+            pady=12,  # PR #13 padding
             cursor="hand2",
             borderwidth=0
         )
