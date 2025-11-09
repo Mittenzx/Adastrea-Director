@@ -16,12 +16,12 @@ import sys
 import argparse
 from pathlib import Path
 from typing import List, Dict, Any
-from dotenv import load_dotenv
-
-# Load environment variables
-load_dotenv()
 
 try:
+    from dotenv import load_dotenv
+    # Load environment variables immediately after import
+    load_dotenv()
+    
     from langchain_community.document_loaders import (
         DirectoryLoader,
         TextLoader,
@@ -37,6 +37,10 @@ try:
 except ImportError as e:
     print(f"Error: Missing required dependencies. Please install requirements.txt")
     print(f"Details: {e}")
+    print(f"\nTo install dependencies, run:")
+    print(f"  pip install -r requirements.txt")
+    print(f"\nOr use the setup script:")
+    print(f"  ./setup.sh")
     sys.exit(1)
 
 console = Console()

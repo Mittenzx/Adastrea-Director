@@ -14,12 +14,12 @@ import os
 import sys
 import argparse
 from typing import List, Dict, Any, Optional
-from dotenv import load_dotenv
-
-# Load environment variables
-load_dotenv()
 
 try:
+    from dotenv import load_dotenv
+    # Load environment variables immediately after import
+    load_dotenv()
+    
     from langchain_openai import ChatOpenAI, OpenAIEmbeddings
     from langchain_community.vectorstores import Chroma
     from langchain.chains import ConversationalRetrievalChain
@@ -32,6 +32,10 @@ try:
 except ImportError as e:
     print(f"Error: Missing required dependencies. Please install requirements.txt")
     print(f"Details: {e}")
+    print(f"\nTo install dependencies, run:")
+    print(f"  pip install -r requirements.txt")
+    print(f"\nOr use the setup script:")
+    print(f"  ./setup.sh")
     sys.exit(1)
 
 console = Console()
