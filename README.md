@@ -137,10 +137,7 @@ The improved GUI provides:
 
 See [GUI_IMPROVEMENTS.md](GUI_IMPROVEMENTS.md) for detailed documentation of all enhancements.
 
-**Requirements**: 
-- The GUI application requires **Python 3.9-3.12** (Python 3.13+ not yet supported)
-- Requires **tkinter**, which is included with most Python installations on Windows and can be installed on Linux/Mac
-- If you encounter errors, see [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for solutions
+**Note**: The GUI application requires tkinter, which is included with most Python installations on Windows and can be installed on Linux/Mac.
 
 ## Project Structure
 
