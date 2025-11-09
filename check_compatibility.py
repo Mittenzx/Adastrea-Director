@@ -127,10 +127,15 @@ def check_python_version() -> Tuple[bool, List[str]]:
         issues.append(f"✗ Python 3.9+ required (found {major}.{minor})")
         return False, issues
     
-    if major == 3 and minor >= 12:
-        issues.append("✓ Python 3.12+ detected (excellent compatibility)")
+    if major == 3 and minor >= 13:
+        issues.append(f"⚠ Python 3.{minor} detected - NOT YET FULLY SUPPORTED")
+        issues.append("  Python 3.13+ has compatibility issues with onnxruntime")
+        issues.append("  Recommended: Use Python 3.9-3.12 (3.12 recommended)")
+        # Don't fail, just warn - let user decide
+    elif major == 3 and minor >= 12:
+        issues.append("✓ Python 3.12 detected (excellent compatibility)")
     elif major == 3 and minor >= 9:
-        issues.append(f"✓ Python 3.{minor} supported (3.12+ recommended)")
+        issues.append(f"✓ Python 3.{minor} supported (3.12 recommended)")
     
     return True, issues
 
