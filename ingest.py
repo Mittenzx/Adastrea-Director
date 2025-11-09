@@ -43,7 +43,7 @@ except ImportError as e:
     print(f"  ./setup.sh")
     sys.exit(1)
 
-console = Console()
+console = Console(legacy_windows=False)
 
 
 class DocumentIngestionAgent:
