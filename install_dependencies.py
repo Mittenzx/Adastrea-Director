@@ -20,9 +20,18 @@ def get_platform_info() -> Tuple[str, str, str]:
 
 def check_python_version() -> bool:
     """Check if Python version is compatible."""
-    if sys.version_info < (3, 9):
-        print(f"❌ Python 3.9+ required, found {sys.version_info.major}.{sys.version_info.minor}")
+    version = sys.version_info
+    if version < (3, 9):
+        print(f"❌ Python 3.9+ required, found {version.major}.{version.minor}")
         return False
+    if version >= (3, 13):
+        print(f"⚠️  Warning: Python {version.major}.{version.minor} detected")
+        print("onnxruntime may not have wheels for Python 3.13+")
+        print("Python 3.9-3.12 is recommended for best compatibility")
+        print("\nYou may encounter installation errors. Consider:")
+        print("1. Installing Python 3.12 from https://www.python.org/")
+        print("2. Using Docker with ChromaDB (see INSTALLATION.md)")
+        return True  # Allow to continue but with warning
     return True
 
 
@@ -90,6 +99,14 @@ def print_platform_warning():
         print(f"\n{'='*70}\n")
     else:
         print("\n✅ Standard platform detected - installation should work smoothly.")
+        
+        # Additional check for Windows with Python 3.13+
+        if platform.system() == "Windows" and sys.version_info >= (3, 13):
+            print("\n⚠️  Warning: Python 3.13+ on Windows")
+            print("    onnxruntime may not be available for Python 3.13+")
+            print("    Recommended: Use Python 3.9-3.12 for best compatibility")
+            print("    See INSTALLATION.md for Windows-specific instructions")
+        
         print(f"\n{'='*70}\n")
     
     return True
@@ -127,8 +144,16 @@ def install_requirements():
             print("\n2. Use Docker (see INSTALLATION.md)")
         else:
             print("\n🔍 General troubleshooting:")
-            print("1. Upgrade pip: pip install --upgrade pip")
-            print("2. Check Python version: python --version (need 3.9+)")
+            print("1. Check Python version: python --version")
+            if sys.version_info >= (3, 13):
+                print("   ⚠️  Python 3.13+ detected - onnxruntime may not be available")
+                print("   → Install Python 3.12 from https://www.python.org/")
+            elif platform.system() == "Windows":
+                print("   ℹ️  Windows x86_64 detected")
+                print("   → If Python 3.13+: Install Python 3.12")
+                print("   → Upgrade pip: python -m pip install --upgrade pip setuptools wheel")
+                print("   → Test: pip install --verbose onnxruntime")
+            print("2. Upgrade pip: pip install --upgrade pip setuptools wheel")
             print("3. See INSTALLATION.md for detailed troubleshooting")
         
         print(f"\nFor complete platform-specific guide, see: INSTALLATION.md")

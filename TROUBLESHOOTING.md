@@ -6,21 +6,34 @@ Quick reference for common installation and runtime issues with Adastrea Directo
 
 ### ❌ Error: `Could not find a version that satisfies the requirement onnxruntime`
 
-**Cause**: Your platform doesn't have pre-built onnxruntime wheels available.
+**Common Causes**:
+1. **Python version incompatibility** - Most common on Windows 11 x86_64
+2. **Platform lacks pre-built wheels** - ARM systems (Apple Silicon, Linux ARM, Windows ARM)
+3. **Network/proxy issues**
 
 **Affected Platforms**:
+- **Windows 11 (x86_64)** - Usually Python version issue (3.13+ not supported)
 - Apple Silicon Macs (M1/M2/M3/M4)
 - Linux ARM (Raspberry Pi, ARM servers)
 - Windows ARM (Surface ARM devices)
 
 **Quick Solutions**:
 
-1. **Use the smart installer** (detects platform automatically):
+1. **Windows 11 x86_64 - Check Python version**:
+   ```bash
+   python --version
+   # If 3.13+: Install Python 3.12 from python.org
+   # If 3.12 or lower:
+   python -m pip install --upgrade pip setuptools wheel
+   pip install --verbose onnxruntime  # See detailed error
+   ```
+
+2. **Use the smart installer** (detects platform automatically):
    ```bash
    python install_dependencies.py
    ```
 
-2. **Apple Silicon Macs - Use onnxruntime-silicon**:
+3. **Apple Silicon Macs - Use onnxruntime-silicon**:
    ```bash
    pip install numpy pandas langchain langchain-openai langchain-community openai
    pip install onnxruntime-silicon>=1.14.0
@@ -28,14 +41,14 @@ Quick reference for common installation and runtime issues with Adastrea Directo
    pip install -r requirements.txt  # Install remaining packages
    ```
 
-3. **Linux/Windows ARM - Build from source**:
+4. **Linux/Windows ARM - Build from source**:
    ```bash
    sudo apt-get install python3-dev build-essential cmake  # Linux only
    pip install --no-binary onnxruntime onnxruntime>=1.14.1
    pip install -r requirements.txt
    ```
 
-4. **Any Platform - Use Docker**:
+5. **Any Platform - Use Docker**:
    ```bash
    docker pull chromadb/chroma
    docker run -p 8000:8000 chromadb/chroma

@@ -144,6 +144,52 @@ python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
+**⚠️ Important for Windows 11 Users:**
+
+If you get the error `Could not find a version that satisfies the requirement onnxruntime` on Windows 11 x86_64:
+
+**Most Common Cause: Python Version Incompatibility**
+
+Check your Python version:
+```bash
+python --version
+```
+
+**Solutions:**
+
+1. **If you have Python 3.13+**: onnxruntime doesn't support Python 3.13 yet. You need Python 3.12 or lower.
+   - Download and install Python 3.12 from [python.org](https://www.python.org/downloads/)
+   - Create a new virtual environment with Python 3.12
+   - Retry installation
+
+2. **If you have Python 3.12 or lower and still get the error**:
+   ```bash
+   # Upgrade pip and setuptools
+   python -m pip install --upgrade pip setuptools wheel
+   
+   # Try installing with verbose output to see the issue
+   pip install --verbose onnxruntime
+   
+   # If that fails, try installing from a specific index
+   pip install --index-url https://pypi.org/simple/ onnxruntime
+   ```
+
+3. **Check for network/proxy issues**:
+   ```bash
+   # Test PyPI connectivity
+   python -m pip install --upgrade pip
+   
+   # If behind a proxy, configure pip
+   pip config set global.proxy http://your-proxy:port
+   ```
+
+4. **Last resort - Use Docker**:
+   ```bash
+   docker pull chromadb/chroma
+   docker run -p 8000:8000 chromadb/chroma
+   # See "Using Remote ChromaDB Server" section below
+   ```
+
 #### Windows ARM (Surface devices with ARM processors)
 
 Similar to Linux ARM, you may need to build onnxruntime from source or use the Docker approach.
@@ -152,16 +198,31 @@ Similar to Linux ARM, you may need to build onnxruntime from source or use the D
 
 ### Issue: `Could not find a version that satisfies the requirement onnxruntime`
 
-**Cause**: Your platform doesn't have pre-built onnxruntime wheels.
+**Common Causes**:
+1. **Python version incompatibility** (most common on Windows 11)
+2. **Platform lacks pre-built wheels** (ARM systems)
+3. **Network/proxy issues**
 
-**Solutions**:
-1. **Use Rosetta 2** (macOS Apple Silicon) - See Option 1 above
-2. **Use onnxruntime-silicon** (macOS Apple Silicon) - See Option 2 above  
-3. **Build from source** (Linux ARM):
+**Solutions by Platform**:
+
+**Windows 11 (x86_64)**:
+1. **Check Python version**: `python --version`
+   - If Python 3.13+: Install Python 3.12 or lower (onnxruntime doesn't support 3.13 yet)
+   - If Python 3.8 or lower: Upgrade to Python 3.9-3.12
+2. **Upgrade pip**: `python -m pip install --upgrade pip setuptools wheel`
+3. **Test connectivity**: `pip install --verbose onnxruntime` to see detailed error
+4. **Use Docker** as fallback (see Windows section above)
+
+**macOS Apple Silicon**:
+1. **Use Rosetta 2** - See macOS Option 1 above
+2. **Use onnxruntime-silicon** - See macOS Option 2 above  
+
+**Linux/Windows ARM**:
+1. **Build from source**:
    ```bash
    pip install --no-binary onnxruntime onnxruntime>=1.14.1
    ```
-4. **Use Docker** - See Option 3 above
+2. **Use Docker** - See Option 3 above
 
 ### Issue: `numpy` version conflicts
 
