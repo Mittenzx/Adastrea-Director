@@ -59,6 +59,66 @@ Quick reference for common installation and runtime issues with Adastrea Directo
 
 ---
 
+### ❌ Error: Python 3.13+ Compatibility Issues
+
+**Symptoms**:
+- GUI shows warning: "Python 3.13+ is not yet fully supported"
+- `onnxruntime` installation fails on Python 3.13+
+- GUI fails to start with errors at line 964
+
+**Cause**: Python 3.13+ introduces changes that make it incompatible with `onnxruntime`, which is required by ChromaDB (the vector database).
+
+**Solution**: Use Python 3.9 through 3.12 (Python 3.12 recommended)
+
+**Option 1: Install Python 3.12 (Recommended)**
+1. Download Python 3.12 from [python.org](https://www.python.org/downloads/)
+2. Install it (you can have multiple Python versions)
+3. Create a new virtual environment with Python 3.12:
+   ```bash
+   # Windows
+   py -3.12 -m venv venv
+   venv\Scripts\activate
+   
+   # Linux/macOS
+   python3.12 -m venv venv
+   source venv/bin/activate
+   ```
+4. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+**Option 2: Use pyenv (Linux/macOS)**
+```bash
+# Install pyenv (if not already installed)
+curl https://pyenv.run | bash
+
+# Install Python 3.12
+pyenv install 3.12.7
+pyenv local 3.12.7
+
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+**Option 3: Use Docker**
+If you prefer to keep Python 3.13+, you can run ChromaDB in Docker:
+```bash
+docker pull chromadb/chroma
+docker run -p 8000:8000 chromadb/chroma
+# Then modify code to use remote ChromaDB (see INSTALLATION.md)
+```
+
+**Verify Your Python Version**:
+```bash
+python --version
+# Should show 3.9.x through 3.12.x
+```
+
+---
+
 ### ❌ Error: `numpy` version conflicts
 
 **Cause**: Version incompatibility between numpy 2.0 and older packages.
@@ -108,6 +168,52 @@ pip install -r requirements.txt
    ```
 
 3. **Using GUI**: The GUI will prompt you to enter your API key on first launch.
+
+---
+
+### ❌ Error: `tkinter is not available` (GUI only)
+
+**Symptoms**:
+- Error message: "ERROR: tkinter is not available"
+- Cannot start `gui_director.py`
+- Import error: "No module named 'tkinter'"
+
+**Cause**: tkinter (Python's built-in GUI library) is not installed.
+
+**Solutions by Platform**:
+
+**Windows**:
+- tkinter should be included with Python from python.org
+- If missing, reinstall Python and ensure "tcl/tk and IDLE" is checked in the installer
+- Download from: https://www.python.org/downloads/
+
+**Ubuntu/Debian Linux**:
+```bash
+sudo apt-get update
+sudo apt-get install python3-tk
+```
+
+**Fedora/RHEL Linux**:
+```bash
+sudo dnf install python3-tkinter
+```
+
+**macOS**:
+- tkinter is included with Python from python.org
+- If using Homebrew Python:
+  ```bash
+  brew install python-tk@3.12  # Replace 3.12 with your Python version
+  ```
+
+**Verify tkinter installation**:
+```bash
+python -c "import tkinter; print('✅ tkinter is available')"
+```
+
+**Alternative**: If you can't install tkinter, use the command-line interface instead:
+```bash
+python main.py
+```
 
 ---
 
