@@ -11,6 +11,9 @@ from datetime import datetime
 # This ensures we use the same Python environment where all the dependencies are installed.
 PYTHON_EXECUTABLE = sys.executable
 
+# Get the directory where this script is located
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+
 class AdastreaDirectorApp:
     def __init__(self, root):
         self.root = root
@@ -668,7 +671,9 @@ GitHub: Mittenzx/Adastrea-Director
         self.ask_button.config(state=tk.DISABLED)
         self.status_var.set(status_message)
         
-        command = [PYTHON_EXECUTABLE, script_name] + list(args)
+        # Use absolute path for the script to ensure it can be found
+        script_path = os.path.join(SCRIPT_DIR, script_name)
+        command = [PYTHON_EXECUTABLE, script_path] + list(args)
 
         thread = threading.Thread(target=self._execute_command, args=(command,))
         thread.start()
