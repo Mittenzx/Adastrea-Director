@@ -146,6 +146,10 @@ Adastrea-Director/
 
 ## Documentation
 
+### Installation & Setup
+- [Installation Guide](INSTALLATION.md) - Platform-specific installation instructions
+- [Troubleshooting](TROUBLESHOOTING.md) - Quick reference for common issues
+
 ### Project Documentation
 - [Project Plan](PROJECT_PLAN.md) - Detailed breakdown of all four phases
 - [Agent System](AGENTS.md) - Architecture and design of the agent system
