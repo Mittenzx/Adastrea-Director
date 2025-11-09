@@ -24,7 +24,26 @@ After researching Unreal Engine 5's editor UI design, we identified the followin
 
 ## Changes Made
 
-### 1. Color Scheme Updates
+### 1. Visual Depth and Borders (UE5 Style)
+
+Added subtle borders and separators to create visual hierarchy:
+
+**Separator Lines:**
+- Accent-colored separator line below header (#40a9ff)
+- Muted separator line above input area (#343843)
+- Creates clear visual sections like UE5 editor panels
+
+**Panel Borders:**
+- Conversation area wrapped in subtle border container
+- Input field wrapped in border container for depth
+- 1px borders using button background color for subtle depth
+
+**Enhanced Spacing:**
+- Increased button padding (18px horizontal, 9px vertical)
+- Better input field padding (10px horizontal, 8px vertical)
+- More professional spacing throughout
+
+### 2. Color Scheme Updates
 
 #### Background Colors
 ```python
@@ -70,27 +89,41 @@ timestamp: "#6a7080" # Muted blue-gray (UE5 secondary)
 error: "#ff5555"     # Brighter error red (more visible)
 ```
 
-### 3. Button Styling
+### 3. Enhanced Button Styling
 
 #### Primary Action Button (Ask)
-Changed to use bright accent color with dark text for high contrast:
+Changed to use bright accent color with dark text for high contrast, plus improved padding:
 
 ```python
 # Before
 bg: "#007acc"           # Standard blue background
 fg: "white"             # White text
 activebackground: "#005a9e"  # Darker blue hover
+padx: 25, pady: 8       # Standard padding
 
 # After
 bg: "#40a9ff"           # UE5 bright blue
 fg: "#20232b"           # Dark text (better contrast)
 activebackground: "#5bb8ff"  # Lighter blue hover
+padx: 28, pady: 10      # More generous padding
+borderwidth: 0          # Clean, flat design
 ```
 
 This creates a more striking, modern appearance that matches Unreal Engine's prominent action buttons.
 
 #### Secondary Buttons
-Now use the UE5 button default color (`#343843`) with blue-gray tones, creating better visual cohesion with the overall interface.
+Now use the UE5 button default color (`#343843`) with blue-gray tones, subtle borders, and improved padding:
+
+```python
+# Enhanced button properties
+padx: 18, pady: 9       # More comfortable padding
+borderwidth: 1          # Subtle border
+highlightthickness: 1   # Focus indicator
+highlightbackground: button_bg  # Matches button color
+highlightcolor: accent_color    # Blue on focus
+```
+
+Creates better visual cohesion with the overall interface and provides subtle depth.
 
 ### 4. Tooltip Styling
 
@@ -110,10 +143,29 @@ border: "#40a9ff"        # UE5 accent (more visible)
 
 The bright blue border makes tooltips stand out more, similar to UE5's highlighting approach.
 
-### 5. Dialog Windows (API Key Dialog)
+### 5. Input Field Enhancement
+
+Added visual depth to input fields with border containers:
+
+```python
+# Container with border (1px)
+entry_container = tk.Frame(bg=button_bg, padx=1, pady=1)
+
+# Input field inside
+- Increased internal padding (ipady=8, ipadx=10)
+- Clean flat relief
+- Focus indicator with accent color
+- Borderwidth: 0 (border provided by container)
+```
+
+Creates a recessed appearance similar to UE5 input fields.
+
+### 6. Dialog Windows (API Key Dialog)
 
 Updated dialog styling to maintain consistency:
 - OK button uses bright accent color with dark text
+- Enhanced padding (padx=24, pady=8)
+- Cancel button has subtle border for definition
 - Hover state uses lighter blue (`#5bb8ff`)
 - Background maintains UE5 panel colors
 
@@ -126,6 +178,9 @@ Updated dialog styling to maintain consistency:
 3. **Better Contrast**: Bright blue accent color provides stronger visual hierarchy
 4. **Reduced Eye Strain**: Warmer tones and subtle blue tints are easier on the eyes during extended use
 5. **Visual Consistency**: Color relationships mirror Unreal Engine's design language
+6. **Visual Depth**: Subtle borders and separators create clear section boundaries like UE5 panels
+7. **Refined Spacing**: More generous padding makes the interface feel polished and professional
+8. **Clear Hierarchy**: Separator lines and borders guide the eye through the interface
 
 ### Color Harmony
 
@@ -143,9 +198,14 @@ The updated palette creates a harmonious color relationship:
 ### Lines Changed
 - Color scheme definitions (lines 24-29)
 - Text tag configurations (lines 190-193)
-- Primary button styling (lines 236-243)
-- Dialog button styling (lines 464-472)
+- Primary button styling with enhanced padding
+- Secondary button styling with borders and better padding
+- Dialog button styling with improved spacing
 - Tooltip styling (lines 329-342)
+- Added header separator line (accent color)
+- Added input area separator line (subtle)
+- Added border containers for conversation and input areas
+- Enhanced spacing throughout (pady, padx values)
 
 ### Backward Compatibility
 All changes are visual only and do not affect:
@@ -170,10 +230,10 @@ When testing the updated UI:
 
 Consider these additional UE5-inspired improvements:
 
-1. **Border Accents**: Add subtle blue accent borders to active panels
-2. **Icon Styling**: Use more geometric, modern icons
-3. **Panel Separators**: Add thin blue accent lines between sections
-4. **Font Adjustments**: Consider font weight adjustments for better hierarchy
+1. ~~**Border Accents**: Add subtle blue accent borders to active panels~~ ✓ Implemented
+2. **Icon Styling**: Use more geometric, modern icons (optional)
+3. ~~**Panel Separators**: Add thin blue accent lines between sections~~ ✓ Implemented
+4. **Font Adjustments**: Consider font weight adjustments for better hierarchy (optional)
 5. **Animation**: Subtle transitions on hover (similar to UE5's responsive feel)
 6. **Gradient Effects**: Subtle gradients on buttons (UE5 uses these sparingly)
 
