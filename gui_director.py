@@ -1,70 +1,9 @@
-#!/usr/bin/env python3
-"""
-Adastrea Director GUI Application
-
-A graphical user interface for the Adastrea Director AI Game Development Assistant.
-Requires Python 3.9-3.12 (Python 3.13+ not yet supported due to onnxruntime).
-"""
-
-import sys
-import os
-
-# --- Version Check ---
-# Check Python version before any other imports
-def check_python_version():
-    """Check if Python version is compatible."""
-    version_info = sys.version_info
-    if version_info.major < 3 or (version_info.major == 3 and version_info.minor < 9):
-        print("=" * 70)
-        print("ERROR: Python 3.9 or higher is required")
-        print("=" * 70)
-        print(f"You are running Python {version_info.major}.{version_info.minor}.{version_info.micro}")
-        print("\nPlease upgrade Python to version 3.9 or higher.")
-        print("Download from: https://www.python.org/downloads/")
-        print("=" * 70)
-        sys.exit(1)
-    
-    if version_info.major == 3 and version_info.minor >= 13:
-        print("=" * 70)
-        print("WARNING: Python 3.13+ is not yet fully supported")
-        print("=" * 70)
-        print(f"You are running Python {version_info.major}.{version_info.minor}.{version_info.micro}")
-        print("\nAdastrea Director currently supports Python 3.9 through 3.12.")
-        print("Python 3.13+ has compatibility issues with onnxruntime (required by ChromaDB).")
-        print("\nRecommended actions:")
-        print("1. Install Python 3.12 from https://www.python.org/downloads/")
-        print("2. Create a virtual environment with Python 3.12")
-        print("3. Install dependencies using: pip install -r requirements.txt")
-        print("\nSee INSTALLATION.md for detailed instructions.")
-        print("=" * 70)
-        print("\nAttempting to continue anyway... (GUI may not work correctly)")
-        print()
-
-check_python_version()
-
-# --- Tkinter Import Check ---
-try:
-    import tkinter as tk
-    from tkinter import scrolledtext, messagebox, Menu, font
-except ImportError as e:
-    print("=" * 70)
-    print("ERROR: tkinter is not available")
-    print("=" * 70)
-    print(f"Import error: {e}")
-    print("\nThe GUI application requires tkinter, which is not installed.")
-    print("\nHow to install tkinter:")
-    print("  • Windows: tkinter is included with Python from python.org")
-    print("             Reinstall Python and ensure 'tcl/tk and IDLE' is checked")
-    print("  • Ubuntu/Debian: sudo apt-get install python3-tk")
-    print("  • macOS: tkinter is included with Python from python.org")
-    print("           If using Homebrew: brew install python-tk")
-    print("\nAlternatively, use the command-line interface:")
-    print("  python main.py")
-    print("=" * 70)
-    sys.exit(1)
-
+import tkinter as tk
+from tkinter import scrolledtext, messagebox, Menu, font
 import subprocess
 import threading
+import sys
+import os
 from datetime import datetime
 
 # --- Configuration ---
@@ -1017,32 +956,9 @@ GitHub: Mittenzx/Adastrea-Director
         self.query_entry.focus()
 
 def main():
-    """Main entry point for the GUI application."""
-    try:
-        root = tk.Tk()
-        app = AdastreaDirectorApp(root)
-        root.mainloop()
-    except Exception as e:
-        print("=" * 70)
-        print("ERROR: Failed to start Adastrea Director GUI")
-        print("=" * 70)
-        print(f"Error: {type(e).__name__}: {e}")
-        print("\nPossible causes:")
-        print("1. Missing dependencies - run: pip install -r requirements.txt")
-        print("2. Python version incompatibility (requires Python 3.9-3.12)")
-        print("3. Display/graphics issues - ensure DISPLAY is set on Linux")
-        print("\nFor detailed troubleshooting, see:")
-        print("  • TROUBLESHOOTING.md")
-        print("  • INSTALLATION.md")
-        print("  • GUI_QUICK_START.md")
-        print("\nAlternatively, use the command-line interface:")
-        print("  python main.py")
-        print("=" * 70)
-        import traceback
-        print("\nFull error details:")
-        traceback.print_exc()
-        print("=" * 70)
-        sys.exit(1)
+    root = tk.Tk()
+    app = AdastreaDirectorApp(root)
+    root.mainloop()
 
 if __name__ == "__main__":
     main()
