@@ -15,6 +15,13 @@ import sys
 import argparse
 from typing import List, Dict, Any, Optional
 
+# Force UTF-8 encoding for stdout/stderr to handle Unicode characters (emojis)
+# This prevents encoding errors on Windows systems with cp1252 encoding
+if sys.platform == "win32":
+    import io
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
+
 try:
     from dotenv import load_dotenv
     # Load environment variables immediately after import
