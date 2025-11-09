@@ -21,13 +21,13 @@ class AdastreaDirectorApp:
         self.root.geometry("1000x700")
         self.root.minsize(800, 600)
         
-        # Color scheme
-        self.bg_color = "#1e1e1e"
-        self.fg_color = "#e0e0e0"
-        self.accent_color = "#007acc"
-        self.button_bg = "#2d2d30"
-        self.button_active = "#3e3e42"
-        self.text_bg = "#252526"
+        # Unreal Engine inspired color scheme
+        self.bg_color = "#20232b"  # UE5 background panel (darker, blueish)
+        self.fg_color = "#e3e4e8"  # UE5 text color (light gray, slightly warm)
+        self.accent_color = "#40a9ff"  # UE5 toolbar/button highlight (bright blue)
+        self.button_bg = "#343843"  # UE5 button default (medium gray-blue)
+        self.button_active = "#4a4e5a"  # Lighter variant for hover
+        self.text_bg = "#2a2d35"  # Slightly lighter than background for input areas
         
         # Configure root window
         self.root.configure(bg=self.bg_color)
@@ -186,11 +186,11 @@ class AdastreaDirectorApp:
         )
         self.response_text.pack(fill=tk.BOTH, expand=True)
         
-        # Configure text tags for better formatting
-        self.response_text.tag_config("user", foreground="#4ec9b0", font=("Segoe UI", self.current_font_size, "bold"))
-        self.response_text.tag_config("assistant", foreground="#ce9178")
-        self.response_text.tag_config("timestamp", foreground="#858585", font=("Segoe UI", 8))
-        self.response_text.tag_config("error", foreground="#f48771")
+        # Configure text tags for better formatting (Unreal Engine inspired)
+        self.response_text.tag_config("user", foreground="#40a9ff", font=("Segoe UI", self.current_font_size, "bold"))  # UE5 blue
+        self.response_text.tag_config("assistant", foreground="#a5b8c8")  # Lighter blue-gray for assistant
+        self.response_text.tag_config("timestamp", foreground="#6a7080", font=("Segoe UI", 8))  # Muted blue-gray
+        self.response_text.tag_config("error", foreground="#ff5555")  # Brighter error red
 
         # --- Query Input Area ---
         query_frame = tk.Frame(main_frame, bg=self.bg_color)
@@ -234,9 +234,9 @@ class AdastreaDirectorApp:
             command=self.run_query,
             font=("Segoe UI", 11, "bold"),
             bg=self.accent_color,
-            fg="white",
-            activebackground="#005a9e",
-            activeforeground="white",
+            fg="#20232b",  # Dark text on bright button for UE5 style
+            activebackground="#5bb8ff",  # Lighter blue on hover
+            activeforeground="#20232b",
             relief=tk.FLAT,
             padx=25,
             pady=8,
@@ -325,12 +325,12 @@ class AdastreaDirectorApp:
             y = event.widget.winfo_rooty() + event.widget.winfo_height() + 5
             tooltip.wm_geometry(f"+{x}+{y}")
             
-            # Create tooltip label with dark theme styling per design spec
+            # Create tooltip label with Unreal Engine styling
             label = tk.Label(
                 tooltip,
                 text=text,
-                background="#2d2d30",  # Dark background per design spec
-                foreground="#e0e0e0",  # Light text per design spec
+                background="#343843",  # UE5 button default color
+                foreground="#e3e4e8",  # UE5 text color
                 relief=tk.SOLID,
                 borderwidth=1,
                 font=("Segoe UI", 9),
@@ -339,8 +339,8 @@ class AdastreaDirectorApp:
             )
             label.pack()
             
-            # Configure border color
-            tooltip.configure(bg="#3e3e42", highlightthickness=1, highlightbackground="#3e3e42")
+            # Configure border color with UE5 style
+            tooltip.configure(bg="#40a9ff", highlightthickness=1, highlightbackground="#40a9ff")
             
             widget.tooltip = tooltip
         
@@ -462,9 +462,9 @@ Type your question below to get started! 🚀
             text="OK",
             command=on_ok,
             bg=self.accent_color,
-            fg="white",
-            activebackground="#005a9e",  # Darker blue on hover
-            activeforeground="white",
+            fg="#20232b",  # Dark text on bright button for UE5 style
+            activebackground="#5bb8ff",  # Lighter blue on hover
+            activeforeground="#20232b",
             relief=tk.FLAT,
             padx=20,
             pady=6,
