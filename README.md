@@ -44,6 +44,22 @@ Phase 1 focuses on creating a context-aware assistant using Retrieval-Augmented 
 
 ### Installation
 
+#### Quick Setup (All Platforms)
+
+```bash
+git clone https://github.com/Mittenzx/Adastrea-Director.git
+cd Adastrea-Director
+./setup.sh  # Linux/Mac
+```
+
+The setup script will:
+- Check your system compatibility
+- Create a virtual environment
+- Install all dependencies with platform-specific handling
+- Verify the installation
+
+#### Manual Installation
+
 1. Clone the repository:
 ```bash
 git clone https://github.com/Mittenzx/Adastrea-Director.git
