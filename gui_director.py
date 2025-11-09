@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import scrolledtext, messagebox, simpledialog, Menu, font
+from tkinter import scrolledtext, messagebox, Menu, font
 import subprocess
 import threading
 import sys
@@ -21,6 +21,25 @@ class AdastreaDirectorApp:
         self.root.geometry("1000x700")
         self.root.minsize(800, 600)
         
+        # Enhanced color scheme - Professional dark theme with better contrast
+        self.bg_color = "#1e1e1e"           # Primary background
+        self.bg_secondary = "#252526"       # Secondary background (panels)
+        self.bg_tertiary = "#2d2d30"        # Tertiary background (cards)
+        self.fg_color = "#e0e0e0"           # Primary text
+        self.fg_secondary = "#cccccc"       # Secondary text
+        self.fg_muted = "#858585"           # Muted/disabled text
+        self.accent_color = "#007acc"       # Primary accent (blue)
+        self.accent_hover = "#1e8ad6"       # Accent hover state (lighter blue)
+        self.accent_active = "#005a9e"      # Accent active state (darker blue)
+        self.button_bg = "#2d2d30"          # Button background
+        self.button_hover = "#3e3e42"       # Button hover
+        self.button_active = "#4e4e52"      # Button active/pressed
+        self.text_bg = "#252526"            # Input/text areas
+        self.border_color = "#3e3e42"       # Border color
+        self.success_color = "#4ec9b0"      # Success/positive
+        self.warning_color = "#ce9178"      # Warning/info
+        self.error_color = "#f48771"        # Error/danger
+        self.highlight_bg = "#094771"       # Selection/highlight background
         # Unreal Engine inspired color scheme
         self.bg_color = "#20232b"  # UE5 background panel (darker, blueish)
         self.fg_color = "#e3e4e8"  # UE5 text color (light gray, slightly warm)
@@ -42,26 +61,73 @@ class AdastreaDirectorApp:
         main_frame = tk.Frame(root, padx=15, pady=15, bg=self.bg_color)
         main_frame.pack(fill=tk.BOTH, expand=True)
 
+        # --- Header Frame with Card Design ---
+        header_card = tk.Frame(main_frame, bg=self.bg_tertiary, highlightthickness=1, 
+                              highlightbackground=self.border_color)
+        header_card.pack(fill=tk.X, pady=(0, 15))
+        
+        header_inner = tk.Frame(header_card, bg=self.bg_tertiary, padx=15, pady=12)
+        header_inner.pack(fill=tk.BOTH, expand=True)
+        
+        # Title with icon
+        title_frame = tk.Frame(header_inner, bg=self.bg_tertiary)
+        title_frame.pack(side=tk.LEFT)
         # --- Header Frame with UE5-style border separator ---
         header_frame = tk.Frame(main_frame, bg=self.bg_color)
         header_frame.pack(fill=tk.X, pady=(0, 8))
         
         title_label = tk.Label(
-            header_frame,
-            text="🤖 Adastrea Director",
-            font=("Segoe UI", 16, "bold"),
-            bg=self.bg_color,
+            title_frame,
+            text="⚡ Adastrea Director",
+            font=("Segoe UI", 18, "bold"),
+            bg=self.bg_tertiary,
             fg=self.accent_color
         )
         title_label.pack(side=tk.LEFT)
         
+        # Divider
+        divider = tk.Frame(header_inner, width=2, bg=self.border_color)
+        divider.pack(side=tk.LEFT, fill=tk.Y, padx=15)
+        
+        # Subtitle and status
+        info_frame = tk.Frame(header_inner, bg=self.bg_tertiary)
+        info_frame.pack(side=tk.LEFT, fill=tk.Y)
+        
         subtitle_label = tk.Label(
-            header_frame,
-            text="AI Game Development Assistant",
-            font=("Segoe UI", 10),
-            bg=self.bg_color,
-            fg=self.fg_color
+            info_frame,
+            text="AI-Powered Game Development Assistant",
+            font=("Segoe UI", 11),
+            bg=self.bg_tertiary,
+            fg=self.fg_secondary
         )
+        subtitle_label.pack(anchor=tk.W)
+        
+        self.header_status_label = tk.Label(
+            info_frame,
+            text="● Ready",
+            font=("Segoe UI", 9),
+            bg=self.bg_tertiary,
+            fg=self.success_color
+        )
+        self.header_status_label.pack(anchor=tk.W)
+
+        # --- Top Frame for Action Buttons (Card-based layout) ---
+        actions_card = tk.Frame(main_frame, bg=self.bg_tertiary, highlightthickness=1,
+                               highlightbackground=self.border_color)
+        actions_card.pack(fill=tk.X, pady=(0, 15))
+        
+        actions_inner = tk.Frame(actions_card, bg=self.bg_tertiary, padx=15, pady=10)
+        actions_inner.pack(fill=tk.X)
+        
+        # Section label
+        actions_label = tk.Label(
+            actions_inner,
+            text="Quick Actions",
+            font=("Segoe UI", 9, "bold"),
+            bg=self.bg_tertiary,
+            fg=self.fg_muted
+        )
+        actions_label.pack(side=tk.LEFT, padx=(0, 15))
         subtitle_label.pack(side=tk.LEFT, padx=(10, 0))
         
         # UE5-style separator line below header (7px bottom padding maintains original 15px total)
@@ -72,13 +138,19 @@ class AdastreaDirectorApp:
         top_frame = tk.Frame(main_frame, bg=self.bg_color)
         top_frame.pack(fill=tk.X, pady=(0, 15))
 
+        # Enhanced button style with better visual hierarchy
         button_style = {
             "font": ("Segoe UI", 10),
             "bg": self.button_bg,
             "fg": self.fg_color,
-            "activebackground": self.button_active,
+            "activebackground": self.button_hover,
             "activeforeground": self.fg_color,
             "relief": tk.FLAT,
+            "padx": 15,
+            "pady": 8,
+            "cursor": "hand2",
+            "borderwidth": 1,
+            "highlightthickness": 0
             "padx": 18,  # Slightly more padding for UE5 style
             "pady": 9,   # Slightly more vertical padding
             "cursor": "hand2",
@@ -89,54 +161,72 @@ class AdastreaDirectorApp:
         }
 
         self.ingest_button = tk.Button(
-            top_frame,
+            actions_inner,
             text="📚 Update Knowledge Base",
             command=self.run_ingestion,
             **button_style
         )
-        self.ingest_button.pack(side=tk.LEFT, padx=(0, 10))
+        self.ingest_button.pack(side=tk.LEFT, padx=(0, 8))
         self.create_tooltip(self.ingest_button, "Load and process project documents (Ctrl+U)")
+        self.add_button_hover_effect(self.ingest_button)
 
         self.api_key_button = tk.Button(
-            top_frame,
+            actions_inner,
             text="🔑 Set API Key",
             command=self.set_api_key,
             **button_style
         )
-        self.api_key_button.pack(side=tk.LEFT, padx=(0, 10))
+        self.api_key_button.pack(side=tk.LEFT, padx=(0, 8))
         self.create_tooltip(self.api_key_button, "Configure your OpenAI API key (Ctrl+K)")
+        self.add_button_hover_effect(self.api_key_button)
 
         self.clear_button = tk.Button(
-            top_frame,
+            actions_inner,
             text="🗑️ Clear",
             command=self.clear_conversation,
             **button_style
         )
-        self.clear_button.pack(side=tk.LEFT, padx=(0, 10))
+        self.clear_button.pack(side=tk.LEFT, padx=(0, 8))
         self.create_tooltip(self.clear_button, "Clear conversation history (Ctrl+L)")
+        self.add_button_hover_effect(self.clear_button)
         
         self.copy_button = tk.Button(
-            top_frame,
+            actions_inner,
             text="📋 Copy",
             command=self.copy_response,
             **button_style
         )
         self.copy_button.pack(side=tk.LEFT)
         self.create_tooltip(self.copy_button, "Copy last response to clipboard (Ctrl+C)")
+        self.add_button_hover_effect(self.copy_button)
 
-        # Font size controls
-        font_frame = tk.Frame(top_frame, bg=self.bg_color)
+        # Separator
+        separator = tk.Frame(actions_inner, width=2, bg=self.border_color)
+        separator.pack(side=tk.LEFT, fill=tk.Y, padx=10)
+        
+        # Font size controls with enhanced styling
+        font_frame = tk.Frame(actions_inner, bg=self.bg_tertiary)
         font_frame.pack(side=tk.RIGHT)
         
-        tk.Label(font_frame, text="Font:", bg=self.bg_color, fg=self.fg_color, font=("Segoe UI", 9)).pack(side=tk.LEFT, padx=(0, 5))
+        tk.Label(
+            font_frame, 
+            text="Text Size:", 
+            bg=self.bg_tertiary, 
+            fg=self.fg_muted, 
+            font=("Segoe UI", 9, "bold")
+        ).pack(side=tk.LEFT, padx=(0, 8))
         
         small_button_style = {
-            "font": ("Segoe UI", 9),
+            "font": ("Segoe UI", 9, "bold"),
             "bg": self.button_bg,
             "fg": self.fg_color,
-            "activebackground": self.button_active,
+            "activebackground": self.button_hover,
             "activeforeground": self.fg_color,
             "relief": tk.FLAT,
+            "padx": 10,
+            "pady": 6,
+            "cursor": "hand2",
+            "width": 3
             "padx": 10,  # Slightly more padding
             "pady": 5,   # Better vertical alignment
             "cursor": "hand2",
@@ -151,8 +241,9 @@ class AdastreaDirectorApp:
             command=self.decrease_font,
             **small_button_style
         )
-        self.decrease_font_button.pack(side=tk.LEFT, padx=(0, 5))
+        self.decrease_font_button.pack(side=tk.LEFT, padx=(0, 4))
         self.create_tooltip(self.decrease_font_button, "Decrease font size (min 8pt)")
+        self.add_button_hover_effect(self.decrease_font_button)
         
         self.increase_font_button = tk.Button(
             font_frame,
@@ -162,22 +253,46 @@ class AdastreaDirectorApp:
         )
         self.increase_font_button.pack(side=tk.LEFT)
         self.create_tooltip(self.increase_font_button, "Increase font size (max 20pt)")
+        self.add_button_hover_effect(self.increase_font_button)
 
+        # --- Response Display Area (Card-based design) ---
+        response_card = tk.Frame(main_frame, bg=self.bg_tertiary, highlightthickness=1,
+                                highlightbackground=self.border_color)
+        response_card.pack(fill=tk.BOTH, expand=True, pady=(0, 15))
         # --- Response Display Area with UE5-style border ---
         response_frame = tk.Frame(main_frame, bg=self.bg_color)
         response_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 15))
         
-        response_header = tk.Frame(response_frame, bg=self.bg_color)
-        response_header.pack(fill=tk.X, pady=(0, 5))
+        # Header section
+        response_header = tk.Frame(response_card, bg=self.bg_tertiary, padx=15, pady=10)
+        response_header.pack(fill=tk.X)
         
         response_label = tk.Label(
             response_header,
-            text="💬 Conversation",
+            text="💬 Conversation History",
             font=("Segoe UI", 11, "bold"),
-            bg=self.bg_color,
+            bg=self.bg_tertiary,
             fg=self.fg_color
         )
         response_label.pack(side=tk.LEFT)
+        
+        # Conversation stats
+        self.stats_label = tk.Label(
+            response_header,
+            text="0 messages",
+            font=("Segoe UI", 9),
+            bg=self.bg_tertiary,
+            fg=self.fg_muted
+        )
+        self.stats_label.pack(side=tk.RIGHT)
+        
+        # Separator line
+        separator_line = tk.Frame(response_card, height=1, bg=self.border_color)
+        separator_line.pack(fill=tk.X)
+        
+        # Content frame with padding
+        content_frame = tk.Frame(response_card, bg=self.text_bg)
+        content_frame.pack(fill=tk.BOTH, expand=True, padx=1, pady=1)
         
         self.current_font_size = 10
         self.response_font = font.Font(family="Consolas", size=self.current_font_size)
@@ -187,15 +302,20 @@ class AdastreaDirectorApp:
         text_container.pack(fill=tk.BOTH, expand=True)
         
         self.response_text = scrolledtext.ScrolledText(
+            content_frame,
             text_container,
             wrap=tk.WORD,
             height=20,
             state=tk.DISABLED,
             bg=self.text_bg,
             fg=self.fg_color,
-            insertbackground=self.fg_color,
+            insertbackground=self.accent_color,
             font=self.response_font,
             relief=tk.FLAT,
+            padx=15,
+            pady=15,
+            selectbackground=self.highlight_bg,
+            selectforeground=self.fg_color
             padx=12,
             pady=12,
             borderwidth=0
@@ -208,6 +328,13 @@ class AdastreaDirectorApp:
         self.response_text.tag_config("timestamp", foreground="#6a7080", font=("Segoe UI", 8))  # Muted blue-gray
         self.response_text.tag_config("error", foreground="#ff5555")  # Brighter error red
 
+        # --- Query Input Area (Card-based design) ---
+        query_card = tk.Frame(main_frame, bg=self.bg_tertiary, highlightthickness=1,
+                             highlightbackground=self.border_color)
+        query_card.pack(fill=tk.X, pady=(0, 0))
+        
+        query_inner = tk.Frame(query_card, bg=self.bg_tertiary, padx=15, pady=12)
+        query_inner.pack(fill=tk.X)
         # --- Query Input Area with UE5-style separator ---
         # Add separator line above input area
         input_separator = tk.Frame(main_frame, height=1, bg=self.button_bg)
@@ -220,30 +347,41 @@ class AdastreaDirectorApp:
         query_header = tk.Frame(query_frame, bg=self.bg_color)
         query_header.pack(fill=tk.X, pady=(0, 8))
         
+        # Header with icon
         query_label = tk.Label(
-            query_header,
-            text="❓ Your Question:",
+            query_inner,
+            text="💭 Ask a Question",
             font=("Segoe UI", 11, "bold"),
-            bg=self.bg_color,
+            bg=self.bg_tertiary,
             fg=self.fg_color
         )
-        query_label.pack(side=tk.LEFT)
+        query_label.pack(anchor=tk.W, pady=(0, 8))
         
-        # Input frame with button
-        input_frame = tk.Frame(query_frame, bg=self.bg_color)
-        input_frame.pack(fill=tk.X)
+        # Input frame with enhanced styling
+        input_container = tk.Frame(query_inner, bg=self.bg_tertiary)
+        input_container.pack(fill=tk.X)
+        
+        # Entry field container with border
+        entry_frame = tk.Frame(input_container, bg=self.text_bg, highlightthickness=2,
+                              highlightbackground=self.border_color)
+        entry_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 10))
         
         # Container with border for input field (UE5 style)
         entry_container = tk.Frame(input_frame, bg=self.button_bg, padx=1, pady=1)
         entry_container.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 10))
         
         self.query_entry = tk.Entry(
+            entry_frame,
             entry_container,
             font=("Segoe UI", 11),
             bg=self.text_bg,
             fg=self.fg_color,
-            insertbackground=self.fg_color,
+            insertbackground=self.accent_color,
             relief=tk.FLAT,
+            highlightthickness=0,
+            borderwidth=0
+        )
+        self.query_entry.pack(fill=tk.BOTH, expand=True, padx=12, pady=10)
             highlightthickness=1,
             highlightbackground=self.button_bg,
             highlightcolor=self.accent_color,
@@ -254,12 +392,19 @@ class AdastreaDirectorApp:
         self.query_entry.bind("<Control-Return>", self.run_query_event)
         self.query_entry.focus()
 
+        # Enhanced Ask button with better styling
         self.ask_button = tk.Button(
-            input_frame,
-            text="Ask ▶",
+            input_container,
+            text="Send ▶",
             command=self.run_query,
             font=("Segoe UI", 11, "bold"),
             bg=self.accent_color,
+            fg="white",
+            activebackground=self.accent_active,
+            activeforeground="white",
+            relief=tk.FLAT,
+            padx=30,
+            pady=12,
             fg="#20232b",  # Dark text on bright button for UE5 style
             activebackground="#5bb8ff",  # Lighter blue on hover
             activeforeground="#20232b",
@@ -272,22 +417,57 @@ class AdastreaDirectorApp:
         self.ask_button.pack(side=tk.RIGHT)
         self.create_tooltip(self.ask_button, "Send your question (Enter or Ctrl+Enter)")
         
-        # --- Status Bar ---
-        self.status_var = tk.StringVar()
-        self.status_var.set("✓ Ready. Please set your OpenAI API Key if you haven't.")
-        status_bar = tk.Label(
-            root,
-            textvariable=self.status_var,
-            bd=1,
-            relief=tk.FLAT,
-            anchor=tk.W,
-            bg=self.button_bg,
-            fg=self.fg_color,
-            font=("Segoe UI", 9),
-            padx=10,
-            pady=5
+        # Add hover effect to primary button with custom accent color
+        self.add_button_hover_effect(self.ask_button, hover_color=self.accent_hover)
+        
+        # Add focus effect to entry
+        def entry_focus_in(e):
+            entry_frame.config(highlightbackground=self.accent_color)
+        def entry_focus_out(e):
+            entry_frame.config(highlightbackground=self.border_color)
+        self.query_entry.bind("<FocusIn>", entry_focus_in)
+        self.query_entry.bind("<FocusOut>", entry_focus_out)
+        
+        # --- Enhanced Status Bar ---
+        status_frame = tk.Frame(root, bg=self.bg_secondary, highlightthickness=1,
+                               highlightbackground=self.border_color)
+        status_frame.pack(side=tk.BOTTOM, fill=tk.X)
+        
+        status_inner = tk.Frame(status_frame, bg=self.bg_secondary)
+        status_inner.pack(fill=tk.X, padx=15, pady=8)
+        
+        # Status indicator
+        self.status_indicator = tk.Label(
+            status_inner,
+            text="●",
+            font=("Segoe UI", 10),
+            bg=self.bg_secondary,
+            fg=self.success_color
         )
-        status_bar.pack(side=tk.BOTTOM, fill=tk.X)
+        self.status_indicator.pack(side=tk.LEFT, padx=(0, 8))
+        
+        # Status text
+        self.status_var = tk.StringVar()
+        self.status_var.set("Ready • Please set your OpenAI API Key if you haven't")
+        status_label = tk.Label(
+            status_inner,
+            textvariable=self.status_var,
+            bg=self.bg_secondary,
+            fg=self.fg_secondary,
+            font=("Segoe UI", 9),
+            anchor=tk.W
+        )
+        status_label.pack(side=tk.LEFT, fill=tk.X, expand=True)
+        
+        # Version info
+        version_label = tk.Label(
+            status_inner,
+            text="v1.0.0",
+            bg=self.bg_secondary,
+            fg=self.fg_muted,
+            font=("Segoe UI", 8)
+        )
+        version_label.pack(side=tk.RIGHT)
         
         # Bind keyboard shortcuts
         self.bind_shortcuts()
@@ -297,6 +477,41 @@ class AdastreaDirectorApp:
 
         self.check_api_key_on_startup()
 
+    def update_status(self, message, status_type="info"):
+        """
+        Update status bar with message and indicator color.
+        
+        Args:
+            message: Status message to display
+            status_type: Type of status - "success", "error", "warning", "info", "busy"
+        """
+        self.status_var.set(message)
+        
+        # Update indicator color based on status type
+        color_map = {
+            "success": self.success_color,
+            "error": self.error_color,
+            "warning": self.warning_color,
+            "info": self.fg_secondary,
+            "busy": self.accent_color
+        }
+        
+        self.status_indicator.config(fg=color_map.get(status_type, self.fg_secondary))
+        
+        # Update header status as well
+        if hasattr(self, 'header_status_label'):
+            status_text = {
+                "success": "● Ready",
+                "error": "● Error",
+                "warning": "● Warning",
+                "info": "● Ready",
+                "busy": "● Processing"
+            }
+            self.header_status_label.config(
+                text=status_text.get(status_type, "● Ready"),
+                fg=color_map.get(status_type, self.fg_secondary)
+            )
+    
     def create_menu_bar(self):
         """Create the application menu bar with dark theme styling."""
         menubar = Menu(self.root, bg=self.button_bg, fg=self.fg_color, 
@@ -326,6 +541,25 @@ class AdastreaDirectorApp:
         menubar.add_cascade(label="Help", menu=help_menu)
         help_menu.add_command(label="Keyboard Shortcuts", command=self.show_shortcuts)
         help_menu.add_command(label="About", command=self.show_about)
+    
+    def add_button_hover_effect(self, button, hover_color=None):
+        """Add smooth hover effect to buttons for better visual feedback.
+        
+        Args:
+            button: The button widget to add hover effect to
+            hover_color: Optional custom hover color. If None, uses self.button_hover
+        """
+        original_bg = button.cget("background")
+        hover_bg = hover_color if hover_color else self.button_hover
+        
+        def on_enter(e):
+            button.config(background=hover_bg)
+        
+        def on_leave(e):
+            button.config(background=original_bg)
+        
+        button.bind("<Enter>", on_enter)
+        button.bind("<Leave>", on_leave)
     
     def create_tooltip(self, widget, text):
         """Create a tooltip for a widget that appears after a delay."""
@@ -469,7 +703,7 @@ Type your question below to get started! 🚀
             key = key_entry.get()
             if key:
                 os.environ['OPENAI_API_KEY'] = key
-                self.status_var.set("✓ API Key set successfully. Ready to ingest or query.")
+                self.update_status("API Key set successfully • Ready to ingest or query", "success")
                 self.add_to_conversation("System", "API Key configured successfully.", is_system=True)
                 dialog.destroy()
             else:
@@ -543,7 +777,8 @@ Type your question below to get started! 🚀
         self.response_text.delete(1.0, tk.END)
         self.response_text.config(state=tk.DISABLED)
         self.conversation_history = []
-        self.status_var.set("✓ Conversation cleared.")
+        self.update_message_count()
+        self.update_status("Conversation cleared • Ready for new questions", "success")
         self.show_welcome_message()
     
     def copy_response(self):
@@ -554,7 +789,7 @@ Type your question below to get started! 🚀
                 if last_response['role'] == 'assistant':
                     self.root.clipboard_clear()
                     self.root.clipboard_append(last_response['content'])
-                    self.status_var.set("✓ Response copied to clipboard.")
+                    self.update_status("Response copied to clipboard", "success")
                 else:
                     messagebox.showinfo("No Response", "No assistant response to copy.")
             else:
@@ -585,7 +820,7 @@ Type your question below to get started! 🚀
                         role = entry['role'].upper()
                         content = entry['content']
                         f.write(f"[{timestamp}] {role}:\n{content}\n\n")
-                self.status_var.set(f"✓ Conversation exported to {filename}")
+                self.update_status(f"Conversation exported successfully", "success")
                 messagebox.showinfo("Success", f"Conversation exported to:\n{filename}")
             except Exception as e:
                 messagebox.showerror("Error", f"Failed to export: {e}")
@@ -596,7 +831,7 @@ Type your question below to get started! 🚀
             self.current_font_size += 1
             self.response_font.configure(size=self.current_font_size)
             self.response_text.tag_config("user", font=("Segoe UI", self.current_font_size, "bold"))
-            self.status_var.set(f"Font size: {self.current_font_size}")
+            self.update_status(f"Text size increased to {self.current_font_size}pt", "info")
     
     def decrease_font(self):
         """Decrease font size."""
@@ -604,7 +839,7 @@ Type your question below to get started! 🚀
             self.current_font_size -= 1
             self.response_font.configure(size=self.current_font_size)
             self.response_text.tag_config("user", font=("Segoe UI", self.current_font_size, "bold"))
-            self.status_var.set(f"Font size: {self.current_font_size}")
+            self.update_status(f"Text size decreased to {self.current_font_size}pt", "info")
     
     def show_shortcuts(self):
         """Display keyboard shortcuts."""
@@ -654,6 +889,9 @@ GitHub: Mittenzx/Adastrea-Director
             'timestamp': timestamp
         })
         
+        # Update message count
+        self.update_message_count()
+        
         self.response_text.config(state=tk.NORMAL)
         
         # Add timestamp
@@ -672,6 +910,12 @@ GitHub: Mittenzx/Adastrea-Director
         
         self.response_text.see(tk.END)
         self.response_text.config(state=tk.DISABLED)
+    
+    def update_message_count(self):
+        """Update the message count in the conversation header."""
+        count = len(self.conversation_history)
+        plural = "message" if count == 1 else "messages"
+        self.stats_label.config(text=f"{count} {plural}")
     
     def run_query_event(self, event):
         """Handler for pressing Enter in the query box."""
@@ -700,7 +944,7 @@ GitHub: Mittenzx/Adastrea-Director
         """
         self.ingest_button.config(state=tk.DISABLED)
         self.ask_button.config(state=tk.DISABLED)
-        self.status_var.set(status_message)
+        self.update_status(status_message, "busy")
         
         # Use absolute path for the script to ensure it can be found
         script_path = os.path.join(SCRIPT_DIR, script_name)
@@ -739,7 +983,7 @@ GitHub: Mittenzx/Adastrea-Director
             if output:
                 # Add assistant response to conversation
                 self.add_to_conversation("Assistant", output)
-            self.status_var.set("✓ Ready.")
+            self.update_status("Ready • Waiting for your question", "success")
         else:
             # Add error to conversation
             error_message = f"Error occurred:\n{output}"
@@ -748,7 +992,7 @@ GitHub: Mittenzx/Adastrea-Director
             self.response_text.insert(tk.END, error_message + "\n\n", "error")
             self.response_text.see(tk.END)
             self.response_text.config(state=tk.DISABLED)
-            self.status_var.set("❌ An error occurred. Check the response window for details.")
+            self.update_status("An error occurred • Check the conversation for details", "error")
             
         self.ingest_button.config(state=tk.NORMAL)
         self.ask_button.config(state=tk.NORMAL)
