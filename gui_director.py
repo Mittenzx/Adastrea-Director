@@ -235,9 +235,6 @@ class AdastreaDirectorApp:
         response_card = tk.Frame(main_frame, bg=self.bg_tertiary, highlightthickness=1,
                                 highlightbackground=self.border_color)
         response_card.pack(fill=tk.BOTH, expand=True, pady=(0, 15))
-        # --- Response Display Area with UE5-style border ---
-        response_frame = tk.Frame(main_frame, bg=self.bg_color)
-        response_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 15))
         
         # Header section
         response_header = tk.Frame(response_card, bg=self.bg_tertiary, padx=15, pady=10)
@@ -273,13 +270,8 @@ class AdastreaDirectorApp:
         self.current_font_size = 10
         self.response_font = font.Font(family="Consolas", size=self.current_font_size)
         
-        # Container frame with UE5-style border for visual depth
-        text_container = tk.Frame(response_frame, bg=self.button_bg, padx=1, pady=1)
-        text_container.pack(fill=tk.BOTH, expand=True)
-        
         self.response_text = scrolledtext.ScrolledText(
             content_frame,
-            text_container,
             wrap=tk.WORD,
             height=20,
             state=tk.DISABLED,
