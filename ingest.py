@@ -19,6 +19,9 @@ from typing import List, Dict, Any
 
 try:
     from dotenv import load_dotenv
+    # Load environment variables immediately after import
+    load_dotenv()
+    
     from langchain_community.document_loaders import (
         DirectoryLoader,
         TextLoader,
@@ -39,9 +42,6 @@ except ImportError as e:
     print(f"\nOr use the setup script:")
     print(f"  ./setup.sh")
     sys.exit(1)
-
-# Load environment variables
-load_dotenv()
 
 console = Console()
 

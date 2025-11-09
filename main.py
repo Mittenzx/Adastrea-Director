@@ -17,6 +17,9 @@ from typing import List, Dict, Any, Optional
 
 try:
     from dotenv import load_dotenv
+    # Load environment variables immediately after import
+    load_dotenv()
+    
     from langchain_openai import ChatOpenAI, OpenAIEmbeddings
     from langchain_community.vectorstores import Chroma
     from langchain.chains import ConversationalRetrievalChain
@@ -34,9 +37,6 @@ except ImportError as e:
     print(f"\nOr use the setup script:")
     print(f"  ./setup.sh")
     sys.exit(1)
-
-# Load environment variables
-load_dotenv()
 
 console = Console()
 
