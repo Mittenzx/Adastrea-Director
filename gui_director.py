@@ -708,7 +708,8 @@ Type your question below to get started! 🚀
 
     def run_ingestion(self):
         """Runs the ingest.py script in a separate thread."""
-        self.run_script_in_thread('ingest.py', "🤔 Ingesting documents...")
+        # Use repository root as default docs directory
+        self.run_script_in_thread('ingest.py', "🤔 Ingesting documents...", '--docs-dir', SCRIPT_DIR)
 
     def clear_conversation(self):
         """Clear the conversation display with confirmation."""
