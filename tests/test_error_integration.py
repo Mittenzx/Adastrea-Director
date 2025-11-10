@@ -19,8 +19,6 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from ingest import DocumentIngestionAgent
 from exceptions import (
     ValidationError,
-    FileEncodingError,
-    CorruptedFileError,
 )
 
 
@@ -196,10 +194,9 @@ class TestErrorRecovery:
             mock_embeddings.return_value = Mock()
             return DocumentIngestionAgent()
     
-    def test_partial_directory_load_continues_on_error(self, agent, temp_dir=None):
+    def test_partial_directory_load_continues_on_error(self, agent):
         """Test that directory loading continues after individual file errors."""
-        if temp_dir is None:
-            temp_dir = tempfile.mkdtemp()
+        temp_dir = tempfile.mkdtemp()
         
         try:
             # Create multiple files

@@ -7,6 +7,8 @@ error categorization and more descriptive error messages throughout
 the application.
 """
 
+from typing import Any
+
 
 class AdastreaDirectorError(Exception):
     """Base exception class for all Adastrea Director errors."""
@@ -88,15 +90,14 @@ class RateLimitError(NetworkError):
     """Exception raised when API rate limit is exceeded."""
     
     def __init__(self, service: str = "OpenAI API", details: str = None):
-        message = f"Rate limit exceeded for {service}"
         if not details:
             details = (
-                "You have exceeded the API rate limit. Please:\n"
+                f"Rate limit exceeded for {service}. You have exceeded the API rate limit. Please:\n"
                 "  - Wait a few minutes before trying again\n"
                 "  - Consider upgrading your API plan for higher limits\n"
                 "  - Reduce the chunk size to make fewer API calls"
             )
-        super().__init__(message, details)
+        super().__init__("rate limiting", details)
 
 
 class ChunkingError(AdastreaDirectorError):
@@ -120,7 +121,7 @@ class QueryError(AdastreaDirectorError):
 class ValidationError(AdastreaDirectorError):
     """Exception raised when input validation fails."""
     
-    def __init__(self, field: str, value: any, constraint: str):
+    def __init__(self, field: str, value: Any, constraint: str):
         message = f"Invalid value for {field}"
         details = f"Value: {value}\nConstraint: {constraint}"
         super().__init__(message, details)
@@ -130,13 +131,12 @@ class EmptyDatabaseError(DatabaseError):
     """Exception raised when attempting to query an empty database."""
     
     def __init__(self, collection_name: str):
-        message = "Cannot query empty database"
         details = (
             f"The collection '{collection_name}' contains no documents.\n"
             f"Please ingest documents first using:\n"
             f"  python ingest.py --docs-dir <your_docs_directory>"
         )
-        super().__init__(message, details)
+        super().__init__("query", details)
 
 
 class UnsupportedFileTypeError(DocumentLoadError):

@@ -18,7 +18,6 @@ from exceptions import (
     APIKeyError,
     DatabaseError,
     NetworkError,
-    QueryError,
     EmptyDatabaseError,
 )
 

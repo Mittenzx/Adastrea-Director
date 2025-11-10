@@ -18,8 +18,6 @@ from pathlib import Path
 from typing import List, Dict, Any
 from exceptions import (
     APIKeyError,
-    ConfigurationError,
-    DocumentLoadError,
     DatabaseError,
     NetworkError,
     RateLimitError,
@@ -244,9 +242,16 @@ class DocumentIngestionAgent:
             console.print(f"[yellow]{error.details}[/yellow]")
             return []
         except ImportError as e:
+            # Map file extensions to correct package names
+            package_mapping = {
+                ".pdf": "pypdf",
+                ".docx": "python-docx",
+                ".md": "unstructured",
+            }
+            package_name = package_mapping.get(extension, extension.replace('.', ''))
             console.print(f"[red]Error: Missing required library to load {extension} files[/red]")
             console.print(f"[yellow]Details: {e}[/yellow]")
-            console.print(f"[yellow]Install the required package using: pip install {extension.replace('.', '')}[/yellow]")
+            console.print(f"[yellow]Install the required package using: pip install {package_name}[/yellow]")
             return []
         except PermissionError as e:
             console.print(f"[red]Error: Permission denied for file: {file_path}[/red]")
@@ -383,12 +388,12 @@ class DocumentIngestionAgent:
             
             # Check for rate limit errors
             if "rate" in error_msg and "limit" in error_msg:
-                error = RateLimitError()
+                error = RateLimitError(service="OpenAI API")
                 console.print(f"[red]{error.message}[/red]")
                 console.print(f"[yellow]{error.details}[/yellow]")
             # Check for API key errors
             elif "api" in error_msg and "key" in error_msg:
-                error = APIKeyError()
+                error = APIKeyError("OpenAI")
                 console.print(f"[red]{error.message}[/red]")
                 console.print(f"[yellow]{error.details}[/yellow]")
             # Check for network/connection errors
