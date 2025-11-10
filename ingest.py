@@ -42,7 +42,6 @@ try:
     from langchain_community.document_loaders import (
         DirectoryLoader,
         TextLoader,
-        UnstructuredMarkdownLoader,
         PythonLoader,
         PyPDFLoader,
         Docx2txtLoader,
@@ -56,6 +55,23 @@ try:
     from rich.console import Console
     from rich.progress import Progress, SpinnerColumn, TextColumn
     from rich import print as rprint
+    
+    # Try to import UnstructuredMarkdownLoader, but fall back to TextLoader if not available
+    try:
+        from langchain_community.document_loaders import UnstructuredMarkdownLoader
+        MARKDOWN_LOADER = UnstructuredMarkdownLoader
+    except ImportError:
+        # If unstructured is not installed, fall back to TextLoader for markdown files
+        MARKDOWN_LOADER = TextLoader
+        console_fallback = Console(legacy_windows=False)
+        console_fallback.print(
+            "[yellow]Note: 'unstructured' package not found. "
+            "Markdown files will be loaded as plain text.[/yellow]"
+        )
+        console_fallback.print(
+            "[yellow]For better markdown parsing, install: pip install unstructured[/yellow]"
+        )
+    
 except ImportError as e:
     print(f"Error: Missing required dependencies. Please install requirements.txt")
     print(f"Details: {e}")
@@ -66,6 +82,16 @@ except ImportError as e:
     sys.exit(1)
 
 console = Console(legacy_windows=False)
+
+# Disable ChromaDB telemetry to avoid signature errors
+# This prevents "capture() takes 1 positional argument but 3 were given" errors
+try:
+    import chromadb
+    # Disable telemetry by setting the environment variable
+    os.environ["ANONYMIZED_TELEMETRY"] = "False"
+except ImportError:
+    # ChromaDB not yet imported, will be imported later
+    pass
 
 
 class DocumentIngestionAgent:
@@ -234,7 +260,7 @@ class DocumentIngestionAgent:
         # Define loaders for different file types
         loader_mapping = {
             # Documentation files
-            ".md": UnstructuredMarkdownLoader,
+            ".md": MARKDOWN_LOADER,  # Will be UnstructuredMarkdownLoader or TextLoader
             ".txt": TextLoader,
             ".pdf": PyPDFLoader,
             ".docx": Docx2txtLoader,
@@ -273,13 +299,15 @@ class DocumentIngestionAgent:
                         glob=f"**/*{extension}",
                         loader_cls=loader_class,
                         show_progress=False,
+                        silent_errors=True,  # Continue loading even if some files fail
                     )
                     docs = loader.load()
                     documents.extend(docs)
-                    progress.update(
-                        task,
-                        description=f"Loaded {len(docs)} {extension} files",
-                    )
+                    if len(docs) > 0:
+                        progress.update(
+                            task,
+                            description=f"✓ Loaded {len(docs)} {extension} files",
+                        )
                 except UnicodeDecodeError as e:
                     console.print(
                         f"[yellow]Warning: Encoding error in {extension} files. "
@@ -329,7 +357,7 @@ class DocumentIngestionAgent:
         extension = file_path_obj.suffix.lower()
         loader_mapping = {
             # Documentation files
-            ".md": UnstructuredMarkdownLoader,
+            ".md": MARKDOWN_LOADER,  # Will be UnstructuredMarkdownLoader or TextLoader
             ".txt": TextLoader,
             ".pdf": PyPDFLoader,
             ".docx": Docx2txtLoader,
@@ -601,8 +629,18 @@ class DocumentIngestionAgent:
         except Exception as e:
             error_msg = str(e).lower()
             
+            # Check for quota exceeded errors (429)
+            if "quota" in error_msg or "insufficient_quota" in error_msg or "429" in str(e):
+                console.print(f"[red]✗ OpenAI API Quota Exceeded[/red]")
+                console.print(f"[yellow]You have exceeded your OpenAI API quota.[/yellow]")
+                console.print(f"[yellow]Solutions:[/yellow]")
+                console.print(f"[yellow]  1. Check your billing details at: https://platform.openai.com/account/billing[/yellow]")
+                console.print(f"[yellow]  2. Add credits to your account or upgrade your plan[/yellow]")
+                console.print(f"[yellow]  3. Wait until your quota resets (if on free tier)[/yellow]")
+                console.print(f"[yellow]  4. Use a smaller batch size: --batch-size 50[/yellow]")
+                console.print(f"[yellow]\nError details: {e}[/yellow]")
             # Check for rate limit errors
-            if "rate" in error_msg and "limit" in error_msg:
+            elif "rate" in error_msg and "limit" in error_msg:
                 error = RateLimitError(service="OpenAI API")
                 console.print(f"[red]{error.message}[/red]")
                 console.print(f"[yellow]{error.details}[/yellow]")
@@ -688,8 +726,18 @@ class DocumentIngestionAgent:
         except Exception as e:
             error_msg = str(e).lower()
             
+            # Check for quota exceeded errors (429)
+            if "quota" in error_msg or "insufficient_quota" in error_msg or "429" in str(e):
+                console.print(f"[red]✗ OpenAI API Quota Exceeded[/red]")
+                console.print(f"[yellow]You have exceeded your OpenAI API quota.[/yellow]")
+                console.print(f"[yellow]Solutions:[/yellow]")
+                console.print(f"[yellow]  1. Check your billing details at: https://platform.openai.com/account/billing[/yellow]")
+                console.print(f"[yellow]  2. Add credits to your account or upgrade your plan[/yellow]")
+                console.print(f"[yellow]  3. Wait until your quota resets (if on free tier)[/yellow]")
+                console.print(f"[yellow]  4. Use batch processing with smaller batches: --use-batch --batch-size 50[/yellow]")
+                console.print(f"[yellow]\nError details: {e}[/yellow]")
             # Check for rate limit errors
-            if "rate" in error_msg and "limit" in error_msg:
+            elif "rate" in error_msg and "limit" in error_msg:
                 error = RateLimitError(service="OpenAI API")
                 console.print(f"[red]{error.message}[/red]")
                 console.print(f"[yellow]{error.details}[/yellow]")
