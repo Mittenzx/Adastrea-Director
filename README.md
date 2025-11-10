@@ -121,6 +121,7 @@ The improved GUI provides:
 - **Modern Dark Theme**: Professional appearance with reduced eye strain
 - **Easy API Key Management**: Styled dialog for OpenAI API key configuration
 - **Knowledge Base Updates**: One-click knowledge base updates
+- **Ingest List Tab**: Visual checklist of ingested documents with statistics
 - **Conversation History**: Full conversation display with timestamps and color-coding
 - **Keyboard Shortcuts**: Fast workflow with comprehensive keyboard support (Ctrl+K, Ctrl+U, Ctrl+L, etc.)
 - **Copy & Export**: One-click copy to clipboard and export conversations to file
@@ -182,6 +183,7 @@ Adastrea-Director/
 
 ### GUI Documentation
 - [GUI Improvements](GUI_IMPROVEMENTS.md) - Comprehensive feature documentation
+- [Ingest List Feature](INGEST_LIST_FEATURE.md) - Document ingestion tracking and visualization
 - [Visual Comparison](GUI_VISUAL_COMPARISON.md) - Before/after comparison with visuals
 - [Visual Description](GUI_SCREENSHOT_DESCRIPTION.md) - Detailed interface description
 - [Quick Start Guide](GUI_QUICK_START.md) - User quick start and tips
