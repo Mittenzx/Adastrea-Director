@@ -34,6 +34,8 @@ try:
         TextLoader,
         UnstructuredMarkdownLoader,
         PythonLoader,
+        PyPDFLoader,
+        Docx2txtLoader,
     )
     from langchain.text_splitter import RecursiveCharacterTextSplitter
     from langchain_openai import OpenAIEmbeddings
@@ -119,6 +121,8 @@ class DocumentIngestionAgent:
             ".md": UnstructuredMarkdownLoader,
             ".txt": TextLoader,
             ".py": PythonLoader,
+            ".pdf": PyPDFLoader,
+            ".docx": Docx2txtLoader,
         }
 
         with Progress(
@@ -171,6 +175,8 @@ class DocumentIngestionAgent:
             ".md": UnstructuredMarkdownLoader,
             ".txt": TextLoader,
             ".py": PythonLoader,
+            ".pdf": PyPDFLoader,
+            ".docx": Docx2txtLoader,
         }
 
         loader_class = loader_mapping.get(extension, TextLoader)
