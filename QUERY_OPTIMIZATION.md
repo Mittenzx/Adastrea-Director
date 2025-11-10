@@ -49,7 +49,7 @@ python main.py --retrieval-k 10 --fetch-k 30
 
 ### 3. Query Result Caching
 
-**What**: In-memory LRU cache for query results (max 50 entries).
+**What**: In-memory FIFO cache for query results (max 50 entries).
 
 **Why**: Repeated queries (e.g., following up on same topic) can be served instantly.
 
@@ -59,8 +59,8 @@ python main.py --retrieval-k 10 --fetch-k 30
 - Better user experience for iterative questioning
 
 **Implementation**:
-- Cache key: MD5 hash of normalized query text
-- Max size: 50 queries (oldest evicted when full)
+- Cache key: Hash of normalized query text
+- Max size: 50 queries (oldest inserted evicted when full)
 - Automatically bypasses cache for new queries
 
 ### 4. Document-Type Aware Chunking

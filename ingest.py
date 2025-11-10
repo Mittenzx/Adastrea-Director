@@ -312,11 +312,14 @@ class DocumentIngestionAgent:
                 task = progress.add_task("Chunking documents...", total=None)
                 
                 # Separate documents by type for optimized chunking
+                # Currently only Python files get code-aware chunking;
+                # all other files (including other code languages) use text chunking
                 code_docs = []
                 text_docs = []
                 
                 for doc in documents:
                     source = doc.metadata.get("source", "")
+                    # Only Python files use the code-aware splitter
                     if source.endswith(".py"):
                         code_docs.append(doc)
                     else:

@@ -59,24 +59,24 @@ python main.py --search-type similarity
 
 ### 2. Query Result Caching
 
-**Implementation**: In-memory LRU cache with MD5 hash-based key generation
+**Implementation**: In-memory FIFO cache with hash-based key generation
 
 **Code Changes**:
 ```python
 def _get_query_hash(self, query: str) -> str:
-    return hashlib.md5(query.lower().strip().encode()).hexdigest()
+    return str(hash(query.lower().strip()))
 
 def process_query(self, query: str, use_cache: bool = True):
     query_hash = self._get_query_hash(query)
     if use_cache and query_hash in self.query_cache:
-        return cached_result
+        return copy.deepcopy(cached_result)
     
     # Process query...
     
     if use_cache:
         if len(self.query_cache) >= self.cache_max_size:
             self.query_cache.pop(next(iter(self.query_cache)))
-        self.query_cache[query_hash] = result
+        self.query_cache[query_hash] = copy.deepcopy(result)
 ```
 
 **Benefits**:
@@ -88,7 +88,7 @@ def process_query(self, query: str, use_cache: bool = True):
 - Max size: 50 entries
 - Case-insensitive matching
 - Whitespace-trimmed
-- LRU eviction policy
+- FIFO eviction policy (oldest inserted entry removed first)
 
 ### 3. Document-Type Aware Chunking
 
@@ -190,7 +190,7 @@ parser.add_argument("--fetch-k", type=int, default=20)
 ### Automated Tests
 ✅ All optimization logic validated independently
 - Query hashing (case-insensitive, whitespace handling)
-- Cache LRU eviction
+- Cache FIFO eviction
 - Search configuration
 - Document type detection
 
@@ -300,7 +300,7 @@ python main.py --model gpt-4 --temperature 0.5 --search-type mmr
 ## Security
 
 ✅ **CodeQL Scan**: No vulnerabilities detected
-✅ **Input Validation**: Query hashing uses standard MD5
+✅ **Input Validation**: Query hashing uses built-in hash() function
 ✅ **Cache Safety**: In-memory only, no disk writes
 ✅ **API Safety**: No changes to API communication
 ✅ **Dependencies**: No new dependencies added

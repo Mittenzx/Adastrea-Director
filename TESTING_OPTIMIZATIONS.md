@@ -19,9 +19,9 @@ The core optimization logic has been validated independently:
 - Whitespace trimming
 - Consistent hash generation
 
-### ✓ Cache LRU Eviction
+### ✓ Cache FIFO Eviction
 - Maximum size enforcement (50 entries)
-- Oldest entry eviction when full
+- Oldest inserted entry eviction when full (FIFO, not LRU)
 - Proper cache hit/miss behavior
 
 ### ✓ Search Configuration
