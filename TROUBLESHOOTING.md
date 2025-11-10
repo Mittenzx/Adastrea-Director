@@ -2,6 +2,8 @@
 
 Quick reference for common installation and runtime issues with Adastrea Director.
 
+**For comprehensive error handling documentation, see [ERROR_HANDLING.md](ERROR_HANDLING.md).**
+
 ## Installation Issues
 
 ### ❌ Error: `Could not find a version that satisfies the requirement onnxruntime`

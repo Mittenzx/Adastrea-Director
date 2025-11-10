@@ -168,6 +168,7 @@ Adastrea-Director/
 ### Installation & Setup
 - [Installation Guide](INSTALLATION.md) - Platform-specific installation instructions
 - [Troubleshooting](TROUBLESHOOTING.md) - Quick reference for common issues
+- [Error Handling Guide](ERROR_HANDLING.md) - Comprehensive error handling documentation
 - **[Documents to Ingest](DOCS_TO_INGEST.md)** - Comprehensive guide to documents for the knowledge base
 
 ### Project Documentation
