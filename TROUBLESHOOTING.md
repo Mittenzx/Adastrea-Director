@@ -124,6 +124,132 @@ python ingest.py --docs-dir /path/to/your/docs
 
 ---
 
+## Document Ingestion Issues
+
+### ❌ Error: `No module named 'unstructured'` when loading Markdown files
+
+**Cause**: The `unstructured` package is an optional dependency for better Markdown parsing.
+
+**Impact**: Markdown files will be loaded as plain text instead of parsed Markdown.
+
+**Solutions**:
+
+1. **Install the package** (recommended for better parsing):
+   ```bash
+   pip install unstructured
+   ```
+
+2. **Continue without it** - The system will automatically fall back to plain text loading.
+
+**Note**: The fallback to TextLoader works well for most use cases. Only install `unstructured` if you need advanced Markdown parsing features.
+
+---
+
+### ❌ Error: `Error loading file` for specific .txt or .json files
+
+**Cause**: Individual files may fail to load due to:
+- Encoding issues (non-UTF-8 characters)
+- File corruption
+- Permission problems
+- Malformed content
+
+**Solution**: The ingestion system now continues loading other files even when some fail. Check the warning messages for specific file issues.
+
+**To fix individual files**:
+
+1. **Encoding issues**:
+   ```bash
+   # Convert to UTF-8
+   iconv -f ISO-8859-1 -t UTF-8 problem_file.txt -o problem_file_utf8.txt
+   ```
+
+2. **Check file permissions**:
+   ```bash
+   chmod 644 problem_file.txt
+   ```
+
+3. **Validate JSON files**:
+   ```bash
+   python -m json.tool problem_file.json
+   ```
+
+---
+
+### ❌ Error: `Error code: 429 - insufficient_quota` or `You exceeded your current quota`
+
+**Cause**: OpenAI API rate limiting or quota exceeded. When ingesting large document sets (e.g., 6000+ files), you're making too many API calls too quickly, hitting OpenAI's rate limits (requests per minute).
+
+**Built-in Solutions (Automatic)**:
+- ✅ Rate limiting with delays between batches
+- ✅ Automatic retry with exponential backoff
+- ✅ Configurable delays and batch sizes
+
+**Recommended Solutions**:
+
+1. **Use delays between batches** (RECOMMENDED for large document sets):
+   ```bash
+   # For 1000-5000 chunks
+   python ingest.py --docs-dir /path/to/docs --delay 2.0
+   
+   # For 5000+ chunks
+   python ingest.py --docs-dir /path/to/docs --delay 3.0 --batch-size 50
+   ```
+
+2. **Use smaller batches with longer delays**:
+   ```bash
+   python ingest.py --docs-dir /path/to/docs --batch-size 50 --delay 2.0
+   ```
+
+3. **Check your billing** at [OpenAI Platform](https://platform.openai.com/account/billing):
+   - Verify payment method is valid
+   - Check current usage and limits
+   - Add credits if needed
+
+4. **Upgrade your plan**:
+   - Free tier has very limited rate limits
+   - Paid plans have higher requests-per-minute limits
+
+5. **Process documents in smaller groups**:
+   ```bash
+   # Instead of entire directory, process subdirectories
+   python ingest.py --docs-dir /path/to/docs/subset1 --delay 2.0
+   python ingest.py --docs-dir /path/to/docs/subset2 --delay 2.0
+   ```
+
+**Understanding Rate Limits**:
+- Rate limits are measured in **requests per minute (RPM)**, not total quota
+- Each batch of documents makes 1 API call for embeddings
+- Default: 100 chunks per batch = ~62 batches for 6000 chunks
+- Without delays: hits rate limit quickly
+- With delays: spreads requests over time, avoiding limits
+
+**Example for 6000 chunks**:
+```bash
+# Good: 2 second delay between batches = ~2 minutes total
+python ingest.py --docs-dir /path/to/docs --batch-size 100 --delay 2.0
+
+# Better: Smaller batches with delays = more stable
+python ingest.py --docs-dir /path/to/docs --batch-size 50 --delay 1.5
+```
+
+**Tip**: Start with a small test set to verify everything works before processing large collections.
+
+---
+
+### ❌ Error: `capture() takes 1 positional argument but 3 were given`
+
+**Cause**: ChromaDB telemetry signature mismatch.
+
+**Solution**: This is now automatically fixed - the ingestion system disables ChromaDB telemetry. If you still see this error, update to the latest version.
+
+**Manual workaround** (if needed):
+```bash
+export ANONYMIZED_TELEMETRY=False
+python ingest.py --docs-dir /path/to/docs
+```
+
+---
+
 ### ❌ Error: `sentence-transformers` download fails or is slow
 
 **Cause**: Large model downloads on first run.

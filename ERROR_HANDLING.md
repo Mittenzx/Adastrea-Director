@@ -150,6 +150,22 @@ Details: No module named 'pypdf'
 Install the required package using: pip install pypdf
 ```
 
+**Example (Markdown with fallback):**
+```
+Note: 'unstructured' package not found. Markdown files will be loaded as plain text.
+For better markdown parsing, install: pip install unstructured
+```
+
+**Solution:**
+- For PDFs: `pip install pypdf`
+- For DOCX: `pip install python-docx`
+- For Markdown (optional): `pip install unstructured`
+
+**Note:** The system now provides graceful fallbacks:
+- Markdown files will load as plain text if `unstructured` is not available
+- Individual file failures won't stop the entire directory from loading
+```
+
 **Solution:**
 - Install the missing package: `pip install pypdf`
 - For all dependencies: `pip install -r requirements.txt`

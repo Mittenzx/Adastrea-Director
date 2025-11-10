@@ -14,6 +14,7 @@ Usage:
 import os
 import sys
 import argparse
+import time
 from pathlib import Path
 from typing import List, Dict, Any
 from exceptions import (
@@ -42,7 +43,6 @@ try:
     from langchain_community.document_loaders import (
         DirectoryLoader,
         TextLoader,
-        UnstructuredMarkdownLoader,
         PythonLoader,
         PyPDFLoader,
         Docx2txtLoader,
@@ -56,6 +56,23 @@ try:
     from rich.console import Console
     from rich.progress import Progress, SpinnerColumn, TextColumn
     from rich import print as rprint
+    
+    # Try to import UnstructuredMarkdownLoader, but fall back to TextLoader if not available
+    try:
+        from langchain_community.document_loaders import UnstructuredMarkdownLoader
+        MARKDOWN_LOADER = UnstructuredMarkdownLoader
+    except ImportError:
+        # If unstructured is not installed, fall back to TextLoader for markdown files
+        MARKDOWN_LOADER = TextLoader
+        console_fallback = Console(legacy_windows=False)
+        console_fallback.print(
+            "[yellow]Note: 'unstructured' package not found. "
+            "Markdown files will be loaded as plain text.[/yellow]"
+        )
+        console_fallback.print(
+            "[yellow]For better markdown parsing, install: pip install unstructured[/yellow]"
+        )
+    
 except ImportError as e:
     print(f"Error: Missing required dependencies. Please install requirements.txt")
     print(f"Details: {e}")
@@ -66,6 +83,16 @@ except ImportError as e:
     sys.exit(1)
 
 console = Console(legacy_windows=False)
+
+# Disable ChromaDB telemetry to avoid signature errors
+# This prevents "capture() takes 1 positional argument but 3 were given" errors
+try:
+    import chromadb
+    # Disable telemetry by setting the environment variable
+    os.environ["ANONYMIZED_TELEMETRY"] = "False"
+except ImportError:
+    # ChromaDB not yet imported, will be imported later
+    pass
 
 
 class DocumentIngestionAgent:
@@ -234,7 +261,7 @@ class DocumentIngestionAgent:
         # Define loaders for different file types
         loader_mapping = {
             # Documentation files
-            ".md": UnstructuredMarkdownLoader,
+            ".md": MARKDOWN_LOADER,  # Will be UnstructuredMarkdownLoader or TextLoader
             ".txt": TextLoader,
             ".pdf": PyPDFLoader,
             ".docx": Docx2txtLoader,
@@ -273,13 +300,15 @@ class DocumentIngestionAgent:
                         glob=f"**/*{extension}",
                         loader_cls=loader_class,
                         show_progress=False,
+                        silent_errors=True,  # Continue loading even if some files fail
                     )
                     docs = loader.load()
                     documents.extend(docs)
-                    progress.update(
-                        task,
-                        description=f"Loaded {len(docs)} {extension} files",
-                    )
+                    if len(docs) > 0:
+                        progress.update(
+                            task,
+                            description=f"✓ Loaded {len(docs)} {extension} files",
+                        )
                 except UnicodeDecodeError as e:
                     console.print(
                         f"[yellow]Warning: Encoding error in {extension} files. "
@@ -329,7 +358,7 @@ class DocumentIngestionAgent:
         extension = file_path_obj.suffix.lower()
         loader_mapping = {
             # Documentation files
-            ".md": UnstructuredMarkdownLoader,
+            ".md": MARKDOWN_LOADER,  # Will be UnstructuredMarkdownLoader or TextLoader
             ".txt": TextLoader,
             ".pdf": PyPDFLoader,
             ".docx": Docx2txtLoader,
@@ -505,52 +534,95 @@ class DocumentIngestionAgent:
         except Exception as e:
             raise ChunkingError(str(e))
 
-    def _process_batch(self, batch: List[Any], is_first_batch: bool) -> Any:
+    def _process_batch(self, batch: List[Any], is_first_batch: bool, max_retries: int = 3) -> Any:
         """
-        Process a single batch of documents.
+        Process a single batch of documents with retry logic for rate limits.
         
         Args:
             batch: Documents to process
             is_first_batch: Whether this is the first batch
+            max_retries: Maximum number of retries for rate limit errors
             
         Returns:
             The vectorstore instance
+            
+        Raises:
+            Exception: If all retries are exhausted
         """
-        if is_first_batch:
-            vectorstore = Chroma.from_documents(
-                documents=batch,
-                embedding=self.embeddings,
-                collection_name=self.collection_name,
-                persist_directory=self.persist_directory,
-            )
-        else:
-            vectorstore = Chroma(
-                collection_name=self.collection_name,
-                embedding_function=self.embeddings,
-                persist_directory=self.persist_directory,
-            )
-            vectorstore.add_documents(batch)
+        retry_count = 0
+        last_error = None
         
-        # Persist after each batch
-        vectorstore.persist()
-        return vectorstore
+        while retry_count <= max_retries:
+            try:
+                if is_first_batch:
+                    vectorstore = Chroma.from_documents(
+                        documents=batch,
+                        embedding=self.embeddings,
+                        collection_name=self.collection_name,
+                        persist_directory=self.persist_directory,
+                    )
+                else:
+                    vectorstore = Chroma(
+                        collection_name=self.collection_name,
+                        embedding_function=self.embeddings,
+                        persist_directory=self.persist_directory,
+                    )
+                    vectorstore.add_documents(batch)
+                
+                # Persist after each batch
+                vectorstore.persist()
+                return vectorstore
+                
+            except Exception as e:
+                error_msg = str(e).lower()
+                
+                # Check if it's a rate limit error
+                if any(word in error_msg for word in ["rate", "limit", "429", "too many requests"]):
+                    retry_count += 1
+                    if retry_count <= max_retries:
+                        # Exponential backoff: 2, 4, 8 seconds
+                        wait_time = 2 ** retry_count
+                        console.print(
+                            f"[yellow]Rate limit hit. Waiting {wait_time} seconds before retry "
+                            f"({retry_count}/{max_retries})...[/yellow]"
+                        )
+                        time.sleep(wait_time)
+                        last_error = e
+                    else:
+                        # All retries exhausted
+                        console.print(
+                            f"[red]Rate limit retries exhausted. Consider using a smaller batch size "
+                            f"or longer delays.[/red]"
+                        )
+                        raise e
+                else:
+                    # Not a rate limit error, raise immediately
+                    raise e
+        
+        # Should not reach here, but just in case
+        if last_error:
+            raise last_error
 
     def ingest_documents_batch(
         self, 
         documents: List[Any], 
         batch_size: int = 100,
-        show_progress: bool = True
+        show_progress: bool = True,
+        delay_between_batches: float = 1.0
     ) -> bool:
         """
         Ingest documents into the vector database in batches.
         
         This method is more memory efficient for large document sets
-        and provides better progress tracking.
+        and provides better progress tracking. It also includes rate limiting
+        to avoid hitting OpenAI API rate limits.
 
         Args:
             documents: List of documents to ingest
             batch_size: Number of documents to process in each batch
             show_progress: Whether to show progress bar
+            delay_between_batches: Seconds to wait between batches (default: 1.0)
+                                   Helps avoid rate limiting. Use 2.0+ for large batches.
 
         Returns:
             True if successful, False otherwise
@@ -579,13 +651,26 @@ class DocumentIngestionAgent:
                     
                     for i in range(0, len(documents), batch_size):
                         batch = documents[i:i + batch_size]
+                        batch_num = (i // batch_size) + 1
+                        
+                        # Process the batch
                         self._process_batch(batch, is_first_batch=(i == 0))
                         progress.update(task, advance=len(batch))
+                        
+                        # Add delay between batches to avoid rate limiting (except after last batch)
+                        if i + batch_size < len(documents):
+                            time.sleep(delay_between_batches)
             else:
                 # No progress bar
                 for i in range(0, len(documents), batch_size):
                     batch = documents[i:i + batch_size]
+                    batch_num = (i // batch_size) + 1
+                    
                     self._process_batch(batch, is_first_batch=(i == 0))
+                    
+                    # Add delay between batches to avoid rate limiting (except after last batch)
+                    if i + batch_size < len(documents):
+                        time.sleep(delay_between_batches)
 
             console.print(
                 f"[green]✓ Successfully ingested {len(documents)} documents![/green]"
@@ -601,8 +686,20 @@ class DocumentIngestionAgent:
         except Exception as e:
             error_msg = str(e).lower()
             
+            # Check for quota exceeded errors (429)
+            if "quota" in error_msg or "insufficient_quota" in error_msg or "429" in str(e):
+                console.print(f"[red]✗ OpenAI API Rate Limit or Quota Exceeded[/red]")
+                console.print(f"[yellow]You have hit OpenAI API limits (rate limiting or quota).[/yellow]")
+                console.print(f"[yellow]Solutions:[/yellow]")
+                console.print(f"[yellow]  1. Use longer delays between batches: --delay 2.0 or --delay 3.0[/yellow]")
+                console.print(f"[yellow]  2. Use smaller batch sizes: --batch-size 50 --delay 2.0[/yellow]")
+                console.print(f"[yellow]  3. Check your billing at: https://platform.openai.com/account/billing[/yellow]")
+                console.print(f"[yellow]  4. Add credits or upgrade your plan for higher limits[/yellow]")
+                console.print(f"[yellow]  5. Wait a few minutes and try again[/yellow]")
+                console.print(f"[yellow]\nNote: The system now includes automatic retries with exponential backoff.[/yellow]")
+                console.print(f"[yellow]Error details: {e}[/yellow]")
             # Check for rate limit errors
-            if "rate" in error_msg and "limit" in error_msg:
+            elif "rate" in error_msg and "limit" in error_msg:
                 error = RateLimitError(service="OpenAI API")
                 console.print(f"[red]{error.message}[/red]")
                 console.print(f"[yellow]{error.details}[/yellow]")
@@ -688,8 +785,19 @@ class DocumentIngestionAgent:
         except Exception as e:
             error_msg = str(e).lower()
             
+            # Check for quota exceeded errors (429)
+            if "quota" in error_msg or "insufficient_quota" in error_msg or "429" in str(e):
+                console.print(f"[red]✗ OpenAI API Rate Limit or Quota Exceeded[/red]")
+                console.print(f"[yellow]You have hit OpenAI API limits (rate limiting or quota).[/yellow]")
+                console.print(f"[yellow]Solutions:[/yellow]")
+                console.print(f"[yellow]  1. Use batch processing with delays: --use-batch --batch-size 50 --delay 2.0[/yellow]")
+                console.print(f"[yellow]  2. Check your billing at: https://platform.openai.com/account/billing[/yellow]")
+                console.print(f"[yellow]  3. Add credits or upgrade your plan for higher limits[/yellow]")
+                console.print(f"[yellow]  4. Wait a few minutes and try again[/yellow]")
+                console.print(f"[yellow]\nNote: The system now includes automatic retries with exponential backoff.[/yellow]")
+                console.print(f"[yellow]Error details: {e}[/yellow]")
             # Check for rate limit errors
-            if "rate" in error_msg and "limit" in error_msg:
+            elif "rate" in error_msg and "limit" in error_msg:
                 error = RateLimitError(service="OpenAI API")
                 console.print(f"[red]{error.message}[/red]")
                 console.print(f"[yellow]{error.details}[/yellow]")
@@ -795,6 +903,13 @@ def main():
         action="store_true",
         help="Use batch processing mode (recommended for large document sets)",
     )
+    parser.add_argument(
+        "--delay",
+        type=float,
+        default=1.0,
+        help="Delay in seconds between batches to avoid rate limiting (default: 1.0). "
+             "Use 2.0+ for large document sets to avoid API rate limits.",
+    )
 
     args = parser.parse_args()
 
@@ -857,7 +972,20 @@ def main():
             console.print(
                 f"[yellow]Detected {len(chunks)} chunks. Automatically using batch processing.[/yellow]\n"
             )
-        success = agent.ingest_documents_batch(chunks, batch_size=args.batch_size)
+        
+        # Recommend longer delay for very large document sets
+        delay = args.delay
+        if len(chunks) > 1000 and delay < 2.0:
+            console.print(
+                f"[yellow]Note: Processing {len(chunks)} chunks. Consider using --delay 2.0 or higher "
+                f"to avoid rate limits.[/yellow]\n"
+            )
+        
+        success = agent.ingest_documents_batch(
+            chunks, 
+            batch_size=args.batch_size,
+            delay_between_batches=delay
+        )
     else:
         success = agent.ingest_documents(chunks)
 
