@@ -1,10 +1,11 @@
 import tkinter as tk
-from tkinter import scrolledtext, messagebox, Menu, font, filedialog
+from tkinter import scrolledtext, messagebox, Menu, font, filedialog, ttk
 import subprocess
 import threading
 import sys
 import os
 from datetime import datetime
+from pathlib import Path
 
 # --- Configuration ---
 # Path to the python executable running this script.
@@ -251,13 +252,34 @@ class AdastreaDirectorApp:
         self.create_tooltip(self.increase_font_button, "Increase font size (max 20pt)")
         self.add_button_hover_effect(self.increase_font_button)
 
-        # --- Response Display Area (Card-based design) ---
-        response_card = tk.Frame(main_frame, bg=self.bg_tertiary, highlightthickness=1,
-                                highlightbackground=self.border_color)
-        response_card.pack(fill=tk.BOTH, expand=True, pady=(0, 15))
+        # --- Tabbed Interface (Card-based design) ---
+        tabs_card = tk.Frame(main_frame, bg=self.bg_tertiary, highlightthickness=1,
+                            highlightbackground=self.border_color)
+        tabs_card.pack(fill=tk.BOTH, expand=True, pady=(0, 15))
         
-        # Header section
-        response_header = tk.Frame(response_card, bg=self.bg_tertiary, padx=15, pady=10)
+        # Style the notebook for dark theme
+        style = ttk.Style()
+        style.theme_use('default')
+        style.configure('TNotebook', background=self.bg_tertiary, borderwidth=0)
+        style.configure('TNotebook.Tab', 
+                       background=self.button_bg, 
+                       foreground=self.fg_color,
+                       padding=[20, 10],
+                       font=("Segoe UI", 10))
+        style.map('TNotebook.Tab',
+                 background=[('selected', self.bg_tertiary)],
+                 foreground=[('selected', self.accent_color)])
+        
+        # Create notebook for tabs
+        self.notebook = ttk.Notebook(tabs_card)
+        self.notebook.pack(fill=tk.BOTH, expand=True, padx=1, pady=1)
+        
+        # --- Conversation Tab ---
+        conversation_tab = tk.Frame(self.notebook, bg=self.bg_tertiary)
+        self.notebook.add(conversation_tab, text="💬 Conversation")
+        
+        # Header section for conversation
+        response_header = tk.Frame(conversation_tab, bg=self.bg_tertiary, padx=15, pady=10)
         response_header.pack(fill=tk.X)
         
         response_label = tk.Label(
@@ -280,11 +302,11 @@ class AdastreaDirectorApp:
         self.stats_label.pack(side=tk.RIGHT)
         
         # Separator line
-        separator_line = tk.Frame(response_card, height=1, bg=self.border_color)
+        separator_line = tk.Frame(conversation_tab, height=1, bg=self.border_color)
         separator_line.pack(fill=tk.X)
         
         # Content frame with padding
-        content_frame = tk.Frame(response_card, bg=self.text_bg)
+        content_frame = tk.Frame(conversation_tab, bg=self.text_bg)
         content_frame.pack(fill=tk.BOTH, expand=True, padx=1, pady=1)
         
         self.current_font_size = 10
@@ -313,6 +335,9 @@ class AdastreaDirectorApp:
         self.response_text.tag_config("assistant", foreground="#a5b8c8")  # Lighter blue-gray for assistant
         self.response_text.tag_config("timestamp", foreground="#6a7080", font=("Segoe UI", 8))  # Muted blue-gray
         self.response_text.tag_config("error", foreground="#ff5555")  # Brighter error red
+        
+        # --- Ingest List Tab ---
+        self.create_ingest_list_tab()
 
         # --- Query Input Area (Card-based design) ---
         query_card = tk.Frame(main_frame, bg=self.bg_tertiary, highlightthickness=1,
@@ -445,6 +470,111 @@ class AdastreaDirectorApp:
         self.show_welcome_message()
 
         self.check_api_key_on_startup()
+    
+    def create_ingest_list_tab(self):
+        """Create the Ingest List tab showing ingested and pending documents."""
+        ingest_tab = tk.Frame(self.notebook, bg=self.bg_tertiary)
+        self.notebook.add(ingest_tab, text="📋 Ingest List")
+        
+        # Header section
+        ingest_header = tk.Frame(ingest_tab, bg=self.bg_tertiary, padx=15, pady=10)
+        ingest_header.pack(fill=tk.X)
+        
+        ingest_label = tk.Label(
+            ingest_header,
+            text="📋 Document Ingestion Status",
+            font=("Segoe UI", 11, "bold"),
+            bg=self.bg_tertiary,
+            fg=self.fg_color
+        )
+        ingest_label.pack(side=tk.LEFT)
+        
+        # Refresh button
+        refresh_button = tk.Button(
+            ingest_header,
+            text="🔄 Refresh",
+            command=self.refresh_ingest_list,
+            font=("Segoe UI", 9),
+            bg=self.button_bg,
+            fg=self.fg_color,
+            activebackground=self.button_hover,
+            activeforeground=self.fg_color,
+            relief=tk.FLAT,
+            padx=15,
+            pady=6,
+            cursor="hand2",
+            borderwidth=1,
+            highlightthickness=1,
+            highlightbackground=self.button_bg
+        )
+        refresh_button.pack(side=tk.RIGHT)
+        self.create_tooltip(refresh_button, "Refresh the ingestion status")
+        self.add_button_hover_effect(refresh_button)
+        
+        # Separator line
+        separator_line = tk.Frame(ingest_tab, height=1, bg=self.border_color)
+        separator_line.pack(fill=tk.X)
+        
+        # Main content area with two sections
+        content_frame = tk.Frame(ingest_tab, bg=self.bg_tertiary)
+        content_frame.pack(fill=tk.BOTH, expand=True, padx=15, pady=15)
+        
+        # --- Ingested Documents Section ---
+        ingested_frame = tk.Frame(content_frame, bg=self.bg_tertiary)
+        ingested_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
+        
+        ingested_header = tk.Label(
+            ingested_frame,
+            text="✅ Ingested Documents",
+            font=("Segoe UI", 10, "bold"),
+            bg=self.bg_tertiary,
+            fg=self.success_color,
+            anchor=tk.W
+        )
+        ingested_header.pack(fill=tk.X, pady=(0, 5))
+        
+        # Ingested documents list with scrollbar
+        ingested_list_frame = tk.Frame(ingested_frame, bg=self.text_bg, 
+                                      highlightthickness=1, highlightbackground=self.border_color)
+        ingested_list_frame.pack(fill=tk.BOTH, expand=True)
+        
+        self.ingested_text = scrolledtext.ScrolledText(
+            ingested_list_frame,
+            wrap=tk.WORD,
+            height=10,
+            state=tk.DISABLED,
+            bg=self.text_bg,
+            fg=self.fg_color,
+            font=("Consolas", 9),
+            relief=tk.FLAT,
+            padx=10,
+            pady=10,
+            selectbackground=self.highlight_bg,
+            selectforeground=self.fg_color,
+            borderwidth=0
+        )
+        self.ingested_text.pack(fill=tk.BOTH, expand=True)
+        
+        # --- Statistics Section ---
+        stats_frame = tk.Frame(content_frame, bg=self.bg_secondary, 
+                              highlightthickness=1, highlightbackground=self.border_color)
+        stats_frame.pack(fill=tk.X, pady=(10, 0))
+        
+        stats_inner = tk.Frame(stats_frame, bg=self.bg_secondary, padx=15, pady=10)
+        stats_inner.pack(fill=tk.X)
+        
+        self.ingest_stats_label = tk.Label(
+            stats_inner,
+            text="Loading statistics...",
+            font=("Segoe UI", 9),
+            bg=self.bg_secondary,
+            fg=self.fg_secondary,
+            anchor=tk.W
+        )
+        self.ingest_stats_label.pack(side=tk.LEFT)
+        
+        # Initial load of ingest list
+        self.refresh_ingest_list()
 
     def update_status(self, message, status_type="info"):
         """
@@ -480,6 +610,167 @@ class AdastreaDirectorApp:
                 text=status_text.get(status_type, "● Ready"),
                 fg=color_map.get(status_type, self.fg_secondary)
             )
+    
+    def refresh_ingest_list(self):
+        """Refresh the ingestion list by querying the vector database."""
+        def refresh_in_thread():
+            try:
+                # Get ingested documents from the database
+                ingested_docs = self.get_ingested_documents()
+                
+                # Update UI on main thread
+                self.root.after(0, self._update_ingest_list_ui, ingested_docs)
+            except Exception as e:
+                self.root.after(0, self._show_ingest_error, str(e))
+        
+        # Run in thread to avoid blocking UI
+        thread = threading.Thread(target=refresh_in_thread)
+        thread.start()
+    
+    def get_ingested_documents(self):
+        """
+        Query the vector database to get a list of ingested documents.
+        Returns a dictionary with document sources and their metadata.
+        """
+        try:
+            # Import here to avoid requiring dependencies if not used
+            from langchain_openai import OpenAIEmbeddings
+            from langchain_community.vectorstores import Chroma
+            
+            persist_directory = os.path.join(SCRIPT_DIR, "chroma_db")
+            
+            # Check if database exists
+            if not os.path.exists(persist_directory):
+                return {
+                    "status": "no_database",
+                    "message": "No vector database found. Please ingest documents first.",
+                    "documents": []
+                }
+            
+            # Initialize embeddings and vector store
+            embeddings = OpenAIEmbeddings()
+            vectorstore = Chroma(
+                collection_name="adastrea_docs",
+                embedding_function=embeddings,
+                persist_directory=persist_directory,
+            )
+            
+            # Get collection and documents
+            collection = vectorstore._collection
+            count = collection.count()
+            
+            if count == 0:
+                return {
+                    "status": "empty",
+                    "message": "Vector database is empty. Please ingest documents.",
+                    "documents": []
+                }
+            
+            # Get all documents with metadata
+            results = collection.get(include=['metadatas'])
+            
+            # Extract unique source documents
+            sources = {}
+            if results and 'metadatas' in results:
+                for metadata in results['metadatas']:
+                    if metadata and 'source' in metadata:
+                        source = metadata['source']
+                        if source not in sources:
+                            sources[source] = {
+                                'path': source,
+                                'chunks': 1
+                            }
+                        else:
+                            sources[source]['chunks'] += 1
+            
+            return {
+                "status": "success",
+                "total_chunks": count,
+                "total_documents": len(sources),
+                "documents": sources
+            }
+            
+        except ImportError:
+            return {
+                "status": "error",
+                "message": "Required dependencies not installed. Please run: pip install -r requirements.txt",
+                "documents": []
+            }
+        except Exception as e:
+            return {
+                "status": "error",
+                "message": f"Error accessing database: {str(e)}",
+                "documents": []
+            }
+    
+    def _update_ingest_list_ui(self, result):
+        """Update the UI with ingestion results."""
+        # Update ingested documents list
+        self.ingested_text.config(state=tk.NORMAL)
+        self.ingested_text.delete(1.0, tk.END)
+        
+        if result["status"] == "success":
+            documents = result["documents"]
+            
+            if documents:
+                # Sort documents by path
+                sorted_docs = sorted(documents.items(), key=lambda x: x[0])
+                
+                for doc_path, doc_info in sorted_docs:
+                    # Get filename from path
+                    filename = os.path.basename(doc_path)
+                    chunks = doc_info['chunks']
+                    
+                    # Format the line
+                    line = f"✅ {filename}\n"
+                    self.ingested_text.insert(tk.END, line, "ingested")
+                    self.ingested_text.insert(tk.END, f"   📍 {doc_path}\n", "path")
+                    self.ingested_text.insert(tk.END, f"   📦 {chunks} chunk{'s' if chunks > 1 else ''}\n\n", "chunks")
+                
+                # Configure tags
+                self.ingested_text.tag_config("ingested", foreground=self.success_color, font=("Consolas", 9, "bold"))
+                self.ingested_text.tag_config("path", foreground=self.fg_muted, font=("Consolas", 8))
+                self.ingested_text.tag_config("chunks", foreground=self.fg_secondary, font=("Consolas", 8))
+            else:
+                self.ingested_text.insert(tk.END, "No documents found in database.\n", "info")
+                self.ingested_text.tag_config("info", foreground=self.fg_muted)
+            
+            # Update statistics
+            self.ingest_stats_label.config(
+                text=f"📊 Total: {result['total_documents']} documents • {result['total_chunks']} chunks"
+            )
+            
+        elif result["status"] == "no_database":
+            self.ingested_text.insert(tk.END, "⚠️ No vector database found\n\n", "warning")
+            self.ingested_text.insert(tk.END, result["message"], "info")
+            self.ingested_text.tag_config("warning", foreground=self.warning_color, font=("Consolas", 9, "bold"))
+            self.ingested_text.tag_config("info", foreground=self.fg_secondary)
+            self.ingest_stats_label.config(text="No database found")
+            
+        elif result["status"] == "empty":
+            self.ingested_text.insert(tk.END, "ℹ️ Database is empty\n\n", "info_header")
+            self.ingested_text.insert(tk.END, result["message"], "info")
+            self.ingested_text.tag_config("info_header", foreground=self.accent_color, font=("Consolas", 9, "bold"))
+            self.ingested_text.tag_config("info", foreground=self.fg_secondary)
+            self.ingest_stats_label.config(text="0 documents • 0 chunks")
+            
+        else:  # error
+            self.ingested_text.insert(tk.END, "❌ Error\n\n", "error_header")
+            self.ingested_text.insert(tk.END, result["message"], "error")
+            self.ingested_text.tag_config("error_header", foreground=self.error_color, font=("Consolas", 9, "bold"))
+            self.ingested_text.tag_config("error", foreground=self.error_color)
+            self.ingest_stats_label.config(text="Error loading data")
+        
+        self.ingested_text.config(state=tk.DISABLED)
+    
+    def _show_ingest_error(self, error_msg):
+        """Show error message when refreshing ingest list fails."""
+        self.ingested_text.config(state=tk.NORMAL)
+        self.ingested_text.delete(1.0, tk.END)
+        self.ingested_text.insert(tk.END, f"❌ Error refreshing list:\n{error_msg}\n", "error")
+        self.ingested_text.tag_config("error", foreground=self.error_color)
+        self.ingested_text.config(state=tk.DISABLED)
+        self.ingest_stats_label.config(text="Error")
     
     def create_menu_bar(self):
         """Create the application menu bar with dark theme styling."""
