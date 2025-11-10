@@ -47,7 +47,7 @@ try:
         PyPDFLoader,
         Docx2txtLoader,
     )
-    from langchain.text_splitter import (
+    from langchain_text_splitters import (
         RecursiveCharacterTextSplitter,
         Language,
     )
