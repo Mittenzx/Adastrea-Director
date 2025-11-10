@@ -95,6 +95,8 @@ export OPENAI_API_KEY="your-api-key-here"
 python ingest.py --docs-dir /path/to/your/docs
 ```
 
+**📚 New to ingestion?** See [DOCS_TO_INGEST.md](DOCS_TO_INGEST.md) for a comprehensive list of documents to ingest and detailed instructions.
+
 2. **Start the interactive assistant:**
 ```bash
 python main.py
@@ -165,6 +167,7 @@ Adastrea-Director/
 ### Installation & Setup
 - [Installation Guide](INSTALLATION.md) - Platform-specific installation instructions
 - [Troubleshooting](TROUBLESHOOTING.md) - Quick reference for common issues
+- **[Documents to Ingest](DOCS_TO_INGEST.md)** - Comprehensive guide to documents for the knowledge base
 
 ### Project Documentation
 - [Project Plan](PROJECT_PLAN.md) - Detailed breakdown of all four phases
