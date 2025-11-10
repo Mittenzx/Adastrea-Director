@@ -133,12 +133,86 @@ class DocumentIngestionAgent:
             separators=["\n\n", "\n", " ", ""],
         )
         
-        # Initialize code-specific text splitter for Python files
-        self.code_splitter = RecursiveCharacterTextSplitter.from_language(
-            language=Language.PYTHON,
-            chunk_size=chunk_size,
-            chunk_overlap=chunk_overlap,
-        )
+        # Initialize code-specific text splitters for different languages
+        self.code_splitters = {
+            Language.PYTHON: RecursiveCharacterTextSplitter.from_language(
+                language=Language.PYTHON,
+                chunk_size=chunk_size,
+                chunk_overlap=chunk_overlap,
+            ),
+            Language.JS: RecursiveCharacterTextSplitter.from_language(
+                language=Language.JS,
+                chunk_size=chunk_size,
+                chunk_overlap=chunk_overlap,
+            ),
+            Language.TS: RecursiveCharacterTextSplitter.from_language(
+                language=Language.TS,
+                chunk_size=chunk_size,
+                chunk_overlap=chunk_overlap,
+            ),
+            Language.CPP: RecursiveCharacterTextSplitter.from_language(
+                language=Language.CPP,
+                chunk_size=chunk_size,
+                chunk_overlap=chunk_overlap,
+            ),
+            Language.CSHARP: RecursiveCharacterTextSplitter.from_language(
+                language=Language.CSHARP,
+                chunk_size=chunk_size,
+                chunk_overlap=chunk_overlap,
+            ),
+        }
+
+    def _enrich_document_metadata(self, documents: List[Any]) -> List[Any]:
+        """
+        Enrich document metadata with additional information.
+        
+        Args:
+            documents: List of documents to enrich
+            
+        Returns:
+            List of documents with enriched metadata
+        """
+        for doc in documents:
+            try:
+                source = doc.metadata.get("source", "")
+                if source and isinstance(source, str):
+                    source_path = Path(source)
+                    
+                    # Add file information
+                    doc.metadata["filename"] = source_path.name
+                    doc.metadata["extension"] = source_path.suffix.lower()
+                    
+                    # Detect document type
+                    extension = source_path.suffix.lower()
+                    if extension in [".md", ".txt"]:
+                        doc.metadata["doc_type"] = "documentation"
+                    elif extension in [".pdf", ".docx"]:
+                        doc.metadata["doc_type"] = "document"
+                    elif extension in [".py", ".js", ".jsx", ".ts", ".tsx", ".cpp", ".cc", ".cxx", ".h", ".hpp", ".cs"]:
+                        doc.metadata["doc_type"] = "code"
+                    elif extension in [".json", ".yaml", ".yml"]:
+                        doc.metadata["doc_type"] = "config"
+                    else:
+                        doc.metadata["doc_type"] = "other"
+                    
+                    # Detect programming language for code files
+                    language = self._detect_language(source)
+                    if language:
+                        doc.metadata["language"] = language.value
+                    
+                    # Add file size if available
+                    try:
+                        if source_path.exists():
+                            doc.metadata["file_size"] = source_path.stat().st_size
+                    except (OSError, IOError):
+                        # Ignore file system errors when getting file size
+                        pass
+            except Exception as e:
+                # Skip metadata enrichment if there's any error
+                source = doc.metadata.get("source", "unknown")
+                console.print(f"[yellow]Warning: Failed to enrich metadata for '{source}': {e}[/yellow]")
+        
+        return documents
 
     def load_documents_from_directory(self, directory: str) -> List[Any]:
         """
@@ -159,11 +233,30 @@ class DocumentIngestionAgent:
 
         # Define loaders for different file types
         loader_mapping = {
+            # Documentation files
             ".md": UnstructuredMarkdownLoader,
             ".txt": TextLoader,
-            ".py": PythonLoader,
             ".pdf": PyPDFLoader,
             ".docx": Docx2txtLoader,
+            # Code files - Python
+            ".py": PythonLoader,
+            # Code files - JavaScript/TypeScript (use TextLoader for now)
+            ".js": TextLoader,
+            ".jsx": TextLoader,
+            ".ts": TextLoader,
+            ".tsx": TextLoader,
+            # Code files - C++
+            ".cpp": TextLoader,
+            ".cc": TextLoader,
+            ".cxx": TextLoader,
+            ".h": TextLoader,
+            ".hpp": TextLoader,
+            # Code files - C#
+            ".cs": TextLoader,
+            # Config files
+            ".json": TextLoader,
+            ".yaml": TextLoader,
+            ".yml": TextLoader,
         }
 
         with Progress(
@@ -211,6 +304,9 @@ class DocumentIngestionAgent:
                         f"[yellow]Warning: Error loading {extension} files: {e}[/yellow]"
                     )
 
+        # Enrich metadata for loaded documents
+        documents = self._enrich_document_metadata(documents)
+        
         return documents
 
     def load_single_file(self, file_path: str) -> List[Any]:
@@ -232,11 +328,30 @@ class DocumentIngestionAgent:
         # Determine loader based on extension
         extension = file_path_obj.suffix.lower()
         loader_mapping = {
+            # Documentation files
             ".md": UnstructuredMarkdownLoader,
             ".txt": TextLoader,
-            ".py": PythonLoader,
             ".pdf": PyPDFLoader,
             ".docx": Docx2txtLoader,
+            # Code files - Python
+            ".py": PythonLoader,
+            # Code files - JavaScript/TypeScript
+            ".js": TextLoader,
+            ".jsx": TextLoader,
+            ".ts": TextLoader,
+            ".tsx": TextLoader,
+            # Code files - C++
+            ".cpp": TextLoader,
+            ".cc": TextLoader,
+            ".cxx": TextLoader,
+            ".h": TextLoader,
+            ".hpp": TextLoader,
+            # Code files - C#
+            ".cs": TextLoader,
+            # Config files
+            ".json": TextLoader,
+            ".yaml": TextLoader,
+            ".yml": TextLoader,
         }
 
         loader_class = loader_mapping.get(extension, TextLoader)
@@ -245,6 +360,8 @@ class DocumentIngestionAgent:
             loader = loader_class(file_path)
             documents = loader.load()
             console.print(f"[green]Loaded {file_path}[/green]")
+            # Enrich metadata for loaded document
+            documents = self._enrich_document_metadata(documents)
             return documents
         except UnicodeDecodeError as e:
             error = FileEncodingError(file_path)
@@ -287,6 +404,32 @@ class DocumentIngestionAgent:
                 console.print(f"[yellow]File: {file_path}[/yellow]")
             return []
 
+    def _detect_language(self, source: str) -> Language:
+        """
+        Detect the programming language based on file extension.
+        
+        Args:
+            source: Source file path
+            
+        Returns:
+            Language enum or None if not a code file
+        """
+        extension = Path(source).suffix.lower()
+        language_map = {
+            ".py": Language.PYTHON,
+            ".js": Language.JS,
+            ".jsx": Language.JS,
+            ".ts": Language.TS,
+            ".tsx": Language.TS,
+            ".cpp": Language.CPP,
+            ".cc": Language.CPP,
+            ".cxx": Language.CPP,
+            ".h": Language.CPP,
+            ".hpp": Language.CPP,
+            ".cs": Language.CSHARP,
+        }
+        return language_map.get(extension)
+
     def chunk_documents(self, documents: List[Any]) -> List[Any]:
         """
         Split documents into chunks using document-type aware strategies.
@@ -311,31 +454,37 @@ class DocumentIngestionAgent:
             ) as progress:
                 task = progress.add_task("Chunking documents...", total=None)
                 
-                # Separate documents by type for optimized chunking
-                # Currently only Python files get code-aware chunking;
-                # all other files (including other code languages) use text chunking
-                code_docs = []
+                # Separate documents by language for optimized chunking
+                docs_by_language = {lang: [] for lang in self.code_splitters.keys()}
                 text_docs = []
                 
                 for doc in documents:
                     source = doc.metadata.get("source", "")
-                    # Only Python files use the code-aware splitter
-                    if source.endswith(".py"):
-                        code_docs.append(doc)
+                    language = self._detect_language(source)
+                    
+                    if language and language in self.code_splitters:
+                        docs_by_language[language].append(doc)
                     else:
                         text_docs.append(doc)
                 
                 # Chunk with appropriate splitters
                 chunks = []
-                if code_docs:
-                    chunks.extend(self.code_splitter.split_documents(code_docs))
+                code_doc_count = 0
+                
+                # Process code documents with language-specific splitters
+                for language, docs in docs_by_language.items():
+                    if docs:
+                        chunks.extend(self.code_splitters[language].split_documents(docs))
+                        code_doc_count += len(docs)
+                
+                # Process text documents
                 if text_docs:
                     chunks.extend(self.text_splitter.split_documents(text_docs))
                 
                 progress.update(
                     task,
                     description=f"Created {len(chunks)} chunks from {len(documents)} documents "
-                               f"({len(code_docs)} code, {len(text_docs)} text)",
+                               f"({code_doc_count} code, {len(text_docs)} text)",
                 )
 
             return chunks
@@ -355,6 +504,127 @@ class DocumentIngestionAgent:
             )
         except Exception as e:
             raise ChunkingError(str(e))
+
+    def _process_batch(self, batch: List[Any], is_first_batch: bool) -> Any:
+        """
+        Process a single batch of documents.
+        
+        Args:
+            batch: Documents to process
+            is_first_batch: Whether this is the first batch
+            
+        Returns:
+            The vectorstore instance
+        """
+        if is_first_batch:
+            vectorstore = Chroma.from_documents(
+                documents=batch,
+                embedding=self.embeddings,
+                collection_name=self.collection_name,
+                persist_directory=self.persist_directory,
+            )
+        else:
+            vectorstore = Chroma(
+                collection_name=self.collection_name,
+                embedding_function=self.embeddings,
+                persist_directory=self.persist_directory,
+            )
+            vectorstore.add_documents(batch)
+        
+        # Persist after each batch
+        vectorstore.persist()
+        return vectorstore
+
+    def ingest_documents_batch(
+        self, 
+        documents: List[Any], 
+        batch_size: int = 100,
+        show_progress: bool = True
+    ) -> bool:
+        """
+        Ingest documents into the vector database in batches.
+        
+        This method is more memory efficient for large document sets
+        and provides better progress tracking.
+
+        Args:
+            documents: List of documents to ingest
+            batch_size: Number of documents to process in each batch
+            show_progress: Whether to show progress bar
+
+        Returns:
+            True if successful, False otherwise
+        """
+        if not documents:
+            console.print("[yellow]No documents to ingest[/yellow]")
+            return False
+
+        try:
+            total_batches = (len(documents) + batch_size - 1) // batch_size
+            
+            if show_progress:
+                from rich.progress import Progress, BarColumn, TextColumn, TimeRemainingColumn
+                
+                with Progress(
+                    TextColumn("[progress.description]{task.description}"),
+                    BarColumn(),
+                    TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
+                    TimeRemainingColumn(),
+                    console=console,
+                ) as progress:
+                    task = progress.add_task(
+                        f"Ingesting {len(documents)} documents in {total_batches} batches...",
+                        total=len(documents)
+                    )
+                    
+                    for i in range(0, len(documents), batch_size):
+                        batch = documents[i:i + batch_size]
+                        self._process_batch(batch, is_first_batch=(i == 0))
+                        progress.update(task, advance=len(batch))
+            else:
+                # No progress bar
+                for i in range(0, len(documents), batch_size):
+                    batch = documents[i:i + batch_size]
+                    self._process_batch(batch, is_first_batch=(i == 0))
+
+            console.print(
+                f"[green]✓ Successfully ingested {len(documents)} documents![/green]"
+            )
+            console.print(
+                f"[cyan]Collection: {self.collection_name}[/cyan]"
+            )
+            console.print(
+                f"[cyan]Storage: {self.persist_directory}[/cyan]"
+            )
+            return True
+
+        except Exception as e:
+            error_msg = str(e).lower()
+            
+            # Check for rate limit errors
+            if "rate" in error_msg and "limit" in error_msg:
+                error = RateLimitError(service="OpenAI API")
+                console.print(f"[red]{error.message}[/red]")
+                console.print(f"[yellow]{error.details}[/yellow]")
+            # Check for API key errors
+            elif "api" in error_msg and "key" in error_msg:
+                error = APIKeyError("OpenAI")
+                console.print(f"[red]{error.message}[/red]")
+                console.print(f"[yellow]{error.details}[/yellow]")
+            # Check for network/connection errors
+            elif any(word in error_msg for word in ["connection", "network", "timeout"]):
+                error = NetworkError("batch ingestion")
+                console.print(f"[red]{error.message}[/red]")
+                console.print(f"[yellow]{error.details}[/yellow]")
+            # Check for database errors
+            elif any(word in error_msg for word in ["chroma", "database", "persist"]):
+                error = DatabaseError("batch ingestion", str(e))
+                console.print(f"[red]{error.message}[/red]")
+                console.print(f"[yellow]{error.details}[/yellow]")
+            else:
+                console.print(f"[red]Error during batch ingestion: {e}[/red]")
+            
+            return False
 
     def ingest_documents(self, documents: List[Any]) -> bool:
         """
@@ -514,6 +784,17 @@ def main():
         action="store_true",
         help="Show database statistics",
     )
+    parser.add_argument(
+        "--batch-size",
+        type=int,
+        default=100,
+        help="Batch size for processing large document sets (default: 100)",
+    )
+    parser.add_argument(
+        "--use-batch",
+        action="store_true",
+        help="Use batch processing mode (recommended for large document sets)",
+    )
 
     args = parser.parse_args()
 
@@ -570,8 +851,15 @@ def main():
 
     console.print(f"\n[green]Created {len(chunks)} chunks[/green]\n")
 
-    # Ingest documents
-    success = agent.ingest_documents(chunks)
+    # Ingest documents (use batch mode for large sets or if explicitly requested)
+    if args.use_batch or len(chunks) > 200:
+        if not args.use_batch:
+            console.print(
+                f"[yellow]Detected {len(chunks)} chunks. Automatically using batch processing.[/yellow]\n"
+            )
+        success = agent.ingest_documents_batch(chunks, batch_size=args.batch_size)
+    else:
+        success = agent.ingest_documents(chunks)
 
     if success:
         console.print("\n[bold green]✓ Ingestion complete![/bold green]")
