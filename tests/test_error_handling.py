@@ -13,7 +13,7 @@ Tests cover:
 
 import os
 import sys
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 import pytest
 
 # Add parent directory to path for imports
@@ -233,7 +233,7 @@ class TestConfigurationErrors:
             
             # Negative chunk size should raise ValueError
             with pytest.raises(ValueError):
-                agent = DocumentIngestionAgent(chunk_size=-100)
+                DocumentIngestionAgent(chunk_size=-100)
 
     def test_invalid_chunk_overlap(self):
         """Test handling invalid chunk overlap."""
@@ -242,7 +242,7 @@ class TestConfigurationErrors:
             
             # Overlap larger than chunk size should raise ValueError
             with pytest.raises(ValueError):
-                agent = DocumentIngestionAgent(chunk_size=100, chunk_overlap=200)
+                DocumentIngestionAgent(chunk_size=100, chunk_overlap=200)
 
     def test_invalid_collection_name(self):
         """Test handling invalid collection name."""

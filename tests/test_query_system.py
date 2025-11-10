@@ -12,7 +12,7 @@ Tests cover:
 
 import os
 import sys
-from unittest.mock import Mock, patch, MagicMock, call
+from unittest.mock import Mock, patch
 import pytest
 
 # Add parent directory to path for imports
@@ -94,7 +94,7 @@ class TestQueryAgentInitialization:
         mock_chroma.return_value = mock_vectorstore
         mock_chain.from_llm.return_value = Mock()
         
-        agent = QueryAgent(model_name="gpt-4", temperature=0.3)
+        QueryAgent(model_name="gpt-4", temperature=0.3)
         
         mock_llm.assert_called_once_with(
             model_name="gpt-4",
@@ -138,7 +138,7 @@ class TestQueryAgentInitialization:
         mock_chroma.return_value = mock_vectorstore
         mock_chain.from_llm.return_value = Mock()
         
-        agent = QueryAgent()
+        QueryAgent()
         
         mock_vectorstore.as_retriever.assert_called_once_with(
             search_kwargs={"k": 5}

@@ -15,7 +15,7 @@ import sys
 import tempfile
 import shutil
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 import pytest
 
 # Add parent directory to path for imports
@@ -156,7 +156,7 @@ class TestLoadDocumentsFromDirectory:
         with patch('ingest.DirectoryLoader') as mock_loader:
             mock_loader.return_value.load.return_value = [Mock(), Mock(), Mock()]
             
-            documents = agent.load_documents_from_directory(temp_dir)
+            agent.load_documents_from_directory(temp_dir)
             
             # Should be called multiple times for different file types
             assert mock_loader.call_count >= 1
