@@ -21,15 +21,20 @@ Read: **[AGENTS_UTILITY_ASSESSMENT.md](AGENTS_UTILITY_ASSESSMENT.md)**
 - Testing strategies
 - Complete roadmap
 
-### 🔍 Original Document
+### 🔍 Original Documents
 Read: **[AGENTS.md](AGENTS.md)**
 - Agent architecture specification
 - Design principles
 - Implementation templates
 
+Read: **[UNREAL_MCP_ASSESSMENT.md](UNREAL_MCP_ASSESSMENT.md)**
+- Unreal Engine MCP Server evaluation
+- Integration opportunities for Phase 3
+- Technical architecture and roadmap
+
 ---
 
-## �� Key Takeaways
+## 💡 Key Takeaways
 
 ### What We Found
 
