@@ -47,7 +47,10 @@ try:
         PyPDFLoader,
         Docx2txtLoader,
     )
-    from langchain.text_splitter import RecursiveCharacterTextSplitter
+    from langchain.text_splitter import (
+        RecursiveCharacterTextSplitter,
+        Language,
+    )
     from langchain_openai import OpenAIEmbeddings
     from langchain_community.vectorstores import Chroma
     from rich.console import Console
@@ -122,12 +125,19 @@ class DocumentIngestionAgent:
             )
             sys.exit(1)
 
-        # Initialize text splitter
+        # Initialize text splitter (default for markdown and text)
         self.text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=chunk_size,
             chunk_overlap=chunk_overlap,
             length_function=len,
             separators=["\n\n", "\n", " ", ""],
+        )
+        
+        # Initialize code-specific text splitter for Python files
+        self.code_splitter = RecursiveCharacterTextSplitter.from_language(
+            language=Language.PYTHON,
+            chunk_size=chunk_size,
+            chunk_overlap=chunk_overlap,
         )
 
     def load_documents_from_directory(self, directory: str) -> List[Any]:
@@ -279,7 +289,7 @@ class DocumentIngestionAgent:
 
     def chunk_documents(self, documents: List[Any]) -> List[Any]:
         """
-        Split documents into chunks.
+        Split documents into chunks using document-type aware strategies.
 
         Args:
             documents: List of documents to chunk
@@ -300,10 +310,29 @@ class DocumentIngestionAgent:
                 console=console,
             ) as progress:
                 task = progress.add_task("Chunking documents...", total=None)
-                chunks = self.text_splitter.split_documents(documents)
+                
+                # Separate documents by type for optimized chunking
+                code_docs = []
+                text_docs = []
+                
+                for doc in documents:
+                    source = doc.metadata.get("source", "")
+                    if source.endswith(".py"):
+                        code_docs.append(doc)
+                    else:
+                        text_docs.append(doc)
+                
+                # Chunk with appropriate splitters
+                chunks = []
+                if code_docs:
+                    chunks.extend(self.code_splitter.split_documents(code_docs))
+                if text_docs:
+                    chunks.extend(self.text_splitter.split_documents(text_docs))
+                
                 progress.update(
                     task,
-                    description=f"Created {len(chunks)} chunks from {len(documents)} documents",
+                    description=f"Created {len(chunks)} chunks from {len(documents)} documents "
+                               f"({len(code_docs)} code, {len(text_docs)} text)",
                 )
 
             return chunks

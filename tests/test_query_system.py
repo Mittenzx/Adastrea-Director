@@ -47,6 +47,9 @@ class TestQueryAgentInitialization:
         assert agent.persist_directory == "./chroma_db"
         assert agent.model_name == "gpt-3.5-turbo"
         assert agent.temperature == 0.7
+        assert agent.search_type == "mmr"
+        assert agent.retrieval_k == 6
+        assert agent.fetch_k == 20
         mock_embeddings.assert_called_once()
 
     @patch('main.ConversationalRetrievalChain')
@@ -140,8 +143,10 @@ class TestQueryAgentInitialization:
         
         QueryAgent()
         
+        # Test MMR retriever configuration
         mock_vectorstore.as_retriever.assert_called_once_with(
-            search_kwargs={"k": 5}
+            search_type="mmr",
+            search_kwargs={"k": 6, "fetch_k": 20}
         )
 
 
@@ -364,11 +369,108 @@ class TestQueryOptimization:
             return QueryAgent()
 
     def test_retriever_returns_top_k_results(self, agent):
-        """Test that retriever is configured to return top 5 results."""
-        # The retriever should be configured with k=5
+        """Test that retriever is configured to return top k results."""
+        # The retriever should be configured with k=6 (new default)
         assert agent.vectorstore.as_retriever.called
         call_kwargs = agent.vectorstore.as_retriever.call_args[1]
-        assert call_kwargs['search_kwargs']['k'] == 5
+        assert call_kwargs['search_kwargs']['k'] == 6
+
+    def test_mmr_search_type_configured(self, agent):
+        """Test that MMR search type is configured by default."""
+        assert agent.search_type == "mmr"
+        assert agent.vectorstore.as_retriever.called
+        call_kwargs = agent.vectorstore.as_retriever.call_args[1]
+        assert call_kwargs['search_type'] == "mmr"
+        assert call_kwargs['search_kwargs']['fetch_k'] == 20
+
+    def test_custom_search_parameters(self):
+        """Test agent initialization with custom search parameters."""
+        with patch('main.OpenAIEmbeddings') as mock_embeddings, \
+             patch('main.ChatOpenAI') as mock_llm, \
+             patch('main.Chroma') as mock_chroma, \
+             patch('main.ConversationalRetrievalChain') as mock_chain:
+            
+            mock_embeddings.return_value = Mock()
+            mock_llm.return_value = Mock()
+            mock_collection = Mock()
+            mock_collection.count.return_value = 10
+            mock_vectorstore = Mock()
+            mock_vectorstore._collection = mock_collection
+            mock_vectorstore.as_retriever.return_value = Mock()
+            mock_chroma.return_value = mock_vectorstore
+            mock_chain.from_llm.return_value = Mock()
+            
+            agent = QueryAgent(
+                search_type="similarity",
+                retrieval_k=10,
+                fetch_k=30
+            )
+            
+            assert agent.search_type == "similarity"
+            assert agent.retrieval_k == 10
+            assert agent.fetch_k == 30
+
+    def test_query_caching(self, agent):
+        """Test that query caching works correctly."""
+        query = "What is the main gameplay loop?"
+        
+        # Mock response
+        mock_response = {
+            "answer": "The main gameplay loop involves...",
+            "source_documents": []
+        }
+        
+        agent.qa_chain = Mock()
+        agent.qa_chain.return_value = mock_response
+        
+        # First query should call the chain
+        result1 = agent.process_query(query)
+        assert result1["cached"] is False
+        assert agent.qa_chain.call_count == 1
+        
+        # Second identical query should use cache
+        result2 = agent.process_query(query)
+        assert result2["cached"] is True
+        assert agent.qa_chain.call_count == 1  # Still 1, not called again
+        
+    def test_cache_disabled(self, agent):
+        """Test that caching can be disabled."""
+        query = "What is the main gameplay loop?"
+        
+        mock_response = {
+            "answer": "The main gameplay loop involves...",
+            "source_documents": []
+        }
+        
+        agent.qa_chain = Mock()
+        agent.qa_chain.return_value = mock_response
+        
+        # First query with cache disabled
+        result1 = agent.process_query(query, use_cache=False)
+        assert result1["cached"] is False
+        
+        # Second query with cache disabled should still call chain
+        result2 = agent.process_query(query, use_cache=False)
+        assert result2["cached"] is False
+        assert agent.qa_chain.call_count == 2
+
+    def test_performance_timing(self, agent):
+        """Test that performance timing is tracked."""
+        query = "Test query"
+        
+        mock_response = {
+            "answer": "Test answer",
+            "source_documents": []
+        }
+        
+        agent.qa_chain = Mock()
+        agent.qa_chain.return_value = mock_response
+        
+        result = agent.process_query(query)
+        
+        assert "processing_time" in result
+        assert isinstance(result["processing_time"], float)
+        assert result["processing_time"] >= 0
 
     def test_custom_prompt_template_used(self, agent):
         """Test that custom prompt template is used in the chain."""

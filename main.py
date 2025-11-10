@@ -13,6 +13,8 @@ Usage:
 import os
 import sys
 import argparse
+import time
+import hashlib
 from typing import List, Dict, Any, Optional
 from exceptions import (
     APIKeyError,
@@ -63,6 +65,9 @@ class QueryAgent:
         persist_directory: str = "./chroma_db",
         model_name: str = "gpt-3.5-turbo",
         temperature: float = 0.7,
+        search_type: str = "mmr",
+        retrieval_k: int = 6,
+        fetch_k: int = 20,
     ):
         """
         Initialize the query agent.
@@ -72,11 +77,21 @@ class QueryAgent:
             persist_directory: Directory where vector database is stored
             model_name: Name of the OpenAI model to use
             temperature: Temperature for response generation (0-1)
+            search_type: Type of search to use ("similarity" or "mmr")
+            retrieval_k: Number of documents to retrieve (default: 6)
+            fetch_k: Number of documents to fetch before MMR reranking (default: 20)
         """
         self.collection_name = collection_name
         self.persist_directory = persist_directory
         self.model_name = model_name
         self.temperature = temperature
+        self.search_type = search_type
+        self.retrieval_k = retrieval_k
+        self.fetch_k = fetch_k
+        
+        # Simple in-memory cache for query results (LRU with max 50 entries)
+        self.query_cache: Dict[str, Dict[str, Any]] = {}
+        self.cache_max_size = 50
 
         # Initialize components
         self._initialize_components()
@@ -137,11 +152,17 @@ Answer:"""
                 input_variables=["context", "question"],
             )
 
-            # Create conversational retrieval chain
+            # Create conversational retrieval chain with optimized retrieval
+            search_kwargs = {"k": self.retrieval_k}
+            if self.search_type == "mmr":
+                # Use MMR (Maximal Marginal Relevance) for better diversity
+                search_kwargs["fetch_k"] = self.fetch_k
+            
             self.qa_chain = ConversationalRetrievalChain.from_llm(
                 llm=self.llm,
                 retriever=self.vectorstore.as_retriever(
-                    search_kwargs={"k": 5}
+                    search_type=self.search_type,
+                    search_kwargs=search_kwargs
                 ),
                 memory=self.memory,
                 return_source_documents=True,
@@ -174,18 +195,46 @@ Answer:"""
             
             sys.exit(1)
 
-    def process_query(self, query: str) -> Dict[str, Any]:
+    def _get_query_hash(self, query: str) -> str:
+        """Generate a hash for query caching."""
+        return hashlib.md5(query.lower().strip().encode()).hexdigest()
+    
+    def process_query(self, query: str, use_cache: bool = True) -> Dict[str, Any]:
         """
         Process a user query and generate a response.
 
         Args:
             query: User's question
+            use_cache: Whether to use cached results for identical queries
 
         Returns:
-            Dictionary containing answer and source documents
+            Dictionary containing answer, source documents, and processing time
         """
         try:
+            start_time = time.time()
+            
+            # Check cache for identical query
+            query_hash = self._get_query_hash(query)
+            if use_cache and query_hash in self.query_cache:
+                cached_result = self.query_cache[query_hash].copy()
+                cached_result["cached"] = True
+                cached_result["processing_time"] = time.time() - start_time
+                return cached_result
+            
             result = self.qa_chain({"question": query})
+            processing_time = time.time() - start_time
+            
+            # Add performance metrics to result
+            result["processing_time"] = processing_time
+            result["cached"] = False
+            
+            # Cache the result (implement simple LRU by removing oldest if full)
+            if use_cache:
+                if len(self.query_cache) >= self.cache_max_size:
+                    # Remove oldest entry (first item)
+                    self.query_cache.pop(next(iter(self.query_cache)))
+                self.query_cache[query_hash] = result.copy()
+            
             return result
         except TimeoutError as e:
             error = NetworkError("query processing",
@@ -356,6 +405,13 @@ class AdastreaDirectorCLI:
                 console.print(
                     f"\n[dim]Based on {len(result['source_documents'])} document(s)[/dim]"
                 )
+            
+            # Display performance metrics
+            if result.get("processing_time"):
+                cached_indicator = " (cached)" if result.get("cached") else ""
+                console.print(
+                    f"[dim]Response time: {result['processing_time']:.2f}s{cached_indicator}[/dim]"
+                )
 
             console.print()  # Empty line for spacing
 
@@ -435,6 +491,25 @@ def main():
         default=0.7,
         help="Temperature for response generation (default: 0.7)",
     )
+    parser.add_argument(
+        "--search-type",
+        type=str,
+        default="mmr",
+        choices=["similarity", "mmr"],
+        help="Search type: 'similarity' for basic similarity search, 'mmr' for diverse results (default: mmr)",
+    )
+    parser.add_argument(
+        "--retrieval-k",
+        type=int,
+        default=6,
+        help="Number of documents to retrieve (default: 6)",
+    )
+    parser.add_argument(
+        "--fetch-k",
+        type=int,
+        default=20,
+        help="Number of documents to fetch before MMR reranking (default: 20)",
+    )
 
     args = parser.parse_args()
 
@@ -444,6 +519,9 @@ def main():
         persist_directory=args.persist_dir,
         model_name=args.model,
         temperature=args.temperature,
+        search_type=args.search_type,
+        retrieval_k=args.retrieval_k,
+        fetch_k=args.fetch_k,
     )
 
     # Run CLI
