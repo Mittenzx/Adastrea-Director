@@ -534,14 +534,14 @@ class DocumentIngestionAgent:
         except Exception as e:
             raise ChunkingError(str(e))
 
-    def _process_batch(self, batch: List[Any], is_first_batch: bool, max_retries: int = 3) -> Any:
+    def _process_batch(self, batch: List[Any], is_first_batch: bool, max_retries: int = 5) -> Any:
         """
         Process a single batch of documents with retry logic for rate limits.
         
         Args:
             batch: Documents to process
             is_first_batch: Whether this is the first batch
-            max_retries: Maximum number of retries for rate limit errors
+            max_retries: Maximum number of retries for rate limit errors (default: 5)
             
         Returns:
             The vectorstore instance
@@ -576,14 +576,20 @@ class DocumentIngestionAgent:
             except Exception as e:
                 error_msg = str(e).lower()
                 
-                # Check if it's a rate limit error
-                if any(word in error_msg for word in ["rate", "limit", "429", "too many requests"]):
+                # Check if it's a rate limit error (429, rate_limit_exceeded, etc.)
+                is_rate_limit = any(word in error_msg for word in [
+                    "rate", "limit", "429", "too many requests", 
+                    "rate_limit_exceeded", "quota"
+                ])
+                
+                if is_rate_limit:
                     retry_count += 1
                     if retry_count <= max_retries:
-                        # Exponential backoff: 2, 4, 8 seconds
-                        wait_time = 2 ** retry_count
+                        # Exponential backoff with longer waits: 5, 10, 20, 40, 60 seconds
+                        # Capped at 60 seconds to be reasonable
+                        wait_time = min(5 * (2 ** (retry_count - 1)), 60)
                         console.print(
-                            f"[yellow]Rate limit hit. Waiting {wait_time} seconds before retry "
+                            f"[yellow]⚠ Rate limit hit. Waiting {wait_time} seconds before retry "
                             f"({retry_count}/{max_retries})...[/yellow]"
                         )
                         time.sleep(wait_time)
@@ -591,8 +597,19 @@ class DocumentIngestionAgent:
                     else:
                         # All retries exhausted
                         console.print(
-                            f"[red]Rate limit retries exhausted. Consider using a smaller batch size "
-                            f"or longer delays.[/red]"
+                            f"[red]✗ Rate limit retries exhausted after {max_retries} attempts.[/red]"
+                        )
+                        console.print(
+                            f"[yellow]Recommendations:[/yellow]"
+                        )
+                        console.print(
+                            f"[yellow]  1. Use longer delays: --delay 3.0 or --delay 5.0[/yellow]"
+                        )
+                        console.print(
+                            f"[yellow]  2. Use smaller batches: --batch-size 25 or --batch-size 10[/yellow]"
+                        )
+                        console.print(
+                            f"[yellow]  3. Check OpenAI usage limits at: https://platform.openai.com/account/limits[/yellow]"
                         )
                         raise e
                 else:
@@ -606,9 +623,9 @@ class DocumentIngestionAgent:
     def ingest_documents_batch(
         self, 
         documents: List[Any], 
-        batch_size: int = 100,
+        batch_size: int = 50,
         show_progress: bool = True,
-        delay_between_batches: float = 1.0
+        delay_between_batches: float = 2.0
     ) -> bool:
         """
         Ingest documents into the vector database in batches.
@@ -621,8 +638,8 @@ class DocumentIngestionAgent:
             documents: List of documents to ingest
             batch_size: Number of documents to process in each batch
             show_progress: Whether to show progress bar
-            delay_between_batches: Seconds to wait between batches (default: 1.0)
-                                   Helps avoid rate limiting. Use 2.0+ for large batches.
+            delay_between_batches: Seconds to wait between batches (default: 2.0)
+                                   Helps avoid rate limiting. Use 3.0+ for very large batches.
 
         Returns:
             True if successful, False otherwise
@@ -690,14 +707,18 @@ class DocumentIngestionAgent:
             if "quota" in error_msg or "insufficient_quota" in error_msg or "429" in str(e):
                 console.print(f"[red]✗ OpenAI API Rate Limit or Quota Exceeded[/red]")
                 console.print(f"[yellow]You have hit OpenAI API limits (rate limiting or quota).[/yellow]")
-                console.print(f"[yellow]Solutions:[/yellow]")
-                console.print(f"[yellow]  1. Use longer delays between batches: --delay 2.0 or --delay 3.0[/yellow]")
-                console.print(f"[yellow]  2. Use smaller batch sizes: --batch-size 50 --delay 2.0[/yellow]")
-                console.print(f"[yellow]  3. Check your billing at: https://platform.openai.com/account/billing[/yellow]")
-                console.print(f"[yellow]  4. Add credits or upgrade your plan for higher limits[/yellow]")
-                console.print(f"[yellow]  5. Wait a few minutes and try again[/yellow]")
-                console.print(f"[yellow]\nNote: The system now includes automatic retries with exponential backoff.[/yellow]")
-                console.print(f"[yellow]Error details: {e}[/yellow]")
+                console.print(f"[yellow]\nRecommended Solutions (in order):[/yellow]")
+                console.print(f"[yellow]  1. Use smaller batches with longer delays:[/yellow]")
+                console.print(f"[cyan]     python ingest.py --docs-dir <path> --batch-size 25 --delay 5.0[/cyan]")
+                console.print(f"[yellow]  2. For very strict limits, use even smaller batches:[/yellow]")
+                console.print(f"[cyan]     python ingest.py --docs-dir <path> --batch-size 10 --delay 10.0[/cyan]")
+                console.print(f"[yellow]  3. Check your OpenAI usage and limits:[/yellow]")
+                console.print(f"[cyan]     https://platform.openai.com/account/limits[/cyan]")
+                console.print(f"[yellow]  4. Check your billing and add credits:[/yellow]")
+                console.print(f"[cyan]     https://platform.openai.com/account/billing[/cyan]")
+                console.print(f"[yellow]  5. Wait 5-10 minutes and try again with conservative settings[/yellow]")
+                console.print(f"[yellow]\nNote: The system includes automatic retries (up to 5 attempts) with exponential backoff.[/yellow]")
+                console.print(f"[dim]Error details: {e}[/dim]")
             # Check for rate limit errors
             elif "rate" in error_msg and "limit" in error_msg:
                 error = RateLimitError(service="OpenAI API")
@@ -789,13 +810,18 @@ class DocumentIngestionAgent:
             if "quota" in error_msg or "insufficient_quota" in error_msg or "429" in str(e):
                 console.print(f"[red]✗ OpenAI API Rate Limit or Quota Exceeded[/red]")
                 console.print(f"[yellow]You have hit OpenAI API limits (rate limiting or quota).[/yellow]")
-                console.print(f"[yellow]Solutions:[/yellow]")
-                console.print(f"[yellow]  1. Use batch processing with delays: --use-batch --batch-size 50 --delay 2.0[/yellow]")
-                console.print(f"[yellow]  2. Check your billing at: https://platform.openai.com/account/billing[/yellow]")
-                console.print(f"[yellow]  3. Add credits or upgrade your plan for higher limits[/yellow]")
-                console.print(f"[yellow]  4. Wait a few minutes and try again[/yellow]")
-                console.print(f"[yellow]\nNote: The system now includes automatic retries with exponential backoff.[/yellow]")
-                console.print(f"[yellow]Error details: {e}[/yellow]")
+                console.print(f"[yellow]\nRecommended Solutions (in order):[/yellow]")
+                console.print(f"[yellow]  1. Use batch processing with conservative settings:[/yellow]")
+                console.print(f"[cyan]     python ingest.py --docs-dir <path> --use-batch --batch-size 25 --delay 5.0[/cyan]")
+                console.print(f"[yellow]  2. For very strict limits:[/yellow]")
+                console.print(f"[cyan]     python ingest.py --docs-dir <path> --use-batch --batch-size 10 --delay 10.0[/cyan]")
+                console.print(f"[yellow]  3. Check your OpenAI usage and limits:[/yellow]")
+                console.print(f"[cyan]     https://platform.openai.com/account/limits[/cyan]")
+                console.print(f"[yellow]  4. Check your billing and add credits:[/yellow]")
+                console.print(f"[cyan]     https://platform.openai.com/account/billing[/cyan]")
+                console.print(f"[yellow]  5. Wait 5-10 minutes and try again[/yellow]")
+                console.print(f"[yellow]\nNote: The system includes automatic retries (up to 5 attempts) with exponential backoff.[/yellow]")
+                console.print(f"[dim]Error details: {e}[/dim]")
             # Check for rate limit errors
             elif "rate" in error_msg and "limit" in error_msg:
                 error = RateLimitError(service="OpenAI API")
@@ -895,8 +921,9 @@ def main():
     parser.add_argument(
         "--batch-size",
         type=int,
-        default=100,
-        help="Batch size for processing large document sets (default: 100)",
+        default=50,
+        help="Batch size for processing large document sets (default: 50). "
+             "Use 25 or lower if you encounter rate limits.",
     )
     parser.add_argument(
         "--use-batch",
@@ -906,9 +933,9 @@ def main():
     parser.add_argument(
         "--delay",
         type=float,
-        default=1.0,
-        help="Delay in seconds between batches to avoid rate limiting (default: 1.0). "
-             "Use 2.0+ for large document sets to avoid API rate limits.",
+        default=2.0,
+        help="Delay in seconds between batches to avoid rate limiting (default: 2.0). "
+             "Use 3.0+ for very large document sets or if you hit rate limits.",
     )
 
     args = parser.parse_args()
@@ -975,10 +1002,15 @@ def main():
         
         # Recommend longer delay for very large document sets
         delay = args.delay
-        if len(chunks) > 1000 and delay < 2.0:
+        if len(chunks) > 1000 and delay < 3.0:
             console.print(
-                f"[yellow]Note: Processing {len(chunks)} chunks. Consider using --delay 2.0 or higher "
+                f"[yellow]Note: Processing {len(chunks)} chunks. Consider using --delay 3.0 or higher "
                 f"to avoid rate limits.[/yellow]\n"
+            )
+        elif len(chunks) > 500 and delay < 2.0:
+            console.print(
+                f"[yellow]Note: Processing {len(chunks)} chunks. Current delay is {delay}s. "
+                f"If you hit rate limits, try --delay 3.0[/yellow]\n"
             )
         
         success = agent.ingest_documents_batch(
