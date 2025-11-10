@@ -507,6 +507,132 @@ class DocumentIngestionAgent:
         except Exception as e:
             raise ChunkingError(str(e))
 
+    def ingest_documents_batch(
+        self, 
+        documents: List[Any], 
+        batch_size: int = 100,
+        show_progress: bool = True
+    ) -> bool:
+        """
+        Ingest documents into the vector database in batches.
+        
+        This method is more memory efficient for large document sets
+        and provides better progress tracking.
+
+        Args:
+            documents: List of documents to ingest
+            batch_size: Number of documents to process in each batch
+            show_progress: Whether to show progress bar
+
+        Returns:
+            True if successful, False otherwise
+        """
+        if not documents:
+            console.print("[yellow]No documents to ingest[/yellow]")
+            return False
+
+        try:
+            total_batches = (len(documents) + batch_size - 1) // batch_size
+            
+            if show_progress:
+                from rich.progress import Progress, BarColumn, TextColumn, TimeRemainingColumn
+                
+                with Progress(
+                    TextColumn("[progress.description]{task.description}"),
+                    BarColumn(),
+                    TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
+                    TimeRemainingColumn(),
+                    console=console,
+                ) as progress:
+                    task = progress.add_task(
+                        f"Ingesting {len(documents)} documents in {total_batches} batches...",
+                        total=len(documents)
+                    )
+                    
+                    for i in range(0, len(documents), batch_size):
+                        batch = documents[i:i + batch_size]
+                        
+                        # Create or load vector store
+                        if i == 0:
+                            vectorstore = Chroma.from_documents(
+                                documents=batch,
+                                embedding=self.embeddings,
+                                collection_name=self.collection_name,
+                                persist_directory=self.persist_directory,
+                            )
+                        else:
+                            vectorstore = Chroma(
+                                collection_name=self.collection_name,
+                                embedding_function=self.embeddings,
+                                persist_directory=self.persist_directory,
+                            )
+                            vectorstore.add_documents(batch)
+                        
+                        # Persist after each batch
+                        vectorstore.persist()
+                        
+                        progress.update(task, advance=len(batch))
+            else:
+                # No progress bar
+                for i in range(0, len(documents), batch_size):
+                    batch = documents[i:i + batch_size]
+                    
+                    if i == 0:
+                        vectorstore = Chroma.from_documents(
+                            documents=batch,
+                            embedding=self.embeddings,
+                            collection_name=self.collection_name,
+                            persist_directory=self.persist_directory,
+                        )
+                    else:
+                        vectorstore = Chroma(
+                            collection_name=self.collection_name,
+                            embedding_function=self.embeddings,
+                            persist_directory=self.persist_directory,
+                        )
+                        vectorstore.add_documents(batch)
+                    
+                    vectorstore.persist()
+
+            console.print(
+                f"[green]✓ Successfully ingested {len(documents)} documents![/green]"
+            )
+            console.print(
+                f"[cyan]Collection: {self.collection_name}[/cyan]"
+            )
+            console.print(
+                f"[cyan]Storage: {self.persist_directory}[/cyan]"
+            )
+            return True
+
+        except Exception as e:
+            error_msg = str(e).lower()
+            
+            # Check for rate limit errors
+            if "rate" in error_msg and "limit" in error_msg:
+                error = RateLimitError(service="OpenAI API")
+                console.print(f"[red]{error.message}[/red]")
+                console.print(f"[yellow]{error.details}[/yellow]")
+            # Check for API key errors
+            elif "api" in error_msg and "key" in error_msg:
+                error = APIKeyError("OpenAI")
+                console.print(f"[red]{error.message}[/red]")
+                console.print(f"[yellow]{error.details}[/yellow]")
+            # Check for network/connection errors
+            elif any(word in error_msg for word in ["connection", "network", "timeout"]):
+                error = NetworkError("batch ingestion")
+                console.print(f"[red]{error.message}[/red]")
+                console.print(f"[yellow]{error.details}[/yellow]")
+            # Check for database errors
+            elif any(word in error_msg for word in ["chroma", "database", "persist"]):
+                error = DatabaseError("batch ingestion", str(e))
+                console.print(f"[red]{error.message}[/red]")
+                console.print(f"[yellow]{error.details}[/yellow]")
+            else:
+                console.print(f"[red]Error during batch ingestion: {e}[/red]")
+            
+            return False
+
     def ingest_documents(self, documents: List[Any]) -> bool:
         """
         Ingest documents into the vector database.
@@ -665,6 +791,17 @@ def main():
         action="store_true",
         help="Show database statistics",
     )
+    parser.add_argument(
+        "--batch-size",
+        type=int,
+        default=100,
+        help="Batch size for processing large document sets (default: 100)",
+    )
+    parser.add_argument(
+        "--use-batch",
+        action="store_true",
+        help="Use batch processing mode (recommended for large document sets)",
+    )
 
     args = parser.parse_args()
 
@@ -721,8 +858,15 @@ def main():
 
     console.print(f"\n[green]Created {len(chunks)} chunks[/green]\n")
 
-    # Ingest documents
-    success = agent.ingest_documents(chunks)
+    # Ingest documents (use batch mode for large sets or if explicitly requested)
+    if args.use_batch or len(chunks) > 200:
+        if not args.use_batch:
+            console.print(
+                f"[yellow]Detected {len(chunks)} chunks. Automatically using batch processing.[/yellow]\n"
+            )
+        success = agent.ingest_documents_batch(chunks, batch_size=args.batch_size)
+    else:
+        success = agent.ingest_documents(chunks)
 
     if success:
         console.print("\n[bold green]✓ Ingestion complete![/bold green]")
