@@ -174,6 +174,7 @@ Adastrea-Director/
 ### Project Documentation
 - [Project Plan](PROJECT_PLAN.md) - Detailed breakdown of all four phases
 - [Agent System](AGENTS.md) - Architecture and design of the agent system
+- [Agent System Assessment](AGENTS_UTILITY_ASSESSMENT.md) - Comprehensive evaluation of agent architecture utility
 - [GDD Template](GDD_TEMPLATE.md) - Template for creating game design documents
 
 ### UI/UX Design Documentation
