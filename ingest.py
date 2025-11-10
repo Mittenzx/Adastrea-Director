@@ -51,6 +51,7 @@ try:
         RecursiveCharacterTextSplitter,
         Language,
     )
+    from langchain_core.documents import Document
     from langchain_openai import OpenAIEmbeddings
     from langchain_community.vectorstores import Chroma
     from rich.console import Console
@@ -133,12 +134,84 @@ class DocumentIngestionAgent:
             separators=["\n\n", "\n", " ", ""],
         )
         
-        # Initialize code-specific text splitter for Python files
-        self.code_splitter = RecursiveCharacterTextSplitter.from_language(
-            language=Language.PYTHON,
-            chunk_size=chunk_size,
-            chunk_overlap=chunk_overlap,
-        )
+        # Initialize code-specific text splitters for different languages
+        self.code_splitters = {
+            Language.PYTHON: RecursiveCharacterTextSplitter.from_language(
+                language=Language.PYTHON,
+                chunk_size=chunk_size,
+                chunk_overlap=chunk_overlap,
+            ),
+            Language.JS: RecursiveCharacterTextSplitter.from_language(
+                language=Language.JS,
+                chunk_size=chunk_size,
+                chunk_overlap=chunk_overlap,
+            ),
+            Language.TS: RecursiveCharacterTextSplitter.from_language(
+                language=Language.TS,
+                chunk_size=chunk_size,
+                chunk_overlap=chunk_overlap,
+            ),
+            Language.CPP: RecursiveCharacterTextSplitter.from_language(
+                language=Language.CPP,
+                chunk_size=chunk_size,
+                chunk_overlap=chunk_overlap,
+            ),
+            Language.CSHARP: RecursiveCharacterTextSplitter.from_language(
+                language=Language.CSHARP,
+                chunk_size=chunk_size,
+                chunk_overlap=chunk_overlap,
+            ),
+        }
+
+    def _enrich_document_metadata(self, documents: List[Any]) -> List[Any]:
+        """
+        Enrich document metadata with additional information.
+        
+        Args:
+            documents: List of documents to enrich
+            
+        Returns:
+            List of documents with enriched metadata
+        """
+        for doc in documents:
+            try:
+                source = doc.metadata.get("source", "")
+                if source and isinstance(source, str):
+                    source_path = Path(source)
+                    
+                    # Add file information
+                    doc.metadata["filename"] = source_path.name
+                    doc.metadata["extension"] = source_path.suffix.lower()
+                    
+                    # Detect document type
+                    extension = source_path.suffix.lower()
+                    if extension in [".md", ".txt"]:
+                        doc.metadata["doc_type"] = "documentation"
+                    elif extension in [".pdf", ".docx"]:
+                        doc.metadata["doc_type"] = "document"
+                    elif extension in [".py", ".js", ".jsx", ".ts", ".tsx", ".cpp", ".cc", ".cxx", ".h", ".hpp", ".cs"]:
+                        doc.metadata["doc_type"] = "code"
+                    elif extension in [".json", ".yaml", ".yml"]:
+                        doc.metadata["doc_type"] = "config"
+                    else:
+                        doc.metadata["doc_type"] = "other"
+                    
+                    # Detect programming language for code files
+                    language = self._detect_language(source)
+                    if language:
+                        doc.metadata["language"] = language.value
+                    
+                    # Add file size if available
+                    try:
+                        if source_path.exists():
+                            doc.metadata["file_size"] = source_path.stat().st_size
+                    except:
+                        pass
+            except Exception:
+                # Skip metadata enrichment if there's any error
+                pass
+        
+        return documents
 
     def load_documents_from_directory(self, directory: str) -> List[Any]:
         """
@@ -159,11 +232,30 @@ class DocumentIngestionAgent:
 
         # Define loaders for different file types
         loader_mapping = {
+            # Documentation files
             ".md": UnstructuredMarkdownLoader,
             ".txt": TextLoader,
-            ".py": PythonLoader,
             ".pdf": PyPDFLoader,
             ".docx": Docx2txtLoader,
+            # Code files - Python
+            ".py": PythonLoader,
+            # Code files - JavaScript/TypeScript (use TextLoader for now)
+            ".js": TextLoader,
+            ".jsx": TextLoader,
+            ".ts": TextLoader,
+            ".tsx": TextLoader,
+            # Code files - C++
+            ".cpp": TextLoader,
+            ".cc": TextLoader,
+            ".cxx": TextLoader,
+            ".h": TextLoader,
+            ".hpp": TextLoader,
+            # Code files - C#
+            ".cs": TextLoader,
+            # Config files
+            ".json": TextLoader,
+            ".yaml": TextLoader,
+            ".yml": TextLoader,
         }
 
         with Progress(
@@ -211,6 +303,9 @@ class DocumentIngestionAgent:
                         f"[yellow]Warning: Error loading {extension} files: {e}[/yellow]"
                     )
 
+        # Enrich metadata for loaded documents
+        documents = self._enrich_document_metadata(documents)
+        
         return documents
 
     def load_single_file(self, file_path: str) -> List[Any]:
@@ -232,11 +327,30 @@ class DocumentIngestionAgent:
         # Determine loader based on extension
         extension = file_path_obj.suffix.lower()
         loader_mapping = {
+            # Documentation files
             ".md": UnstructuredMarkdownLoader,
             ".txt": TextLoader,
-            ".py": PythonLoader,
             ".pdf": PyPDFLoader,
             ".docx": Docx2txtLoader,
+            # Code files - Python
+            ".py": PythonLoader,
+            # Code files - JavaScript/TypeScript
+            ".js": TextLoader,
+            ".jsx": TextLoader,
+            ".ts": TextLoader,
+            ".tsx": TextLoader,
+            # Code files - C++
+            ".cpp": TextLoader,
+            ".cc": TextLoader,
+            ".cxx": TextLoader,
+            ".h": TextLoader,
+            ".hpp": TextLoader,
+            # Code files - C#
+            ".cs": TextLoader,
+            # Config files
+            ".json": TextLoader,
+            ".yaml": TextLoader,
+            ".yml": TextLoader,
         }
 
         loader_class = loader_mapping.get(extension, TextLoader)
@@ -286,6 +400,37 @@ class DocumentIngestionAgent:
                 console.print(f"[red]Error loading file: {e}[/red]")
                 console.print(f"[yellow]File: {file_path}[/yellow]")
             return []
+        
+        # Enrich metadata for loaded document
+        documents = self._enrich_document_metadata(documents)
+        
+        return documents
+
+    def _detect_language(self, source: str) -> Language:
+        """
+        Detect the programming language based on file extension.
+        
+        Args:
+            source: Source file path
+            
+        Returns:
+            Language enum or None if not a code file
+        """
+        extension = Path(source).suffix.lower()
+        language_map = {
+            ".py": Language.PYTHON,
+            ".js": Language.JS,
+            ".jsx": Language.JS,
+            ".ts": Language.TS,
+            ".tsx": Language.TS,
+            ".cpp": Language.CPP,
+            ".cc": Language.CPP,
+            ".cxx": Language.CPP,
+            ".h": Language.CPP,
+            ".hpp": Language.CPP,
+            ".cs": Language.CSHARP,
+        }
+        return language_map.get(extension)
 
     def chunk_documents(self, documents: List[Any]) -> List[Any]:
         """
@@ -311,31 +456,37 @@ class DocumentIngestionAgent:
             ) as progress:
                 task = progress.add_task("Chunking documents...", total=None)
                 
-                # Separate documents by type for optimized chunking
-                # Currently only Python files get code-aware chunking;
-                # all other files (including other code languages) use text chunking
-                code_docs = []
+                # Separate documents by language for optimized chunking
+                docs_by_language = {lang: [] for lang in self.code_splitters.keys()}
                 text_docs = []
                 
                 for doc in documents:
                     source = doc.metadata.get("source", "")
-                    # Only Python files use the code-aware splitter
-                    if source.endswith(".py"):
-                        code_docs.append(doc)
+                    language = self._detect_language(source)
+                    
+                    if language and language in self.code_splitters:
+                        docs_by_language[language].append(doc)
                     else:
                         text_docs.append(doc)
                 
                 # Chunk with appropriate splitters
                 chunks = []
-                if code_docs:
-                    chunks.extend(self.code_splitter.split_documents(code_docs))
+                code_doc_count = 0
+                
+                # Process code documents with language-specific splitters
+                for language, docs in docs_by_language.items():
+                    if docs:
+                        chunks.extend(self.code_splitters[language].split_documents(docs))
+                        code_doc_count += len(docs)
+                
+                # Process text documents
                 if text_docs:
                     chunks.extend(self.text_splitter.split_documents(text_docs))
                 
                 progress.update(
                     task,
                     description=f"Created {len(chunks)} chunks from {len(documents)} documents "
-                               f"({len(code_docs)} code, {len(text_docs)} text)",
+                               f"({code_doc_count} code, {len(text_docs)} text)",
                 )
 
             return chunks
