@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import scrolledtext, messagebox, Menu, font
+from tkinter import scrolledtext, messagebox, Menu, font, filedialog
 import subprocess
 import threading
 import sys
@@ -139,15 +139,35 @@ class AdastreaDirectorApp:
             "highlightcolor": self.accent_color
         }
 
-        self.ingest_button = tk.Button(
+        self.ingest_folder_button = tk.Button(
             actions_inner,
-            text="📚 Update Knowledge Base",
-            command=self.run_ingestion,
+            text="📁 Ingest Folder",
+            command=self.ingest_folder,
             **button_style
         )
-        self.ingest_button.pack(side=tk.LEFT, padx=(0, 8))
-        self.create_tooltip(self.ingest_button, "Load and process project documents (Ctrl+U)")
-        self.add_button_hover_effect(self.ingest_button)
+        self.ingest_folder_button.pack(side=tk.LEFT, padx=(0, 8))
+        self.create_tooltip(self.ingest_folder_button, "Select a folder to ingest documents from")
+        self.add_button_hover_effect(self.ingest_folder_button)
+
+        self.ingest_file_button = tk.Button(
+            actions_inner,
+            text="📄 Ingest File",
+            command=self.ingest_file,
+            **button_style
+        )
+        self.ingest_file_button.pack(side=tk.LEFT, padx=(0, 8))
+        self.create_tooltip(self.ingest_file_button, "Select a single file to ingest")
+        self.add_button_hover_effect(self.ingest_file_button)
+
+        self.ingest_repo_button = tk.Button(
+            actions_inner,
+            text="🔗 Ingest Repo",
+            command=self.ingest_github_repo,
+            **button_style
+        )
+        self.ingest_repo_button.pack(side=tk.LEFT, padx=(0, 8))
+        self.create_tooltip(self.ingest_repo_button, "Ingest documents from a GitHub repository")
+        self.add_button_hover_effect(self.ingest_repo_button)
 
         self.api_key_button = tk.Button(
             actions_inner,
@@ -572,8 +592,8 @@ class AdastreaDirectorApp:
         """Bind keyboard shortcuts."""
         self.root.bind("<Control-k>", lambda e: self.set_api_key())
         self.root.bind("<Control-K>", lambda e: self.set_api_key())
-        self.root.bind("<Control-u>", lambda e: self.run_ingestion())
-        self.root.bind("<Control-U>", lambda e: self.run_ingestion())
+        self.root.bind("<Control-u>", lambda e: self.ingest_folder())
+        self.root.bind("<Control-U>", lambda e: self.ingest_folder())
         self.root.bind("<Control-l>", lambda e: self.clear_conversation())
         self.root.bind("<Control-L>", lambda e: self.clear_conversation())
         self.root.bind("<Control-e>", lambda e: self.export_conversation())
@@ -588,7 +608,10 @@ Your AI-powered game development assistant is ready to help.
 
 Getting Started:
 1. Set your OpenAI API Key (🔑 button or Ctrl+K)
-2. Update the knowledge base with your project docs (📚 button or Ctrl+U)
+2. Load documents into the knowledge base:
+   • 📁 Ingest Folder - Select a folder containing your docs (Ctrl+U)
+   • 📄 Ingest File - Select a single document to add
+   • 🔗 Ingest Repo - Clone and ingest from a GitHub repository
 3. Ask questions about your game design, code, or documentation
 
 Try asking:
@@ -601,7 +624,7 @@ Keyboard Shortcuts:
 • Ctrl+L - Clear conversation
 • Ctrl+C - Copy last response
 • Ctrl+K - Set API key
-• Ctrl+U - Update knowledge base
+• Ctrl+U - Ingest folder
 
 Type your question below to get started! 🚀
 """
@@ -706,9 +729,201 @@ Type your question below to get started! 🚀
         if not os.getenv("OPENAI_API_KEY"):
             self.root.after(500, self.set_api_key)
 
-    def run_ingestion(self):
-        """Runs the ingest.py script in a separate thread."""
-        self.run_script_in_thread('ingest.py', "🤔 Ingesting documents...")
+    def ingest_folder(self):
+        """Opens a folder selection dialog and ingests documents from the selected folder."""
+        folder_path = filedialog.askdirectory(
+            title="Select Folder to Ingest",
+            initialdir=SCRIPT_DIR
+        )
+        
+        if folder_path:
+            self.add_to_conversation("System", f"Ingesting documents from: {folder_path}", is_system=True)
+            self.run_script_in_thread('ingest.py', f"🤔 Ingesting documents from folder...", '--docs-dir', folder_path)
+        else:
+            self.update_status("Folder selection cancelled", "info")
+    
+    def ingest_file(self):
+        """Opens a file selection dialog and ingests a single document."""
+        file_path = filedialog.askopenfilename(
+            title="Select File to Ingest",
+            initialdir=SCRIPT_DIR,
+            filetypes=[
+                ("All Supported", "*.md *.txt *.py"),
+                ("Markdown files", "*.md"),
+                ("Text files", "*.txt"),
+                ("Python files", "*.py"),
+                ("All files", "*.*")
+            ]
+        )
+        
+        if file_path:
+            self.add_to_conversation("System", f"Ingesting file: {file_path}", is_system=True)
+            self.run_script_in_thread('ingest.py', f"🤔 Ingesting file...", '--file', file_path)
+        else:
+            self.update_status("File selection cancelled", "info")
+    
+    def ingest_github_repo(self):
+        """Opens a dialog to input a GitHub repository URL and clones/ingests it."""
+        dialog = tk.Toplevel(self.root)
+        dialog.title("Ingest GitHub Repository")
+        dialog.geometry("500x220")
+        dialog.configure(bg=self.bg_color)
+        dialog.transient(self.root)
+        dialog.grab_set()
+        
+        # Center the dialog
+        dialog.update_idletasks()
+        x = (dialog.winfo_screenwidth() // 2) - (dialog.winfo_width() // 2)
+        y = (dialog.winfo_screenheight() // 2) - (dialog.winfo_height() // 2)
+        dialog.geometry(f"+{x}+{y}")
+        
+        tk.Label(
+            dialog,
+            text="Enter GitHub Repository URL:",
+            bg=self.bg_color,
+            fg=self.fg_color,
+            font=("Segoe UI", 11)
+        ).pack(pady=(20, 5), padx=20)
+        
+        tk.Label(
+            dialog,
+            text="Example: https://github.com/username/repository",
+            bg=self.bg_color,
+            fg=self.fg_muted,
+            font=("Segoe UI", 9)
+        ).pack(pady=(0, 10), padx=20)
+        
+        repo_entry = tk.Entry(
+            dialog,
+            font=("Segoe UI", 10),
+            bg=self.text_bg,
+            fg=self.fg_color,
+            insertbackground=self.fg_color,
+            relief=tk.FLAT,
+            highlightthickness=1,
+            highlightbackground=self.button_bg,
+            highlightcolor=self.accent_color,
+            width=50
+        )
+        repo_entry.pack(pady=10, padx=20)
+        repo_entry.focus()
+        
+        def on_ok():
+            repo_url = repo_entry.get().strip()
+            if repo_url:
+                # Extract repo name from URL for folder name
+                repo_name = repo_url.rstrip('/').split('/')[-1].replace('.git', '')
+                clone_dir = os.path.join('/tmp', f'github_repo_{repo_name}')
+                
+                # Clone the repository
+                self.add_to_conversation("System", f"Cloning repository: {repo_url}", is_system=True)
+                dialog.destroy()
+                
+                # Run git clone in a thread, then ingest
+                self._clone_and_ingest_repo(repo_url, clone_dir)
+            else:
+                messagebox.showwarning("Invalid Input", "Please enter a valid GitHub repository URL.")
+        
+        def on_cancel():
+            dialog.destroy()
+        
+        repo_entry.bind("<Return>", lambda e: on_ok())
+        repo_entry.bind("<Escape>", lambda e: on_cancel())
+        
+        button_frame = tk.Frame(dialog, bg=self.bg_color)
+        button_frame.pack(pady=20)
+        
+        tk.Button(
+            button_frame,
+            text="Clone & Ingest",
+            command=on_ok,
+            bg=self.accent_color,
+            fg="#20232b",
+            activebackground="#5bb8ff",
+            activeforeground="#20232b",
+            relief=tk.FLAT,
+            padx=24,
+            pady=8,
+            cursor="hand2",
+            font=("Segoe UI", 10),
+            borderwidth=0
+        ).pack(side=tk.LEFT, padx=5)
+        
+        tk.Button(
+            button_frame,
+            text="Cancel",
+            command=on_cancel,
+            bg=self.button_bg,
+            fg=self.fg_color,
+            activebackground=self.button_active,
+            activeforeground=self.fg_color,
+            relief=tk.FLAT,
+            padx=24,
+            pady=8,
+            cursor="hand2",
+            font=("Segoe UI", 10),
+            borderwidth=1,
+            highlightthickness=1,
+            highlightbackground=self.button_bg
+        ).pack(side=tk.LEFT, padx=5)
+    
+    def _clone_and_ingest_repo(self, repo_url, clone_dir):
+        """Clone a GitHub repository and then ingest its documents."""
+        import shutil
+        
+        # Disable buttons
+        self.ingest_folder_button.config(state=tk.DISABLED)
+        self.ingest_file_button.config(state=tk.DISABLED)
+        self.ingest_repo_button.config(state=tk.DISABLED)
+        self.ask_button.config(state=tk.DISABLED)
+        self.update_status(f"Cloning repository...", "busy")
+        
+        def clone_and_ingest():
+            try:
+                # Remove existing directory if it exists
+                if os.path.exists(clone_dir):
+                    shutil.rmtree(clone_dir)
+                
+                # Clone the repository
+                clone_process = subprocess.run(
+                    ['git', 'clone', '--depth', '1', repo_url, clone_dir],
+                    capture_output=True,
+                    text=True
+                )
+                
+                if clone_process.returncode != 0:
+                    error_msg = f"Failed to clone repository:\n{clone_process.stderr}"
+                    self.root.after(0, self._show_clone_error, error_msg)
+                    return
+                
+                # Now ingest the cloned repository
+                self.root.after(0, self._ingest_cloned_repo, clone_dir)
+                
+            except Exception as e:
+                self.root.after(0, self._show_clone_error, str(e))
+        
+        thread = threading.Thread(target=clone_and_ingest)
+        thread.start()
+    
+    def _show_clone_error(self, error_msg):
+        """Show error message when cloning fails."""
+        self.response_text.config(state=tk.NORMAL)
+        self.response_text.insert(tk.END, "❌ ", "error")
+        self.response_text.insert(tk.END, f"Error cloning repository:\n{error_msg}\n\n", "error")
+        self.response_text.see(tk.END)
+        self.response_text.config(state=tk.DISABLED)
+        self.update_status("Failed to clone repository", "error")
+        
+        # Re-enable buttons
+        self.ingest_folder_button.config(state=tk.NORMAL)
+        self.ingest_file_button.config(state=tk.NORMAL)
+        self.ingest_repo_button.config(state=tk.NORMAL)
+        self.ask_button.config(state=tk.NORMAL)
+    
+    def _ingest_cloned_repo(self, clone_dir):
+        """Ingest documents from the cloned repository."""
+        self.add_to_conversation("System", f"Repository cloned successfully. Ingesting documents...", is_system=True)
+        self.run_script_in_thread('ingest.py', f"🤔 Ingesting documents from repository...", '--docs-dir', clone_dir)
 
     def clear_conversation(self):
         """Clear the conversation display with confirmation."""
@@ -804,7 +1019,7 @@ Editing:
 
 Actions:
 • Enter or Ctrl+Enter - Send question
-• Ctrl+U - Update knowledge base
+• Ctrl+U - Ingest folder (opens file dialog)
 
 Navigation:
 • Alt+F4 - Exit application
@@ -891,7 +1106,9 @@ GitHub: Mittenzx/Adastrea-Director
         """
         Generic function to run a python script in a thread to keep the GUI responsive.
         """
-        self.ingest_button.config(state=tk.DISABLED)
+        self.ingest_folder_button.config(state=tk.DISABLED)
+        self.ingest_file_button.config(state=tk.DISABLED)
+        self.ingest_repo_button.config(state=tk.DISABLED)
         self.ask_button.config(state=tk.DISABLED)
         self.update_status(status_message, "busy")
         
@@ -943,7 +1160,9 @@ GitHub: Mittenzx/Adastrea-Director
             self.response_text.config(state=tk.DISABLED)
             self.update_status("An error occurred • Check the conversation for details", "error")
             
-        self.ingest_button.config(state=tk.NORMAL)
+        self.ingest_folder_button.config(state=tk.NORMAL)
+        self.ingest_file_button.config(state=tk.NORMAL)
+        self.ingest_repo_button.config(state=tk.NORMAL)
         self.ask_button.config(state=tk.NORMAL)
         self.query_entry.focus()
 
