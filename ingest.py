@@ -51,7 +51,6 @@ try:
         RecursiveCharacterTextSplitter,
         Language,
     )
-    from langchain_core.documents import Document
     from langchain_openai import OpenAIEmbeddings
     from langchain_community.vectorstores import Chroma
     from rich.console import Console
@@ -205,11 +204,13 @@ class DocumentIngestionAgent:
                     try:
                         if source_path.exists():
                             doc.metadata["file_size"] = source_path.stat().st_size
-                    except:
+                    except (OSError, IOError):
+                        # Ignore file system errors when getting file size
                         pass
-            except Exception:
+            except Exception as e:
                 # Skip metadata enrichment if there's any error
-                pass
+                source = doc.metadata.get("source", "unknown")
+                console.print(f"[yellow]Warning: Failed to enrich metadata for '{source}': {e}[/yellow]")
         
         return documents
 
@@ -359,6 +360,8 @@ class DocumentIngestionAgent:
             loader = loader_class(file_path)
             documents = loader.load()
             console.print(f"[green]Loaded {file_path}[/green]")
+            # Enrich metadata for loaded document
+            documents = self._enrich_document_metadata(documents)
             return documents
         except UnicodeDecodeError as e:
             error = FileEncodingError(file_path)
@@ -400,11 +403,6 @@ class DocumentIngestionAgent:
                 console.print(f"[red]Error loading file: {e}[/red]")
                 console.print(f"[yellow]File: {file_path}[/yellow]")
             return []
-        
-        # Enrich metadata for loaded document
-        documents = self._enrich_document_metadata(documents)
-        
-        return documents
 
     def _detect_language(self, source: str) -> Language:
         """
@@ -507,6 +505,36 @@ class DocumentIngestionAgent:
         except Exception as e:
             raise ChunkingError(str(e))
 
+    def _process_batch(self, batch: List[Any], is_first_batch: bool) -> Any:
+        """
+        Process a single batch of documents.
+        
+        Args:
+            batch: Documents to process
+            is_first_batch: Whether this is the first batch
+            
+        Returns:
+            The vectorstore instance
+        """
+        if is_first_batch:
+            vectorstore = Chroma.from_documents(
+                documents=batch,
+                embedding=self.embeddings,
+                collection_name=self.collection_name,
+                persist_directory=self.persist_directory,
+            )
+        else:
+            vectorstore = Chroma(
+                collection_name=self.collection_name,
+                embedding_function=self.embeddings,
+                persist_directory=self.persist_directory,
+            )
+            vectorstore.add_documents(batch)
+        
+        # Persist after each batch
+        vectorstore.persist()
+        return vectorstore
+
     def ingest_documents_batch(
         self, 
         documents: List[Any], 
@@ -551,48 +579,13 @@ class DocumentIngestionAgent:
                     
                     for i in range(0, len(documents), batch_size):
                         batch = documents[i:i + batch_size]
-                        
-                        # Create or load vector store
-                        if i == 0:
-                            vectorstore = Chroma.from_documents(
-                                documents=batch,
-                                embedding=self.embeddings,
-                                collection_name=self.collection_name,
-                                persist_directory=self.persist_directory,
-                            )
-                        else:
-                            vectorstore = Chroma(
-                                collection_name=self.collection_name,
-                                embedding_function=self.embeddings,
-                                persist_directory=self.persist_directory,
-                            )
-                            vectorstore.add_documents(batch)
-                        
-                        # Persist after each batch
-                        vectorstore.persist()
-                        
+                        self._process_batch(batch, is_first_batch=(i == 0))
                         progress.update(task, advance=len(batch))
             else:
                 # No progress bar
                 for i in range(0, len(documents), batch_size):
                     batch = documents[i:i + batch_size]
-                    
-                    if i == 0:
-                        vectorstore = Chroma.from_documents(
-                            documents=batch,
-                            embedding=self.embeddings,
-                            collection_name=self.collection_name,
-                            persist_directory=self.persist_directory,
-                        )
-                    else:
-                        vectorstore = Chroma(
-                            collection_name=self.collection_name,
-                            embedding_function=self.embeddings,
-                            persist_directory=self.persist_directory,
-                        )
-                        vectorstore.add_documents(batch)
-                    
-                    vectorstore.persist()
+                    self._process_batch(batch, is_first_batch=(i == 0))
 
             console.print(
                 f"[green]✓ Successfully ingested {len(documents)} documents![/green]"

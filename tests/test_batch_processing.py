@@ -11,7 +11,7 @@ Tests cover:
 
 import os
 import sys
-from unittest.mock import Mock, patch, call
+from unittest.mock import Mock, patch
 import pytest
 
 # Add parent directory to path for imports
