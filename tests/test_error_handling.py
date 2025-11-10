@@ -21,21 +21,24 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from ingest import DocumentIngestionAgent
 from main import QueryAgent
+from exceptions import (
+    APIKeyError,
+    ValidationError,
+    ChunkingError,
+)
 
 
 class TestAPIKeyErrors:
     """Test error handling for missing or invalid API keys."""
 
     @patch.dict(os.environ, {}, clear=True)
-    @patch('ingest.sys.exit')
-    def test_missing_openai_key_ingest(self, mock_exit):
+    def test_missing_openai_key_ingest(self):
         """Test that missing OpenAI key is handled in ingestion."""
         with patch('ingest.OpenAIEmbeddings') as mock_embeddings:
             mock_embeddings.side_effect = Exception("OPENAI_API_KEY not found")
             
-            DocumentIngestionAgent()
-            
-            mock_exit.assert_called_once_with(1)
+            with pytest.raises(APIKeyError):
+                DocumentIngestionAgent()
 
     @patch.dict(os.environ, {}, clear=True)
     @patch('main.sys.exit')
@@ -53,9 +56,8 @@ class TestAPIKeyErrors:
         """Test handling of invalid API key format."""
         mock_embeddings.side_effect = Exception("Invalid API key format")
         
-        with patch('ingest.sys.exit') as mock_exit:
+        with pytest.raises(APIKeyError):
             DocumentIngestionAgent()
-            mock_exit.assert_called_once_with(1)
 
 
 class TestFilePathErrors:
@@ -231,8 +233,8 @@ class TestConfigurationErrors:
         with patch('ingest.OpenAIEmbeddings') as mock_embeddings:
             mock_embeddings.return_value = Mock()
             
-            # Negative chunk size should raise ValueError
-            with pytest.raises(ValueError):
+            # Negative chunk size should raise ValidationError
+            with pytest.raises(ValidationError):
                 DocumentIngestionAgent(chunk_size=-100)
 
     def test_invalid_chunk_overlap(self):
@@ -240,8 +242,8 @@ class TestConfigurationErrors:
         with patch('ingest.OpenAIEmbeddings') as mock_embeddings:
             mock_embeddings.return_value = Mock()
             
-            # Overlap larger than chunk size should raise ValueError
-            with pytest.raises(ValueError):
+            # Overlap larger than chunk size should raise ValidationError
+            with pytest.raises(ValidationError):
                 DocumentIngestionAgent(chunk_size=100, chunk_overlap=200)
 
     def test_invalid_collection_name(self):
@@ -338,7 +340,7 @@ class TestChunkingErrors:
         with patch.object(agent.text_splitter, 'split_documents') as mock_split:
             mock_split.side_effect = AttributeError("'NoneType' object has no attribute")
             
-            with pytest.raises(AttributeError):
+            with pytest.raises(ChunkingError):
                 agent.chunk_documents([None])
 
     def test_chunking_with_invalid_document(self, agent):
@@ -348,7 +350,7 @@ class TestChunkingErrors:
         with patch.object(agent.text_splitter, 'split_documents') as mock_split:
             mock_split.side_effect = AttributeError("Invalid document")
             
-            with pytest.raises(AttributeError):
+            with pytest.raises(ChunkingError):
                 agent.chunk_documents([invalid_doc])
 
     def test_chunking_memory_error(self, agent):
@@ -359,7 +361,7 @@ class TestChunkingErrors:
         with patch.object(agent.text_splitter, 'split_documents') as mock_split:
             mock_split.side_effect = MemoryError("Not enough memory")
             
-            with pytest.raises(MemoryError):
+            with pytest.raises(ChunkingError):
                 agent.chunk_documents([mock_doc])
 
 

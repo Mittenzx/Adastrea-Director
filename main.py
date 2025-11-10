@@ -14,6 +14,12 @@ import os
 import sys
 import argparse
 from typing import List, Dict, Any, Optional
+from exceptions import (
+    APIKeyError,
+    DatabaseError,
+    NetworkError,
+    EmptyDatabaseError,
+)
 
 # Force UTF-8 encoding for stdout/stderr to handle Unicode characters (emojis)
 # This prevents encoding errors on Windows systems with cp1252 encoding
@@ -90,12 +96,9 @@ class QueryAgent:
 
             # Check if database has documents
             if self.vectorstore._collection.count() == 0:
-                console.print(
-                    "[yellow]Warning: No documents found in the database.[/yellow]"
-                )
-                console.print(
-                    "[yellow]Please run 'python ingest.py --docs-dir <your_docs>' first.[/yellow]"
-                )
+                error = EmptyDatabaseError(self.collection_name)
+                console.print(f"[red]{error.message}[/red]")
+                console.print(f"[yellow]{error.details}[/yellow]")
                 sys.exit(1)
 
             # Initialize LLM
@@ -147,12 +150,28 @@ Answer:"""
 
             console.print("[green]✓ AI Assistant initialized successfully[/green]")
 
+        except EmptyDatabaseError:
+            # Re-raise to handle at call site
+            raise
         except Exception as e:
-            console.print(f"[red]Error initializing agent: {e}[/red]")
-            if "OPENAI_API_KEY" in str(e):
-                console.print(
-                    "[yellow]Make sure OPENAI_API_KEY is set in your environment[/yellow]"
-                )
+            error_msg = str(e).lower()
+            
+            if "api" in error_msg and "key" in error_msg:
+                error = APIKeyError("OpenAI", str(e))
+                console.print(f"[red]{error.message}[/red]")
+                console.print(f"[yellow]{error.details}[/yellow]")
+            elif any(word in error_msg for word in ["connection", "network", "timeout"]):
+                error = NetworkError("initialization", str(e))
+                console.print(f"[red]{error.message}[/red]")
+                console.print(f"[yellow]{error.details}[/yellow]")
+            elif any(word in error_msg for word in ["chroma", "database", "persist"]):
+                error = DatabaseError("initialization", str(e))
+                console.print(f"[red]{error.message}[/red]")
+                console.print(f"[yellow]{error.details}[/yellow]")
+            else:
+                console.print(f"[red]Error initializing agent: {e}[/red]")
+                console.print(f"[yellow]Check your configuration and try again[/yellow]")
+            
             sys.exit(1)
 
     def process_query(self, query: str) -> Dict[str, Any]:
@@ -168,12 +187,42 @@ Answer:"""
         try:
             result = self.qa_chain({"question": query})
             return result
-        except Exception as e:
-            console.print(f"[red]Error processing query: {e}[/red]")
+        except TimeoutError as e:
+            error = NetworkError("query processing",
+                "The request timed out. The API may be experiencing high load. "
+                "Try again in a few moments."
+            )
+            console.print(f"[red]{error.message}[/red]")
+            console.print(f"[yellow]{error.details}[/yellow]")
             return {
-                "answer": "I encountered an error processing your query. Please try again.",
+                "answer": "I encountered a timeout error. Please try again in a moment.",
                 "source_documents": [],
             }
+        except Exception as e:
+            error_msg = str(e).lower()
+            
+            # Provide specific error messages based on error type
+            if "rate" in error_msg and "limit" in error_msg:
+                return {
+                    "answer": "Rate limit exceeded. Please wait a few moments before asking another question.",
+                    "source_documents": [],
+                }
+            elif "api" in error_msg and "key" in error_msg:
+                return {
+                    "answer": "API key error. Please check your OpenAI API key configuration.",
+                    "source_documents": [],
+                }
+            elif any(word in error_msg for word in ["connection", "network"]):
+                return {
+                    "answer": "Network error. Please check your internet connection and try again.",
+                    "source_documents": [],
+                }
+            else:
+                console.print(f"[red]Error processing query: {e}[/red]")
+                return {
+                    "answer": "I encountered an error processing your query. Please try again.",
+                    "source_documents": [],
+                }
 
     def get_database_info(self) -> Dict[str, Any]:
         """

@@ -16,6 +16,16 @@ import sys
 import argparse
 from pathlib import Path
 from typing import List, Dict, Any
+from exceptions import (
+    APIKeyError,
+    DatabaseError,
+    NetworkError,
+    RateLimitError,
+    ChunkingError,
+    ValidationError,
+    FileEncodingError,
+    CorruptedFileError,
+)
 
 # Force UTF-8 encoding for stdout/stderr to handle Unicode characters (emojis)
 # This prevents encoding errors on Windows systems with cp1252 encoding
@@ -73,7 +83,25 @@ class DocumentIngestionAgent:
             persist_directory: Directory to persist the vector database
             chunk_size: Size of text chunks for embedding
             chunk_overlap: Overlap between chunks
+            
+        Raises:
+            ValidationError: If chunk_size or chunk_overlap are invalid
+            APIKeyError: If OpenAI API key is missing or invalid
         """
+        # Validate configuration
+        if chunk_size <= 0:
+            raise ValidationError("chunk_size", chunk_size, "Must be greater than 0")
+        
+        if chunk_overlap < 0:
+            raise ValidationError("chunk_overlap", chunk_overlap, "Must be non-negative")
+        
+        if chunk_overlap >= chunk_size:
+            raise ValidationError(
+                "chunk_overlap", 
+                chunk_overlap, 
+                f"Must be less than chunk_size ({chunk_size})"
+            )
+        
         self.collection_name = collection_name
         self.persist_directory = persist_directory
         self.chunk_size = chunk_size
@@ -83,6 +111,9 @@ class DocumentIngestionAgent:
         try:
             self.embeddings = OpenAIEmbeddings()
         except Exception as e:
+            error_msg = str(e).lower()
+            if "api" in error_msg and "key" in error_msg:
+                raise APIKeyError("OpenAI", str(e))
             console.print(
                 f"[red]Error initializing OpenAI embeddings: {e}[/red]"
             )
@@ -146,6 +177,25 @@ class DocumentIngestionAgent:
                         task,
                         description=f"Loaded {len(docs)} {extension} files",
                     )
+                except UnicodeDecodeError as e:
+                    console.print(
+                        f"[yellow]Warning: Encoding error in {extension} files. "
+                        f"Some files may have been skipped due to encoding issues.[/yellow]"
+                    )
+                except ImportError as e:
+                    console.print(
+                        f"[yellow]Warning: Missing dependency for {extension} files: {e}[/yellow]"
+                    )
+                    console.print(
+                        f"[yellow]Install the required package to load {extension} files.[/yellow]"
+                    )
+                except PermissionError as e:
+                    console.print(
+                        f"[yellow]Warning: Permission denied when loading {extension} files.[/yellow]"
+                    )
+                    console.print(
+                        f"[yellow]Check file permissions in the directory.[/yellow]"
+                    )
                 except Exception as e:
                     console.print(
                         f"[yellow]Warning: Error loading {extension} files: {e}[/yellow]"
@@ -186,8 +236,45 @@ class DocumentIngestionAgent:
             documents = loader.load()
             console.print(f"[green]Loaded {file_path}[/green]")
             return documents
+        except UnicodeDecodeError as e:
+            error = FileEncodingError(file_path)
+            console.print(f"[red]{error.message}[/red]")
+            console.print(f"[yellow]{error.details}[/yellow]")
+            return []
+        except ImportError as e:
+            # Map file extensions to correct package names
+            package_mapping = {
+                ".pdf": "pypdf",
+                ".docx": "python-docx",
+                ".md": "unstructured",
+            }
+            package_name = package_mapping.get(extension, extension.replace('.', ''))
+            console.print(f"[red]Error: Missing required library to load {extension} files[/red]")
+            console.print(f"[yellow]Details: {e}[/yellow]")
+            console.print(f"[yellow]Install the required package using: pip install {package_name}[/yellow]")
+            return []
+        except PermissionError as e:
+            console.print(f"[red]Error: Permission denied for file: {file_path}[/red]")
+            console.print(f"[yellow]Check that you have read permissions for this file[/yellow]")
+            return []
+        except FileNotFoundError as e:
+            console.print(f"[red]Error: File not found during loading: {file_path}[/red]")
+            console.print(f"[yellow]The file may have been moved or deleted[/yellow]")
+            return []
         except Exception as e:
-            console.print(f"[red]Error loading file: {e}[/red]")
+            # Try to provide more specific error messages based on file type
+            error_msg = str(e).lower()
+            if extension == ".pdf" and ("pdf" in error_msg or "parse" in error_msg):
+                error = CorruptedFileError(file_path, "PDF")
+                console.print(f"[red]{error.message}[/red]")
+                console.print(f"[yellow]{error.details}[/yellow]")
+            elif extension == ".docx" and ("docx" in error_msg or "xml" in error_msg):
+                error = CorruptedFileError(file_path, "DOCX")
+                console.print(f"[red]{error.message}[/red]")
+                console.print(f"[yellow]{error.details}[/yellow]")
+            else:
+                console.print(f"[red]Error loading file: {e}[/red]")
+                console.print(f"[yellow]File: {file_path}[/yellow]")
             return []
 
     def chunk_documents(self, documents: List[Any]) -> List[Any]:
@@ -199,23 +286,43 @@ class DocumentIngestionAgent:
 
         Returns:
             List of document chunks
+            
+        Raises:
+            ChunkingError: If chunking fails
         """
         if not documents:
             return []
 
-        with Progress(
-            SpinnerColumn(),
-            TextColumn("[progress.description]{task.description}"),
-            console=console,
-        ) as progress:
-            task = progress.add_task("Chunking documents...", total=None)
-            chunks = self.text_splitter.split_documents(documents)
-            progress.update(
-                task,
-                description=f"Created {len(chunks)} chunks from {len(documents)} documents",
-            )
+        try:
+            with Progress(
+                SpinnerColumn(),
+                TextColumn("[progress.description]{task.description}"),
+                console=console,
+            ) as progress:
+                task = progress.add_task("Chunking documents...", total=None)
+                chunks = self.text_splitter.split_documents(documents)
+                progress.update(
+                    task,
+                    description=f"Created {len(chunks)} chunks from {len(documents)} documents",
+                )
 
-        return chunks
+            return chunks
+        except AttributeError as e:
+            raise ChunkingError(
+                "Invalid document format",
+                "One or more documents are not in the expected format. "
+                "Ensure all documents have 'page_content' and 'metadata' attributes."
+            )
+        except MemoryError as e:
+            raise ChunkingError(
+                "Out of memory",
+                "The documents are too large to process. Try:\n"
+                "  - Processing fewer documents at once\n"
+                "  - Reducing the chunk_size parameter\n"
+                "  - Increasing available system memory"
+            )
+        except Exception as e:
+            raise ChunkingError(str(e))
 
     def ingest_documents(self, documents: List[Any]) -> bool:
         """
@@ -266,8 +373,42 @@ class DocumentIngestionAgent:
             )
             return True
 
+        except TimeoutError as e:
+            error = NetworkError("embedding generation", 
+                "The OpenAI API request timed out. This usually means:\n"
+                "  - The API is experiencing high load\n"
+                "  - Your internet connection is slow\n"
+                "Try again in a few moments."
+            )
+            console.print(f"[red]{error.message}[/red]")
+            console.print(f"[yellow]{error.details}[/yellow]")
+            return False
         except Exception as e:
-            console.print(f"[red]Error ingesting documents: {e}[/red]")
+            error_msg = str(e).lower()
+            
+            # Check for rate limit errors
+            if "rate" in error_msg and "limit" in error_msg:
+                error = RateLimitError(service="OpenAI API")
+                console.print(f"[red]{error.message}[/red]")
+                console.print(f"[yellow]{error.details}[/yellow]")
+            # Check for API key errors
+            elif "api" in error_msg and "key" in error_msg:
+                error = APIKeyError("OpenAI")
+                console.print(f"[red]{error.message}[/red]")
+                console.print(f"[yellow]{error.details}[/yellow]")
+            # Check for network/connection errors
+            elif any(word in error_msg for word in ["connection", "network", "timeout"]):
+                error = NetworkError("database ingestion")
+                console.print(f"[red]{error.message}[/red]")
+                console.print(f"[yellow]{error.details}[/yellow]")
+            # Check for database errors
+            elif any(word in error_msg for word in ["chroma", "database", "persist"]):
+                error = DatabaseError("ingestion", str(e))
+                console.print(f"[red]{error.message}[/red]")
+                console.print(f"[yellow]{error.details}[/yellow]")
+            else:
+                console.print(f"[red]Error ingesting documents: {e}[/red]")
+            
             return False
 
     def get_database_stats(self) -> Dict[str, Any]:
