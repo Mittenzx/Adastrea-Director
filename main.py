@@ -37,9 +37,9 @@ try:
     
     from langchain_openai import ChatOpenAI, OpenAIEmbeddings
     from langchain_community.vectorstores import Chroma
-    from langchain_classic.chains import ConversationalRetrievalChain
-    from langchain_classic.memory import ConversationBufferMemory
-    from langchain_core.prompts import PromptTemplate
+    from langchain.chains import ConversationalRetrievalChain
+    from langchain.memory import ConversationBufferMemory
+    from langchain.prompts import PromptTemplate
     from rich.console import Console
     from rich.markdown import Markdown
     from rich.panel import Panel

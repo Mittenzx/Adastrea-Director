@@ -228,24 +228,25 @@ $ python3 main.py
 
 ### 3. Import Compatibility
 
-**Issue Identified:** Langchain library structure changed in recent versions
+**Issue Identified:** Langchain library structure changed for text splitters in version 0.3.x
 
 **Resolution Applied:** ✅ FIXED
-- Updated `langchain.text_splitter` → `langchain_text_splitters`
-- Updated `langchain.chains` → `langchain_classic.chains`
-- Updated `langchain.memory` → `langchain_classic.memory`
-- Updated `langchain.prompts` → `langchain_core.prompts`
+- Updated `langchain.text_splitter` → `langchain_text_splitters` in ingest.py and test files
+- All other imports (`langchain.chains`, `langchain.memory`, `langchain.prompts`) remain unchanged and are correct for langchain 0.3.x as specified in requirements.txt
 
 **Verification:**
 ```bash
 $ python3 -c "from langchain_text_splitters import RecursiveCharacterTextSplitter, Language"
-✅ SUCCESS: Imports work correctly
+✅ SUCCESS: Text splitter imports work correctly
 
-$ python3 -c "from langchain_classic.chains import ConversationalRetrievalChain"
-✅ SUCCESS: Chain imports work correctly
+$ python3 -c "from langchain.chains import ConversationalRetrievalChain"
+✅ SUCCESS: Chain imports correct for langchain 0.3.x
 
-$ python3 -c "from langchain_core.prompts import PromptTemplate"
-✅ SUCCESS: Prompt imports work correctly
+$ python3 -c "from langchain.memory import ConversationBufferMemory"
+✅ SUCCESS: Memory imports correct for langchain 0.3.x
+
+$ python3 -c "from langchain.prompts import PromptTemplate"
+✅ SUCCESS: Prompt imports correct for langchain 0.3.x
 ```
 
 ---
