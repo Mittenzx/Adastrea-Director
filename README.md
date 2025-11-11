@@ -177,28 +177,31 @@ Adastrea-Director/
 ├── AGENTS.md                      # Agent system architecture
 ├── requirements.txt               # Python dependencies
 │
-├── Phase 1: Foundation
+├── Phase 1 - Foundation
 │   ├── ingest.py                  # Document ingestion script
 │   ├── main.py                    # CLI Q&A interface
 │   └── gui_director.py            # GUI application
 │
-├── Phase 2: Planning (NEW!)
+├── Phase 2 - Planning (NEW!)
 │   ├── planning_models.py         # Data models for goals and tasks
 │   ├── goal_analysis_agent.py     # Goal analysis and classification
 │   ├── task_decomposition_agent.py # Task decomposition and planning
 │   ├── planning_cli.py            # Planning CLI interface
 │   └── PHASE2_GUIDE.md            # Phase 2 user guide
 │
-├── Examples & Templates
-│   ├── examples/
-│   │   └── phase2_example.py      # Phase 2 example code
+├── examples/
+│   └── phase2_example.py          # Phase 2 demonstration code
+│
+├── Templates
 │   ├── GDD_TEMPLATE.md            # Game design document template
 │   └── SAMPLE_GDD.md              # Example game design document
 │
-└── Tests
-    └── tests/
-        ├── test_phase2_planning.py # Phase 2 tests
-        └── ... (Phase 1 tests)
+└── tests/
+    ├── test_phase2_planning.py    # Tests for Phase 2 features
+    └── ...                        # Additional tests
+
+Note: "Phase 1" and "Phase 2" labels above indicate logical groupings, 
+not actual directory names. All files are in the root directory.
 ```
 
 ## Documentation

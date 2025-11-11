@@ -19,7 +19,6 @@ try:
     from rich.panel import Panel
     from rich.table import Table
     from rich.markdown import Markdown
-    from rich import print as rprint
     
     from goal_analysis_agent import GoalAnalysisAgent
     from task_decomposition_agent import TaskDecompositionAgent
@@ -36,10 +35,11 @@ console = Console(legacy_windows=False)
 class PlanningCLI:
     """Command-line interface for goal decomposition and planning."""
     
-    def __init__(self):
+    def __init__(self, debug: bool = False):
         """Initialize the planning CLI."""
         self.goal_agent = GoalAnalysisAgent()
         self.task_agent = TaskDecompositionAgent()
+        self.debug = debug
     
     def print_banner(self):
         """Print the application banner."""
@@ -208,6 +208,10 @@ class PlanningCLI:
                 continue
             except Exception as e:
                 console.print(f"\n[red]Error: {e}[/red]\n")
+                if self.debug:
+                    import traceback
+                    console.print("[dim]Full traceback:[/dim]")
+                    traceback.print_exc()
     
     def run_single_goal(self, goal_description: str, output_file: Optional[str] = None):
         """
@@ -235,37 +239,45 @@ class PlanningCLI:
         """Save action plan to a markdown file."""
         output_path = Path(output_file)
         
-        with output_path.open('w', encoding='utf-8') as f:
-            f.write(f"# Action Plan: {action_plan.goal.description}\n\n")
-            f.write(f"**Created:** {action_plan.created_at.strftime('%Y-%m-%d %H:%M:%S')}\n\n")
-            f.write(f"## Goal Analysis\n\n")
-            f.write(f"- **Type:** {action_plan.goal.goal_type.value}\n")
-            f.write(f"- **Priority:** {action_plan.goal.priority.value}\n")
+        try:
+            # Ensure parent directory exists
+            if output_path.parent and not output_path.parent.exists():
+                output_path.parent.mkdir(parents=True, exist_ok=True)
             
-            if action_plan.goal.scope:
-                f.write(f"- **Complexity:** {action_plan.goal.scope.estimated_complexity}\n")
-            
-            f.write(f"\n## Summary\n\n")
-            f.write(f"- Total Tasks: {len(action_plan.tasks)}\n")
-            if action_plan.total_estimated_effort:
-                f.write(f"- Estimated Effort: {action_plan.total_estimated_effort}\n")
-            
-            f.write(f"\n## Tasks\n\n")
-            for idx, task in enumerate(action_plan.tasks, start=1):
-                f.write(f"### {idx}. {task.title}\n\n")
-                f.write(f"{task.description}\n\n")
-                f.write(f"- **Priority:** {task.priority.value}\n")
-                f.write(f"- **Estimated Effort:** {task.estimated_effort or 'TBD'}\n")
+            with output_path.open('w', encoding='utf-8') as f:
+                f.write(f"# Action Plan: {action_plan.goal.description}\n\n")
+                f.write(f"**Created:** {action_plan.created_at.strftime('%Y-%m-%d %H:%M:%S')}\n\n")
+                f.write(f"## Goal Analysis\n\n")
+                f.write(f"- **Type:** {action_plan.goal.goal_type.value}\n")
+                f.write(f"- **Priority:** {action_plan.goal.priority.value}\n")
                 
-                if task.dependencies:
-                    f.write(f"- **Dependencies:** {len(task.dependencies)} task(s)\n")
+                if action_plan.goal.scope:
+                    f.write(f"- **Complexity:** {action_plan.goal.scope.estimated_complexity}\n")
                 
-                if task.file_modifications:
-                    f.write(f"- **Files to modify:**\n")
-                    for file in task.file_modifications:
-                        f.write(f"  - {file}\n")
+                f.write(f"\n## Summary\n\n")
+                f.write(f"- Total Tasks: {len(action_plan.tasks)}\n")
+                if action_plan.total_estimated_effort:
+                    f.write(f"- Estimated Effort: {action_plan.total_estimated_effort}\n")
                 
-                f.write("\n")
+                f.write(f"\n## Tasks\n\n")
+                for idx, task in enumerate(action_plan.tasks, start=1):
+                    f.write(f"### {idx}. {task.title}\n\n")
+                    f.write(f"{task.description}\n\n")
+                    f.write(f"- **Priority:** {task.priority.value}\n")
+                    f.write(f"- **Estimated Effort:** {task.estimated_effort or 'TBD'}\n")
+                    
+                    if task.dependencies:
+                        f.write(f"- **Dependencies:** {len(task.dependencies)} task(s)\n")
+                    
+                    if task.file_modifications:
+                        f.write(f"- **Files to modify:**\n")
+                        for file in task.file_modifications:
+                            f.write(f"  - {file}\n")
+                    
+                    f.write("\n")
+        except OSError as e:
+            console.print(f"[red]Error: Failed to save action plan to '{output_file}': {e}[/red]")
+            return
 
 
 def main():
@@ -288,10 +300,15 @@ def main():
         action="store_true",
         help="Run in interactive mode"
     )
+    parser.add_argument(
+        "--debug",
+        action="store_true",
+        help="Enable debug mode with full exception tracebacks"
+    )
     
     args = parser.parse_args()
     
-    cli = PlanningCLI()
+    cli = PlanningCLI(debug=args.debug)
     
     if args.goal:
         # Single goal mode

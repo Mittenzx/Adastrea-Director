@@ -112,10 +112,13 @@ class TaskTree:
     
     def get_all_tasks(self) -> List[Task]:
         """Get a flat list of all tasks in the tree."""
-        tasks = [self.root_task]
+        return list(self._iter_all_tasks())
+    
+    def _iter_all_tasks(self):
+        """Yield all tasks in the tree (generator for efficiency)."""
+        yield self.root_task
         for subtree in self.subtasks:
-            tasks.extend(subtree.get_all_tasks())
-        return tasks
+            yield from subtree._iter_all_tasks()
 
 
 @dataclass
@@ -182,12 +185,33 @@ class Duration:
         """Convert duration to hours."""
         return self.hours + (self.days * 8)  # Assuming 8-hour workday
     
+    def normalize(self) -> None:
+        """Normalize duration by converting excess hours into days."""
+        if self.hours >= 8:
+            extra_days = self.hours // 8
+            self.days += extra_days
+            self.hours = self.hours % 8
+    
     def __str__(self) -> str:
-        if self.days > 0:
-            return f"{self.days} day{'s' if self.days != 1 else ''}"
-        elif self.hours > 0:
-            return f"{self.hours} hour{'s' if self.hours != 1 else ''}"
-        return "0 hours"
+        # Handle fractional values by converting to more readable format
+        total_days = int(self.days)
+        rem_days = self.days - total_days
+        total_hours = self.hours + rem_days * 8
+        int_hours = int(total_hours)
+        rem_hours = total_hours - int_hours
+        minutes = int(round(rem_hours * 60))
+        
+        parts = []
+        if total_days > 0:
+            parts.append(f"{total_days} day{'s' if total_days != 1 else ''}")
+        if int_hours > 0:
+            parts.append(f"{int_hours} hour{'s' if int_hours != 1 else ''}")
+        if minutes > 0:
+            parts.append(f"{minutes} minute{'s' if minutes != 1 else ''}")
+        
+        if not parts:
+            return "0 hours"
+        return ", ".join(parts)
 
 
 @dataclass

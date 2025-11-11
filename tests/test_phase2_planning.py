@@ -6,13 +6,12 @@ Tests goal analysis, task decomposition, and planning functionality.
 """
 
 import pytest
-from unittest.mock import Mock, patch, MagicMock
-from datetime import datetime
+from unittest.mock import Mock
 
 from planning_models import (
     Goal, GoalType, Task, TaskTree, DependencyGraph,
     Duration, ActionPlan, TaskStatus, TaskPriority,
-    Constraint, ConstraintType, ProjectScope
+    ConstraintType, ProjectScope
 )
 from goal_analysis_agent import GoalAnalysisAgent
 from task_decomposition_agent import TaskDecompositionAgent

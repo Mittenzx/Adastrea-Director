@@ -8,7 +8,8 @@ and prioritizes tasks.
 """
 
 import re
-from typing import List, Dict, Any
+import logging
+from typing import List
 from planning_models import (
     Goal, Task, TaskTree, DependencyGraph, Duration,
     TaskStatus, TaskPriority, ActionPlan
@@ -16,6 +17,8 @@ from planning_models import (
 from langchain_openai import ChatOpenAI
 from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
+
+logger = logging.getLogger(__name__)
 
 
 class TaskDecompositionAgent:
@@ -114,7 +117,7 @@ Guidelines:
         
         # Create root task representing the overall goal
         root_task = Task(
-            title=f"Implement: {goal.description[:50]}...",
+            title=f"Implement: {goal.description[:50]}" + ("..." if len(goal.description) > 50 else ""),
             description=goal.description,
             goal_id=goal.id,
             priority=goal.priority,
@@ -143,6 +146,10 @@ Guidelines:
         """
         tasks = []
         task_blocks = re.split(r'TASK \d+:', response_text, re.IGNORECASE)[1:]
+        
+        if not task_blocks or (len(task_blocks) == 1 and not task_blocks[0].strip()):
+            logger.warning("No tasks found in LLM response. Response may not be in expected format.")
+            return tasks
         
         for idx, block in enumerate(task_blocks, start=1):
             task = Task(goal_id=goal_id)
@@ -214,6 +221,11 @@ Guidelines:
                 for dep_idx in task.metadata['dependency_indices']:
                     if 1 <= dep_idx <= len(tasks):
                         task.dependencies.append(tasks[dep_idx - 1].id)
+                    else:
+                        logger.warning(
+                            f"Invalid dependency index {dep_idx} for task '{task.title}'. "
+                            f"Valid range: 1-{len(tasks)}"
+                        )
                 del task.metadata['dependency_indices']
         
         return tasks
@@ -232,13 +244,13 @@ Guidelines:
             # Parse the estimated effort string
             effort_str = task.estimated_effort.lower()
             
-            # Extract hours
-            hours_match = re.search(r'(\d+(?:\.\d+)?)\s*hour', effort_str)
+            # Extract hours (supports both "hour" and "hours")
+            hours_match = re.search(r'(\d+(?:\.\d+)?)\s*hours?', effort_str)
             if hours_match:
                 return Duration(hours=float(hours_match.group(1)))
             
-            # Extract days
-            days_match = re.search(r'(\d+(?:\.\d+)?)\s*day', effort_str)
+            # Extract days (supports both "day" and "days")
+            days_match = re.search(r'(\d+(?:\.\d+)?)\s*days?', effort_str)
             if days_match:
                 return Duration(days=float(days_match.group(1)))
         
@@ -336,6 +348,9 @@ Guidelines:
             task_effort = self.estimate_effort(task)
             total_effort.hours += task_effort.hours
             total_effort.days += task_effort.days
+        
+        # Normalize the total effort (convert excess hours to days)
+        total_effort.normalize()
         
         # Prioritize tasks
         prioritized_tasks = self.prioritize_tasks(all_tasks)

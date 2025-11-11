@@ -8,7 +8,7 @@ determines project scope.
 """
 
 import re
-from typing import List, Dict, Any
+from typing import List
 from planning_models import (
     Goal, GoalType, Constraint, ConstraintType, 
     ProjectScope, TaskPriority
@@ -177,7 +177,7 @@ Be specific and practical in your analysis."""
             line: Constraint line in format "TYPE - description (severity: level)"
             
         Returns:
-            Constraint object or None if parsing fails
+            Constraint object. If parsing fails, returns a general technical constraint with "medium" severity.
         """
         # Try to match: TYPE - description (severity: level)
         match = re.match(
