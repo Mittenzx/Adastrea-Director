@@ -80,13 +80,10 @@ class TestChromaDBTelemetryFix:
             # Create a client (this would trigger telemetry if not disabled)
             client = chromadb.Client()
             
-            # Try to create a collection (this also triggers telemetry events)
-            collection = client.create_collection(
+            # Try to get or create a collection (this also triggers telemetry events)
+            _ = client.get_or_create_collection(
                 name=f"test_telemetry_{os.getpid()}"
             )
-            
-            # If we got here without errors, the test passes
-            assert True
             
         except Exception as e:
             error_msg = str(e)
@@ -154,7 +151,7 @@ class TestChromaDBTelemetryFix:
             f"Telemetry signature error found in stderr:\n{result.stderr}"
         )
         
-        assert "posthog" not in stderr_lower or "failed to send telemetry" not in stderr_lower, (
+        assert not ("posthog" in stderr_lower and "failed to send telemetry" in stderr_lower), (
             f"Posthog telemetry error found in stderr:\n{result.stderr}"
         )
 
