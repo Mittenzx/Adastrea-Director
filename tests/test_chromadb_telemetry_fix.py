@@ -124,6 +124,25 @@ class TestChromaDBTelemetryFix:
             "test_ingest_list.py should set ANONYMIZED_TELEMETRY"
         )
     
+    @pytest.mark.unit
+    def test_ingest_game_repo_sets_telemetry_env(self):
+        """Test that ingest_game_repo.py sets ANONYMIZED_TELEMETRY."""
+        ingest_game_repo_file = Path(__file__).parent.parent / "ingest_game_repo.py"
+        content = ingest_game_repo_file.read_text()
+        
+        # Check that telemetry is disabled
+        telemetry_pos = content.find('os.environ["ANONYMIZED_TELEMETRY"]')
+        assert telemetry_pos > 0, "ANONYMIZED_TELEMETRY setting not found in ingest_game_repo.py"
+        
+        # Find the position of ingest module import
+        ingest_import_pos = content.find('from ingest import')
+        assert ingest_import_pos > 0, "ingest module import not found"
+        
+        # Verify telemetry is set BEFORE the import
+        assert telemetry_pos < ingest_import_pos, (
+            "ANONYMIZED_TELEMETRY must be set BEFORE importing ingest module"
+        )
+    
     @pytest.mark.integration
     def test_ingest_script_runs_without_telemetry_errors(self, tmp_path):
         """Integration test: Run ingest.py and check for telemetry errors."""
