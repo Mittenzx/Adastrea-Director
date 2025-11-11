@@ -23,6 +23,10 @@ from exceptions import (
     EmptyDatabaseError,
 )
 
+# Disable ChromaDB telemetry BEFORE any imports that might import chromadb
+# This prevents "capture() takes 1 positional argument but 3 were given" errors
+os.environ["ANONYMIZED_TELEMETRY"] = "False"
+
 # Force UTF-8 encoding for stdout/stderr to handle Unicode characters (emojis)
 # This prevents encoding errors on Windows systems with cp1252 encoding
 if sys.platform == "win32":
