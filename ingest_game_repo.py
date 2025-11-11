@@ -116,6 +116,7 @@ def get_current_commit_hash(repo_dir: Path) -> Optional[str]:
             ["git", "-C", str(repo_dir), "rev-parse", "HEAD"],
             capture_output=True,
             text=True,
+            encoding='utf-8',
             check=True,
         )
         return result.stdout.strip()
@@ -154,6 +155,8 @@ def clone_repository(repo_url: str, clone_dir: Path, github_token: Optional[str]
             ["git", "clone", "--depth", "1", repo_url, str(clone_dir)],
             capture_output=True,
             text=True,
+            encoding='utf-8',
+            errors='replace',  # Replace invalid UTF-8 sequences instead of failing
             timeout=300,  # 5 minute timeout
         )
         
