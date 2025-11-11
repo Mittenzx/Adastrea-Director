@@ -199,7 +199,7 @@ class TestLoadSingleFile:
         test_file = Path(temp_dir) / "test.md"
         test_file.write_text("# Test\nContent")
         
-        with patch('ingest.UnstructuredMarkdownLoader') as mock_loader:
+        with patch('ingest.MARKDOWN_LOADER') as mock_loader:
             mock_doc = Mock()
             mock_doc.page_content = "# Test\nContent"
             mock_loader.return_value.load.return_value = [mock_doc]
