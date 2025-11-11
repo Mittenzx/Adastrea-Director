@@ -39,6 +39,14 @@ The test suite provides comprehensive coverage for the document loading, chunkin
   - Invalid configurations
   - Document loading errors
 
+- **`test_game_repo_ingestion.py`**: Tests for game repository ingestion (NEW!)
+  - Mock game repository structure
+  - Document ingestion from game projects
+  - C++ and Blueprint file handling
+  - Configuration parsing
+  - Auto-update detection
+  - Integration with real Mittenzx/Adastrea repo (when credentials provided)
+
 ## Running Tests
 
 ### Run All Tests
@@ -79,6 +87,19 @@ pytest tests/test_document_loaders.py::TestDocumentIngestionAgentInitialization
 
 ```bash
 pytest tests/test_document_loaders.py::TestDocumentIngestionAgentInitialization::test_default_initialization
+```
+
+### Run Game Repository Ingestion Tests
+
+```bash
+# Run all game repo tests (unit tests with mock data)
+pytest tests/test_game_repo_ingestion.py -v -m unit
+
+# Run with real repository (requires GITHUB_TOKEN and OPENAI_API_KEY)
+pytest tests/test_game_repo_ingestion.py -v -m integration --requires-api-key
+
+# View game repo test categories
+pytest tests/test_game_repo_ingestion.py -v --collect-only
 ```
 
 ## Test Coverage
