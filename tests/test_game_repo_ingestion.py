@@ -342,6 +342,8 @@ class TestGameRepositoryIngestion:
                 ["git", "clone", "--depth", "1", repo_url_with_token, str(clone_dir)],
                 capture_output=True,
                 text=True,
+                encoding='utf-8',
+                errors='replace',  # Replace invalid UTF-8 sequences instead of failing
                 timeout=120,
             )
             
@@ -540,9 +542,12 @@ def ingest_game_repository(
             ["git", "clone", "--depth", "1", repo_url, clone_dir],
             check=True,
             capture_output=True,
+            text=True,
+            encoding='utf-8',
+            errors='replace',  # Replace invalid UTF-8 sequences instead of failing
         )
     except subprocess.CalledProcessError as e:
-        print(f"Failed to clone: {e.stderr.decode()}")
+        print(f"Failed to clone: {e.stderr}")
         return False
     
     # Ingest documents

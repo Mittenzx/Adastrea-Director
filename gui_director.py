@@ -1183,7 +1183,9 @@ Type your question below to get started! 🚀
                 clone_process = subprocess.run(
                     ['git', 'clone', '--depth', '1', repo_url, clone_dir],
                     capture_output=True,
-                    text=True
+                    text=True,
+                    encoding='utf-8',
+                    errors='replace'  # Replace invalid UTF-8 sequences instead of failing
                 )
                 
                 if clone_process.returncode != 0:

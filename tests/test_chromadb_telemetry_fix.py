@@ -141,6 +141,8 @@ class TestChromaDBTelemetryFix:
             cwd=str(ingest_script.parent),
             capture_output=True,
             text=True,
+            encoding='utf-8',
+            errors='replace',  # Replace invalid UTF-8 sequences instead of failing
             timeout=30
         )
         
