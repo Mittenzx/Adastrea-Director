@@ -11,6 +11,18 @@ Adastrea Director is an AI-powered tool that aims to revolutionize game developm
 Phase 2 has been **completed successfully** with intelligent goal decomposition, task planning, and code generation capabilities. The system can now break down high-level development goals into concrete, actionable tasks with dependencies, priorities, and effort estimates.
 
 **🎯 Status:** Phase 2 complete (PR #45) - Ready to begin Phase 3 (Autonomous Agents)
+Phase 2 introduces intelligent planning capabilities that transform high-level development goals into actionable implementation plans with code suggestions.
+
+### Features (Phase 2 - NEW!)
+
+- **Goal Analysis**: Parse natural language development goals and classify them
+- **Task Decomposition**: Automatically break down goals into prioritized tasks
+- **Dependency Management**: Identify task dependencies and optimal execution order
+- **Code Generation**: Generate implementation approaches with code examples
+- **Feasibility Analysis**: Assess complexity and provide recommendations
+- **Plan Export**: Export plans in Markdown, JSON, or Text formats
+- **Interactive Planning CLI**: New dedicated planning interface
+Phase 2 builds on Phase 1's foundation by adding **intelligent goal decomposition** - the ability to break down high-level development goals into concrete, actionable tasks with dependencies, priorities, and effort estimates.
 
 ### Features (Phase 2)
 
@@ -25,11 +37,16 @@ Phase 2 has been **completed successfully** with intelligent goal decomposition,
 
 ## Project Phases
 
+1. **Phase 1: The Foundation (Context-Aware Assistant)** - ✅ Complete
 1. **Phase 1: The Foundation (Context-Aware Assistant)** - ✅ *Complete*
    - RAG-based document understanding
    - Natural language query interface
    - Document ingestion and vector database
    
+2. **Phase 2: The Planner (Goal-Oriented Tasking)** - ✅ Complete
+   - Break down high-level goals into actionable tasks
+   - Generate reviewable action plans
+   - Code generation and suggestions
 2. **Phase 2: The Planner (Goal-Oriented Tasking)** - ✨ *Current Phase*
    - Goal analysis and classification
    - Task decomposition with dependencies
@@ -97,6 +114,29 @@ export OPENAI_API_KEY="your-api-key-here"
 
 ### Usage
 
+#### Planning System (Phase 2 - NEW!)
+
+Create implementation plans for your development goals:
+
+```bash
+# Interactive planning mode
+python planner.py --interactive
+
+# Plan a specific goal
+python planner.py "Add a new inventory system"
+
+# Export plan to file
+python planner.py "Optimize rendering pipeline" --export markdown --output plan.md
+```
+
+The planning system will:
+- Analyze your goal and identify requirements
+- Break it down into prioritized tasks with dependencies
+- Estimate effort and assess feasibility
+- Suggest implementation approaches with code examples
+- Export a complete plan for review
+
+#### Context-Aware Assistant (Phase 1)
 #### Phase 1: Context-Aware Assistant
 
 1. **Ingest your project documents:**
@@ -178,6 +218,26 @@ Adastrea-Director/
 ├── PROJECT_PLAN.md                # Detailed project roadmap
 ├── AGENTS.md                      # Agent system architecture
 ├── requirements.txt               # Python dependencies
+├── ingest.py                      # Document ingestion script
+├── main.py                        # Phase 1 CLI entry point
+├── planner.py                     # Phase 2 planning CLI (NEW!)
+├── gui_director.py                # GUI application (enhanced)
+├── agents/                        # Phase 2 agent system (NEW!)
+│   ├── models.py                  # Data models for planning
+│   ├── goal_analysis_agent.py     # Goal analysis agent
+│   ├── task_decomposition_agent.py # Task decomposition agent
+│   └── code_generation_agent.py   # Code generation agent
+├── tests/                         # Comprehensive test suite
+│   ├── test_planning_models.py    # Phase 2 model tests (NEW!)
+│   └── test_planning_agents.py    # Phase 2 agent tests (NEW!)
+├── GDD_TEMPLATE.md                # Game design document template
+├── SAMPLE_GDD.md                  # Example game design document
+├── PHASE1_COMPLETION.md           # Phase 1 completion report
+├── PHASE2_COMPLETION.md           # Phase 2 completion report (NEW!)
+└── GUI Documentation/
+    ├── GUI_IMPROVEMENTS.md        # Detailed feature documentation
+    ├── GUI_VISUAL_COMPARISON.md   # Before/after comparison
+    └── GUI_QUICK_START.md         # User quick start guide
 │
 ├── Phase 1 - Foundation
 │   ├── ingest.py                  # Document ingestion script
@@ -216,6 +276,8 @@ not actual directory names. All files are in the root directory.
 
 ### Project Documentation
 - [Project Plan](PROJECT_PLAN.md) - Detailed breakdown of all four phases
+- [Phase 1 Completion](PHASE1_COMPLETION.md) - Phase 1 completion report
+- [Phase 2 Completion](PHASE2_COMPLETION.md) - Phase 2 completion report (NEW!)
 - [Agent System](AGENTS.md) - Architecture and design of the agent system
 - [Agent System Assessment](AGENTS_UTILITY_ASSESSMENT.md) - Comprehensive evaluation of agent architecture utility
 - [Unreal MCP Assessment](UNREAL_MCP_ASSESSMENT.md) - Evaluation of Unreal Engine MCP Server integration potential
