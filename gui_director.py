@@ -7,6 +7,10 @@ import os
 from datetime import datetime
 from pathlib import Path
 
+# Disable ChromaDB telemetry BEFORE any imports that might import chromadb
+# This prevents "capture() takes 1 positional argument but 3 were given" errors
+os.environ["ANONYMIZED_TELEMETRY"] = "False"
+
 # --- Configuration ---
 # Path to the python executable running this script.
 # This ensures we use the same Python environment where all the dependencies are installed.

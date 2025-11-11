@@ -28,6 +28,11 @@ from exceptions import (
     CorruptedFileError,
 )
 
+# Disable ChromaDB telemetry BEFORE any imports that might import chromadb
+# This prevents "capture() takes 1 positional argument but 3 were given" errors
+# Must be set before langchain_community imports which internally import chromadb
+os.environ["ANONYMIZED_TELEMETRY"] = "False"
+
 # Force UTF-8 encoding for stdout/stderr to handle Unicode characters (emojis)
 # This prevents encoding errors on Windows systems with cp1252 encoding
 if sys.platform == "win32":
@@ -83,16 +88,6 @@ except ImportError as e:
     sys.exit(1)
 
 console = Console(legacy_windows=False)
-
-# Disable ChromaDB telemetry to avoid signature errors
-# This prevents "capture() takes 1 positional argument but 3 were given" errors
-try:
-    import chromadb
-    # Disable telemetry by setting the environment variable
-    os.environ["ANONYMIZED_TELEMETRY"] = "False"
-except ImportError:
-    # ChromaDB not yet imported, will be imported later
-    pass
 
 
 class DocumentIngestionAgent:
