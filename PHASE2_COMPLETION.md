@@ -42,19 +42,19 @@ Phase 2 introduces three specialized agents that work together:
 
 ```
 Planning System
-├── Goal Analysis Agent
+├── Goal Analysis Agent (262 lines)
 │   ├── Parse natural language goals
 │   ├── Identify constraints & requirements
 │   ├── Classify goal type
 │   ├── Determine project scope
 │   └── Analyze feasibility
-├── Task Decomposition Agent
+├── Task Decomposition Agent (311 lines)
 │   ├── Break goals into tasks
 │   ├── Estimate effort & duration
 │   ├── Identify dependencies
 │   ├── Prioritize tasks
 │   └── Generate dependency graph
-└── Code Generation Agent
+└── Code Generation Agent (328 lines)
     ├── Suggest implementations
     ├── Generate boilerplate code
     ├── Propose file modifications
@@ -64,7 +64,7 @@ Planning System
 
 ### Data Models
 
-Comprehensive data models for planning:
+Comprehensive data models for planning (266 lines):
 
 - **Goal**: High-level development objective with type, constraints, and scope
 - **Task**: Atomic work item with dependencies, duration, and file references
@@ -190,14 +190,14 @@ python planner.py "Implement save/load system" --export markdown --output plan.m
 adastrea-director/
 ├── agents/
 │   ├── __init__.py                    # Agent exports
-│   ├── models.py                      # Data models (178 lines)
-│   ├── goal_analysis_agent.py         # Goal Analysis (81 lines)
-│   ├── task_decomposition_agent.py    # Task Decomposition (93 lines)
-│   └── code_generation_agent.py       # Code Generation (81 lines)
-├── planner.py                         # Planning CLI (151 lines)
+│   ├── models.py                      # Data models (266 lines)
+│   ├── goal_analysis_agent.py         # Goal Analysis (262 lines)
+│   ├── task_decomposition_agent.py    # Task Decomposition (311 lines)
+│   └── code_generation_agent.py       # Code Generation (328 lines)
+├── planner.py                         # Planning CLI (405 lines)
 ├── tests/
-│   ├── test_planning_models.py        # Model tests (176 lines, 30 tests)
-│   └── test_planning_agents.py        # Agent tests (198 lines, 23 tests)
+│   ├── test_planning_models.py        # Model tests (356 lines, 30 tests)
+│   └── test_planning_agents.py        # Agent tests (437 lines, 23 tests)
 └── PHASE2_COMPLETION.md               # This document
 ```
 
@@ -457,7 +457,8 @@ Phase 2 of the Adastrea Director project has been completed successfully, delive
 - **70%+ code coverage** for agents
 - **98% code coverage** for models
 - **0 security vulnerabilities**
-- **434 lines of new agent code**
+- **901 lines of new agent code**
+- **793 lines of test code**
 - **Complete documentation**
 
 ### Next Steps

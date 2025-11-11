@@ -6,7 +6,6 @@ Responsible for breaking down goals into actionable tasks.
 
 import uuid
 from typing import List, Dict, Any
-from datetime import datetime
 
 from langchain_openai import ChatOpenAI
 from langchain.prompts import PromptTemplate
@@ -18,7 +17,6 @@ from agents.models import (
     Task,
     TaskTree,
     TaskPriority,
-    TaskStatus,
     DependencyGraph,
     Duration,
 )
@@ -133,6 +131,7 @@ Generate the task decomposition in the specified JSON format.
             try:
                 priority = TaskPriority(priority_str)
             except ValueError:
+                # If the priority string is invalid, default to MEDIUM priority.
                 pass
             
             # Parse duration

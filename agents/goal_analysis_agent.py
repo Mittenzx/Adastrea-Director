@@ -114,6 +114,7 @@ Provide your analysis in the specified JSON format.
         try:
             priority = TaskPriority(result.priority.lower())
         except (ValueError, AttributeError):
+            # If priority value is not recognized or missing, default to MEDIUM
             pass
         
         # Create constraints

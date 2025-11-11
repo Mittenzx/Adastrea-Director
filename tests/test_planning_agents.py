@@ -3,7 +3,7 @@ Tests for Phase 2 planning agents.
 """
 
 import pytest
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 
 from agents.goal_analysis_agent import GoalAnalysisAgent, GoalParsingOutput
 from agents.task_decomposition_agent import TaskDecompositionAgent, TaskDecompositionOutput
@@ -13,7 +13,6 @@ from agents.models import (
     GoalType,
     Task,
     TaskPriority,
-    TaskStatus,
     Constraint,
     ProjectScope,
     Duration,

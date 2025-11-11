@@ -196,18 +196,22 @@ Provide only the code, no explanations.
         
         return result.content
     
-    def create_example(self, task: Task) -> str:
+    def create_example(self, task: Task, implementations: List[Implementation] = None) -> str:
         """
         Create a code example demonstrating the task implementation.
         
         Args:
             task: Task to create example for
+            implementations: Optional pre-computed implementation suggestions to avoid redundant LLM calls
         
         Returns:
             String containing example code
         """
+        # Use provided implementations or generate them
+        if implementations is None:
+            implementations = self.suggest_implementation(task)
+        
         # Use the first implementation approach's code example
-        implementations = self.suggest_implementation(task)
         if implementations and implementations[0].code_example:
             return implementations[0].code_example
         

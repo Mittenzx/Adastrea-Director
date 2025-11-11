@@ -2,8 +2,7 @@
 Tests for planning agent data models.
 """
 
-import pytest
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from agents.models import (
     Goal,

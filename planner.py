@@ -10,23 +10,20 @@ Usage:
     python planner.py --interactive
 """
 
-import os
 import sys
 import argparse
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 
 from rich.console import Console
 from rich.panel import Panel
 from rich.markdown import Markdown
 from rich.table import Table
-from rich import print as rprint
 
 from agents import (
     GoalAnalysisAgent,
     TaskDecompositionAgent,
     CodeGenerationAgent,
     Goal,
-    TaskTree,
 )
 from exceptions import APIKeyError
 
