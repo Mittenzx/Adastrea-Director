@@ -14,7 +14,8 @@ import os
 import tempfile
 import shutil
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
+from typing import Optional
+from unittest.mock import patch, MagicMock
 import subprocess
 
 from ingest import DocumentIngestionAgent
@@ -515,7 +516,7 @@ class TestAutoUpdateFromRepo:
 def ingest_game_repository(
     repo_url: str = GAME_REPO_URL,
     clone_dir: str = "/tmp/adastrea_game",
-    github_token: str = None,
+    github_token: Optional[str] = None,
 ):
     """
     Helper function to ingest the Mittenzx/Adastrea game repository.

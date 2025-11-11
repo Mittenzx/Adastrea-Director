@@ -61,7 +61,7 @@ Once secrets are added, the tests will automatically run:
 1. Go to https://github.com/Mittenzx/Adastrea-Director/actions
 2. Click **Test Game Repository Integration** workflow
 3. Click **Run workflow**
-4. Select branch: `copilot/add-testing-for-document-ingestion`
+4. Select branch: the branch you want to test (e.g., `main` or your feature branch)
 5. Click **Run workflow**
 
 ---

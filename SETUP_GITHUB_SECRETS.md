@@ -169,7 +169,7 @@ pytest tests/test_game_repo_ingestion.py -v -m integration
 1. Go to **Actions** tab
 2. Select the workflow
 3. Click **Run workflow**
-4. Select branch: `copilot/add-testing-for-document-ingestion`
+4. Select branch: the branch you want to test (e.g., `main` or your feature branch)
 5. Click **Run workflow**
 
 ### 5.3 Verify Test Results

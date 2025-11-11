@@ -33,11 +33,10 @@ import shutil
 import json
 from pathlib import Path
 from datetime import datetime
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, Tuple, List
 
 from ingest import DocumentIngestionAgent
 from rich.console import Console
-from rich.progress import Progress, SpinnerColumn, TextColumn
 
 console = Console(legacy_windows=False)
 
@@ -210,8 +209,8 @@ def ingest_game_repository(
     clone_dir: Path,
     collection_name: str = "adastrea_game_docs",
     persist_directory: str = "./chroma_db_adastrea",
-    ingest_dirs: list = None,
-) -> tuple[bool, int, int]:
+    ingest_dirs: Optional[List[str]] = None,
+) -> Tuple[bool, int, int]:
     """
     Ingest documents from the cloned game repository.
     

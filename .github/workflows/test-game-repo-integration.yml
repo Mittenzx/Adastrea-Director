@@ -43,8 +43,8 @@ jobs:
   integration-tests:
     name: Integration Tests (with real repository)
     runs-on: ubuntu-latest
-    # Only run on main branch or when manually triggered
-    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    # Only run on main branch or when manually triggered with run_integration=true
+    if: (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch') && (github.event_name != 'workflow_dispatch' || github.event.inputs.run_integration == 'true')
     needs: unit-tests
     
     steps:

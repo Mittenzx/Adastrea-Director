@@ -31,7 +31,7 @@ Then:
 1. Go to https://github.com/Mittenzx/Adastrea-Director/actions
 2. Click on "Test Game Repository Integration" workflow
 3. Click "Run workflow" button (top right)
-4. Select branch: `copilot/add-testing-for-document-ingestion`
+4. Select branch: the branch you want to test (e.g., `main` or your feature branch)
 5. Click green "Run workflow" button
 6. Wait for it to complete (2-3 minutes)
 7. Check the results
@@ -47,7 +47,7 @@ If you want to run the integration tests on your local machine:
 # Clone the repository
 git clone https://github.com/Mittenzx/Adastrea-Director.git
 cd Adastrea-Director
-git checkout copilot/add-testing-for-document-ingestion
+git checkout <your-branch-name>  # e.g., main or your feature branch
 
 # Install dependencies
 pip install -r requirements.txt
