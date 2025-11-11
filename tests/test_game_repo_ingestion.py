@@ -26,6 +26,20 @@ GAME_REPO_URL = "https://github.com/Mittenzx/Adastrea.git"
 GAME_REPO_NAME = "Adastrea"
 
 
+def _is_rate_limit_error(error: Exception) -> bool:
+    """
+    Check if an exception is related to API rate limits or quota issues.
+    
+    Args:
+        error: The exception to check
+        
+    Returns:
+        True if the error is related to rate limits or quota, False otherwise
+    """
+    error_str = str(error).lower()
+    return any(keyword in error_str for keyword in ['rate limit', 'quota', '429', 'insufficient_quota'])
+
+
 @pytest.fixture
 def mock_game_repo_structure(tmp_path):
     """
@@ -393,21 +407,16 @@ class TestGameRepositoryIngestion:
                     # If no documents were persisted, likely hit rate limits during ingestion
                     if doc_count == 0:
                         pytest.skip("No documents persisted - likely due to API rate limits during ingestion")
-                    
-                    # Verify we actually ingested documents
-                    assert doc_count > 0, "Should have ingested documents"
                 except Exception as stats_error:
                     # If stats retrieval fails, also skip - likely rate limits
-                    error_str = str(stats_error).lower()
-                    if any(keyword in error_str for keyword in ['rate limit', 'quota', '429', 'insufficient_quota']):
+                    if _is_rate_limit_error(stats_error):
                         pytest.skip(f"Failed to retrieve stats due to API limits: {stats_error}")
                     # Re-raise unexpected errors
                     raise
                     
             except Exception as e:
                 # Check if this is a rate limit or quota error
-                error_str = str(e).lower()
-                if any(keyword in error_str for keyword in ['rate limit', 'quota', '429', 'insufficient_quota']):
+                if _is_rate_limit_error(e):
                     pytest.skip(f"API rate limit or quota exceeded: {e}")
                 else:
                     # Re-raise other exceptions
