@@ -25,9 +25,15 @@ Usage:
     python ingest_game_repo.py --force
 """
 
-import argparse
 import os
 import sys
+
+# Disable ChromaDB telemetry BEFORE any imports that might import chromadb
+# This prevents "capture() takes 1 positional argument but 3 were given" errors
+# Must be set before importing the ingest module which imports langchain_community/chromadb
+os.environ["ANONYMIZED_TELEMETRY"] = "False"
+
+import argparse
 import subprocess
 import shutil
 import json
