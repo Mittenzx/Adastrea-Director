@@ -113,7 +113,12 @@ export OPENAI_API_KEY="your-api-key-here"
 ```bash
 export GITHUB_TOKEN="your-github-token-here"
 ```
-This is only needed if you want to ingest documents from the private Mittenzx/Adastrea game repository. See [GAME_REPO_INGESTION.md](GAME_REPO_INGESTION.md) for details.
+This is only needed if you want to ingest documents from the private Mittenzx/Adastrea game repository. 
+
+**📖 Setup Guides:**
+- [Quick Start](QUICK_START_GAME_REPO.md) - 5-minute setup
+- [GitHub Secrets Setup](SETUP_GITHUB_SECRETS.md) - CI/CD integration
+- [Complete Guide](GAME_REPO_INGESTION.md) - Full documentation
 
 ### Usage
 
