@@ -153,7 +153,7 @@ python ingest.py --docs-dir /path/to/your/docs
 ```bash
 python ingest_game_repo.py
 ```
-See [GAME_REPO_INGESTION.md](GAME_REPO_INGESTION.md) for setup and automatic update features.
+See [Quick Start Guide](QUICK_START_GAME_REPO.md) for 5-minute setup or [GAME_REPO_INGESTION.md](GAME_REPO_INGESTION.md) for complete documentation.
 
 2. **Start the interactive assistant:**
 ```bash
