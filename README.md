@@ -112,6 +112,17 @@ pip install -r requirements.txt
 export OPENAI_API_KEY="your-api-key-here"
 ```
 
+4. **(Optional)** Set up GitHub token for game repository ingestion:
+```bash
+export GITHUB_TOKEN="your-github-token-here"
+```
+This is only needed if you want to ingest documents from the private Mittenzx/Adastrea game repository. 
+
+**📖 Setup Guides:**
+- [Quick Start](QUICK_START_GAME_REPO.md) - 5-minute setup
+- [GitHub Secrets Setup](SETUP_GITHUB_SECRETS.md) - CI/CD integration
+- [Complete Guide](GAME_REPO_INGESTION.md) - Full documentation
+
 ### Usage
 
 #### Planning System (Phase 2 - NEW!)
@@ -145,6 +156,12 @@ python ingest.py --docs-dir /path/to/your/docs
 ```
 
 **📚 New to ingestion?** See [DOCS_TO_INGEST.md](DOCS_TO_INGEST.md) for a comprehensive list of documents to ingest and detailed instructions.
+
+**🎮 Working on the Mittenzx/Adastrea game?** Use the dedicated game repository ingestion:
+```bash
+python ingest_game_repo.py
+```
+See [Quick Start Guide](QUICK_START_GAME_REPO.md) for 5-minute setup or [GAME_REPO_INGESTION.md](GAME_REPO_INGESTION.md) for complete documentation.
 
 2. **Start the interactive assistant:**
 ```bash
@@ -219,6 +236,7 @@ Adastrea-Director/
 ├── AGENTS.md                      # Agent system architecture
 ├── requirements.txt               # Python dependencies
 ├── ingest.py                      # Document ingestion script
+├── ingest_game_repo.py            # Game repository ingestion (NEW!)
 ├── main.py                        # Phase 1 CLI entry point
 ├── planner.py                     # Phase 2 planning CLI (NEW!)
 ├── gui_director.py                # GUI application (enhanced)
@@ -229,7 +247,8 @@ Adastrea-Director/
 │   └── code_generation_agent.py   # Code generation agent
 ├── tests/                         # Comprehensive test suite
 │   ├── test_planning_models.py    # Phase 2 model tests (NEW!)
-│   └── test_planning_agents.py    # Phase 2 agent tests (NEW!)
+│   ├── test_planning_agents.py    # Phase 2 agent tests (NEW!)
+│   └── test_game_repo_ingestion.py # Game repo ingestion tests (NEW!)
 ├── GDD_TEMPLATE.md                # Game design document template
 ├── SAMPLE_GDD.md                  # Example game design document
 ├── PHASE1_COMPLETION.md           # Phase 1 completion report
@@ -273,6 +292,7 @@ not actual directory names. All files are in the root directory.
 - [Troubleshooting](TROUBLESHOOTING.md) - Quick reference for common issues
 - [Error Handling Guide](ERROR_HANDLING.md) - Comprehensive error handling documentation
 - **[Documents to Ingest](DOCS_TO_INGEST.md)** - Comprehensive guide to documents for the knowledge base
+- **[Game Repository Ingestion](GAME_REPO_INGESTION.md)** - Guide for ingesting from Mittenzx/Adastrea game repo
 
 ### Project Documentation
 - [Project Plan](PROJECT_PLAN.md) - Detailed breakdown of all four phases

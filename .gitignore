@@ -40,9 +40,13 @@ env/
 
 # ChromaDB / Vector Database
 chroma_db/
+chroma_db_adastrea/
 *.db
 *.sqlite
 *.sqlite3
+
+# Game repository ingestion tracking
+.adastrea_ingestion_tracking.json
 
 # Logs
 *.log
