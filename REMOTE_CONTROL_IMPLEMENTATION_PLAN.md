@@ -315,7 +315,7 @@ class VersionControlAgent:
 # requirements.txt additions
 requests>=2.31.0
 websocket-client>=1.6.0
-websockets>=12.0  # For async WebSocket support
+websockets>=12.0,<13.0.0  # For async WebSocket support
 ```
 
 #### Week 3: WebSocket Integration

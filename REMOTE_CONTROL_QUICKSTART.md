@@ -121,7 +121,7 @@ The following packages will be installed (if not already present):
 - `requests>=2.31.0` - HTTP client
 - `websocket-client>=1.6.0` - WebSocket support
 - `websockets>=12.0` - Async WebSocket (for future enhancements)
-- `GitPython>=3.1.0` - Git operations (for version control integration)
+- `GitPython>=3.1.40` - Git operations (for version control integration)
 
 ### Step 2: Configure Remote Control Settings
 

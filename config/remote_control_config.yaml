@@ -61,7 +61,7 @@ version_control:
   detailed_commit_messages: true
   sign_commits: false
   commit_author_name: "Adastrea Director"
-  commit_author_email: "adastrea-director@automated.agent"
+  commit_author_email: "adastrea-director@example.com"
   
   # Push settings
   auto_push: true
