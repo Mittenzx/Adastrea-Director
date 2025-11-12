@@ -92,11 +92,19 @@ Adastrea-Director/
    git push origin feature/your-feature-name
    ```
 
-6. **Create a Pull Request:**
+6. **Update the Roadmap:**
+   - **REQUIRED:** Update ROADMAP.md if your changes complete features, phases, or milestones
+   - Mark completed items with ✅ and add completion dates
+   - Update metrics with actual results
+   - Add lessons learned and impacts on future work
+   - See "Contributing to the Roadmap" section in ROADMAP.md for details
+
+7. **Create a Pull Request:**
    - Go to the GitHub repository
    - Click "New Pull Request"
    - Describe your changes clearly
    - Reference any related issues
+   - **Include "Roadmap Updates" section** if you modified ROADMAP.md
 
 ### Commit Message Guidelines
 
@@ -171,10 +179,12 @@ pytest tests/test_ingestion.py
 ### Updating Documentation
 
 - Update README.md for user-facing changes
-- Update PROJECT_PLAN.md for roadmap changes
+- **Update ROADMAP.md when completing features/phases/milestones (REQUIRED)**
 - Update AGENTS.md for architecture changes
 - Add inline comments for complex logic
 - Update docstrings when changing function signatures
+
+**Note:** ROADMAP.md has replaced PROJECT_PLAN.md as the primary planning document.
 
 ### Documentation Style
 
@@ -212,7 +222,28 @@ pytest tests/test_ingestion.py
 2. All tests must pass
 3. Code must follow style guidelines
 4. Documentation must be updated
-5. No merge conflicts
+5. **ROADMAP.md must be updated** if completing features/phases/milestones
+6. No merge conflicts
+
+### Roadmap Update Requirements
+
+All PRs that complete significant work **must update ROADMAP.md**:
+
+✅ **Update ROADMAP.md when your PR:**
+- Completes a feature or major enhancement
+- Finishes a phase or milestone
+- Adds new agents or capabilities
+- Changes project direction or priorities
+- Discovers important technical insights
+
+📝 **What to update:**
+- Change ⏳ to ✅ for completed items
+- Add actual completion dates
+- Update metrics with actual results
+- Add lessons learned
+- Note impacts on future phases
+
+See the "Contributing to the Roadmap" section in ROADMAP.md for detailed guidelines and examples.
 
 ## License
 
