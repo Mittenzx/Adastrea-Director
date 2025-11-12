@@ -5,10 +5,27 @@ Document Ingestion Script for Adastrea Director
 This script handles loading, processing, and embedding project documents
 into a vector database for RAG-based question answering.
 
+Features:
+- Incremental ingestion: Only processes changed or new files (default)
+- Hash-based change detection: Uses SHA-256 to detect file modifications
+- Sequential processing: Processes files one-by-one to avoid rate limits
+- Legacy mode: Option to load all files at once (use --legacy-mode)
+
 Usage:
+    # Incremental ingestion (default, recommended)
     python ingest.py --docs-dir /path/to/docs
-    python ingest.py --docs-dir /path/to/docs --collection-name my_project
+    
+    # Force re-ingestion of all files
+    python ingest.py --docs-dir /path/to/docs --reingest
+    
+    # Legacy mode (load all files at once)
+    python ingest.py --docs-dir /path/to/docs --legacy-mode
+    
+    # Single file
     python ingest.py --file single_doc.md
+    
+    # Custom collection name
+    python ingest.py --docs-dir /path/to/docs --collection-name my_project
 """
 
 import os
@@ -16,8 +33,9 @@ import sys
 import argparse
 import time
 import random
+import hashlib
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional, Tuple
 from exceptions import (
     APIKeyError,
     DatabaseError,
@@ -185,12 +203,129 @@ class DocumentIngestionAgent:
             ),
         }
 
-    def _enrich_document_metadata(self, documents: List[Any]) -> List[Any]:
+    def _calculate_file_hash(self, file_path: str) -> str:
+        """
+        Calculate SHA-256 hash of a file's content.
+        
+        Args:
+            file_path: Path to the file
+            
+        Returns:
+            SHA-256 hash as a hexadecimal string
+        """
+        sha256_hash = hashlib.sha256()
+        try:
+            with open(file_path, "rb") as f:
+                # Read file in chunks to handle large files efficiently
+                for byte_block in iter(lambda: f.read(4096), b""):
+                    sha256_hash.update(byte_block)
+            return sha256_hash.hexdigest()
+        except Exception as e:
+            console.print(f"[yellow]Warning: Could not calculate hash for {file_path}: {e}[/yellow]")
+            return ""
+
+    def _check_file_changed(
+        self, file_path: str, force_reingest: bool = False
+    ) -> Tuple[bool, Optional[str], str]:
+        """
+        Check if a file has changed by comparing its hash with stored metadata.
+        
+        Args:
+            file_path: Path to the file to check
+            force_reingest: If True, always treat file as changed
+            
+        Returns:
+            Tuple of (has_changed, old_hash, current_hash). 
+            has_changed is True if file should be processed.
+        """
+        # Calculate current file hash
+        current_hash = self._calculate_file_hash(file_path)
+        
+        if force_reingest:
+            return True, None, current_hash
+            
+        if not current_hash:
+            # If we can't calculate hash, process the file to be safe
+            return True, None, ""
+        
+        try:
+            # Query ChromaDB for existing documents with this source
+            vectorstore = Chroma(
+                collection_name=self.collection_name,
+                embedding_function=self.embeddings,
+                persist_directory=self.persist_directory,
+            )
+            
+            # Get documents by source metadata
+            collection = vectorstore._collection
+            results = collection.get(
+                where={"source": file_path},
+                limit=1,
+                include=["metadatas"]
+            )
+            
+            if results and results.get("metadatas") and len(results["metadatas"]) > 0:
+                # File exists in database, check hash
+                stored_metadata = results["metadatas"][0]
+                stored_hash = stored_metadata.get("file_hash", "")
+                
+                if stored_hash == current_hash:
+                    # File unchanged
+                    return False, stored_hash, current_hash
+                else:
+                    # File changed
+                    return True, stored_hash, current_hash
+            else:
+                # File not in database, needs to be added
+                return True, None, current_hash
+                
+        except Exception as e:
+            # If database doesn't exist yet or there's an error, process the file
+            return True, None, current_hash
+
+    def _delete_document_by_source(self, source: str) -> bool:
+        """
+        Delete all document chunks for a given source file.
+        
+        Args:
+            source: Source file path to delete
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            vectorstore = Chroma(
+                collection_name=self.collection_name,
+                embedding_function=self.embeddings,
+                persist_directory=self.persist_directory,
+            )
+            
+            collection = vectorstore._collection
+            # Get all IDs for documents with this source
+            results = collection.get(
+                where={"source": source},
+                include=["documents"]
+            )
+            
+            if results and results.get("ids"):
+                ids_to_delete = results["ids"]
+                collection.delete(ids=ids_to_delete)
+                console.print(f"[dim]  Deleted {len(ids_to_delete)} old chunks[/dim]")
+                return True
+            
+            return False
+            
+        except Exception as e:
+            console.print(f"[yellow]Warning: Could not delete old chunks for {source}: {e}[/yellow]")
+            return False
+
+    def _enrich_document_metadata(self, documents: List[Any], file_hash: Optional[str] = None) -> List[Any]:
         """
         Enrich document metadata with additional information.
         
         Args:
             documents: List of documents to enrich
+            file_hash: Optional SHA-256 hash of the file content
             
         Returns:
             List of documents with enriched metadata
@@ -204,6 +339,15 @@ class DocumentIngestionAgent:
                     # Add file information
                     doc.metadata["filename"] = source_path.name
                     doc.metadata["extension"] = source_path.suffix.lower()
+                    
+                    # Add file hash if provided
+                    if file_hash:
+                        doc.metadata["file_hash"] = file_hash
+                    else:
+                        # Calculate hash if not provided
+                        calculated_hash = self._calculate_file_hash(source)
+                        if calculated_hash:
+                            doc.metadata["file_hash"] = calculated_hash
                     
                     # Detect document type
                     extension = source_path.suffix.lower()
@@ -236,6 +380,30 @@ class DocumentIngestionAgent:
                 console.print(f"[yellow]Warning: Failed to enrich metadata for '{source}': {e}[/yellow]")
         
         return documents
+
+    def _get_file_list(self, directory: str) -> List[str]:
+        """
+        Get a list of all supported files in a directory.
+        
+        Args:
+            directory: Path to directory
+            
+        Returns:
+            List of file paths
+        """
+        directory_path = Path(directory)
+        supported_extensions = {
+            ".md", ".txt", ".pdf", ".docx",
+            ".py", ".js", ".jsx", ".ts", ".tsx",
+            ".cpp", ".cc", ".cxx", ".h", ".hpp", ".cs",
+            ".json", ".yaml", ".yml"
+        }
+        
+        file_list = []
+        for ext in supported_extensions:
+            file_list.extend(directory_path.glob(f"**/*{ext}"))
+        
+        return [str(f) for f in file_list]
 
     def load_documents_from_directory(self, directory: str) -> List[Any]:
         """
@@ -428,6 +596,163 @@ class DocumentIngestionAgent:
                 console.print(f"[red]Error loading file: {e}[/red]")
                 console.print(f"[yellow]File: {file_path}[/yellow]")
             return []
+
+    def ingest_directory_incremental(
+        self,
+        directory: str,
+        force_reingest: bool = False,
+        delay_between_files: float = 1.0
+    ) -> Dict[str, Any]:
+        """
+        Ingest documents from a directory incrementally, processing one file at a time.
+        
+        This method:
+        1. Discovers all files in the directory
+        2. For each file, checks if it has changed (via hash comparison)
+        3. Skips unchanged files
+        4. Deletes old chunks and re-ingests changed files
+        5. Adds new files
+        
+        Args:
+            directory: Path to directory containing documents
+            force_reingest: If True, re-ingest all files regardless of changes
+            delay_between_files: Delay in seconds between processing files (default: 1.0)
+            
+        Returns:
+            Dictionary with statistics about the ingestion process
+        """
+        stats = {
+            "total_files": 0,
+            "skipped": 0,
+            "updated": 0,
+            "added": 0,
+            "errors": 0,
+        }
+        
+        directory_path = Path(directory)
+        if not directory_path.exists():
+            console.print(f"[red]Error: Directory {directory} does not exist[/red]")
+            return stats
+        
+        # Get list of all files
+        file_list = self._get_file_list(directory)
+        stats["total_files"] = len(file_list)
+        
+        if not file_list:
+            console.print(f"[yellow]No supported files found in {directory}[/yellow]")
+            return stats
+        
+        console.print(f"\n[cyan]Found {len(file_list)} files to process[/cyan]")
+        if force_reingest:
+            console.print(f"[yellow]Force re-ingestion enabled - all files will be processed[/yellow]\n")
+        else:
+            console.print(f"[cyan]Checking for changes...[/cyan]\n")
+        
+        from rich.progress import Progress, BarColumn, TextColumn, TimeRemainingColumn
+        
+        with Progress(
+            TextColumn("[progress.description]{task.description}"),
+            BarColumn(),
+            TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
+            TimeRemainingColumn(),
+            console=console,
+        ) as progress:
+            task = progress.add_task(
+                f"Processing files...",
+                total=len(file_list)
+            )
+            
+            for file_path in file_list:
+                try:
+                    # Check if file has changed
+                    has_changed, old_hash, current_hash = self._check_file_changed(file_path, force_reingest)
+                    
+                    if not has_changed:
+                        # File unchanged, skip
+                        stats["skipped"] += 1
+                        progress.update(
+                            task,
+                            advance=1,
+                            description=f"[dim]⊘ Skipped (unchanged): {Path(file_path).name}[/dim]"
+                        )
+                        continue
+                    
+                    # Load the file
+                    documents = self.load_single_file(file_path)
+                    
+                    if not documents:
+                        stats["errors"] += 1
+                        progress.update(task, advance=1)
+                        continue
+                    
+                    # Enrich metadata with hash
+                    documents = self._enrich_document_metadata(documents, file_hash=current_hash)
+                    
+                    # Chunk the documents
+                    chunks = self.chunk_documents(documents)
+                    
+                    if not chunks:
+                        stats["errors"] += 1
+                        progress.update(task, advance=1)
+                        continue
+                    
+                    # If file exists in DB, delete old chunks first
+                    if old_hash is not None:
+                        self._delete_document_by_source(file_path)
+                        stats["updated"] += 1
+                        action = "↻ Updated"
+                    else:
+                        stats["added"] += 1
+                        action = "+ Added"
+                    
+                    # Ingest the chunks
+                    try:
+                        # Check if database exists
+                        if not Path(self.persist_directory).exists():
+                            # Database doesn't exist, create it
+                            vectorstore = Chroma.from_documents(
+                                documents=chunks,
+                                embedding=self.embeddings,
+                                collection_name=self.collection_name,
+                                persist_directory=self.persist_directory,
+                            )
+                        else:
+                            # Add to existing database
+                            vectorstore = Chroma(
+                                collection_name=self.collection_name,
+                                embedding_function=self.embeddings,
+                                persist_directory=self.persist_directory,
+                            )
+                            vectorstore.add_documents(chunks)
+                        
+                        vectorstore.persist()
+                        
+                        progress.update(
+                            task,
+                            advance=1,
+                            description=f"[green]{action}: {Path(file_path).name} ({len(chunks)} chunks)[/green]"
+                        )
+                        
+                        # Add delay between files to avoid rate limiting
+                        if delay_between_files > 0:
+                            time.sleep(delay_between_files)
+                            
+                    except Exception as e:
+                        stats["errors"] += 1
+                        error_msg = str(e).lower()
+                        if "rate" in error_msg and "limit" in error_msg:
+                            console.print(f"[red]✗ Rate limit error for {Path(file_path).name}[/red]")
+                            console.print(f"[yellow]Consider increasing --delay parameter[/yellow]")
+                        else:
+                            console.print(f"[red]✗ Error ingesting {Path(file_path).name}: {e}[/red]")
+                        progress.update(task, advance=1)
+                        
+                except Exception as e:
+                    stats["errors"] += 1
+                    console.print(f"[red]✗ Error processing {Path(file_path).name}: {e}[/red]")
+                    progress.update(task, advance=1)
+        
+        return stats
 
     def _detect_language(self, source: str) -> Language:
         """
@@ -971,6 +1296,18 @@ def main():
         help="Delay in seconds between batches to avoid rate limiting (default: 2.0). "
              "Use 3.0+ for very large document sets or if you hit rate limits.",
     )
+    parser.add_argument(
+        "--reingest",
+        action="store_true",
+        help="Force re-ingestion of all documents, ignoring change detection. "
+             "Useful for clearing out old data or recovering from corrupted database.",
+    )
+    parser.add_argument(
+        "--legacy-mode",
+        action="store_true",
+        help="Use legacy ingestion mode (load all files at once). "
+             "By default, incremental mode is used.",
+    )
 
     args = parser.parse_args()
 
@@ -1003,6 +1340,51 @@ def main():
         parser.print_help()
         sys.exit(1)
 
+    # Use incremental ingestion by default for directories (unless legacy mode is enabled)
+    if args.docs_dir and not args.legacy_mode:
+        console.print(f"[cyan]Processing directory: {args.docs_dir}[/cyan]")
+        console.print(f"[cyan]Mode: Incremental (file-by-file)[/cyan]\n")
+        
+        stats = agent.ingest_directory_incremental(
+            args.docs_dir,
+            force_reingest=args.reingest,
+            delay_between_files=args.delay
+        )
+        
+        # Print summary
+        console.print("\n[bold]Ingestion Summary:[/bold]")
+        console.print(f"  Total files: [cyan]{stats['total_files']}[/cyan]")
+        console.print(f"  Skipped (unchanged): [dim]{stats['skipped']}[/dim]")
+        console.print(f"  Updated: [yellow]{stats['updated']}[/yellow]")
+        console.print(f"  Added: [green]{stats['added']}[/green]")
+        if stats['errors'] > 0:
+            console.print(f"  Errors: [red]{stats['errors']}[/red]")
+        
+        if stats['added'] > 0 or stats['updated'] > 0:
+            console.print("\n[bold green]✓ Ingestion complete![/bold green]")
+            console.print(
+                "\n[cyan]You can now run the main assistant with:[/cyan] python main.py\n"
+            )
+        elif stats['skipped'] > 0:
+            console.print("\n[bold green]✓ All files up to date![/bold green]")
+            console.print("[cyan]No changes detected. Database is current.\n")
+        else:
+            console.print("\n[bold yellow]⚠ No files were processed[/bold yellow]\n")
+            sys.exit(1)
+        
+        return
+    
+    # Legacy mode or single file processing
+    if args.legacy_mode and args.docs_dir:
+        console.print(f"[yellow]Using legacy mode (load all files at once)[/yellow]\n")
+    
+    # Warn if --reingest or --legacy-mode used with --file
+    if args.file and (args.reingest or args.legacy_mode):
+        console.print(
+            "[yellow]Note: --reingest and --legacy-mode flags have no effect "
+            "when using --file for single file ingestion[/yellow]\n"
+        )
+    
     # Load documents
     documents = []
     if args.docs_dir:
