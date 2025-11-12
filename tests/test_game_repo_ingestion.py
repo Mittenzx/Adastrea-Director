@@ -2,10 +2,14 @@
 Tests for ingesting documents from the Mittenzx/Adastrea game repository.
 
 This test module validates that the Adastrea Director can properly ingest
-documents from the game repository it's designed to help build. It supports:
+documents from the game repository it's designed to help build. 
 
-1. Real repository ingestion (if GitHub token is provided)
-2. Mock repository structure for testing without credentials
+NOTE: The Mittenzx/Adastrea repository is private. Integration tests require
+a GitHub token with access to the repository.
+
+Test approaches:
+1. Unit tests with mock repository structure (always run, no credentials needed)
+2. Integration tests with real private repository (requires GITHUB_TOKEN and OPENAI_API_KEY)
 3. Validation of document types expected in a game repository
 """
 
@@ -22,6 +26,7 @@ from ingest import DocumentIngestionAgent
 
 
 # Constants for the game repository
+# NOTE: This is a private repository. Tests require GITHUB_TOKEN with repo access.
 GAME_REPO_URL = "https://github.com/Mittenzx/Adastrea.git"
 GAME_REPO_NAME = "Adastrea"
 
@@ -331,16 +336,19 @@ class TestGameRepositoryIngestion:
     @pytest.mark.slow
     def test_ingest_real_game_repo(self, tmp_path):
         """
-        Test ingesting from the real Mittenzx/Adastrea repository.
+        Test ingesting from the Mittenzx/Adastrea game repository.
         
         This test requires:
-        1. GITHUB_TOKEN environment variable (for private repos)
+        1. GITHUB_TOKEN environment variable with access to the private repository
         2. OPENAI_API_KEY environment variable
         
-        It will be skipped if credentials are not available or if API quota is exceeded.
+        This test will be skipped if:
+        - Credentials are not available
+        - The repository cannot be accessed (invalid token or insufficient permissions)
+        - API quota is exceeded
         
-        Note: This test may be skipped in CI/CD due to OpenAI API rate limits.
-        This is expected behavior and does not indicate a test failure.
+        Note: The Mittenzx/Adastrea repository is private. Ensure your GitHub token
+        has the 'repo' scope and access to Mittenzx/Adastrea.
         """
         github_token = os.environ.get("GITHUB_TOKEN")
         openai_key = os.environ.get("OPENAI_API_KEY")

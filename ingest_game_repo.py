@@ -3,9 +3,13 @@
 Script to ingest documents from the Mittenzx/Adastrea game repository.
 
 This script handles cloning and ingesting documents from the game repository
-that Adastrea Director is designed to help build. It supports:
+that Adastrea Director is designed to help build.
 
-1. Cloning the repository (with GitHub token for private repos)
+NOTE: The Mittenzx/Adastrea repository is private. You need a GitHub token
+with 'repo' scope and access to the repository.
+
+Features:
+1. Cloning the private repository (requires GitHub token)
 2. Selective ingestion of relevant directories
 3. Tracking of last ingestion for auto-update detection
 4. Scheduled updates via cron or GitHub Actions
@@ -47,6 +51,7 @@ from rich.console import Console
 console = Console(legacy_windows=False)
 
 # Configuration
+# NOTE: This is a private repository. A GitHub token with 'repo' scope is required.
 GAME_REPO_URL = "https://github.com/Mittenzx/Adastrea.git"
 GAME_REPO_NAME = "Adastrea"
 DEFAULT_CLONE_DIR = Path("/tmp") / f"adastrea_game_repo"

@@ -2,11 +2,13 @@
 
 This guide walks you through setting up GitHub secrets to enable full integration testing with the Mittenzx/Adastrea game repository.
 
+**IMPORTANT:** The Mittenzx/Adastrea repository is **private**. You need access to this repository and a token with appropriate permissions.
+
 ## Prerequisites
 
 You need:
-1. Admin access to the Mittenzx/Adastrea-Director repository
-2. Access to the Mittenzx/Adastrea repository (to generate token with correct permissions)
+1. Admin access to the Mittenzx/Adastrea-Director repository (to add secrets)
+2. Access to the private Mittenzx/Adastrea game repository (to generate token with correct permissions)
 3. An OpenAI API account
 
 ---
