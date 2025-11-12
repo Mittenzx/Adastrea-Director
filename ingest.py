@@ -15,6 +15,7 @@ import os
 import sys
 import argparse
 import time
+import random
 from pathlib import Path
 from typing import List, Dict, Any
 from exceptions import (
@@ -529,14 +530,17 @@ class DocumentIngestionAgent:
         except Exception as e:
             raise ChunkingError(str(e))
 
-    def _process_batch(self, batch: List[Any], is_first_batch: bool, max_retries: int = 5) -> Any:
+    def _process_batch(self, batch: List[Any], is_first_batch: bool, max_retries: int = 8) -> Any:
         """
         Process a single batch of documents with retry logic for rate limits.
+        
+        Implements OpenAI's recommended retry strategy with exponential backoff and jitter:
+        https://platform.openai.com/docs/guides/rate-limits/retrying-with-exponential-backoff
         
         Args:
             batch: Documents to process
             is_first_batch: Whether this is the first batch
-            max_retries: Maximum number of retries for rate limit errors (default: 5)
+            max_retries: Maximum number of retries for rate limit errors (default: 8)
             
         Returns:
             The vectorstore instance
@@ -574,17 +578,20 @@ class DocumentIngestionAgent:
                 # Check if it's a rate limit error (429, rate_limit_exceeded, etc.)
                 is_rate_limit = any(word in error_msg for word in [
                     "rate", "limit", "429", "too many requests", 
-                    "rate_limit_exceeded", "quota"
+                    "rate_limit_exceeded", "quota", "insufficient_quota"
                 ])
                 
                 if is_rate_limit:
                     retry_count += 1
                     if retry_count <= max_retries:
-                        # Exponential backoff with longer waits: 5, 10, 20, 40, 60 seconds
-                        # Capped at 60 seconds to be reasonable
-                        wait_time = min(5 * (2 ** (retry_count - 1)), 60)
+                        # Exponential backoff with jitter (OpenAI best practices)
+                        # Base wait time: 1, 2, 4, 8, 16, 32, 64, 64 seconds (capped at 60)
+                        # Add random jitter (0-100% of base wait) to prevent thundering herd
+                        base_wait = min(2 ** (retry_count - 1), 60)
+                        jitter = random.uniform(0, base_wait)
+                        wait_time = base_wait + jitter
                         console.print(
-                            f"[yellow]⚠ Rate limit hit. Waiting {wait_time} seconds before retry "
+                            f"[yellow]⚠ Rate limit hit. Waiting {wait_time:.1f} seconds before retry "
                             f"({retry_count}/{max_retries})...[/yellow]"
                         )
                         time.sleep(wait_time)
@@ -598,13 +605,19 @@ class DocumentIngestionAgent:
                             f"[yellow]Recommendations:[/yellow]"
                         )
                         console.print(
-                            f"[yellow]  1. Use longer delays: --delay 3.0 or --delay 5.0[/yellow]"
+                            f"[yellow]  1. Use longer delays: --delay 5.0 or --delay 10.0[/yellow]"
                         )
                         console.print(
-                            f"[yellow]  2. Use smaller batches: --batch-size 25 or --batch-size 10[/yellow]"
+                            f"[yellow]  2. Use smaller batches: --batch-size 10 or --batch-size 5[/yellow]"
                         )
                         console.print(
-                            f"[yellow]  3. Check OpenAI usage limits at: https://platform.openai.com/account/limits[/yellow]"
+                            f"[yellow]  3. Wait a few minutes and try again (API quotas reset over time)[/yellow]"
+                        )
+                        console.print(
+                            f"[yellow]  4. Check OpenAI usage limits at: https://platform.openai.com/account/limits[/yellow]"
+                        )
+                        console.print(
+                            f"[dim]Note: Using exponential backoff with jitter per OpenAI best practices[/dim]"
                         )
                         raise e
                 else:
@@ -614,6 +627,8 @@ class DocumentIngestionAgent:
         # Should not reach here, but just in case
         if last_error:
             raise last_error
+        else:
+            raise RuntimeError("Unexpected: _process_batch completed without returning or raising an exception")
 
     def ingest_documents_batch(
         self, 
@@ -704,15 +719,15 @@ class DocumentIngestionAgent:
                 console.print(f"[yellow]You have hit OpenAI API limits (rate limiting or quota).[/yellow]")
                 console.print(f"[yellow]\nRecommended Solutions (in order):[/yellow]")
                 console.print(f"[yellow]  1. Use smaller batches with longer delays:[/yellow]")
-                console.print(f"[cyan]     python ingest.py --docs-dir <path> --batch-size 25 --delay 5.0[/cyan]")
+                console.print(f"[cyan]     python ingest.py --docs-dir <path> --batch-size 10 --delay 5.0[/cyan]")
                 console.print(f"[yellow]  2. For very strict limits, use even smaller batches:[/yellow]")
-                console.print(f"[cyan]     python ingest.py --docs-dir <path> --batch-size 10 --delay 10.0[/cyan]")
+                console.print(f"[cyan]     python ingest.py --docs-dir <path> --batch-size 5 --delay 10.0[/cyan]")
                 console.print(f"[yellow]  3. Check your OpenAI usage and limits:[/yellow]")
                 console.print(f"[cyan]     https://platform.openai.com/account/limits[/cyan]")
                 console.print(f"[yellow]  4. Check your billing and add credits:[/yellow]")
                 console.print(f"[cyan]     https://platform.openai.com/account/billing[/cyan]")
                 console.print(f"[yellow]  5. Wait 5-10 minutes and try again with conservative settings[/yellow]")
-                console.print(f"[yellow]\nNote: The system includes automatic retries (up to 5 attempts) with exponential backoff.[/yellow]")
+                console.print(f"[yellow]\nNote: The system includes automatic retries (up to 8 attempts) with exponential backoff and jitter per OpenAI best practices.[/yellow]")
                 console.print(f"[dim]Error details: {e}[/dim]")
             # Check for rate limit errors
             elif "rate" in error_msg and "limit" in error_msg:
