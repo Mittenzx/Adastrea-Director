@@ -7,7 +7,7 @@ and refactoring suggestions.
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 import logging
 import re
 
@@ -514,7 +514,7 @@ class CodeQualityAgent(BaseAutonomousAgent):
         
         # Estimate debt hours (rough estimate)
         debt_hours = (
-            total_smells * 0.5 +  # 30 min per smell
+            total_smells * 0.5 +  # 0.5 hours (30 min) per smell
             total_violations * 0.1  # 6 min per violation
         )
         

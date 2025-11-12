@@ -5,9 +5,9 @@ Continuously monitors game performance, identifies bottlenecks,
 and generates optimization recommendations.
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 import logging
 
 from .base_agent import BaseAutonomousAgent

@@ -3,15 +3,12 @@ Tests for the Bug Detection Agent.
 """
 
 import pytest
-from datetime import datetime
 from agents.phase3.event_bus import EventBus, EventType
 from agents.phase3.shared_state import SharedContext, AgentStatus
 from agents.phase3.bug_detection_agent import (
     BugDetectionAgent,
-    Anomaly,
     Crash,
-    TestResults,
-    BugReport
+    TestResults
 )
 
 

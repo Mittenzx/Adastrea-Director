@@ -10,9 +10,7 @@ Demonstrates the capabilities of Phase 3 agents including:
 
 import sys
 import time
-from datetime import datetime
 from rich.console import Console
-from rich.table import Table
 from rich.panel import Panel
 from rich import box
 

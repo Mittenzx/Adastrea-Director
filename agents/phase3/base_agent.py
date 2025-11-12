@@ -7,11 +7,11 @@ common functionality for monitoring, event handling, and state management.
 
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Optional
 import logging
 
 from .event_bus import Event, EventBus, EventType
-from .shared_state import AgentState, AgentStatus, SharedContext
+from .shared_state import AgentStatus, SharedContext
 
 logger = logging.getLogger(__name__)
 

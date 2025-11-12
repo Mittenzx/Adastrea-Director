@@ -7,10 +7,7 @@ from agents.phase3.event_bus import EventBus, EventType
 from agents.phase3.shared_state import SharedContext, AgentStatus
 from agents.phase3.code_quality_agent import (
     CodeQualityAgent,
-    CodeSmell,
-    Violation,
-    Refactoring,
-    QualityReport
+    CodeSmell
 )
 
 
@@ -171,7 +168,7 @@ def function():
     return x * 1000  # another magic
 """
         
-        report = agent.analyze_code("refactor.py", code_with_issues)
+        agent.analyze_code("refactor.py", code_with_issues)
         
         # Should trigger refactoring event
         assert len(refactorings) > 0
@@ -268,7 +265,7 @@ def function():
     return x
 """
         
-        report = agent.analyze_code("bad.py", bad_code)
+        agent.analyze_code("bad.py", bad_code)
         
         # Should trigger quality issue event
         assert len(quality_issues) > 0

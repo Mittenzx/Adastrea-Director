@@ -550,8 +550,8 @@ Current test coverage:
 - Event Bus: 96%
 - Shared State: 98%
 - Performance Profiling Agent: 93%
-- Bug Detection Agent: 45% (implementation phase)
-- Code Quality Agent: 36% (implementation phase)
+- Bug Detection Agent: 91%
+- Code Quality Agent: 98%
 
 ---
 
