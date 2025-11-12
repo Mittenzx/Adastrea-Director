@@ -534,6 +534,9 @@ class DocumentIngestionAgent:
         """
         Process a single batch of documents with retry logic for rate limits.
         
+        Implements OpenAI's recommended retry strategy with exponential backoff and jitter:
+        https://platform.openai.com/docs/guides/rate-limits/retrying-with-exponential-backoff
+        
         Args:
             batch: Documents to process
             is_first_batch: Whether this is the first batch
