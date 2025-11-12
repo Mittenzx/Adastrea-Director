@@ -301,6 +301,7 @@ not actual directory names. All files are in the root directory.
 - [Agent System](AGENTS.md) - Architecture and design of the agent system
 - [Agent System Assessment](AGENTS_UTILITY_ASSESSMENT.md) - Comprehensive evaluation of agent architecture utility
 - [Unreal MCP Assessment](UNREAL_MCP_ASSESSMENT.md) - Evaluation of Unreal Engine MCP Server integration potential
+- **[Remote Control API](REMOTE_CONTROL_API.md)** - ✨ Unreal Engine Remote Control API capabilities and agent enhancements (NEW!)
 - **[Phase 2 Status](PHASE2_STATUS.md)** - ✨ Complete status report and Phase 3 readiness assessment (NEW!)
 - **[Phase 2 to Phase 3 Checklist](PHASE2_TO_PHASE3_CHECKLIST.md)** - ✨ Transition checklist and action items (NEW!)
 - **[Phase 2 Guide](PHASE2_GUIDE.md)** - ✨ Complete guide to goal decomposition and planning (NEW!)
