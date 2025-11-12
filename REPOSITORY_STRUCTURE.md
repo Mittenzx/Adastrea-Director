@@ -108,8 +108,8 @@ To access and ingest from the private Mittenzx/Adastrea repository:
 If you want to use Adastrea-Director with a different game project:
 
 1. Update the repository URL in:
-   - `ingest_game_repo.py` (line 52): `GAME_REPO_URL`
-   - `tests/test_game_repo_ingestion.py` (line 27): `GAME_REPO_URL`
+   - `ingest_game_repo.py` (line 55): `GAME_REPO_URL`
+   - `tests/test_game_repo_ingestion.py` (line 30): `GAME_REPO_URL`
 
 2. Run the ingestion script:
    ```bash
