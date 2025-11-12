@@ -32,7 +32,7 @@ jobs:
           
       - name: Run unit tests
         run: |
-          pytest tests/test_game_repo_ingestion.py -v -m unit --tb=short
+          pytest tests/test_game_repo_ingestion.py -v -s -m unit --tb=short
           
       - name: Display test summary
         if: always()
@@ -75,7 +75,7 @@ jobs:
       - name: Run integration tests
         if: steps.check_secrets.outputs.secrets_available == 'true'
         run: |
-          pytest tests/test_game_repo_ingestion.py -v -m integration --tb=short
+          pytest tests/test_game_repo_ingestion.py -v -s -m integration --tb=short
         env:
           GITHUB_TOKEN: ${{ secrets.GAME_REPO_TOKEN }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
