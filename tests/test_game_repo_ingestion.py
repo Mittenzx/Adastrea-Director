@@ -373,7 +373,21 @@ class TestGameRepositoryIngestion:
             )
             
             if result.returncode != 0:
-                pytest.skip(f"Failed to clone repository: {result.stderr}")
+                skip_reason = (
+                    f"Failed to clone repository: {result.stderr}\n"
+                    f"Return code: {result.returncode}\n"
+                    f"Repository: {GAME_REPO_URL}\n"
+                    f"This test requires:\n"
+                    f"  - GITHUB_TOKEN with 'repo' scope\n"
+                    f"  - Access to the Mittenzx/Adastrea repository\n"
+                    f"  - If the repository doesn't exist, this test should be updated or removed"
+                )
+                print(f"\n{'='*70}")
+                print("SKIPPING TEST: Unable to clone game repository")
+                print(f"{'='*70}")
+                print(skip_reason)
+                print(f"{'='*70}\n")
+                pytest.skip(skip_reason)
             
             # Create agent
             agent = DocumentIngestionAgent(
