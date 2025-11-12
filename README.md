@@ -80,9 +80,11 @@ cd Adastrea-Director
 
 The setup script will:
 - Check your system compatibility
-- Create a virtual environment
+- Create a virtual environment (reusable for fast subsequent runs)
 - Install all dependencies with platform-specific handling
 - Verify the installation
+
+**💡 Tip**: The virtual environment can be reused - just activate it with `source venv/bin/activate` for instant access without reinstalling dependencies. See [DEPENDENCY_CACHING.md](docs/guides/DEPENDENCY_CACHING.md) for details.
 
 #### Manual Installation
 
