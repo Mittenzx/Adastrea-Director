@@ -62,6 +62,7 @@ UI/UX design documentation:
 ### 📘 Installation & Setup Guides
 Getting started and troubleshooting:
 - [Installation Guide](guides/INSTALLATION.md) - Platform-specific installation
+- [Dependency Caching](guides/DEPENDENCY_CACHING.md) - Speed up installation with caching
 - [Troubleshooting](guides/TROUBLESHOOTING.md) - Common issues and solutions
 - [Error Handling](guides/ERROR_HANDLING.md) - Error handling guide
 - [Setup GitHub Secrets](guides/SETUP_GITHUB_SECRETS.md) - CI/CD configuration
