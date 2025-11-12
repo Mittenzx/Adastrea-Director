@@ -627,6 +627,8 @@ class DocumentIngestionAgent:
         # Should not reach here, but just in case
         if last_error:
             raise last_error
+        else:
+            raise RuntimeError("Unexpected: _process_batch completed without returning or raising an exception")
 
     def ingest_documents_batch(
         self, 
