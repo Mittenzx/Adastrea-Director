@@ -410,10 +410,14 @@ class TestGameRepositoryIngestion:
             test_chunks = chunks[:10]
             
             try:
+                # Use very conservative settings to avoid rate limits
+                # batch_size=2: Process only 2 documents at a time
+                # delay_between_batches=5.0: Wait 5 seconds between batches
+                # This means 10 chunks will take ~25 seconds minimum (5 batches * 5 sec)
                 success = agent.ingest_documents_batch(
                     test_chunks,
-                    batch_size=5,
-                    delay_between_batches=2.0
+                    batch_size=2,
+                    delay_between_batches=5.0
                 )
                 
                 # If ingestion failed, skip - likely due to rate limits

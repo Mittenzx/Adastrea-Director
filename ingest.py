@@ -529,14 +529,14 @@ class DocumentIngestionAgent:
         except Exception as e:
             raise ChunkingError(str(e))
 
-    def _process_batch(self, batch: List[Any], is_first_batch: bool, max_retries: int = 5) -> Any:
+    def _process_batch(self, batch: List[Any], is_first_batch: bool, max_retries: int = 8) -> Any:
         """
         Process a single batch of documents with retry logic for rate limits.
         
         Args:
             batch: Documents to process
             is_first_batch: Whether this is the first batch
-            max_retries: Maximum number of retries for rate limit errors (default: 5)
+            max_retries: Maximum number of retries for rate limit errors (default: 8)
             
         Returns:
             The vectorstore instance
@@ -574,15 +574,15 @@ class DocumentIngestionAgent:
                 # Check if it's a rate limit error (429, rate_limit_exceeded, etc.)
                 is_rate_limit = any(word in error_msg for word in [
                     "rate", "limit", "429", "too many requests", 
-                    "rate_limit_exceeded", "quota"
+                    "rate_limit_exceeded", "quota", "insufficient_quota"
                 ])
                 
                 if is_rate_limit:
                     retry_count += 1
                     if retry_count <= max_retries:
-                        # Exponential backoff with longer waits: 5, 10, 20, 40, 60 seconds
-                        # Capped at 60 seconds to be reasonable
-                        wait_time = min(5 * (2 ** (retry_count - 1)), 60)
+                        # Enhanced exponential backoff: 10, 20, 40, 60, 90, 120, 120, 120 seconds
+                        # Start with longer waits and cap at 120 seconds
+                        wait_time = min(10 * (2 ** (retry_count - 1)), 120)
                         console.print(
                             f"[yellow]⚠ Rate limit hit. Waiting {wait_time} seconds before retry "
                             f"({retry_count}/{max_retries})...[/yellow]"
@@ -598,10 +598,10 @@ class DocumentIngestionAgent:
                             f"[yellow]Recommendations:[/yellow]"
                         )
                         console.print(
-                            f"[yellow]  1. Use longer delays: --delay 3.0 or --delay 5.0[/yellow]"
+                            f"[yellow]  1. Use longer delays: --delay 5.0 or --delay 10.0[/yellow]"
                         )
                         console.print(
-                            f"[yellow]  2. Use smaller batches: --batch-size 25 or --batch-size 10[/yellow]"
+                            f"[yellow]  2. Use smaller batches: --batch-size 10 or --batch-size 5[/yellow]"
                         )
                         console.print(
                             f"[yellow]  3. Check OpenAI usage limits at: https://platform.openai.com/account/limits[/yellow]"
@@ -704,15 +704,15 @@ class DocumentIngestionAgent:
                 console.print(f"[yellow]You have hit OpenAI API limits (rate limiting or quota).[/yellow]")
                 console.print(f"[yellow]\nRecommended Solutions (in order):[/yellow]")
                 console.print(f"[yellow]  1. Use smaller batches with longer delays:[/yellow]")
-                console.print(f"[cyan]     python ingest.py --docs-dir <path> --batch-size 25 --delay 5.0[/cyan]")
+                console.print(f"[cyan]     python ingest.py --docs-dir <path> --batch-size 10 --delay 5.0[/cyan]")
                 console.print(f"[yellow]  2. For very strict limits, use even smaller batches:[/yellow]")
-                console.print(f"[cyan]     python ingest.py --docs-dir <path> --batch-size 10 --delay 10.0[/cyan]")
+                console.print(f"[cyan]     python ingest.py --docs-dir <path> --batch-size 5 --delay 10.0[/cyan]")
                 console.print(f"[yellow]  3. Check your OpenAI usage and limits:[/yellow]")
                 console.print(f"[cyan]     https://platform.openai.com/account/limits[/cyan]")
                 console.print(f"[yellow]  4. Check your billing and add credits:[/yellow]")
                 console.print(f"[cyan]     https://platform.openai.com/account/billing[/cyan]")
                 console.print(f"[yellow]  5. Wait 5-10 minutes and try again with conservative settings[/yellow]")
-                console.print(f"[yellow]\nNote: The system includes automatic retries (up to 5 attempts) with exponential backoff.[/yellow]")
+                console.print(f"[yellow]\nNote: The system includes automatic retries (up to 8 attempts) with exponential backoff.[/yellow]")
                 console.print(f"[dim]Error details: {e}[/dim]")
             # Check for rate limit errors
             elif "rate" in error_msg and "limit" in error_msg:
