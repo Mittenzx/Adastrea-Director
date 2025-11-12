@@ -1,0 +1,239 @@
+# Adastrea Director - Remote Control API Configuration
+# This file configures how Adastrea Director connects to and interacts with
+# Unreal Engine projects via the Remote Control API.
+#
+# Documentation: See REMOTE_CONTROL_IMPLEMENTATION_PLAN.md
+
+# Remote Control API Connection Settings
+remote_control:
+  # Default connection settings
+  default_host: "localhost"
+  default_port: 30010
+  
+  # Timeout and retry settings
+  timeout_seconds: 30
+  retry_attempts: 3
+  retry_delay_seconds: 5
+  
+  # Request settings
+  max_concurrent_requests: 10
+  request_rate_limit: 100  # requests per second
+  
+  # Logging
+  log_all_requests: true
+  log_responses: false  # Set to true for debugging
+  log_file: "logs/remote_control.log"
+
+# WebSocket Connection Settings
+websocket:
+  # Enable WebSocket for real-time updates
+  enable: true
+  
+  # Connection settings
+  reconnect_attempts: 10
+  reconnect_delay_seconds: 2
+  ping_interval_seconds: 30
+  
+  # Event handling
+  buffer_size: 1024
+  max_message_size: 1048576  # 1 MB
+  
+  # Subscriptions
+  auto_resubscribe: true
+  subscription_timeout_seconds: 300
+
+# Version Control Integration Settings
+version_control:
+  # Automatic repository synchronization
+  auto_sync: true
+  sync_interval_minutes: 15
+  sync_before_action: true
+  
+  # Branch management
+  create_feature_branches: true
+  branch_prefix: "agent"
+  branch_naming_format: "{prefix}/{agent_name}/{action}/{timestamp}"
+  auto_cleanup_branches: true
+  cleanup_after_days: 7
+  
+  # Commit settings
+  auto_commit: true
+  detailed_commit_messages: true
+  sign_commits: false
+  commit_author_name: "Adastrea Director"
+  commit_author_email: "adastrea-director@automated.agent"
+  
+  # Push settings
+  auto_push: true
+  push_after_commit: true
+  push_force: false
+  
+  # Pull Request settings
+  auto_create_pr: true
+  pr_draft_mode: false
+  assign_reviewers: []  # Add GitHub usernames, e.g., ["@Mittenzx"]
+  add_labels: ["automated", "agent-generated"]
+  pr_template_path: ".github/PULL_REQUEST_TEMPLATE_AGENT.md"
+  
+  # Human oversight requirements
+  require_approval_for:
+    critical_files: true
+    large_changes: true  # >50 files
+    performance_regression: true
+    test_failures: true
+    security_issues: true
+  
+  # Conflict resolution
+  auto_resolve_conflicts: false
+  prefer_strategy: "manual"  # Options: "manual", "ours", "theirs"
+  notify_on_conflict: true
+
+# Agent Configuration Settings
+agents:
+  # Global agent settings
+  enable_all_agents: true
+  agent_timeout_seconds: 300
+  max_concurrent_agents: 3
+  
+  # Agent-specific settings
+  performance_profiling:
+    enabled: true
+    auto_profile_on_commit: false
+    profile_duration_seconds: 60
+    performance_threshold_fps: 30
+    
+  bug_detection:
+    enabled: true
+    auto_test_on_commit: false
+    max_test_duration_seconds: 300
+    error_severity_threshold: "medium"
+    
+  asset_management:
+    enabled: true
+    auto_optimize_on_import: false
+    texture_max_size: 4096
+    compression_quality: "default"
+    
+  test_automation:
+    enabled: true
+    run_tests_before_merge: true
+    parallel_test_execution: true
+    test_timeout_seconds: 600
+    
+  code_quality:
+    enabled: true
+    run_on_save: false
+    complexity_threshold: 10
+
+# Security Settings
+security:
+  # Access control
+  whitelist_enabled: true
+  allowed_hosts: ["localhost", "127.0.0.1"]
+  allowed_property_prefixes: ["BP_", "DA_", "WBP_"]
+  
+  # Property protection
+  protected_properties:
+    - "ProjectVersion"
+    - "EngineVersion"
+    - "DefaultGameMode"
+  
+  # Function whitelisting
+  whitelist_functions: true
+  allowed_function_prefixes: ["Test", "Debug", "Agent"]
+  
+  # Command filtering
+  whitelist_console_commands: true
+  allowed_commands:
+    - "stat fps"
+    - "stat gpu"
+    - "stat memory"
+    - "stat unit"
+    - "stat game"
+  
+  # Rate limiting
+  rate_limit_enabled: true
+  max_requests_per_minute: 1000
+  
+  # Audit logging
+  audit_all_actions: true
+  audit_log_path: "logs/audit.log"
+
+# Monitoring and Alerting Settings
+monitoring:
+  # Health checks
+  enable_health_checks: true
+  health_check_interval_seconds: 60
+  
+  # Performance monitoring
+  track_performance_metrics: true
+  metrics_collection_interval_seconds: 30
+  
+  # Alerting
+  enable_alerts: true
+  alert_on_connection_loss: true
+  alert_on_action_failure: true
+  alert_on_performance_degradation: true
+  
+  # Alert channels
+  alert_email: ""  # Add email for alerts
+  alert_webhook_url: ""  # Add webhook URL for Slack/Discord
+
+# Logging Settings
+logging:
+  # Log levels: DEBUG, INFO, WARNING, ERROR, CRITICAL
+  level: "INFO"
+  
+  # Log format
+  format: "[%(asctime)s] [%(levelname)s] [%(name)s] %(message)s"
+  date_format: "%Y-%m-%d %H:%M:%S"
+  
+  # Log destinations
+  console_output: true
+  file_output: true
+  log_directory: "logs"
+  
+  # Log rotation
+  rotate_logs: true
+  max_log_size_mb: 10
+  max_log_files: 5
+
+# Unreal Engine Project Settings
+unreal_engine:
+  # Project paths
+  projects: []
+    # Example:
+    # - name: "Adastrea"
+    #   path: "/path/to/Adastrea"
+    #   remote_control_port: 30010
+    # - name: "TestProject"
+    #   path: "/path/to/TestProject"
+    #   remote_control_port: 30011
+  
+  # Editor preferences
+  auto_start_editor: false
+  editor_args: []
+  
+  # Remote Control preset
+  default_preset: "Adastrea_Automation"
+  
+  # Play-in-Editor settings
+  pie_mode: "SelectedViewport"  # Options: SelectedViewport, NewWindow, Standalone, Simulate
+  pie_resolution: [1920, 1080]
+
+# Advanced Settings
+advanced:
+  # Caching
+  enable_response_caching: true
+  cache_ttl_seconds: 300
+  max_cache_size_mb: 100
+  
+  # Experimental features
+  enable_experimental_features: false
+  experimental_parallel_execution: false
+  experimental_ai_optimization: false
+  
+  # Debug mode
+  debug_mode: false
+  verbose_logging: false
+  save_debug_snapshots: false
