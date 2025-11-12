@@ -577,7 +577,7 @@ class DocumentIngestionAgent:
                 
                 # Check if it's a quota exhaustion error (should NOT retry)
                 # Quota errors won't resolve with retries - need to add credits or wait longer
-                is_quota_exceeded = any(word in error_msg for word in [
+                is_quota_exceeded = any(phrase in error_msg for phrase in [
                     "insufficient_quota", "quota exceeded", "exceeded your current quota"
                 ])
                 
@@ -601,9 +601,8 @@ class DocumentIngestionAgent:
                     raise e
                 
                 # Check if it's a temporary rate limit error (should retry)
-                is_rate_limit = any(word in error_msg for word in [
-                    "rate", "limit", "429", "too many requests", 
-                    "rate_limit_exceeded"
+                is_rate_limit = any(phrase in error_msg for phrase in [
+                    "rate limit", "rate_limit_exceeded", "429", "too many requests"
                 ])
                 
                 if is_rate_limit:

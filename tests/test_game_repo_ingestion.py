@@ -509,7 +509,8 @@ class TestRateLimitHandling:
         quota_error_2 = Exception("insufficient_quota: API quota exceeded")
         quota_error_3 = Exception("quota exceeded, please check billing")
         
-        # All should be identified as rate limit/quota errors
+        # The helper function detects both quota and rate limit errors, but does not differentiate between them.
+        # In the main implementation (e.g., ingest.py), separate logic is used to distinguish these error types.
         assert _is_rate_limit_error(quota_error_1)
         assert _is_rate_limit_error(quota_error_2)
         assert _is_rate_limit_error(quota_error_3)
