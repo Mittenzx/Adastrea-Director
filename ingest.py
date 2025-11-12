@@ -575,10 +575,34 @@ class DocumentIngestionAgent:
             except Exception as e:
                 error_msg = str(e).lower()
                 
-                # Check if it's a rate limit error (429, rate_limit_exceeded, etc.)
-                is_rate_limit = any(word in error_msg for word in [
-                    "rate", "limit", "429", "too many requests", 
-                    "rate_limit_exceeded", "quota", "insufficient_quota"
+                # Check if it's a quota exhaustion error (should NOT retry)
+                # Quota errors won't resolve with retries - need to add credits or wait longer
+                is_quota_exceeded = any(phrase in error_msg for phrase in [
+                    "insufficient_quota", "quota exceeded", "exceeded your current quota"
+                ])
+                
+                if is_quota_exceeded:
+                    # Fail immediately on quota errors - retrying won't help
+                    console.print(
+                        f"[red]✗ OpenAI API quota exhausted. Retrying will not help.[/red]"
+                    )
+                    console.print(
+                        f"[yellow]Recommendations:[/yellow]"
+                    )
+                    console.print(
+                        f"[yellow]  1. Check your billing and add credits: https://platform.openai.com/account/billing[/yellow]"
+                    )
+                    console.print(
+                        f"[yellow]  2. Check your usage limits: https://platform.openai.com/account/limits[/yellow]"
+                    )
+                    console.print(
+                        f"[yellow]  3. Wait for quota reset (quotas reset monthly or per billing cycle)[/yellow]"
+                    )
+                    raise e
+                
+                # Check if it's a temporary rate limit error (should retry)
+                is_rate_limit = any(phrase in error_msg for phrase in [
+                    "rate limit", "rate_limit_exceeded", "429", "too many requests"
                 ])
                 
                 if is_rate_limit:

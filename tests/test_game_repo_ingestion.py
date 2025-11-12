@@ -498,6 +498,48 @@ class TestGameRepositoryIngestion:
                 assert "language" in metadata
 
 
+class TestRateLimitHandling:
+    """Tests for rate limit and quota error handling."""
+    
+    @pytest.mark.unit
+    def test_is_rate_limit_error_with_quota_error(self):
+        """Test that quota errors are correctly identified."""
+        # Create exceptions with different quota error messages
+        quota_error_1 = Exception("Error code: 429 - {'error': {'message': 'You exceeded your current quota', 'type': 'insufficient_quota'}}")
+        quota_error_2 = Exception("insufficient_quota: API quota exceeded")
+        quota_error_3 = Exception("quota exceeded, please check billing")
+        
+        # The helper function detects both quota and rate limit errors, but does not differentiate between them.
+        # In the main implementation (e.g., ingest.py), separate logic is used to distinguish these error types.
+        assert _is_rate_limit_error(quota_error_1)
+        assert _is_rate_limit_error(quota_error_2)
+        assert _is_rate_limit_error(quota_error_3)
+    
+    @pytest.mark.unit
+    def test_is_rate_limit_error_with_temporary_rate_limit(self):
+        """Test that temporary rate limit errors are correctly identified."""
+        rate_limit_error_1 = Exception("rate limit exceeded, please retry")
+        rate_limit_error_2 = Exception("429 Too Many Requests")
+        rate_limit_error_3 = Exception("rate_limit_exceeded")
+        
+        # All should be identified as rate limit errors
+        assert _is_rate_limit_error(rate_limit_error_1)
+        assert _is_rate_limit_error(rate_limit_error_2)
+        assert _is_rate_limit_error(rate_limit_error_3)
+    
+    @pytest.mark.unit
+    def test_is_rate_limit_error_with_other_errors(self):
+        """Test that non-rate-limit errors are not identified as rate limit errors."""
+        other_error_1 = Exception("Connection timeout")
+        other_error_2 = Exception("Invalid API key")
+        other_error_3 = Exception("File not found")
+        
+        # None should be identified as rate limit errors
+        assert not _is_rate_limit_error(other_error_1)
+        assert not _is_rate_limit_error(other_error_2)
+        assert not _is_rate_limit_error(other_error_3)
+
+
 class TestGameRepoConfiguration:
     """Tests for configuring game repository ingestion."""
     
