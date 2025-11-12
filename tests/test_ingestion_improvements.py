@@ -418,7 +418,7 @@ class TestRateLimitRetry:
                     assert mock_sleep.called
 
     def test_retry_exponential_backoff(self, agent):
-        """Test that retry uses exponential backoff."""
+        """Test that retry uses exponential backoff with jitter."""
         batch = [Mock(page_content="Test", metadata={})]
         
         with patch('ingest.Chroma') as mock_chroma:
@@ -437,9 +437,13 @@ class TestRateLimitRetry:
                     
                     # Should have retried twice
                     assert mock_sleep.call_count == 2
-                    # Check exponential backoff: 2^1=2, 2^2=4
+                    # Check exponential backoff with jitter: base_wait + jitter(0 to base_wait)
+                    # Retry 1: base=2^0=1, jitter=0-1, total=1-2
+                    # Retry 2: base=2^1=2, jitter=0-2, total=2-4
                     sleep_calls = [call[0][0] for call in mock_sleep.call_args_list]
-                    assert sleep_calls == [2, 4]
+                    assert len(sleep_calls) == 2
+                    assert 1.0 <= sleep_calls[0] <= 2.0, f"First retry delay {sleep_calls[0]} not in range [1.0, 2.0]"
+                    assert 2.0 <= sleep_calls[1] <= 4.0, f"Second retry delay {sleep_calls[1]} not in range [2.0, 4.0]"
 
     def test_retry_exhaustion_raises_error(self, agent):
         """Test that exhausting retries raises the error."""
