@@ -5,10 +5,27 @@ Document Ingestion Script for Adastrea Director
 This script handles loading, processing, and embedding project documents
 into a vector database for RAG-based question answering.
 
+Features:
+- Incremental ingestion: Only processes changed or new files (default)
+- Hash-based change detection: Uses SHA-256 to detect file modifications
+- Sequential processing: Processes files one-by-one to avoid rate limits
+- Legacy mode: Option to load all files at once (use --legacy-mode)
+
 Usage:
+    # Incremental ingestion (default, recommended)
     python ingest.py --docs-dir /path/to/docs
-    python ingest.py --docs-dir /path/to/docs --collection-name my_project
+    
+    # Force re-ingestion of all files
+    python ingest.py --docs-dir /path/to/docs --reingest
+    
+    # Legacy mode (load all files at once)
+    python ingest.py --docs-dir /path/to/docs --legacy-mode
+    
+    # Single file
     python ingest.py --file single_doc.md
+    
+    # Custom collection name
+    python ingest.py --docs-dir /path/to/docs --collection-name my_project
 """
 
 import os

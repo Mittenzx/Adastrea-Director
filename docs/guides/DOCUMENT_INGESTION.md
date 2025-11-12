@@ -6,6 +6,19 @@ The Adastrea Director document ingestion system is a powerful, flexible componen
 
 ## Features
 
+### 🔄 Incremental Ingestion (NEW)
+
+The system now supports intelligent incremental ingestion:
+
+- **Hash-based change detection**: Uses SHA-256 to detect file modifications
+- **Skip unchanged files**: Automatically skips files that haven't changed since last ingestion
+- **Update modified files**: Detects and re-ingests only changed files
+- **Add new files**: Automatically adds newly discovered files
+- **Force re-ingestion**: Option to bypass change detection with `--reingest` flag
+- **Sequential processing**: Processes files one-by-one to avoid rate limits
+
+This reduces API costs, speeds up ingestion, and minimizes rate limit errors.
+
 ### 📄 Supported File Types
 
 #### Documentation Files
@@ -43,6 +56,7 @@ Automatically enriches document metadata with:
 - `doc_type`: Classification (code, documentation, document, config, other)
 - `language`: Programming language for code files
 - `file_size`: Size of the source file in bytes
+- `file_hash`: SHA-256 hash for change detection (NEW)
 
 ### ⚡ Batch Processing
 
@@ -65,11 +79,16 @@ pip install -r requirements.txt
 
 ### Basic Usage
 
-Ingest documents from a directory:
+Ingest documents from a directory (incremental mode - default):
 
 ```bash
 python ingest.py --docs-dir /path/to/your/docs
 ```
+
+This will:
+- Skip files that haven't changed since last ingestion
+- Update files that have been modified
+- Add new files that weren't ingested before
 
 Ingest a single file:
 
@@ -93,15 +112,35 @@ python ingest.py --docs-dir /path/to/docs --chunk-size 500 --chunk-overlap 100
 
 Smaller chunks provide more focused context but require more API calls. Larger chunks provide more context but may be less precise.
 
-#### Batch Processing
+#### Incremental Ingestion Options
 
-For large document sets (recommended for 200+ documents):
+Force re-ingestion of all files (bypass change detection):
 
 ```bash
-python ingest.py --docs-dir /path/to/docs --use-batch --batch-size 50
+python ingest.py --docs-dir /path/to/docs --reingest
 ```
 
-The system automatically enables batch mode for 200+ chunks, but you can force it for smaller sets.
+Use legacy mode (load all files at once, no incremental processing):
+
+```bash
+python ingest.py --docs-dir /path/to/docs --legacy-mode
+```
+
+Adjust delay between files (to avoid rate limits):
+
+```bash
+python ingest.py --docs-dir /path/to/docs --delay 3.0
+```
+
+#### Batch Processing (Legacy Mode Only)
+
+For large document sets in legacy mode (recommended for 200+ documents):
+
+```bash
+python ingest.py --docs-dir /path/to/docs --legacy-mode --use-batch --batch-size 50
+```
+
+Note: In incremental mode (default), files are processed sequentially with automatic delays.
 
 #### View Database Statistics
 
@@ -171,7 +210,7 @@ game_project/
 1. **Keep documents well-structured** - Use clear headings and sections
 2. **Use descriptive names** - `player_movement_system.md` not `doc1.md`
 3. **Add comments to code** - Code comments become searchable context
-4. **Update regularly** - Re-run ingestion when documents change
+4. **Update regularly** - Re-run ingestion when documents change (incremental mode only processes changes)
 5. **Use consistent formatting** - Helps with chunking and retrieval
 
 ## How It Works
@@ -198,7 +237,8 @@ Each document's metadata is automatically enriched with:
     "extension": ".py",
     "doc_type": "code",
     "language": "python",
-    "file_size": 1234
+    "file_size": 1234,
+    "file_hash": "e5a0e044add66321198f1ad628118960b4b37c804af28ce647fd7aa1f1154b20"
 }
 ```
 
@@ -381,7 +421,7 @@ agent = DocumentIngestionAgent(
 
 Planned features for future releases:
 
-- [ ] Incremental updates (only ingest changed files)
+- [x] Incremental updates (only ingest changed files) - **COMPLETED**
 - [ ] Resume interrupted ingestion
 - [ ] Support for more file types (HTML, XML, CSV)
 - [ ] Custom chunking strategies per project
@@ -401,5 +441,5 @@ For issues or questions:
 
 ---
 
-**Last Updated:** 2024-11-10
-**Version:** 1.0.0
+**Last Updated:** 2024-11-12
+**Version:** 1.1.0 - Added incremental ingestion with hash-based change detection
