@@ -8,13 +8,13 @@
 ## 📖 Reading Guide (Choose Your Path)
 
 ### ⚡ Quick Summary (2 minutes)
-Read: **[REVIEW_SUMMARY.md](REVIEW_SUMMARY.md)**
+Read: **[REVIEW_SUMMARY.md](docs/summaries/REVIEW_SUMMARY.md)**
 - Executive verdict
 - Key findings
 - Quick recommendations
 
 ### 📊 Complete Analysis (15-20 minutes)
-Read: **[AGENTS_UTILITY_ASSESSMENT.md](AGENTS_UTILITY_ASSESSMENT.md)**
+Read: **[AGENTS_UTILITY_ASSESSMENT.md](docs/guides/AGENTS_UTILITY_ASSESSMENT.md)**
 - Detailed phase-by-phase analysis
 - Implementation recommendations
 - Cost-benefit analysis
@@ -27,7 +27,7 @@ Read: **[AGENTS.md](AGENTS.md)**
 - Design principles
 - Implementation templates
 
-Read: **[UNREAL_MCP_ASSESSMENT.md](UNREAL_MCP_ASSESSMENT.md)**
+Read: **[UNREAL_MCP_ASSESSMENT.md](docs/guides/UNREAL_MCP_ASSESSMENT.md)**
 - Unreal Engine MCP Server evaluation
 - Integration opportunities for Phase 3
 - Technical architecture and roadmap
@@ -68,13 +68,14 @@ Read: **[UNREAL_MCP_ASSESSMENT.md](UNREAL_MCP_ASSESSMENT.md)**
 
 ---
 
-## 📁 Files Created
+## 📁 Documentation Structure
 
-| File | Size | Purpose |
-|------|------|---------|
-| AGENTS_UTILITY_ASSESSMENT.md | 16KB | Complete analysis |
-| REVIEW_SUMMARY.md | 4KB | Executive summary |
-| START_HERE.md | (this file) | Quick navigation |
+All documentation is now organized in the `docs/` directory:
+- **[docs/INDEX.md](docs/INDEX.md)** - Complete documentation index
+- **[docs/guides/](docs/guides/)** - Installation and usage guides
+- **[docs/phases/](docs/phases/)** - Phase-specific documentation
+- **[docs/gui/](docs/gui/)** - GUI documentation
+- **[docs/design/](docs/design/)** - Design system documentation
 
 ---
 

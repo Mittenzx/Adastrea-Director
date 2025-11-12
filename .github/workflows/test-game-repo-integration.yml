@@ -69,7 +69,7 @@ jobs:
           else
             echo "secrets_available=false" >> $GITHUB_OUTPUT
             echo "⚠️  Secrets not configured - skipping integration tests"
-            echo "See SETUP_GITHUB_SECRETS.md for setup instructions"
+            echo "See docs/guides/SETUP_GITHUB_SECRETS.md for setup instructions"
           fi
           
       - name: Run integration tests
@@ -93,7 +93,7 @@ jobs:
           echo "⚠️  Integration tests skipped - secrets not configured"
           echo ""
           echo "To enable integration testing:"
-          echo "1. Follow instructions in SETUP_GITHUB_SECRETS.md"
+          echo "1. Follow instructions in docs/guides/SETUP_GITHUB_SECRETS.md"
           echo "2. Add GAME_REPO_TOKEN and OPENAI_API_KEY secrets"
           echo "3. Re-run this workflow"
 

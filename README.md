@@ -105,7 +105,7 @@ This script will detect your platform and guide you through any platform-specifi
 pip install -r requirements.txt
 ```
 
-**📝 Note**: If you encounter issues (especially on Apple Silicon Macs or ARM systems), use the smart installer or see [INSTALLATION.md](INSTALLATION.md) for platform-specific instructions and troubleshooting.
+**📝 Note**: If you encounter issues (especially on Apple Silicon Macs or ARM systems), use the smart installer or see [INSTALLATION.md](docs/guides/INSTALLATION.md) for platform-specific instructions and troubleshooting.
 
 3. Set up your OpenAI API key (or other LLM provider):
 ```bash
@@ -119,9 +119,9 @@ export GITHUB_TOKEN="your-github-token-here"
 This is only needed if you want to ingest documents from the private Mittenzx/Adastrea game repository. 
 
 **📖 Setup Guides:**
-- [Quick Start](QUICK_START_GAME_REPO.md) - 5-minute setup
-- [GitHub Secrets Setup](SETUP_GITHUB_SECRETS.md) - CI/CD integration
-- [Complete Guide](GAME_REPO_INGESTION.md) - Full documentation
+- [Quick Start](docs/guides/QUICK_START_GAME_REPO.md) - 5-minute setup
+- [GitHub Secrets Setup](docs/guides/SETUP_GITHUB_SECRETS.md) - CI/CD integration
+- [Complete Guide](docs/guides/GAME_REPO_INGESTION.md) - Full documentation
 
 ### Usage
 
@@ -155,13 +155,13 @@ The planning system will:
 python ingest.py --docs-dir /path/to/your/docs
 ```
 
-**📚 New to ingestion?** See [DOCS_TO_INGEST.md](DOCS_TO_INGEST.md) for a comprehensive list of documents to ingest and detailed instructions.
+**📚 New to ingestion?** See [DOCS_TO_INGEST.md](docs/guides/DOCS_TO_INGEST.md) for a comprehensive list of documents to ingest and detailed instructions.
 
 **🎮 Working on the Mittenzx/Adastrea game?** Use the dedicated game repository ingestion:
 ```bash
 python ingest_game_repo.py
 ```
-See [Quick Start Guide](QUICK_START_GAME_REPO.md) for 5-minute setup or [GAME_REPO_INGESTION.md](GAME_REPO_INGESTION.md) for complete documentation.
+See [Quick Start Guide](docs/guides/QUICK_START_GAME_REPO.md) for 5-minute setup or [GAME_REPO_INGESTION.md](docs/guides/GAME_REPO_INGESTION.md) for complete documentation.
 
 2. **Start the interactive assistant:**
 ```bash
@@ -192,7 +192,7 @@ python planning_cli.py --goal "Implement user authentication system" --output ac
 python examples/phase2_example.py
 ```
 
-**📋 Want to learn more?** See [PHASE2_GUIDE.md](PHASE2_GUIDE.md) for comprehensive Phase 2 documentation with examples.
+**📋 Want to learn more?** See [PHASE2_GUIDE.md](docs/phases/PHASE2_GUIDE.md) for comprehensive Phase 2 documentation with examples.
 
 #### Graphical User Interface (GUI)
 
@@ -223,7 +223,7 @@ The improved GUI provides:
 - `Ctrl+C` - Copy last response (from menu)
 - `Ctrl+E` - Export conversation
 
-See [GUI_IMPROVEMENTS.md](GUI_IMPROVEMENTS.md) for detailed documentation of all enhancements.
+See [GUI_IMPROVEMENTS.md](docs/gui/GUI_IMPROVEMENTS.md) for detailed documentation of all enhancements.
 
 **Note**: The GUI application requires tkinter, which is included with most Python installations on Windows and can be installed on Linux/Mac.
 
@@ -249,14 +249,15 @@ Adastrea-Director/
 │   ├── test_planning_models.py    # Phase 2 model tests (NEW!)
 │   ├── test_planning_agents.py    # Phase 2 agent tests (NEW!)
 │   └── test_game_repo_ingestion.py # Game repo ingestion tests (NEW!)
-├── GDD_TEMPLATE.md                # Game design document template
-├── SAMPLE_GDD.md                  # Example game design document
-├── PHASE1_COMPLETION.md           # Phase 1 completion report
-├── PHASE2_COMPLETION.md           # Phase 2 completion report (NEW!)
-└── GUI Documentation/
-    ├── GUI_IMPROVEMENTS.md        # Detailed feature documentation
-    ├── GUI_VISUAL_COMPARISON.md   # Before/after comparison
-    └── GUI_QUICK_START.md         # User quick start guide
+├── docs/                          # Documentation (organized)
+│   ├── INDEX.md                   # Documentation index
+│   ├── phases/                    # Phase-specific documentation
+│   ├── gui/                       # GUI documentation
+│   ├── design/                    # Design system documentation
+│   ├── guides/                    # Installation and usage guides
+│   ├── remote-control/            # Remote control API documentation
+│   ├── testing/                   # Testing documentation
+│   └── summaries/                 # Implementation summaries
 │
 ├── Phase 1 - Foundation
 │   ├── ingest.py                  # Document ingestion script
@@ -287,39 +288,30 @@ not actual directory names. All files are in the root directory.
 
 ## Documentation
 
-### Installation & Setup
-- [Installation Guide](INSTALLATION.md) - Platform-specific installation instructions
-- [Troubleshooting](TROUBLESHOOTING.md) - Quick reference for common issues
-- [Error Handling Guide](ERROR_HANDLING.md) - Comprehensive error handling documentation
-- **[Documents to Ingest](DOCS_TO_INGEST.md)** - Comprehensive guide to documents for the knowledge base
-- **[Game Repository Ingestion](GAME_REPO_INGESTION.md)** - Guide for ingesting from Mittenzx/Adastrea game repo
+📚 **[Complete Documentation Index](docs/INDEX.md)** - Comprehensive, organized documentation hub
 
-### Project Documentation
-- [Project Plan](PROJECT_PLAN.md) - Detailed breakdown of all four phases
-- [Phase 1 Completion](PHASE1_COMPLETION.md) - Phase 1 completion report
-- [Phase 2 Completion](PHASE2_COMPLETION.md) - Phase 2 completion report (NEW!)
+### Quick Links
+
+**Installation & Setup:**
+- [Installation Guide](docs/guides/INSTALLATION.md) - Platform-specific installation instructions
+- [Troubleshooting](docs/guides/TROUBLESHOOTING.md) - Quick reference for common issues
+- [Error Handling Guide](docs/guides/ERROR_HANDLING.md) - Comprehensive error handling documentation
+
+**Project Documentation:**
+- [Project Plan](docs/guides/PROJECT_PLAN.md) - Detailed breakdown of all four phases
 - [Agent System](AGENTS.md) - Architecture and design of the agent system
-- [Agent System Assessment](AGENTS_UTILITY_ASSESSMENT.md) - Comprehensive evaluation of agent architecture utility
-- [Unreal MCP Assessment](UNREAL_MCP_ASSESSMENT.md) - Evaluation of Unreal Engine MCP Server integration potential
-- **[Remote Control API](REMOTE_CONTROL_API.md)** - ✨ Unreal Engine Remote Control API capabilities and agent enhancements (NEW!)
-- **[Phase 2 Status](PHASE2_STATUS.md)** - ✨ Complete status report and Phase 3 readiness assessment (NEW!)
-- **[Phase 2 to Phase 3 Checklist](PHASE2_TO_PHASE3_CHECKLIST.md)** - ✨ Transition checklist and action items (NEW!)
-- **[Phase 2 Guide](PHASE2_GUIDE.md)** - ✨ Complete guide to goal decomposition and planning (NEW!)
-- [GDD Template](GDD_TEMPLATE.md) - Template for creating game design documents
+- [Phase 2 Guide](docs/phases/PHASE2_GUIDE.md) - Complete guide to goal decomposition and planning
+- [Phase 2 Completion](docs/phases/PHASE2_COMPLETION.md) - Phase 2 completion report
 
-### UI/UX Design Documentation
-- **[Design Documentation Index](DESIGN_INDEX.md)** - Start here! Complete guide to all design documentation
-- [UI/UX Design System](UI_UX_DESIGN_SYSTEM.md) - Complete design system with principles, colors, typography, and components
-- [Visual Design Guide](DESIGN_GUIDE.md) - Visual specifications, mockups, and implementation examples
-- [Component Library](COMPONENT_LIBRARY.md) - Reusable UI components with code examples
+**GUI Documentation:**
+- [GUI Quick Start](docs/gui/GUI_QUICK_START.md) - User quick start and tips
+- [GUI Improvements](docs/gui/GUI_IMPROVEMENTS.md) - Comprehensive feature documentation
 
-### GUI Documentation
-- [GUI Improvements](GUI_IMPROVEMENTS.md) - Comprehensive feature documentation
-- [Ingest List Feature](INGEST_LIST_FEATURE.md) - Document ingestion tracking and visualization
-- [Visual Comparison](GUI_VISUAL_COMPARISON.md) - Before/after comparison with visuals
-- [Visual Description](GUI_SCREENSHOT_DESCRIPTION.md) - Detailed interface description
-- [Quick Start Guide](GUI_QUICK_START.md) - User quick start and tips
-- [Changes Summary](GUI_CHANGES_SUMMARY.md) - Complete summary of all changes
+**Design System:**
+- [Design Index](docs/design/DESIGN_INDEX.md) - Complete guide to all design documentation
+- [UI/UX Design System](docs/design/UI_UX_DESIGN_SYSTEM.md) - Complete design system
+
+**For complete documentation, see [docs/INDEX.md](docs/INDEX.md)**
 
 ## Contributing
 

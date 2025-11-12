@@ -253,7 +253,7 @@ def main():
         console.print("\n[bold green]✓ All examples completed successfully![/bold green]\n")
         console.print("[cyan]Next steps:[/cyan]")
         console.print("  • Try planning_cli.py for interactive goal decomposition")
-        console.print("  • Read PHASE2_GUIDE.md for detailed documentation")
+        console.print("  • Read docs/phases/PHASE2_GUIDE.md for detailed documentation")
         console.print("  • Integrate with your development workflow\n")
         
     except KeyboardInterrupt:
