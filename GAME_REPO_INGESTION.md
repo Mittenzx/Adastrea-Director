@@ -4,9 +4,16 @@ This guide explains how to ingest documents from the Mittenzx/Adastrea game repo
 
 ## Overview
 
-Adastrea Director is designed to help build the Mittenzx/Adastrea game. To provide the most relevant assistance, it needs to understand the game's codebase, documentation, and design documents. This guide shows you how to:
+Adastrea Director is designed to help build the Mittenzx/Adastrea game. To provide the most relevant assistance, it needs to understand the game's codebase, documentation, and design documents.
 
-1. Ingest documents from the game repository
+**IMPORTANT:** The Mittenzx/Adastrea repository is **private**. You must have:
+- A GitHub account with access to the repository
+- A personal access token with `repo` scope
+- An OpenAI API key for document embedding
+
+This guide shows you how to:
+
+1. Ingest documents from the private game repository
 2. Test the ingestion process
 3. Set up automatic updates
 4. Troubleshoot common issues

@@ -84,7 +84,8 @@ jobs:
         if: always() && steps.check_secrets.outputs.secrets_available == 'true'
         run: |
           echo "✅ Integration tests completed"
-          echo "These tests used the real Mittenzx/Adastrea repository"
+          echo "These tests validate ingestion from the Mittenzx/Adastrea repository"
+          echo "Tests may skip if repository is inaccessible or API rate limits are hit"
           
       - name: Skip message
         if: steps.check_secrets.outputs.secrets_available == 'false'
