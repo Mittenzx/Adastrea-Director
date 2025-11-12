@@ -65,7 +65,7 @@ def demo_incremental_ingestion():
                 mock_chroma.return_value = mock_vectorstore
 
                 for file_path in discovered_files:
-                    has_changed, old_hash = agent._check_file_changed(file_path)
+                    has_changed, old_hash, _ = agent._check_file_changed(file_path)
                     filename = Path(file_path).name
                     status = "NEW" if old_hash is None else "CHANGED"
                     print(f"    {filename}: {status} (will be added)")
@@ -84,7 +84,7 @@ def demo_incremental_ingestion():
                     mock_vectorstore._collection = mock_collection
                     mock_chroma.return_value = mock_vectorstore
 
-                    has_changed, old_hash = agent._check_file_changed(file_path)
+                    has_changed, old_hash, _ = agent._check_file_changed(file_path)
                     filename = Path(file_path).name
                     status = "UNCHANGED" if not has_changed else "CHANGED"
                     print(f"    {filename}: {status} (will be skipped)")
@@ -114,7 +114,7 @@ def demo_incremental_ingestion():
                     mock_vectorstore._collection = mock_collection
                     mock_chroma.return_value = mock_vectorstore
 
-                    has_changed, old_hash = agent._check_file_changed(file_path)
+                    has_changed, old_hash, _ = agent._check_file_changed(file_path)
                     filename = Path(file_path).name
                     if has_changed and old_hash is not None:
                         status = "CHANGED"
@@ -130,7 +130,7 @@ def demo_incremental_ingestion():
             # Test force re-ingest
             print("\n  Scenario 4: Force re-ingest (--reingest flag)")
             for file_path in discovered_files:
-                has_changed, old_hash = agent._check_file_changed(file_path, force_reingest=True)
+                agent._check_file_changed(file_path, force_reingest=True)
                 filename = Path(file_path).name
                 print(f"    {filename}: FORCED (will be re-ingested)")
 

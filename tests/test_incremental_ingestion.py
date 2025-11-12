@@ -13,9 +13,8 @@ Tests cover:
 import os
 import sys
 import tempfile
-import shutil
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock, call
+from unittest.mock import Mock, patch
 import pytest
 
 # Add parent directory to path for imports
@@ -92,9 +91,10 @@ class TestChangeDetection:
             temp_file = f.name
         
         try:
-            has_changed, old_hash = agent._check_file_changed(temp_file, force_reingest=True)
+            has_changed, old_hash, current_hash = agent._check_file_changed(temp_file, force_reingest=True)
             assert has_changed is True
             assert old_hash is None
+            assert current_hash  # Hash should be calculated
         finally:
             os.unlink(temp_file)
 
@@ -116,10 +116,11 @@ class TestChangeDetection:
                     mock_vectorstore._collection = mock_collection
                     mock_chroma.return_value = mock_vectorstore
                     
-                    has_changed, old_hash = agent._check_file_changed(temp_file, force_reingest=False)
+                    has_changed, old_hash, current_hash = agent._check_file_changed(temp_file, force_reingest=False)
                     
                     assert has_changed is True
                     assert old_hash is None
+                    assert current_hash == "abc123"
         finally:
             os.unlink(temp_file)
 
@@ -143,10 +144,11 @@ class TestChangeDetection:
                     mock_vectorstore._collection = mock_collection
                     mock_chroma.return_value = mock_vectorstore
                     
-                    has_changed, old_hash = agent._check_file_changed(temp_file, force_reingest=False)
+                    has_changed, old_hash, current_hash = agent._check_file_changed(temp_file, force_reingest=False)
                     
                     assert has_changed is False
                     assert old_hash == "abc123"
+                    assert current_hash == "abc123"
         finally:
             os.unlink(temp_file)
 
@@ -170,10 +172,11 @@ class TestChangeDetection:
                     mock_vectorstore._collection = mock_collection
                     mock_chroma.return_value = mock_vectorstore
                     
-                    has_changed, old_hash = agent._check_file_changed(temp_file, force_reingest=False)
+                    has_changed, old_hash, current_hash = agent._check_file_changed(temp_file, force_reingest=False)
                     
                     assert has_changed is True
                     assert old_hash == "oldHash123"
+                    assert current_hash == "newHash456"
         finally:
             os.unlink(temp_file)
 
@@ -305,7 +308,7 @@ class TestIncrementalIngestion:
                 mock_get_files.return_value = [str(test_file)]
                 
                 with patch.object(agent, '_check_file_changed') as mock_check:
-                    mock_check.return_value = (False, "hash123")  # File unchanged
+                    mock_check.return_value = (False, "hash123", "hash123")  # File unchanged
                     
                     stats = agent.ingest_directory_incremental(temp_dir, delay_between_files=0)
                     
@@ -323,7 +326,7 @@ class TestIncrementalIngestion:
                 mock_get_files.return_value = [str(test_file)]
                 
                 with patch.object(agent, '_check_file_changed') as mock_check:
-                    mock_check.return_value = (True, None)  # New file
+                    mock_check.return_value = (True, None, "new_hash")  # New file
                     
                     with patch.object(agent, 'load_single_file') as mock_load:
                         mock_doc = Mock()
@@ -354,7 +357,7 @@ class TestIncrementalIngestion:
                 mock_get_files.return_value = [str(test_file)]
                 
                 with patch.object(agent, '_check_file_changed') as mock_check:
-                    mock_check.return_value = (True, "old_hash")  # File changed
+                    mock_check.return_value = (True, "old_hash", "new_hash")  # File changed
                     
                     with patch.object(agent, 'load_single_file') as mock_load:
                         mock_doc = Mock()

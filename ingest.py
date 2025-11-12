@@ -35,7 +35,7 @@ import time
 import random
 import hashlib
 from pathlib import Path
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Tuple
 from exceptions import (
     APIKeyError,
     DatabaseError,
@@ -224,7 +224,9 @@ class DocumentIngestionAgent:
             console.print(f"[yellow]Warning: Could not calculate hash for {file_path}: {e}[/yellow]")
             return ""
 
-    def _check_file_changed(self, file_path: str, force_reingest: bool = False) -> tuple[bool, Optional[str]]:
+    def _check_file_changed(
+        self, file_path: str, force_reingest: bool = False
+    ) -> Tuple[bool, Optional[str], str]:
         """
         Check if a file has changed by comparing its hash with stored metadata.
         
@@ -233,16 +235,18 @@ class DocumentIngestionAgent:
             force_reingest: If True, always treat file as changed
             
         Returns:
-            Tuple of (has_changed, old_hash). has_changed is True if file should be processed.
+            Tuple of (has_changed, old_hash, current_hash). 
+            has_changed is True if file should be processed.
         """
-        if force_reingest:
-            return True, None
-            
         # Calculate current file hash
         current_hash = self._calculate_file_hash(file_path)
+        
+        if force_reingest:
+            return True, None, current_hash
+            
         if not current_hash:
             # If we can't calculate hash, process the file to be safe
-            return True, None
+            return True, None, ""
         
         try:
             # Query ChromaDB for existing documents with this source
@@ -267,17 +271,17 @@ class DocumentIngestionAgent:
                 
                 if stored_hash == current_hash:
                     # File unchanged
-                    return False, stored_hash
+                    return False, stored_hash, current_hash
                 else:
                     # File changed
-                    return True, stored_hash
+                    return True, stored_hash, current_hash
             else:
                 # File not in database, needs to be added
-                return True, None
+                return True, None, current_hash
                 
         except Exception as e:
             # If database doesn't exist yet or there's an error, process the file
-            return True, None
+            return True, None, current_hash
 
     def _delete_document_by_source(self, source: str) -> bool:
         """
@@ -661,7 +665,7 @@ class DocumentIngestionAgent:
             for file_path in file_list:
                 try:
                     # Check if file has changed
-                    has_changed, old_hash = self._check_file_changed(file_path, force_reingest)
+                    has_changed, old_hash, current_hash = self._check_file_changed(file_path, force_reingest)
                     
                     if not has_changed:
                         # File unchanged, skip
@@ -672,9 +676,6 @@ class DocumentIngestionAgent:
                             description=f"[dim]⊘ Skipped (unchanged): {Path(file_path).name}[/dim]"
                         )
                         continue
-                    
-                    # Calculate current hash
-                    current_hash = self._calculate_file_hash(file_path)
                     
                     # Load the file
                     documents = self.load_single_file(file_path)
@@ -707,8 +708,8 @@ class DocumentIngestionAgent:
                     # Ingest the chunks
                     try:
                         # Check if database exists
-                        if not Path(self.persist_directory).exists() or stats["added"] + stats["updated"] == 1:
-                            # First document or database doesn't exist
+                        if not Path(self.persist_directory).exists():
+                            # Database doesn't exist, create it
                             vectorstore = Chroma.from_documents(
                                 documents=chunks,
                                 embedding=self.embeddings,
@@ -1376,6 +1377,13 @@ def main():
     # Legacy mode or single file processing
     if args.legacy_mode and args.docs_dir:
         console.print(f"[yellow]Using legacy mode (load all files at once)[/yellow]\n")
+    
+    # Warn if --reingest or --legacy-mode used with --file
+    if args.file and (args.reingest or args.legacy_mode):
+        console.print(
+            "[yellow]Note: --reingest and --legacy-mode flags have no effect "
+            "when using --file for single file ingestion[/yellow]\n"
+        )
     
     # Load documents
     documents = []
