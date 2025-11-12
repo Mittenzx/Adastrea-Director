@@ -478,6 +478,41 @@ class TestRateLimitRetry:
                 assert mock_sleep.call_count == 0
                 assert "Connection timeout" in str(exc_info.value)
 
+    def test_rate_limit_error_messages_displayed(self, agent):
+        """Test that helpful error messages are displayed when rate limits are exhausted."""
+        chunks = [Mock(page_content="Test", metadata={})]
+        
+        with patch('ingest.Chroma') as mock_chroma:
+            # Simulate exhausting retries with rate limit error
+            rate_limit_error = Exception("Rate limit exceeded. 429")
+            mock_chroma.from_documents.side_effect = rate_limit_error
+            
+            with patch('ingest.time.sleep'):
+                with patch('ingest.console') as mock_console:
+                    # Call the batch ingestion method which handles and displays errors
+                    success = agent.ingest_documents_batch(chunks, show_progress=False)
+                    
+                    # Should return False on failure
+                    assert success is False
+                    
+                    # Check that error messages were printed to console
+                    print_calls = [str(call) for call in mock_console.print.call_args_list]
+                    all_prints = ' '.join(print_calls)
+                    
+                    # Verify key error message components are displayed
+                    assert any("Rate limit" in str(call) or "rate limit" in str(call) 
+                              for call in print_calls), "Rate limit message not displayed"
+                    
+                    # Verify recommendations are provided
+                    # At least one of these should be in the output
+                    has_recommendations = (
+                        "Recommendations" in all_prints or
+                        "batch-size" in all_prints or
+                        "delay" in all_prints or
+                        "quota" in all_prints
+                    )
+                    assert has_recommendations, "Helpful recommendations not displayed in error message"
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
