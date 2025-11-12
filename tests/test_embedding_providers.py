@@ -12,9 +12,7 @@ Tests cover:
 
 import os
 import sys
-import tempfile
-from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 import pytest
 
 # Add parent directory to path for imports
@@ -105,11 +103,14 @@ class TestEmbeddingProviderSelection:
         """Test passing custom embeddings to constructor."""
         custom_embeddings = Mock()
         
-        from ingest import DocumentIngestionAgent
-        agent = DocumentIngestionAgent(embeddings=custom_embeddings)
-        
-        # Verify custom embeddings were used
-        assert agent.embeddings == custom_embeddings
+        # Mock HuggingFace and OpenAI embeddings imports to ensure consistent behavior
+        with patch('langchain_community.embeddings.HuggingFaceEmbeddings', new=Mock()), \
+             patch('langchain_openai.OpenAIEmbeddings', new=Mock()):
+            from ingest import DocumentIngestionAgent
+            agent = DocumentIngestionAgent(embeddings=custom_embeddings)
+            
+            # Verify custom embeddings were used
+            assert agent.embeddings == custom_embeddings
 
     def test_huggingface_import_error_handling(self):
         """Test error handling when HuggingFaceEmbeddings raises an ImportError."""
@@ -121,7 +122,6 @@ class TestEmbeddingProviderSelection:
             # Mock ImportError when trying to instantiate HuggingFaceEmbeddings
             # We patch the class to raise an ImportError when called (not imported)
             import langchain_community.embeddings
-            original_hf = langchain_community.embeddings.HuggingFaceEmbeddings
             
             def mock_hf_init(*args, **kwargs):
                 raise ImportError("No module named 'sentence_transformers'")
@@ -130,7 +130,7 @@ class TestEmbeddingProviderSelection:
                 from ingest import DocumentIngestionAgent
                 
                 with pytest.raises(SystemExit):
-                    agent = DocumentIngestionAgent()
+                    DocumentIngestionAgent()
         finally:
             if env_backup is not None:
                 os.environ['EMBEDDING_PROVIDER'] = env_backup
@@ -152,7 +152,7 @@ class TestEmbeddingProviderSelection:
                 from exceptions import APIKeyError
                 
                 with pytest.raises((SystemExit, APIKeyError)):
-                    agent = DocumentIngestionAgent()
+                    DocumentIngestionAgent()
         finally:
             for key, value in env_backup.items():
                 if value is not None:
@@ -171,7 +171,7 @@ class TestEmbeddingProviderCaseInsensitive:
             with patch('langchain_community.embeddings.HuggingFaceEmbeddings') as mock_hf:
                 mock_hf.return_value = Mock()
                 from ingest import DocumentIngestionAgent
-                agent = DocumentIngestionAgent()
+                DocumentIngestionAgent()
                 assert mock_hf.called
         finally:
             if 'EMBEDDING_PROVIDER' in os.environ:
@@ -184,7 +184,7 @@ class TestEmbeddingProviderCaseInsensitive:
             with patch('langchain_community.embeddings.HuggingFaceEmbeddings') as mock_hf:
                 mock_hf.return_value = Mock()
                 from ingest import DocumentIngestionAgent
-                agent = DocumentIngestionAgent()
+                DocumentIngestionAgent()
                 assert mock_hf.called
         finally:
             if 'EMBEDDING_PROVIDER' in os.environ:
@@ -198,7 +198,7 @@ class TestEmbeddingProviderCaseInsensitive:
             with patch('langchain_openai.OpenAIEmbeddings') as mock_openai:
                 mock_openai.return_value = Mock()
                 from ingest import DocumentIngestionAgent
-                agent = DocumentIngestionAgent()
+                DocumentIngestionAgent()
                 assert mock_openai.called
         finally:
             for key in ['EMBEDDING_PROVIDER', 'OPENAI_API_KEY']:

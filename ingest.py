@@ -131,7 +131,7 @@ class DocumentIngestionAgent:
         persist_directory: str = "./chroma_db",
         chunk_size: int = 1000,
         chunk_overlap: int = 200,
-        embeddings = None,
+        embeddings: Optional[Any] = None,
     ):
         """
         Initialize the document ingestion agent.
@@ -176,6 +176,15 @@ class DocumentIngestionAgent:
             # Determine which embedding provider to use
             embedding_provider = os.environ.get("EMBEDDING_PROVIDER", "hf").lower()
             
+            # Validate provider value
+            valid_providers = ["hf", "huggingface", "openai"]
+            if embedding_provider not in valid_providers:
+                console.print(
+                    f"[yellow]Warning: Unknown EMBEDDING_PROVIDER '{embedding_provider}'. "
+                    f"Valid options: {', '.join(valid_providers)}. Defaulting to HuggingFace.[/yellow]"
+                )
+                embedding_provider = "hf"
+            
             if embedding_provider == "openai":
                 # Use OpenAI embeddings
                 try:
@@ -203,32 +212,37 @@ class DocumentIngestionAgent:
             else:
                 # Use HuggingFace embeddings (default)
                 model_name = os.environ.get("HUGGINGFACE_MODEL_NAME", "all-MiniLM-L6-v2")
+                
+                # Import HuggingFaceEmbeddings, handling import errors only
                 try:
-                    # Try the newer langchain-huggingface package first
+                    # Try the newer langchain-huggingface package first (optional)
+                    # Note: This package is not in requirements.txt but users can install it
+                    from langchain_huggingface import HuggingFaceEmbeddings
+                except ImportError:
+                    # Fall back to langchain_community if the newer package isn't available
                     try:
-                        from langchain_huggingface import HuggingFaceEmbeddings
-                    except ImportError:
-                        # Fall back to langchain_community if the newer package isn't available
                         from langchain_community.embeddings import HuggingFaceEmbeddings
-                    
+                    except ImportError as e:
+                        console.print(
+                            "[red]Error: HuggingFace embeddings require 'sentence-transformers' package[/red]"
+                        )
+                        console.print(
+                            "[yellow]Install it with: pip install sentence-transformers[/yellow]"
+                        )
+                        console.print(
+                            "[yellow]Or install the langchain-huggingface package: pip install langchain-huggingface[/yellow]"
+                        )
+                        console.print(
+                            "[yellow]Or to use OpenAI instead, set: EMBEDDING_PROVIDER=openai[/yellow]"
+                        )
+                        sys.exit(1)
+                
+                # Now instantiate, handling instantiation errors separately
+                try:
                     self.embeddings = HuggingFaceEmbeddings(model_name=model_name)
                     console.print(
                         f"[cyan]Using HuggingFace embeddings with model: {model_name}[/cyan]"
                     )
-                except ImportError as e:
-                    console.print(
-                        "[red]Error: HuggingFace embeddings require 'sentence-transformers' package[/red]"
-                    )
-                    console.print(
-                        "[yellow]Install it with: pip install sentence-transformers[/yellow]"
-                    )
-                    console.print(
-                        "[yellow]Or install the langchain-huggingface package: pip install langchain-huggingface[/yellow]"
-                    )
-                    console.print(
-                        "[yellow]Or to use OpenAI instead, set: EMBEDDING_PROVIDER=openai[/yellow]"
-                    )
-                    sys.exit(1)
                 except Exception as e:
                     console.print(
                         f"[red]Error initializing HuggingFace embeddings: {e}[/red]"
