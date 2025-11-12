@@ -42,7 +42,10 @@ def _is_rate_limit_error(error: Exception) -> bool:
         True if the error is related to rate limits or quota, False otherwise
     """
     error_str = str(error).lower()
-    return any(keyword in error_str for keyword in ['rate limit', 'quota', '429', 'insufficient_quota'])
+    return any(keyword in error_str for keyword in [
+        'rate limit', 'quota', '429', 'insufficient_quota',
+        'rate_limit_exceeded', 'too many requests', 'ratelimit'
+    ])
 
 
 @pytest.fixture
@@ -406,18 +409,20 @@ class TestGameRepositoryIngestion:
             assert len(chunks) > 0, "Should create chunks from documents"
             
             # Try to ingest (with small batch for testing)
-            # Only ingest first 10 chunks to avoid rate limits in testing
-            test_chunks = chunks[:10]
+            # Only ingest first 5 chunks to avoid rate limits in testing
+            # This is a minimal test to verify the ingestion pipeline works
+            test_chunks = chunks[:5]
             
             try:
                 # Use very conservative settings to avoid rate limits
                 # batch_size=2: Process only 2 documents at a time
-                # delay_between_batches=5.0: Wait 5 seconds between batches
-                # This means 10 chunks will take ~25 seconds minimum (5 batches * 5 sec)
+                # delay_between_batches=10.0: Wait 10 seconds between batches
+                # This means 5 chunks will take ~30 seconds minimum (3 batches: 2+2+1, 2*10sec wait)
+                # This is extremely conservative to work within strict API rate limits
                 success = agent.ingest_documents_batch(
                     test_chunks,
                     batch_size=2,
-                    delay_between_batches=5.0
+                    delay_between_batches=10.0
                 )
                 
                 # If ingestion failed, skip - likely due to rate limits
