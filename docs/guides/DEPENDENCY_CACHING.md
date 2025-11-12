@@ -43,7 +43,7 @@ The GitHub Actions workflow now caches pip's download cache, significantly speed
 
 - Cache is **automatically created** after first successful install
 - Cache is **invalidated** when `requirements.txt` changes
-- Cache is **shared** across workflow runs on the same branch
+- Cache is **shared** across branches following GitHub's cache scoping rules (accessible from current branch, child branches, and base/target branches for PRs)
 - Cache **expires** after 7 days of inactivity (GitHub default)
 
 ### 2. Local Development (Virtual Environments)
