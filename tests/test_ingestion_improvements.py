@@ -35,7 +35,7 @@ class TestMarkdownLoaderFallback:
         assert hasattr(ingest, 'MARKDOWN_LOADER')
         assert ingest.MARKDOWN_LOADER is not None
         
-    @patch('ingest.OpenAIEmbeddings')
+    @patch('langchain_community.embeddings.HuggingFaceEmbeddings')
     def test_markdown_files_load_with_fallback(self, mock_embeddings):
         """Test that markdown files can be loaded even without unstructured."""
         from ingest import DocumentIngestionAgent, MARKDOWN_LOADER
@@ -69,7 +69,7 @@ class TestSilentErrorHandling:
     @pytest.fixture
     def agent(self):
         """Create a test agent."""
-        with patch('ingest.OpenAIEmbeddings') as mock_embeddings:
+        with patch('langchain_community.embeddings.HuggingFaceEmbeddings') as mock_embeddings:
             mock_embeddings.return_value = Mock()
             from ingest import DocumentIngestionAgent
             return DocumentIngestionAgent()
@@ -122,7 +122,7 @@ class TestChromaDBTelemetryConfiguration:
         # Check that the environment variable is set
         assert os.environ.get("ANONYMIZED_TELEMETRY") == "False"
 
-    @patch('ingest.OpenAIEmbeddings')
+    @patch('langchain_community.embeddings.HuggingFaceEmbeddings')
     def test_agent_initialization_with_telemetry_disabled(self, mock_embeddings):
         """Test that agent initializes with telemetry disabled."""
         from ingest import DocumentIngestionAgent
@@ -145,7 +145,7 @@ class TestAPIQuotaErrorHandling:
     @pytest.fixture
     def agent(self):
         """Create a test agent."""
-        with patch('ingest.OpenAIEmbeddings') as mock_embeddings:
+        with patch('langchain_community.embeddings.HuggingFaceEmbeddings') as mock_embeddings:
             mock_embeddings.return_value = Mock()
             from ingest import DocumentIngestionAgent
             return DocumentIngestionAgent()
@@ -206,7 +206,7 @@ class TestEnhancedErrorMessages:
     @pytest.fixture
     def agent(self):
         """Create a test agent."""
-        with patch('ingest.OpenAIEmbeddings') as mock_embeddings:
+        with patch('langchain_community.embeddings.HuggingFaceEmbeddings') as mock_embeddings:
             mock_embeddings.return_value = Mock()
             from ingest import DocumentIngestionAgent
             return DocumentIngestionAgent()
@@ -266,7 +266,7 @@ class TestErrorRecovery:
     @pytest.fixture
     def agent(self):
         """Create a test agent."""
-        with patch('ingest.OpenAIEmbeddings') as mock_embeddings:
+        with patch('langchain_community.embeddings.HuggingFaceEmbeddings') as mock_embeddings:
             mock_embeddings.return_value = Mock()
             from ingest import DocumentIngestionAgent
             return DocumentIngestionAgent()
@@ -313,7 +313,7 @@ class TestRateLimiting:
     @pytest.fixture
     def agent(self):
         """Create a test agent."""
-        with patch('ingest.OpenAIEmbeddings') as mock_embeddings:
+        with patch('langchain_community.embeddings.HuggingFaceEmbeddings') as mock_embeddings:
             mock_embeddings.return_value = Mock()
             from ingest import DocumentIngestionAgent
             return DocumentIngestionAgent()
@@ -393,7 +393,7 @@ class TestRateLimitRetry:
     @pytest.fixture
     def agent(self):
         """Create a test agent."""
-        with patch('ingest.OpenAIEmbeddings') as mock_embeddings:
+        with patch('langchain_community.embeddings.HuggingFaceEmbeddings') as mock_embeddings:
             mock_embeddings.return_value = Mock()
             from ingest import DocumentIngestionAgent
             return DocumentIngestionAgent()

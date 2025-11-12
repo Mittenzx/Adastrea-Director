@@ -8,6 +8,13 @@ that Adastrea Director is designed to help build.
 NOTE: The Mittenzx/Adastrea repository is private. You need a GitHub token
 with 'repo' scope and access to the repository.
 
+Embedding Configuration:
+- By default, uses HuggingFace embeddings (local, no API key required)
+- To use OpenAI embeddings instead, set: EMBEDDING_PROVIDER=openai
+- To customize HuggingFace model: HUGGINGFACE_MODEL_NAME=your-model-name
+- Default HuggingFace model: 'all-MiniLM-L6-v2'
+- OPENAI_API_KEY is only required when EMBEDDING_PROVIDER=openai
+
 Features:
 1. Cloning the private repository (requires GitHub token)
 2. Selective ingestion of relevant directories
@@ -15,12 +22,18 @@ Features:
 4. Scheduled updates via cron or GitHub Actions
 
 Usage:
-    # With GitHub token in environment
+    # With GitHub token in environment (uses HuggingFace embeddings by default)
     export GITHUB_TOKEN="your_token_here"
     python ingest_game_repo.py
     
-    # With GitHub token as argument
+    # To use OpenAI embeddings instead
+    export EMBEDDING_PROVIDER=openai
+    export OPENAI_API_KEY="your_openai_key"
     python ingest_game_repo.py --token YOUR_TOKEN
+    
+    # To use a different HuggingFace model
+    export HUGGINGFACE_MODEL_NAME="sentence-transformers/all-mpnet-base-v2"
+    python ingest_game_repo.py
     
     # Check if update is needed
     python ingest_game_repo.py --check-updates

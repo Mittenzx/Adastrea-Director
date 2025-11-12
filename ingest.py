@@ -5,6 +5,11 @@ Document Ingestion Script for Adastrea Director
 This script handles loading, processing, and embedding project documents
 into a vector database for RAG-based question answering.
 
+Embedding Providers:
+- By default, uses HuggingFace embeddings (local, no API key required)
+- To use OpenAI embeddings: set EMBEDDING_PROVIDER=openai (requires OPENAI_API_KEY)
+- To customize HuggingFace model: set HUGGINGFACE_MODEL_NAME (default: all-MiniLM-L6-v2)
+
 Features:
 - Incremental ingestion: Only processes changed or new files (default)
 - Hash-based change detection: Uses SHA-256 to detect file modifications
@@ -12,7 +17,16 @@ Features:
 - Legacy mode: Option to load all files at once (use --legacy-mode)
 
 Usage:
-    # Incremental ingestion (default, recommended)
+    # Incremental ingestion (default, recommended, uses HuggingFace embeddings)
+    python ingest.py --docs-dir /path/to/docs
+    
+    # Use OpenAI embeddings instead
+    export EMBEDDING_PROVIDER=openai
+    export OPENAI_API_KEY=your-key
+    python ingest.py --docs-dir /path/to/docs
+    
+    # Use a different HuggingFace model
+    export HUGGINGFACE_MODEL_NAME=sentence-transformers/all-mpnet-base-v2
     python ingest.py --docs-dir /path/to/docs
     
     # Force re-ingestion of all files
@@ -75,7 +89,6 @@ try:
         RecursiveCharacterTextSplitter,
         Language,
     )
-    from langchain_openai import OpenAIEmbeddings
     from langchain_community.vectorstores import Chroma
     from rich.console import Console
     from rich.progress import Progress, SpinnerColumn, TextColumn
@@ -118,6 +131,7 @@ class DocumentIngestionAgent:
         persist_directory: str = "./chroma_db",
         chunk_size: int = 1000,
         chunk_overlap: int = 200,
+        embeddings: Optional[Any] = None,
     ):
         """
         Initialize the document ingestion agent.
@@ -127,10 +141,13 @@ class DocumentIngestionAgent:
             persist_directory: Directory to persist the vector database
             chunk_size: Size of text chunks for embedding
             chunk_overlap: Overlap between chunks
+            embeddings: Optional embeddings instance. If not provided, will use
+                       EMBEDDING_PROVIDER environment variable to select provider.
+                       Defaults to HuggingFace embeddings ('all-MiniLM-L6-v2').
             
         Raises:
             ValidationError: If chunk_size or chunk_overlap are invalid
-            APIKeyError: If OpenAI API key is missing or invalid
+            APIKeyError: If OpenAI is selected and API key is missing or invalid
         """
         # Validate configuration
         if chunk_size <= 0:
@@ -152,19 +169,94 @@ class DocumentIngestionAgent:
         self.chunk_overlap = chunk_overlap
 
         # Initialize embeddings
-        try:
-            self.embeddings = OpenAIEmbeddings()
-        except Exception as e:
-            error_msg = str(e).lower()
-            if "api" in error_msg and "key" in error_msg:
-                raise APIKeyError("OpenAI", str(e))
-            console.print(
-                f"[red]Error initializing OpenAI embeddings: {e}[/red]"
-            )
-            console.print(
-                "[yellow]Make sure OPENAI_API_KEY is set in your environment[/yellow]"
-            )
-            sys.exit(1)
+        if embeddings is not None:
+            # Use provided embeddings
+            self.embeddings = embeddings
+        else:
+            # Determine which embedding provider to use
+            embedding_provider = os.environ.get("EMBEDDING_PROVIDER", "hf").lower()
+            
+            # Validate provider value
+            valid_providers = ["hf", "huggingface", "openai"]
+            if embedding_provider not in valid_providers:
+                console.print(
+                    f"[yellow]Warning: Unknown EMBEDDING_PROVIDER '{embedding_provider}'. "
+                    f"Valid options: {', '.join(valid_providers)}. Defaulting to HuggingFace.[/yellow]"
+                )
+                embedding_provider = "hf"
+            
+            if embedding_provider == "openai":
+                # Use OpenAI embeddings
+                try:
+                    from langchain_openai import OpenAIEmbeddings
+                    self.embeddings = OpenAIEmbeddings()
+                except ImportError as e:
+                    console.print(
+                        "[red]Error: OpenAI embeddings require 'langchain-openai' package[/red]"
+                    )
+                    console.print(
+                        "[yellow]Install it with: pip install langchain-openai[/yellow]"
+                    )
+                    sys.exit(1)
+                except Exception as e:
+                    error_msg = str(e).lower()
+                    if "api" in error_msg and "key" in error_msg:
+                        raise APIKeyError("OpenAI", str(e))
+                    console.print(
+                        f"[red]Error initializing OpenAI embeddings: {e}[/red]"
+                    )
+                    console.print(
+                        "[yellow]Make sure OPENAI_API_KEY is set in your environment[/yellow]"
+                    )
+                    sys.exit(1)
+            else:
+                # Use HuggingFace embeddings (default)
+                model_name = os.environ.get("HUGGINGFACE_MODEL_NAME", "all-MiniLM-L6-v2")
+                
+                # Import HuggingFaceEmbeddings, handling import errors only
+                try:
+                    # Try the newer langchain-huggingface package first (optional)
+                    # Note: This package is not in requirements.txt but users can install it
+                    from langchain_huggingface import HuggingFaceEmbeddings
+                except ImportError:
+                    # Fall back to langchain_community if the newer package isn't available
+                    try:
+                        from langchain_community.embeddings import HuggingFaceEmbeddings
+                    except ImportError as e:
+                        console.print(
+                            "[red]Error: HuggingFace embeddings require 'sentence-transformers' package[/red]"
+                        )
+                        console.print(
+                            "[yellow]Install it with: pip install sentence-transformers[/yellow]"
+                        )
+                        console.print(
+                            "[yellow]Or install the langchain-huggingface package: pip install langchain-huggingface[/yellow]"
+                        )
+                        console.print(
+                            "[yellow]Or to use OpenAI instead, set: EMBEDDING_PROVIDER=openai[/yellow]"
+                        )
+                        sys.exit(1)
+                
+                # Now instantiate, handling instantiation errors separately
+                try:
+                    self.embeddings = HuggingFaceEmbeddings(model_name=model_name)
+                    console.print(
+                        f"[cyan]Using HuggingFace embeddings with model: {model_name}[/cyan]"
+                    )
+                except Exception as e:
+                    console.print(
+                        f"[red]Error initializing HuggingFace embeddings: {e}[/red]"
+                    )
+                    console.print(
+                        f"[yellow]Model: {model_name}[/yellow]"
+                    )
+                    console.print(
+                        "[yellow]Try setting HUGGINGFACE_MODEL_NAME to a different model[/yellow]"
+                    )
+                    console.print(
+                        "[yellow]Or use OpenAI instead: EMBEDDING_PROVIDER=openai[/yellow]"
+                    )
+                    sys.exit(1)
 
         # Initialize text splitter (default for markdown and text)
         self.text_splitter = RecursiveCharacterTextSplitter(
