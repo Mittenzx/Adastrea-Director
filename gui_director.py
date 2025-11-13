@@ -662,7 +662,7 @@ class AdastreaDirectorApp:
             # This is just for compatibility with the old code
             try:
                 embeddings = OpenAIEmbeddings()
-            except:
+            except Exception:
                 # If OpenAI embeddings fail, ingest script will use HuggingFace
                 embeddings = None
             vectorstore = Chroma(

@@ -48,7 +48,7 @@ class PlanningSystem:
         Initialize the planning system.
         
         Args:
-            model_name: LLM model to use (default: gemini-1.5-pro for Gemini, gpt-4 for OpenAI)
+            model_name: LLM model to use (default: gemini-1.5-flash for Gemini, gpt-3.5-turbo for OpenAI)
             enable_code_generation: Whether to enable code generation agent
         """
         self.model_name = model_name
@@ -317,7 +317,7 @@ def main():
         "--model",
         type=str,
         default=None,
-        help="LLM model to use (default: gemini-1.5-pro for Gemini, gpt-4 for OpenAI)",
+        help="LLM model to use (default: gemini-1.5-flash for Gemini, gpt-3.5-turbo for OpenAI)",
     )
     parser.add_argument(
         "--export",

@@ -38,7 +38,7 @@ class TestLLMConfiguration:
                 mock_gemini.return_value = Mock()
                 from llm_config import get_llm, get_provider_name, get_api_key_env_var
                 
-                llm = get_llm()
+                get_llm()
                 
                 # Verify ChatGoogleGenerativeAI was called with default model
                 mock_gemini.assert_called_once()
@@ -61,7 +61,7 @@ class TestLLMConfiguration:
     def test_gemini_with_google_api_key(self):
         """Test that GOOGLE_API_KEY works as fallback for GEMINI_KEY."""
         env_backup = {}
-        for key in ['LLM_PROVIDER', 'GEMINI_KEY', 'GOOGLE_API_KEY']:
+        for key in ['LLM_PROVIDER', 'GEMINI_KEY', 'GOOGLE_API_KEY', 'OPENAI_API_KEY']:
             env_backup[key] = os.environ.get(key)
             if key in os.environ:
                 del os.environ[key]
@@ -74,7 +74,7 @@ class TestLLMConfiguration:
                 mock_gemini.return_value = Mock()
                 from llm_config import get_llm
                 
-                llm = get_llm()
+                get_llm()
                 
                 # Verify ChatGoogleGenerativeAI was called with GOOGLE_API_KEY
                 call_kwargs = mock_gemini.call_args[1]
@@ -88,10 +88,11 @@ class TestLLMConfiguration:
 
     def test_custom_gemini_model(self):
         """Test using a custom Gemini model via environment variable."""
-        env_backup = {
-            'GEMINI_MODEL': os.environ.get('GEMINI_MODEL'),
-            'GEMINI_KEY': os.environ.get('GEMINI_KEY'),
-        }
+        env_backup = {}
+        for key in ['LLM_PROVIDER', 'GEMINI_MODEL', 'GEMINI_KEY', 'GOOGLE_API_KEY', 'OPENAI_API_KEY']:
+            env_backup[key] = os.environ.get(key)
+            if key in os.environ:
+                del os.environ[key]
         
         os.environ['GEMINI_MODEL'] = 'gemini-1.5-pro'
         os.environ['GEMINI_KEY'] = 'test-key'
@@ -101,7 +102,7 @@ class TestLLMConfiguration:
                 mock_gemini.return_value = Mock()
                 from llm_config import get_llm
                 
-                llm = get_llm()
+                get_llm()
                 
                 # Verify ChatGoogleGenerativeAI was called with custom model
                 call_kwargs = mock_gemini.call_args[1]
@@ -115,10 +116,11 @@ class TestLLMConfiguration:
 
     def test_openai_provider_selection(self):
         """Test selecting OpenAI via environment variable."""
-        env_backup = {
-            'LLM_PROVIDER': os.environ.get('LLM_PROVIDER'),
-            'OPENAI_API_KEY': os.environ.get('OPENAI_API_KEY'),
-        }
+        env_backup = {}
+        for key in ['LLM_PROVIDER', 'OPENAI_API_KEY', 'GEMINI_KEY', 'GOOGLE_API_KEY']:
+            env_backup[key] = os.environ.get(key)
+            if key in os.environ:
+                del os.environ[key]
         
         os.environ['LLM_PROVIDER'] = 'openai'
         os.environ['OPENAI_API_KEY'] = 'test-key'
@@ -128,7 +130,7 @@ class TestLLMConfiguration:
                 mock_openai.return_value = Mock()
                 from llm_config import get_llm, get_provider_name, get_api_key_env_var
                 
-                llm = get_llm()
+                get_llm()
                 
                 # Verify ChatOpenAI was called with default model
                 mock_openai.assert_called_once()
@@ -148,11 +150,11 @@ class TestLLMConfiguration:
 
     def test_custom_openai_model(self):
         """Test using a custom OpenAI model via environment variable."""
-        env_backup = {
-            'LLM_PROVIDER': os.environ.get('LLM_PROVIDER'),
-            'OPENAI_MODEL': os.environ.get('OPENAI_MODEL'),
-            'OPENAI_API_KEY': os.environ.get('OPENAI_API_KEY'),
-        }
+        env_backup = {}
+        for key in ['LLM_PROVIDER', 'OPENAI_MODEL', 'OPENAI_API_KEY', 'GEMINI_KEY', 'GOOGLE_API_KEY']:
+            env_backup[key] = os.environ.get(key)
+            if key in os.environ:
+                del os.environ[key]
         
         os.environ['LLM_PROVIDER'] = 'openai'
         os.environ['OPENAI_MODEL'] = 'gpt-4'
@@ -163,7 +165,7 @@ class TestLLMConfiguration:
                 mock_openai.return_value = Mock()
                 from llm_config import get_llm
                 
-                llm = get_llm()
+                get_llm()
                 
                 # Verify ChatOpenAI was called with custom model
                 call_kwargs = mock_openai.call_args[1]
@@ -177,10 +179,11 @@ class TestLLMConfiguration:
 
     def test_explicit_model_overrides_env(self):
         """Test that explicit model parameter overrides environment variable."""
-        env_backup = {
-            'GEMINI_MODEL': os.environ.get('GEMINI_MODEL'),
-            'GEMINI_KEY': os.environ.get('GEMINI_KEY'),
-        }
+        env_backup = {}
+        for key in ['LLM_PROVIDER', 'GEMINI_MODEL', 'GEMINI_KEY', 'GOOGLE_API_KEY', 'OPENAI_API_KEY']:
+            env_backup[key] = os.environ.get(key)
+            if key in os.environ:
+                del os.environ[key]
         
         os.environ['GEMINI_MODEL'] = 'gemini-1.5-flash'
         os.environ['GEMINI_KEY'] = 'test-key'
@@ -190,7 +193,7 @@ class TestLLMConfiguration:
                 mock_gemini.return_value = Mock()
                 from llm_config import get_llm
                 
-                llm = get_llm(model_name='gemini-1.5-pro')
+                get_llm(model_name='gemini-1.5-pro')
                 
                 # Verify the explicit model name was used, not the env var
                 call_kwargs = mock_gemini.call_args[1]
@@ -204,9 +207,11 @@ class TestLLMConfiguration:
 
     def test_custom_temperature(self):
         """Test using a custom temperature parameter."""
-        env_backup = {
-            'GEMINI_KEY': os.environ.get('GEMINI_KEY'),
-        }
+        env_backup = {}
+        for key in ['LLM_PROVIDER', 'GEMINI_KEY', 'GOOGLE_API_KEY', 'OPENAI_API_KEY', 'GEMINI_MODEL']:
+            env_backup[key] = os.environ.get(key)
+            if key in os.environ:
+                del os.environ[key]
         
         os.environ['GEMINI_KEY'] = 'test-key'
         
@@ -215,7 +220,7 @@ class TestLLMConfiguration:
                 mock_gemini.return_value = Mock()
                 from llm_config import get_llm
                 
-                llm = get_llm(temperature=0.3)
+                get_llm(temperature=0.3)
                 
                 # Verify the custom temperature was used
                 call_kwargs = mock_gemini.call_args[1]

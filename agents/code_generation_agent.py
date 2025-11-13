@@ -42,7 +42,7 @@ class CodeGenerationAgent:
         Initialize the Code Generation Agent.
         
         Args:
-            model_name: Name of the LLM model to use (default: gemini-1.5-pro for Gemini, gpt-4 for OpenAI)
+            model_name: Name of the LLM model to use (default: gemini-1.5-flash for Gemini, gpt-3.5-turbo for OpenAI)
             temperature: Temperature for response generation (lower = more deterministic)
         """
         self.model_name = model_name
