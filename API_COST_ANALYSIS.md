@@ -1556,6 +1556,7 @@ planner = PlanningSystem(model_name="gpt-4o")
 
 **Further Reading:**
 - OpenAI Pricing: https://openai.com/api/pricing/
+- **[LLM Alternatives Guide](LLM_ALTERNATIVES.md)** - Compare providers and save 40-100% on costs
 - LangChain Token Usage: https://python.langchain.com/docs/guides/productionization/usage_tracking
 - Adastrea Director Documentation: [README.md](README.md)
 
