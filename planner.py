@@ -26,6 +26,7 @@ from agents import (
     Goal,
 )
 from exceptions import APIKeyError
+from llm_config import get_provider_name
 
 console = Console()
 
@@ -40,14 +41,14 @@ class PlanningSystem:
     
     def __init__(
         self,
-        model_name: str = "gpt-4",
+        model_name: str = None,
         enable_code_generation: bool = True,
     ):
         """
         Initialize the planning system.
         
         Args:
-            model_name: OpenAI model to use
+            model_name: LLM model to use (default: gemini-1.5-flash for Gemini, gpt-3.5-turbo for OpenAI)
             enable_code_generation: Whether to enable code generation agent
         """
         self.model_name = model_name
@@ -70,7 +71,7 @@ class PlanningSystem:
         except Exception as e:
             error_msg = str(e).lower()
             if "api" in error_msg and "key" in error_msg:
-                error = APIKeyError("OpenAI", str(e))
+                error = APIKeyError(get_provider_name(), str(e))
                 console.print(f"[red]{error.message}[/red]")
                 console.print(f"[yellow]{error.details}[/yellow]")
             else:
@@ -315,8 +316,8 @@ def main():
     parser.add_argument(
         "--model",
         type=str,
-        default="gpt-4",
-        help="OpenAI model to use (default: gpt-4)",
+        default=None,
+        help="LLM model to use (default: gemini-1.5-flash for Gemini, gpt-3.5-turbo for OpenAI)",
     )
     parser.add_argument(
         "--export",

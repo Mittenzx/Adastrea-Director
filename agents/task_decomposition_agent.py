@@ -7,7 +7,6 @@ Responsible for breaking down goals into actionable tasks.
 import uuid
 from typing import List, Dict, Any
 
-from langchain_openai import ChatOpenAI
 from langchain.prompts import PromptTemplate
 from langchain.output_parsers import PydanticOutputParser
 from pydantic import BaseModel, Field
@@ -20,6 +19,7 @@ from agents.models import (
     DependencyGraph,
     Duration,
 )
+from llm_config import get_llm
 
 
 class TaskDecompositionOutput(BaseModel):
@@ -37,19 +37,19 @@ class TaskDecompositionAgent:
     
     def __init__(
         self,
-        model_name: str = "gpt-4",
+        model_name: str = None,
         temperature: float = 0.3,
     ):
         """
         Initialize the Task Decomposition Agent.
         
         Args:
-            model_name: Name of the OpenAI model to use
+            model_name: Name of the LLM model to use (default: gemini-1.5-flash for Gemini, gpt-3.5-turbo for OpenAI)
             temperature: Temperature for response generation
         """
         self.model_name = model_name
         self.temperature = temperature
-        self.llm = ChatOpenAI(
+        self.llm = get_llm(
             model_name=model_name,
             temperature=temperature,
         )

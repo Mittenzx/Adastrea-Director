@@ -39,7 +39,6 @@ try:
     # Load environment variables immediately after import
     load_dotenv()
     
-    from langchain_openai import ChatOpenAI
     from langchain_community.vectorstores import Chroma
     from langchain.chains import ConversationalRetrievalChain
     from langchain.memory import ConversationBufferMemory
@@ -48,6 +47,7 @@ try:
     from rich.markdown import Markdown
     from rich.panel import Panel
     from rich import print as rprint
+    from llm_config import get_llm, get_provider_name, get_api_key_env_var
 except ImportError as e:
     print(f"Error: Missing required dependencies. Please install requirements.txt")
     print(f"Details: {e}")
@@ -79,7 +79,7 @@ class QueryAgent:
         Args:
             collection_name: Name of the collection in the vector database
             persist_directory: Directory where vector database is stored
-            model_name: Name of the OpenAI model to use
+            model_name: Name of the LLM model to use (default: gemini-1.5-flash)
             temperature: Temperature for response generation (0-1)
             search_type: Type of search to use ("similarity" or "mmr")
             retrieval_k: Number of documents to retrieve (default: 6)
@@ -126,8 +126,13 @@ class QueryAgent:
                 embedding_provider = "hf"
             
             if embedding_provider == "openai":
-                from langchain_openai import OpenAIEmbeddings
-                self.embeddings = OpenAIEmbeddings()
+                try:
+                    from langchain_openai import OpenAIEmbeddings
+                    self.embeddings = OpenAIEmbeddings()
+                except ImportError:
+                    console.print("[red]Error: OpenAI embeddings require 'langchain-openai' package[/red]")
+                    console.print("[yellow]Install it with: pip install langchain-openai[/yellow]")
+                    sys.exit(1)
             else:
                 # Use HuggingFace embeddings (default)
                 model_name = os.environ.get("HUGGINGFACE_MODEL_NAME", "all-MiniLM-L6-v2")
@@ -161,8 +166,8 @@ class QueryAgent:
                 console.print(f"[yellow]{error.details}[/yellow]")
                 sys.exit(1)
 
-            # Initialize LLM
-            self.llm = ChatOpenAI(
+            # Initialize LLM using the configured provider (Gemini by default)
+            self.llm = get_llm(
                 model_name=self.model_name,
                 temperature=self.temperature,
             )
@@ -223,7 +228,7 @@ Answer:"""
             error_msg = str(e).lower()
             
             if "api" in error_msg and "key" in error_msg:
-                error = APIKeyError("OpenAI", str(e))
+                error = APIKeyError(get_provider_name(), str(e))
                 console.print(f"[red]{error.message}[/red]")
                 console.print(f"[yellow]{error.details}[/yellow]")
             elif any(word in error_msg for word in ["connection", "network", "timeout"]):
@@ -306,7 +311,7 @@ Answer:"""
                 }
             elif "api" in error_msg and "key" in error_msg:
                 return {
-                    "answer": "API key error. Please check your OpenAI API key configuration.",
+                    "answer": f"API key error. Please check your {get_provider_name()} API key configuration (set {get_api_key_env_var()}).",
                     "source_documents": [],
                 }
             elif any(word in error_msg for word in ["connection", "network"]):
@@ -530,8 +535,8 @@ def main():
     parser.add_argument(
         "--model",
         type=str,
-        default="gpt-3.5-turbo",
-        help="OpenAI model to use (default: gpt-3.5-turbo)",
+        default=None,
+        help="LLM model to use (default: gemini-1.5-flash for Gemini, gpt-3.5-turbo for OpenAI)",
     )
     parser.add_argument(
         "--temperature",

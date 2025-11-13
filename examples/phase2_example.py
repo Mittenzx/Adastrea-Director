@@ -231,8 +231,8 @@ def main():
     """Run all examples."""
     print_header()
     
-    console.print("\n[yellow]Note: This example requires an OpenAI API key.[/yellow]")
-    console.print("[dim]Set OPENAI_API_KEY environment variable or create .env file[/dim]\n")
+    console.print("\n[yellow]Note: This example requires a Gemini API key (set GEMINI_KEY environment variable).[/yellow]")
+    console.print("[dim]Set GEMINI_KEY environment variable or create .env file (or LLM_PROVIDER=openai for legacy OpenAI support)[/dim]\n")
     
     try:
         # Example 1: Goal Analysis

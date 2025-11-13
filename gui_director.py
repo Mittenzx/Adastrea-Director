@@ -181,7 +181,7 @@ class AdastreaDirectorApp:
             **button_style
         )
         self.api_key_button.pack(side=tk.LEFT, padx=(0, 8))
-        self.create_tooltip(self.api_key_button, "Configure your OpenAI API key (Ctrl+K)")
+        self.create_tooltip(self.api_key_button, "Configure your Gemini API key (Ctrl+K)")
         self.add_button_hover_effect(self.api_key_button)
 
         self.clear_button = tk.Button(
@@ -446,7 +446,7 @@ class AdastreaDirectorApp:
         
         # Status text
         self.status_var = tk.StringVar()
-        self.status_var.set("Ready • Please set your OpenAI API Key if you haven't")
+        self.status_var.set("Ready • Please set your Gemini API Key if you haven't")
         status_label = tk.Label(
             status_inner,
             textvariable=self.status_var,
@@ -638,7 +638,12 @@ class AdastreaDirectorApp:
         """
         try:
             # Import here to avoid requiring dependencies if not used
-            from langchain_openai import OpenAIEmbeddings
+            # Use HuggingFace embeddings by default (no API key needed)
+            # Or OpenAI if EMBEDDING_PROVIDER=openai
+            try:
+                from langchain_openai import OpenAIEmbeddings
+            except ImportError:
+                pass  # Will be handled by the ingestion script
             from langchain_community.vectorstores import Chroma
             
             persist_directory = os.path.join(SCRIPT_DIR, "chroma_db")
@@ -652,7 +657,14 @@ class AdastreaDirectorApp:
                 }
             
             # Initialize embeddings and vector store
-            embeddings = OpenAIEmbeddings()
+            # The actual embeddings are determined by EMBEDDING_PROVIDER environment variable
+            # handled by the ingestion script (default: HuggingFace)
+            # This is just for compatibility with the old code
+            try:
+                embeddings = OpenAIEmbeddings()
+            except Exception:
+                # If OpenAI embeddings fail, ingest script will use HuggingFace
+                embeddings = None
             vectorstore = Chroma(
                 collection_name="adastrea_docs",
                 embedding_function=embeddings,
@@ -902,7 +914,7 @@ class AdastreaDirectorApp:
 Your AI-powered game development assistant is ready to help.
 
 Getting Started:
-1. Set your OpenAI API Key (🔑 button or Ctrl+K)
+1. Set your Gemini API Key (🔑 button or Ctrl+K)
 2. Load documents into the knowledge base:
    • 📁 Ingest Folder - Select a folder containing your docs (Ctrl+U)
    • 📄 Ingest File - Select a single document to add
@@ -930,7 +942,7 @@ Type your question below to get started! 🚀
     def set_api_key(self):
         """Opens a dialog to ask for the API key."""
         dialog = tk.Toplevel(self.root)
-        dialog.title("Set OpenAI API Key")
+        dialog.title("Set Gemini API Key")
         dialog.geometry("450x180")
         dialog.configure(bg=self.bg_color)
         dialog.transient(self.root)
@@ -944,7 +956,7 @@ Type your question below to get started! 🚀
         
         tk.Label(
             dialog,
-            text="Enter your OpenAI API Key:",
+            text="Enter your Gemini API Key:",
             bg=self.bg_color,
             fg=self.fg_color,
             font=("Segoe UI", 11)
@@ -969,9 +981,10 @@ Type your question below to get started! 🚀
         def on_ok():
             key = key_entry.get()
             if key:
-                os.environ['OPENAI_API_KEY'] = key
+                os.environ['GEMINI_KEY'] = key
+                os.environ['GOOGLE_API_KEY'] = key  # Also set for compatibility
                 self.update_status("API Key set successfully • Ready to ingest or query", "success")
-                self.add_to_conversation("System", "API Key configured successfully.", is_system=True)
+                self.add_to_conversation("System", "Gemini API Key configured successfully.", is_system=True)
                 dialog.destroy()
             else:
                 messagebox.showwarning("Invalid Input", "Please enter a valid API key.")
@@ -1021,7 +1034,8 @@ Type your question below to get started! 🚀
 
     def check_api_key_on_startup(self):
         """Checks if the API key is set and prompts the user if not."""
-        if not os.getenv("OPENAI_API_KEY"):
+        # Check for Gemini API key (primary) or Google API key (compatibility)
+        if not (os.getenv("GEMINI_KEY") or os.getenv("GOOGLE_API_KEY")):
             self.root.after(500, self.set_api_key)
 
     def ingest_folder(self):

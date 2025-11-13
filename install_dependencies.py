@@ -170,7 +170,8 @@ def verify_installation():
         ("numpy", "NumPy"),
         ("pandas", "Pandas"),
         ("langchain", "LangChain"),
-        ("openai", "OpenAI"),
+        ("langchain_google_genai", "LangChain Google Gemini"),
+        ("openai", "OpenAI (Legacy)"),
         ("chromadb", "ChromaDB"),
     ]
     

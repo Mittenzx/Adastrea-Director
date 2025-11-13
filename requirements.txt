@@ -16,12 +16,19 @@ pandas>=2.2.0,<3.0.0
 
 # LangChain for LLM orchestration and RAG - Updated to support numpy 2.0
 langchain>=0.3.19,<0.4.0
-langchain-openai>=0.3.0,<0.4.0
 langchain-community>=0.3.27,<0.4.0
 
-# OpenAI API - Used for LLM (ChatGPT) and optionally for embeddings
-# NOTE: For embeddings, HuggingFace is used by default (no API key required)
-#       Set EMBEDDING_PROVIDER=openai to use OpenAI embeddings instead
+# Google Gemini API - Primary LLM provider (default)
+# NOTE: 73% cheaper than GPT-3.5, excellent quality, generous free tier
+# Set GEMINI_KEY environment variable with your API key
+# Get key at: https://makersuite.google.com/app/apikey
+langchain-google-genai>=2.0.5,<3.0.0
+
+# OpenAI API - Legacy LLM support (optional)
+# NOTE: Set LLM_PROVIDER=openai to use OpenAI instead of Gemini
+# For embeddings, HuggingFace is used by default (no API key required)
+# Set EMBEDDING_PROVIDER=openai to use OpenAI embeddings instead
+langchain-openai>=0.3.0,<0.4.0
 openai>=1.57.0,<2.0.0
 
 # Vector database for document storage and retrieval - Updated for numpy 2.0 compatibility

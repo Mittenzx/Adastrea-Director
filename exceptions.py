@@ -42,13 +42,20 @@ class ConfigurationError(AdastreaDirectorError):
 class APIKeyError(AdastreaDirectorError):
     """Exception raised when API key is missing or invalid."""
     
-    def __init__(self, service: str = "OpenAI", details: str = None):
+    def __init__(self, service: str = "Gemini", details: str = None):
         message = f"Missing or invalid API key for {service}"
         if not details:
-            details = (
-                f"Please set the {service.upper()}_API_KEY environment variable.\n"
-                f"You can add it to a .env file in the project root."
-            )
+            if service == "Gemini":
+                details = (
+                    f"Please set the GEMINI_KEY environment variable.\n"
+                    f"Get your free API key at: https://makersuite.google.com/app/apikey\n"
+                    f"You can add it to a .env file in the project root."
+                )
+            else:
+                details = (
+                    f"Please set the {service.upper()}_API_KEY environment variable.\n"
+                    f"You can add it to a .env file in the project root."
+                )
         super().__init__(message, details)
 
 
@@ -89,7 +96,7 @@ class NetworkError(AdastreaDirectorError):
 class RateLimitError(NetworkError):
     """Exception raised when API rate limit is exceeded."""
     
-    def __init__(self, service: str = "OpenAI API", details: str = None):
+    def __init__(self, service: str = "Gemini API", details: str = None):
         if not details:
             details = (
                 f"Rate limit exceeded for {service}. You have exceeded the API rate limit. Please:\n"
