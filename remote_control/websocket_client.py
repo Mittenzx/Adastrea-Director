@@ -85,6 +85,7 @@ class WebSocketEventClient:
         
         self.is_connected = False
         self.should_reconnect = True
+        self.connection_established = threading.Event()
         
         logger.info(f"Initialized WebSocket client: {self.ws_url}")
     
@@ -130,6 +131,7 @@ class WebSocketEventClient:
     def _on_open(self, ws):
         """WebSocket connection opened."""
         self.is_connected = True
+        self.connection_established.set()
         logger.info("WebSocket connection established")
         self._trigger_event(EventType.CONNECTION_STATUS, {
             "status": "connected",
@@ -258,10 +260,8 @@ class WebSocketEventClient:
             )
             self.ws_thread.start()
             
-            # Wait briefly for connection
-            time.sleep(1)
-            
-            if not self.is_connected:
+            # Wait for connection with timeout
+            if not self.connection_established.wait(timeout=5):
                 raise RemoteControlError("Failed to establish WebSocket connection")
             
             logger.info("WebSocket connected successfully")

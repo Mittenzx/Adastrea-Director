@@ -6,7 +6,7 @@ the Unreal Engine Remote Control API.
 """
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 from datetime import datetime
 from enum import Enum
 

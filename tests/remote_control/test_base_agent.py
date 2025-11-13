@@ -3,7 +3,7 @@ Tests for RemoteControlAgent base class.
 """
 
 import pytest
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 
 from remote_control.base_agent import RemoteControlAgent
 from remote_control.models import RemoteControlError, RemoteControlResponse

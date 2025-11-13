@@ -5,8 +5,7 @@ These tests use mocking to avoid requiring a running Unreal Engine instance.
 """
 
 import pytest
-from unittest.mock import Mock, patch, MagicMock
-from datetime import datetime
+from unittest.mock import Mock, patch
 
 from remote_control.client import UnrealRemoteControlClient
 from remote_control.models import (
@@ -15,8 +14,6 @@ from remote_control.models import (
     ConsoleCommand,
     RemoteControlResponse,
     ValidationError,
-    ConnectionError,
-    RequestError,
     TimeoutError,
 )
 

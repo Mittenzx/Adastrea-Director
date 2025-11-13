@@ -6,7 +6,7 @@ functionality with Remote Control API access.
 """
 
 import logging
-from typing import Optional
+from typing import Any, Dict, Optional
 from abc import ABC, abstractmethod
 
 from .client import UnrealRemoteControlClient
@@ -182,7 +182,7 @@ class RemoteControlAgent(ABC):
         logger.error(f"Agent {self.agent_id} WebSocket error: {error}")
     
     @abstractmethod
-    def execute_task(self, task: any) -> any:
+    def execute_task(self, task: Any) -> Any:
         """
         Execute a task using Remote Control API.
         
@@ -206,7 +206,7 @@ class RemoteControlAgent(ABC):
         """
         return self.is_running and self.remote_control.health_check()
     
-    def execute_command(self, command: str) -> dict:
+    def execute_command(self, command: str) -> Dict[str, Any]:
         """
         Execute a console command in Unreal Engine.
         
@@ -224,7 +224,7 @@ class RemoteControlAgent(ABC):
             raise RemoteControlError(f"Command failed: {response.error}")
         return response.data or {}
     
-    def get_property(self, object_path: str, property_name: str) -> any:
+    def get_property(self, object_path: str, property_name: str) -> Any:
         """
         Get a property value from Unreal Engine object.
         
@@ -243,7 +243,7 @@ class RemoteControlAgent(ABC):
             raise RemoteControlError(f"Failed to get property: {response.error}")
         return response.data.get('PropertyValue')
     
-    def set_property(self, object_path: str, property_name: str, value: any):
+    def set_property(self, object_path: str, property_name: str, value: Any):
         """
         Set a property value on Unreal Engine object.
         
@@ -263,8 +263,8 @@ class RemoteControlAgent(ABC):
         self,
         object_path: str,
         function_name: str,
-        parameters: Optional[dict] = None
-    ) -> any:
+        parameters: Optional[Dict[str, Any]] = None
+    ) -> Any:
         """
         Call a function on Unreal Engine object.
         

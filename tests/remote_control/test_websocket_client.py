@@ -5,11 +5,9 @@ These tests use mocking to avoid requiring a running Unreal Engine instance.
 """
 
 import pytest
-from unittest.mock import Mock, patch, MagicMock, call
-import time
+from unittest.mock import Mock, patch
 
 from remote_control.websocket_client import WebSocketEventClient, EventType
-from remote_control.models import RemoteControlError
 
 
 class TestWebSocketEventClient:
@@ -188,15 +186,14 @@ class TestWebSocketEventClient:
         mock_thread_instance = Mock()
         mock_thread.return_value = mock_thread_instance
         
-        with patch('time.sleep'):  # Mock sleep
-            # Simulate connection after sleep
-            def set_connected(*args, **kwargs):
-                client.is_connected = True
-            
-            with patch.object(client, 'ws', mock_ws_instance):
-                with patch.object(client, 'is_connected', False):
-                    mock_thread_instance.start.side_effect = set_connected
-                    client.connect()
+        # Simulate connection after thread start
+        def set_connected(*args, **kwargs):
+            client.is_connected = True
+            client.connection_established.set()
+        
+        mock_thread_instance.start.side_effect = set_connected
+        
+        client.connect()
         
         mock_ws_app.assert_called_once()
         mock_thread.assert_called_once()
@@ -233,15 +230,15 @@ class TestWebSocketEventClient:
         mock_thread_instance = Mock()
         mock_thread.return_value = mock_thread_instance
         
-        with patch('time.sleep'):
-            # Simulate connection
-            def set_connected(*args, **kwargs):
-                client.is_connected = True
-            
-            mock_thread_instance.start.side_effect = set_connected
-            
-            with client as c:
-                assert c is client
+        # Simulate connection
+        def set_connected(*args, **kwargs):
+            client.is_connected = True
+            client.connection_established.set()
+        
+        mock_thread_instance.start.side_effect = set_connected
+        
+        with client as c:
+            assert c is client
         
         mock_ws_instance.close.assert_called_once()
 
