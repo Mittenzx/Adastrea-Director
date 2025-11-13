@@ -16,7 +16,8 @@ from .models import (
     RemoteControlResponse,
     RemoteControlError,
 )
-from .websocket_client import WebSocketEventClient
+from .websocket_client import WebSocketEventClient, EventType
+from .base_agent import RemoteControlAgent
 
 __all__ = [
     "UnrealRemoteControlClient",
@@ -26,6 +27,8 @@ __all__ = [
     "RemoteControlResponse",
     "RemoteControlError",
     "WebSocketEventClient",
+    "EventType",
+    "RemoteControlAgent",
 ]
 
 __version__ = "0.1.0"
