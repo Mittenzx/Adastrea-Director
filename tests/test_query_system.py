@@ -27,7 +27,7 @@ class TestQueryAgentInitialization:
     @patch('main.ConversationalRetrievalChain')
     @patch('main.Chroma')
     @patch('main.ChatOpenAI')
-    @patch('main.OpenAIEmbeddings')
+    @patch('langchain_community.embeddings.HuggingFaceEmbeddings')
     def test_default_initialization(self, mock_embeddings, mock_llm, mock_chroma, mock_chain):
         """Test agent initializes with default parameters."""
         # Setup mocks
@@ -55,7 +55,7 @@ class TestQueryAgentInitialization:
     @patch('main.ConversationalRetrievalChain')
     @patch('main.Chroma')
     @patch('main.ChatOpenAI')
-    @patch('main.OpenAIEmbeddings')
+    @patch('langchain_community.embeddings.HuggingFaceEmbeddings')
     def test_custom_initialization(self, mock_embeddings, mock_llm, mock_chroma, mock_chain):
         """Test agent initializes with custom parameters."""
         # Setup mocks
@@ -84,7 +84,7 @@ class TestQueryAgentInitialization:
     @patch('main.ConversationalRetrievalChain')
     @patch('main.Chroma')
     @patch('main.ChatOpenAI')
-    @patch('main.OpenAIEmbeddings')
+    @patch('langchain_community.embeddings.HuggingFaceEmbeddings')
     def test_llm_configuration(self, mock_embeddings, mock_llm, mock_chroma, mock_chain):
         """Test that LLM is configured correctly."""
         # Setup mocks
@@ -107,7 +107,7 @@ class TestQueryAgentInitialization:
     @patch('main.ConversationalRetrievalChain')
     @patch('main.Chroma')
     @patch('main.ChatOpenAI')
-    @patch('main.OpenAIEmbeddings')
+    @patch('langchain_community.embeddings.HuggingFaceEmbeddings')
     @patch('main.sys.exit')
     def test_empty_database_exits(self, mock_exit, mock_embeddings, mock_llm, mock_chroma, mock_chain):
         """Test that initialization exits when database is empty."""
@@ -126,7 +126,7 @@ class TestQueryAgentInitialization:
     @patch('main.ConversationalRetrievalChain')
     @patch('main.Chroma')
     @patch('main.ChatOpenAI')
-    @patch('main.OpenAIEmbeddings')
+    @patch('langchain_community.embeddings.HuggingFaceEmbeddings')
     def test_retriever_configuration(self, mock_embeddings, mock_llm, mock_chroma, mock_chain):
         """Test that retriever is configured with correct search parameters."""
         # Setup mocks
@@ -156,7 +156,7 @@ class TestProcessQuery:
     @pytest.fixture
     def agent(self):
         """Create a test agent."""
-        with patch('main.OpenAIEmbeddings') as mock_embeddings, \
+        with patch('langchain_community.embeddings.HuggingFaceEmbeddings') as mock_embeddings, \
              patch('main.ChatOpenAI') as mock_llm, \
              patch('main.Chroma') as mock_chroma, \
              patch('main.ConversationalRetrievalChain') as mock_chain:
@@ -260,7 +260,7 @@ class TestGetDatabaseInfo:
     @pytest.fixture
     def agent(self):
         """Create a test agent."""
-        with patch('main.OpenAIEmbeddings') as mock_embeddings, \
+        with patch('langchain_community.embeddings.HuggingFaceEmbeddings') as mock_embeddings, \
              patch('main.ChatOpenAI') as mock_llm, \
              patch('main.Chroma') as mock_chroma, \
              patch('main.ConversationalRetrievalChain') as mock_chain:
@@ -310,7 +310,7 @@ class TestMemoryManagement:
     @pytest.fixture
     def agent(self):
         """Create a test agent."""
-        with patch('main.OpenAIEmbeddings') as mock_embeddings, \
+        with patch('langchain_community.embeddings.HuggingFaceEmbeddings') as mock_embeddings, \
              patch('main.ChatOpenAI') as mock_llm, \
              patch('main.Chroma') as mock_chroma, \
              patch('main.ConversationalRetrievalChain') as mock_chain:
@@ -350,7 +350,7 @@ class TestQueryOptimization:
     @pytest.fixture
     def agent(self):
         """Create a test agent."""
-        with patch('main.OpenAIEmbeddings') as mock_embeddings, \
+        with patch('langchain_community.embeddings.HuggingFaceEmbeddings') as mock_embeddings, \
              patch('main.ChatOpenAI') as mock_llm, \
              patch('main.Chroma') as mock_chroma, \
              patch('main.ConversationalRetrievalChain') as mock_chain:
@@ -385,7 +385,7 @@ class TestQueryOptimization:
 
     def test_custom_search_parameters(self):
         """Test agent initialization with custom search parameters."""
-        with patch('main.OpenAIEmbeddings') as mock_embeddings, \
+        with patch('langchain_community.embeddings.HuggingFaceEmbeddings') as mock_embeddings, \
              patch('main.ChatOpenAI') as mock_llm, \
              patch('main.Chroma') as mock_chroma, \
              patch('main.ConversationalRetrievalChain') as mock_chain:
@@ -484,7 +484,7 @@ class TestErrorHandling:
 
     def test_missing_api_key_initialization(self):
         """Test initialization fails gracefully with missing API key."""
-        with patch('main.OpenAIEmbeddings') as mock_embeddings, \
+        with patch('langchain_community.embeddings.HuggingFaceEmbeddings') as mock_embeddings, \
              patch('main.sys.exit') as mock_exit:
             
             mock_embeddings.side_effect = Exception("OPENAI_API_KEY not found")
@@ -496,7 +496,7 @@ class TestErrorHandling:
     @patch('main.ConversationalRetrievalChain')
     @patch('main.Chroma')
     @patch('main.ChatOpenAI')
-    @patch('main.OpenAIEmbeddings')
+    @patch('langchain_community.embeddings.HuggingFaceEmbeddings')
     def test_invalid_model_name(self, mock_embeddings, mock_llm, mock_chroma, mock_chain):
         """Test handling of invalid model name."""
         mock_embeddings.return_value = Mock()
@@ -515,7 +515,7 @@ class TestErrorHandling:
     @patch('main.ConversationalRetrievalChain')
     @patch('main.Chroma')
     @patch('main.ChatOpenAI')
-    @patch('main.OpenAIEmbeddings')
+    @patch('langchain_community.embeddings.HuggingFaceEmbeddings')
     def test_invalid_temperature(self, mock_embeddings, mock_llm, mock_chroma, mock_chain):
         """Test handling of invalid temperature value."""
         mock_embeddings.return_value = Mock()
@@ -534,7 +534,7 @@ class TestErrorHandling:
     @patch('main.ConversationalRetrievalChain')
     @patch('main.Chroma')
     @patch('main.ChatOpenAI')
-    @patch('main.OpenAIEmbeddings')
+    @patch('langchain_community.embeddings.HuggingFaceEmbeddings')
     def test_database_connection_error(self, mock_embeddings, mock_llm, mock_chroma, mock_chain):
         """Test handling of database connection errors."""
         mock_embeddings.return_value = Mock()
@@ -551,7 +551,7 @@ class TestConversationalRetrieval:
     @pytest.fixture
     def agent(self):
         """Create a test agent."""
-        with patch('main.OpenAIEmbeddings') as mock_embeddings, \
+        with patch('langchain_community.embeddings.HuggingFaceEmbeddings') as mock_embeddings, \
              patch('main.ChatOpenAI') as mock_llm, \
              patch('main.Chroma') as mock_chroma, \
              patch('main.ConversationalRetrievalChain') as mock_chain:
