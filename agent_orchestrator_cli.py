@@ -8,15 +8,10 @@ Allows starting, stopping, monitoring, and configuring multiple agents.
 
 import sys
 import argparse
-import json
-from typing import Dict, List, Optional
+from typing import Any, Dict, List
 from rich.console import Console
 from rich.table import Table
-from rich.panel import Panel
 from rich import box
-from rich.live import Live
-from rich.layout import Layout
-import time
 
 from agents.phase3 import (
     EventBus,
@@ -24,10 +19,7 @@ from agents.phase3 import (
     PerformanceProfilingAgent,
     BugDetectionAgent,
     CodeQualityAgent,
-    EventType,
-    ProjectInfo,
-    CodeStructure,
-    AgentStatus
+    ProjectInfo
 )
 
 console = Console()
@@ -40,7 +32,7 @@ class AgentOrchestrator:
         """Initialize the orchestrator."""
         self.event_bus = EventBus()
         self.shared_context = SharedContext()
-        self.agents: Dict[str, any] = {}
+        self.agents: Dict[str, Any] = {}
         self._running = False
         
         # Initialize agents (not started yet)
@@ -351,7 +343,7 @@ Examples:
     events_parser.add_argument('--limit', type=int, default=10, help='Number of events to display')
     
     # List command
-    list_parser = subparsers.add_parser('list', help='List available agents')
+    subparsers.add_parser('list', help='List available agents')
     
     # Config command
     config_parser = subparsers.add_parser('config', help='Configure project settings')

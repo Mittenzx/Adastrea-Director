@@ -7,17 +7,9 @@ error handling.
 """
 
 import pytest
-from datetime import datetime, timedelta
 from agents.phase3.event_bus import EventBus, EventType
-from agents.phase3.shared_state import SharedContext, AgentStatus
-from agents.phase3.bug_detection_agent import (
-    BugDetectionAgent,
-    Crash,
-    TestResults,
-    Regression,
-    BugReport,
-    Anomaly
-)
+from agents.phase3.shared_state import SharedContext
+from agents.phase3.bug_detection_agent import BugDetectionAgent
 
 
 class TestBugDetectionAgentExtended:

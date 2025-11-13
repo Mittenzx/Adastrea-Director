@@ -7,17 +7,10 @@ and integration scenarios.
 """
 
 import pytest
-from datetime import datetime, timedelta
+from datetime import datetime
 from agents.phase3.event_bus import EventBus, EventType
-from agents.phase3.shared_state import SharedContext, AgentStatus
-from agents.phase3.code_quality_agent import (
-    CodeQualityAgent,
-    CodeSmell,
-    Violation,
-    Refactoring,
-    QualityReport,
-    TechnicalDebtScore
-)
+from agents.phase3.shared_state import SharedContext
+from agents.phase3.code_quality_agent import CodeQualityAgent, CodeSmell
 
 
 class TestCodeQualityAgentExtended:

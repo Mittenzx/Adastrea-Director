@@ -9,7 +9,6 @@ Displays agent status, events, and metrics in a live-updating interface.
 import sys
 import time
 from datetime import datetime
-from typing import Dict, List
 from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
@@ -17,7 +16,7 @@ from rich.layout import Layout
 from rich.live import Live
 from rich import box
 from rich.text import Text
-from threading import Thread, Event as ThreadEvent
+from threading import Event as ThreadEvent
 import argparse
 
 from agents.phase3 import (
@@ -27,7 +26,6 @@ from agents.phase3 import (
     BugDetectionAgent,
     CodeQualityAgent,
     EventType,
-    ProjectInfo,
     AgentStatus
 )
 
