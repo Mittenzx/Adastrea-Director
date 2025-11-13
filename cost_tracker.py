@@ -55,9 +55,10 @@ class CostTracker:
     cost analysis, budget alerts, and detailed reporting.
     """
     
-    # OpenAI pricing (per 1M tokens) - Prices as of January 2025
-    # Note: Verify current pricing at https://openai.com/api/pricing/
+    # LLM pricing (per 1M tokens) - Prices as of January 2025
+    # Note: Verify current pricing at provider websites
     PRICING = {
+        # OpenAI models
         "gpt-4o": {"input": 2.50, "output": 10.00},
         "gpt-4-turbo": {"input": 10.00, "output": 30.00},
         "gpt-4": {"input": 30.00, "output": 60.00},
@@ -66,6 +67,11 @@ class CostTracker:
         "text-embedding-3-small": {"input": 0.020, "output": 0.020},
         "text-embedding-3-large": {"input": 0.130, "output": 0.130},
         "text-embedding-ada-002": {"input": 0.100, "output": 0.100},
+        # Google Gemini models (recommended alternative)
+        "gemini-1.5-flash": {"input": 0.075, "output": 0.30},
+        "gemini-1.5-pro": {"input": 1.25, "output": 5.00},
+        "gemini-2.0-flash": {"input": 0.075, "output": 0.30},
+        "gemini-pro": {"input": 0.50, "output": 1.50},  # Legacy
     }
     
     def __init__(
