@@ -71,6 +71,8 @@ Getting started and troubleshooting:
 
 ### 📚 Usage Guides
 How to use Adastrea Director:
+- [**Trigger Database Population**](guides/TRIGGER_DATABASE_POPULATION.md) - **⚡ QUICKSTART! Trigger database population now (5 min)**
+- [**Populate Database**](guides/POPULATE_DATABASE.md) - **📖 Complete guide to populating the database**
 - [Document Ingestion](guides/DOCUMENT_INGESTION.md) - Ingestion system guide
 - [Documents to Ingest](guides/DOCS_TO_INGEST.md) - What to ingest
 - [Game Repository Ingestion](guides/GAME_REPO_INGESTION.md) - Game repo ingestion

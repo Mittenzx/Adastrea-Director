@@ -67,6 +67,31 @@ Phase 2 builds on Phase 1's foundation by adding **intelligent goal decompositio
 
 - Python 3.9 or higher (Python 3.12+ recommended for best compatibility)
 - pip package manager
+- (Optional) GitHub Personal Access Token for game repository ingestion
+
+### Quick Start: Populate the Database
+
+**⚡ Want to start using Adastrea Director immediately with full game context?**
+
+Populate the database with your game repository so all agents have access to your codebase:
+
+```bash
+# Set your GitHub token (for private repository access)
+export GITHUB_TOKEN="ghp_your_token_here"
+
+# Populate the database (uses HuggingFace embeddings - no API key required!)
+python ingest_game_repo.py
+```
+
+**Alternative: Use GitHub Actions (Recommended) ⭐**
+1. Add `GAME_REPO_TOKEN` secret in [repository settings](https://github.com/Mittenzx/Adastrea-Director/settings/secrets/actions)
+2. Go to [Actions](https://github.com/Mittenzx/Adastrea-Director/actions) → "Populate Database with Adastrea Game Repository"
+3. Click "Run workflow"
+
+📖 **Quick Setup**: [TRIGGER_DATABASE_POPULATION.md](docs/guides/TRIGGER_DATABASE_POPULATION.md)  
+📖 **Complete Guide**: [POPULATE_DATABASE.md](docs/guides/POPULATE_DATABASE.md)
+
+Once populated, all agents will have full context about your Adastrea game when providing assistance!
 
 ### Installation
 

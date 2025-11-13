@@ -1,0 +1,141 @@
+name: Populate Database with Adastrea Game Repository
+
+on:
+  workflow_dispatch:  # Manual trigger only
+    inputs:
+      force_reingest:
+        description: 'Force re-ingestion of all files (ignore changes)'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
+  schedule:
+    # Run daily at 3 AM UTC to check for updates
+    - cron: '0 3 * * *'
+
+jobs:
+  populate-db:
+    name: Populate Database
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+            
+      - name: Install dependencies
+        run: |
+          pip install -q -r requirements.txt
+          
+      - name: Check for secrets
+        id: check_secrets
+        run: |
+          if [ -n "${{ secrets.GAME_REPO_TOKEN }}" ]; then
+            echo "secrets_available=true" >> $GITHUB_OUTPUT
+            echo "✅ GAME_REPO_TOKEN is configured"
+          else
+            echo "secrets_available=false" >> $GITHUB_OUTPUT
+            echo "❌ GAME_REPO_TOKEN is NOT configured"
+            echo ""
+            echo "To populate the database, you need to:"
+            echo "1. Create a GitHub Personal Access Token with 'repo' scope"
+            echo "2. Add it as a secret named 'GAME_REPO_TOKEN'"
+            echo "3. See docs/guides/SETUP_GITHUB_SECRETS.md for detailed instructions"
+          fi
+          
+      - name: Check for updates
+        if: steps.check_secrets.outputs.secrets_available == 'true' && github.event.inputs.force_reingest != 'true' && github.event_name == 'schedule'
+        id: check_updates
+        run: |
+          python ingest_game_repo.py --check-updates
+          if [ $? -eq 0 ]; then
+            echo "updates_needed=false" >> $GITHUB_OUTPUT
+            echo "✅ Database is up to date"
+          else
+            echo "updates_needed=true" >> $GITHUB_OUTPUT
+            echo "🔄 Updates available"
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GAME_REPO_TOKEN }}
+        continue-on-error: true
+          
+      - name: Populate database
+        if: steps.check_secrets.outputs.secrets_available == 'true' && (steps.check_updates.outputs.updates_needed == 'true' || github.event_name == 'workflow_dispatch')
+        run: |
+          if [ "${{ github.event.inputs.force_reingest }}" == "true" ]; then
+            echo "🔄 Force re-ingestion enabled"
+            python ingest_game_repo.py --force
+          else
+            echo "🔄 Ingesting game repository"
+            python ingest_game_repo.py
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GAME_REPO_TOKEN }}
+          # Using HuggingFace embeddings by default (no API key required)
+          # To use OpenAI embeddings, uncomment the line below and add OPENAI_API_KEY secret
+          # EMBEDDING_PROVIDER: openai
+          # OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          
+      - name: Upload database artifact
+        if: steps.check_secrets.outputs.secrets_available == 'true' && (steps.check_updates.outputs.updates_needed == 'true' || github.event_name == 'workflow_dispatch')
+        uses: actions/upload-artifact@v4
+        with:
+          name: adastrea-database
+          path: |
+            chroma_db_adastrea/
+            .adastrea_ingestion_tracking.json
+          retention-days: 30
+          
+      - name: Display statistics
+        if: steps.check_secrets.outputs.secrets_available == 'true' && (steps.check_updates.outputs.updates_needed == 'true' || github.event_name == 'workflow_dispatch')
+        run: |
+          python ingest_game_repo.py --stats
+          echo ""
+          echo "✅ Database population complete!"
+          echo "📊 Database is ready for use by Adastrea Director agents"
+          
+      - name: Setup instructions
+        if: steps.check_secrets.outputs.secrets_available == 'false'
+        run: |
+          echo "⚠️  Cannot populate database - GAME_REPO_TOKEN not configured"
+          echo ""
+          echo "📖 Setup Instructions:"
+          echo "=================================="
+          echo ""
+          echo "1. Create GitHub Personal Access Token:"
+          echo "   - Go to: https://github.com/settings/tokens"
+          echo "   - Click 'Generate new token' → 'Generate new token (classic)'"
+          echo "   - Give it a name: 'Adastrea Director - Game Repo Access'"
+          echo "   - Select scope: ✅ repo (Full control of private repositories)"
+          echo "   - Click 'Generate token' and copy it"
+          echo ""
+          echo "2. Add token as repository secret:"
+          echo "   - Go to: https://github.com/Mittenzx/Adastrea-Director/settings/secrets/actions"
+          echo "   - Click 'New repository secret'"
+          echo "   - Name: GAME_REPO_TOKEN"
+          echo "   - Value: [paste your token]"
+          echo "   - Click 'Add secret'"
+          echo ""
+          echo "3. Re-run this workflow:"
+          echo "   - Go to Actions tab"
+          echo "   - Select 'Populate Database with Adastrea Game Repository'"
+          echo "   - Click 'Run workflow'"
+          echo ""
+          echo "📚 For detailed instructions, see:"
+          echo "   docs/guides/SETUP_GITHUB_SECRETS.md"
+          echo ""
+          exit 1
