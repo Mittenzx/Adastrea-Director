@@ -1,7 +1,7 @@
 # Phase 3: Autonomous Agents - User Guide
 
-**Version:** 1.0  
-**Last Updated:** 2025-11-12  
+**Version:** 1.1  
+**Last Updated:** 2025-11-13  
 **Status:** Active Development
 
 ---
@@ -10,6 +10,8 @@
 
 Phase 3 introduces **autonomous agents** that run in the background to monitor performance, detect bugs, and maintain code quality. These agents work proactively to identify issues before they impact development.
 
+**Analysis-Driven Development:** This phase incorporates critical enhancements identified in [ADASTREA_DIRECTOR_ANALYSIS.md](ADASTREA_DIRECTOR_ANALYSIS.md), including Blueprint support, YAML validation, and GitHub Issues integration for maximum value delivery.
+
 ### Key Features
 
 1. **Event-Driven Architecture** - Agents communicate through a central event bus
@@ -17,6 +19,47 @@ Phase 3 introduces **autonomous agents** that run in the background to monitor p
 3. **Real-time Monitoring** - Continuous performance and quality tracking
 4. **Proactive Detection** - Identify issues before human QA
 5. **Actionable Recommendations** - Not just alerts, but suggested fixes
+6. **Blueprint Analysis** - Deep understanding of UE Blueprint logic (NEW)
+7. **Validated Outputs** - All YAML and configs validated against schemas (NEW)
+8. **Automated Issue Tracking** - Direct GitHub Issues integration (NEW)
+
+### Expected Value
+
+**Phase 3 ROI (12 months):**
+- **Investment:** $31-36k (development + operation)
+- **Benefits:** $58k+ (time savings + quality improvements)
+- **ROI:** 63% return with 7-8 month payback period
+- **Long-term:** $40-50k annual net benefit
+
+*Source: [ADASTREA_DIRECTOR_ANALYSIS.md - Cost-Benefit Analysis](ADASTREA_DIRECTOR_ANALYSIS.md#cost-benefit-analysis)*
+
+### Critical Enhancements
+
+Phase 3 integrates these high-priority improvements:
+
+1. **Blueprint Support** (Weeks 1-8)
+   - Parse and analyze Blueprint node graphs
+   - Detect complexity and anti-patterns
+   - Generate Blueprint-aware suggestions
+   - See [IMPROVEMENTS.md#1](IMPROVEMENTS.md#1-unreal-engine-blueprint-support)
+
+2. **YAML Validation** (Weeks 2-3)
+   - Automatic validation against project schemas
+   - Error detection and correction
+   - 100% valid generation guarantee
+   - See [IMPROVEMENTS.md#2](IMPROVEMENTS.md#2-yaml-template-validation)
+
+3. **GitHub Issues Integration** (Weeks 8-9)
+   - Automated issue creation from agents
+   - Structured bug reports with repro steps
+   - Automatic labeling and prioritization
+   - See [IMPROVEMENTS.md#3](IMPROVEMENTS.md#3-github-issues-integration)
+
+4. **Cost Tracking** (Weeks 11-12)
+   - Real-time API usage monitoring
+   - Budget management and alerts
+   - Cost optimization recommendations
+   - See [IMPROVEMENTS.md#4](IMPROVEMENTS.md#4-cost-tracking-and-optimization)
 
 ---
 

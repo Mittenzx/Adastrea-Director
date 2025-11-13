@@ -409,6 +409,106 @@ Agent status and alerts visualization:
 | Agent response time | <1 second for alerts |
 | System uptime | 99%+ during development |
 
+### Critical Enhancements for Phase 3
+
+Based on comprehensive analysis ([ADASTREA_DIRECTOR_ANALYSIS.md](ADASTREA_DIRECTOR_ANALYSIS.md)), these enhancements are critical for Phase 3 success:
+
+#### 1. Blueprint Support (HIGH PRIORITY)
+
+**Impact:** HIGH - Blueprints are central to Unreal Engine development  
+**Effort:** Medium (4-6 weeks)  
+**Timeline:** Should start in parallel with Phase 3 weeks 1-6
+
+**Capabilities Needed:**
+- Parse `.uasset` files to extract Blueprint node graphs
+- Understand Blueprint-specific patterns and anti-patterns
+- Detect overly complex Blueprint functions (>30 nodes)
+- Generate Blueprint pseudocode in planning outputs
+- Validate Blueprints against coding standards
+
+**Integration Points:**
+- Code Quality Agent: Blueprint complexity analysis
+- Bug Detection Agent: Blueprint logic validation
+- Planning Agent: Blueprint implementation suggestions
+
+See [IMPROVEMENTS.md](IMPROVEMENTS.md#1-unreal-engine-blueprint-support) for detailed specification.
+
+#### 2. YAML Template Validation (HIGH PRIORITY - Quick Win)
+
+**Impact:** HIGH - Ensures generated content is immediately usable  
+**Effort:** Low (1-2 weeks)  
+**Timeline:** Should complete before Phase 3 week 3
+
+**Capabilities Needed:**
+- Integrate with schema validation tools
+- Validate all generated YAML automatically
+- Provide specific error messages for violations
+- Auto-correct common mistakes
+
+**Integration Points:**
+- Code Generation Agent: Pre-validate YAML before presenting
+- Planning Agent: Ensure YAML examples are valid
+- Bug Detection Agent: Detect invalid YAML in project
+
+See [IMPROVEMENTS.md](IMPROVEMENTS.md#2-yaml-template-validation) for implementation details.
+
+#### 3. GitHub Issues Integration (MEDIUM-HIGH PRIORITY)
+
+**Impact:** MEDIUM-HIGH - Streamlines bug tracking workflow  
+**Effort:** Low (1 week)  
+**Timeline:** Phase 3 weeks 8-9 (after Bug Detection Agent)
+
+**Capabilities Needed:**
+- Automatic GitHub Issue creation from Bug Detection Agent
+- Template-based issue formatting
+- Attachment of logs, screenshots, reproduction steps
+- Automatic labeling (bug, performance, code-quality)
+
+**Integration Points:**
+- Bug Detection Agent: Auto-create issues for detected bugs
+- Performance Profiling Agent: Create issues for performance regressions
+- Code Quality Agent: Create issues for critical quality violations
+
+See [IMPROVEMENTS.md](IMPROVEMENTS.md#3-github-issues-integration) for API requirements.
+
+#### 4. Cost Tracking and Optimization (MEDIUM PRIORITY)
+
+**Impact:** MEDIUM - Controls operational costs  
+**Effort:** Medium (2-3 weeks)  
+**Timeline:** Phase 3 weeks 11-12 (polish phase)
+
+**Capabilities Needed:**
+- Track API usage per session, per agent
+- Display cost estimates before operations
+- Implement token budgeting (daily/weekly limits)
+- Add local LLM fallback option for cost savings
+
+**Integration Points:**
+- All agents: Track and report token usage
+- Dashboard: Display cost trends and projections
+- Alert system: Notify when approaching budget limits
+
+See [IMPROVEMENTS.md](IMPROVEMENTS.md#4-cost-tracking-and-optimization) for implementation details.
+
+**Updated Phase 3 Timeline with Enhancements:**
+
+| Weeks | Core Focus | Critical Enhancement |
+|-------|-----------|---------------------|
+| 1-2 | Architecture & Remote Control | Start Blueprint support research |
+| 2-3 | Event bus, shared state | **Complete YAML validation** ✨ |
+| 3-5 | Performance Profiling Agent | Blueprint parser prototype |
+| 6-8 | Bug Detection Agent | **Blueprint support integration** 🎯 |
+| 8-9 | Code Quality Agent | **GitHub Issues integration** 📋 |
+| 9-10 | Quality agent testing | Blueprint complexity analysis |
+| 11-12 | Dashboard & polish | **Cost tracking implementation** 💰 |
+
+**Success Criteria (Updated):**
+- [ ] Blueprint complexity analysis operational (>80% accuracy)
+- [ ] 100% valid YAML generation
+- [ ] Automated GitHub Issue creation working
+- [ ] Cost tracking showing real-time usage
+- [ ] All Phase 3 core metrics met (see table above)
+
 ---
 
 ## Phase 4: Creative Partner (Content Generation) 🌟
