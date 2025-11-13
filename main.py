@@ -39,7 +39,7 @@ try:
     # Load environment variables immediately after import
     load_dotenv()
     
-    from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+    from langchain_openai import ChatOpenAI
     from langchain_community.vectorstores import Chroma
     from langchain.chains import ConversationalRetrievalChain
     from langchain.memory import ConversationBufferMemory
@@ -111,8 +111,41 @@ class QueryAgent:
     def _initialize_components(self):
         """Initialize LLM, embeddings, vector store, and conversation chain."""
         try:
-            # Initialize embeddings
-            self.embeddings = OpenAIEmbeddings()
+            # Initialize embeddings based on EMBEDDING_PROVIDER environment variable
+            # Default is HuggingFace (no API key required)
+            # Set EMBEDDING_PROVIDER=openai to use OpenAI embeddings instead
+            embedding_provider = os.environ.get("EMBEDDING_PROVIDER", "hf").lower()
+            
+            # Validate provider value
+            valid_providers = ["hf", "huggingface", "openai"]
+            if embedding_provider not in valid_providers:
+                console.print(
+                    f"[yellow]Warning: Unknown EMBEDDING_PROVIDER '{embedding_provider}'. "
+                    f"Valid options: {', '.join(valid_providers)}. Defaulting to HuggingFace.[/yellow]"
+                )
+                embedding_provider = "hf"
+            
+            if embedding_provider == "openai":
+                from langchain_openai import OpenAIEmbeddings
+                self.embeddings = OpenAIEmbeddings()
+            else:
+                # Use HuggingFace embeddings (default)
+                model_name = os.environ.get("HUGGINGFACE_MODEL_NAME", "all-MiniLM-L6-v2")
+                try:
+                    from langchain_huggingface import HuggingFaceEmbeddings
+                except ImportError:
+                    from langchain_community.embeddings import HuggingFaceEmbeddings
+                
+                try:
+                    self.embeddings = HuggingFaceEmbeddings(model_name=model_name)
+                except Exception as e:
+                    console.print(
+                        f"[red]Failed to initialize HuggingFace embeddings with model '{model_name}': {e}[/red]"
+                    )
+                    console.print(
+                        "[yellow]Please check that the model name is correct and that you have an internet connection for model download.[/yellow]"
+                    )
+                    sys.exit(1)
 
             # Load vector store
             self.vectorstore = Chroma(

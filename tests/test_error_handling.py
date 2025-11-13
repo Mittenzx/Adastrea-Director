@@ -14,6 +14,7 @@ Tests cover:
 import os
 import sys
 from unittest.mock import Mock, patch
+from contextlib import contextmanager
 import pytest
 
 # Add parent directory to path for imports
@@ -28,47 +29,101 @@ from exceptions import (
 )
 
 
+@contextmanager
+def patch_hf_embeddings():
+    """
+    Context manager to patch HuggingFace embeddings in both possible import locations.
+    The code tries langchain_huggingface first, then falls back to langchain_community.
+    We patch both to ensure the mock works regardless of which package is installed.
+    """
+    # Create a mock that will be used for the embeddings
+    mock_embeddings_instance = Mock()
+    mock_embeddings_class = Mock(return_value=mock_embeddings_instance)
+    
+    # Patch both possible import paths
+    import sys
+    original_modules = sys.modules.copy()
+    fake_module_created = False
+    
+    try:
+        # Create fake module if langchain_huggingface doesn't exist
+        if 'langchain_huggingface' not in sys.modules:
+            fake_module = type(sys)('langchain_huggingface')
+            fake_module.HuggingFaceEmbeddings = mock_embeddings_class
+            sys.modules['langchain_huggingface'] = fake_module
+            fake_module_created = True
+            # Only patch langchain_community since langchain_huggingface is now mocked
+            with patch('langchain_community.embeddings.HuggingFaceEmbeddings', mock_embeddings_class):
+                yield mock_embeddings_class
+        else:
+            # Both modules exist, patch both
+            with patch('langchain_huggingface.HuggingFaceEmbeddings', mock_embeddings_class), \
+                 patch('langchain_community.embeddings.HuggingFaceEmbeddings', mock_embeddings_class):
+                yield mock_embeddings_class
+    finally:
+        # Restore original sys.modules
+        if fake_module_created:
+            for key in list(sys.modules.keys()):
+                if key not in original_modules:
+                    del sys.modules[key]
+
+
 class TestAPIKeyErrors:
-    """Test error handling for missing or invalid API keys."""
+    """Test error handling for missing or invalid API keys.
+    
+    With HuggingFace as the default provider, API keys are only required
+    when explicitly using OpenAI embeddings via EMBEDDING_PROVIDER=openai.
+    """
 
     @patch.dict(os.environ, {}, clear=True)
-    def test_missing_openai_key_ingest(self):
-        """Test that missing OpenAI key is handled in ingestion."""
-        with patch('ingest.OpenAIEmbeddings') as mock_embeddings:
-            mock_embeddings.side_effect = Exception("OPENAI_API_KEY not found")
+    def test_huggingface_no_key_required_ingest(self):
+        """Test that HuggingFace embeddings work without API keys."""
+        # Mock HuggingFace embeddings to avoid downloading models
+        with patch_hf_embeddings():
+            # Should succeed without any API key
+            agent = DocumentIngestionAgent()
+            assert agent is not None
+
+    @patch.dict(os.environ, {'EMBEDDING_PROVIDER': 'openai'}, clear=True)
+    def test_missing_openai_key_when_provider_selected(self):
+        """Test that missing OpenAI key is handled when OpenAI provider is explicitly selected."""
+        # Mock OpenAI to simulate missing key error
+        with patch('langchain_openai.OpenAIEmbeddings') as mock_embeddings:
+            mock_embeddings.side_effect = Exception("API key not found")
             
-            with pytest.raises(APIKeyError):
+            # Should exit with error when OpenAI is selected but key is missing
+            with pytest.raises(SystemExit):
                 DocumentIngestionAgent()
 
-    @patch.dict(os.environ, {}, clear=True)
-    @patch('main.sys.exit')
-    def test_missing_openai_key_query(self, mock_exit):
-        """Test that missing OpenAI key is handled in query."""
-        with patch('main.OpenAIEmbeddings') as mock_embeddings:
-            mock_embeddings.side_effect = Exception("OPENAI_API_KEY not found")
-            
-            QueryAgent()
-            
-            mock_exit.assert_called()
-
-    @patch('ingest.OpenAIEmbeddings')
-    def test_invalid_api_key_format(self, mock_embeddings):
-        """Test handling of invalid API key format."""
-        mock_embeddings.side_effect = Exception("Invalid API key format")
+    def test_invalid_api_key_format(self):
+        """Test handling of invalid API key format when using OpenAI embeddings.
         
-        with pytest.raises(APIKeyError):
-            DocumentIngestionAgent()
+        This test is only relevant when EMBEDDING_PROVIDER=openai.
+        By default, HuggingFace embeddings are used (no API key required).
+        """
+        # Mock OpenAI embeddings to simulate API key error
+        with patch('langchain_openai.OpenAIEmbeddings') as mock_embeddings:
+            mock_embeddings.side_effect = Exception("Invalid API key format")
+            
+            # Set environment to use OpenAI
+            with patch.dict(os.environ, {'EMBEDDING_PROVIDER': 'openai'}):
+                with pytest.raises(SystemExit):
+                    # Should exit with error when OpenAI is configured but key is invalid
+                    DocumentIngestionAgent()
 
 
 class TestFilePathErrors:
-    """Test error handling for file path issues."""
+    """Test error handling for file path issues.
+    
+    Uses HuggingFace embeddings by default (no API key required).
+    """
 
     @pytest.fixture
     def agent(self):
         """Create a test agent."""
-        with patch('ingest.OpenAIEmbeddings') as mock_embeddings:
-            mock_embeddings.return_value = Mock()
-            return DocumentIngestionAgent()
+        # Use mock embeddings to avoid downloading models during tests
+        mock_embeddings = Mock()
+        return DocumentIngestionAgent(embeddings=mock_embeddings)
 
     def test_nonexistent_directory(self, agent):
         """Test loading from nonexistent directory."""

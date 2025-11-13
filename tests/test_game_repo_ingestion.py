@@ -9,7 +9,10 @@ a GitHub token with access to the repository.
 
 Test approaches:
 1. Unit tests with mock repository structure (always run, no credentials needed)
-2. Integration tests with real private repository (requires GITHUB_TOKEN and OPENAI_API_KEY)
+   - Uses HuggingFace embeddings by default (no API key required)
+2. Integration tests with real private repository (requires GITHUB_TOKEN)
+   - Uses HuggingFace embeddings by default
+   - Optional: Set EMBEDDING_PROVIDER=openai and OPENAI_API_KEY to use OpenAI
 3. Validation of document types expected in a game repository
 """
 
@@ -219,20 +222,23 @@ class TestGameRepositoryIngestion:
         assert (mock_game_repo_structure / "Source").exists()
     
     @pytest.mark.unit
-    @patch('ingest.OpenAIEmbeddings')
     def test_ingest_mock_game_documentation(
-        self, mock_embeddings, mock_game_repo_structure, tmp_path
+        self, mock_game_repo_structure, tmp_path
     ):
-        """Test ingesting documentation from mock game repository."""
-        # Setup mock embeddings
-        mock_embeddings.return_value = MagicMock()
+        """Test ingesting documentation from mock game repository.
         
-        # Create agent with temporary directory
+        Uses HuggingFace embeddings (default, no API key required).
+        """
+        # Create mock embeddings to avoid downloading models during tests
+        mock_embeddings = MagicMock()
+        
+        # Create agent with temporary directory and mock embeddings
         agent = DocumentIngestionAgent(
             collection_name="test_game_docs",
             persist_directory=str(tmp_path / "chroma_db"),
             chunk_size=500,
             chunk_overlap=50,
+            embeddings=mock_embeddings,
         )
         
         # Load documents from the mock game repository
@@ -251,18 +257,22 @@ class TestGameRepositoryIngestion:
         # The test passes regardless - it validates the loading process works
     
     @pytest.mark.unit
-    @patch('ingest.OpenAIEmbeddings')
     def test_ingest_game_source_code(
-        self, mock_embeddings, mock_game_repo_structure, tmp_path
+        self, mock_game_repo_structure, tmp_path
     ):
-        """Test ingesting C++ source code from game repository."""
-        mock_embeddings.return_value = MagicMock()
+        """Test ingesting C++ source code from game repository.
+        
+        Uses HuggingFace embeddings (default, no API key required).
+        """
+        # Create mock embeddings to avoid downloading models during tests
+        mock_embeddings = MagicMock()
         
         agent = DocumentIngestionAgent(
             collection_name="test_game_code",
             persist_directory=str(tmp_path / "chroma_db"),
             chunk_size=500,
             chunk_overlap=50,
+            embeddings=mock_embeddings,
         )
         
         # Load source code
@@ -280,18 +290,22 @@ class TestGameRepositoryIngestion:
             assert doc.metadata["doc_type"] == "code"
     
     @pytest.mark.unit
-    @patch('ingest.OpenAIEmbeddings')
     def test_ingest_full_mock_repository(
-        self, mock_embeddings, mock_game_repo_structure, tmp_path
+        self, mock_game_repo_structure, tmp_path
     ):
-        """Test ingesting all documents from mock game repository."""
-        mock_embeddings.return_value = MagicMock()
+        """Test ingesting all documents from mock game repository.
+        
+        Uses HuggingFace embeddings (default, no API key required).
+        """
+        # Create mock embeddings to avoid downloading models during tests
+        mock_embeddings = MagicMock()
         
         agent = DocumentIngestionAgent(
             collection_name="test_full_game_repo",
             persist_directory=str(tmp_path / "chroma_db"),
             chunk_size=500,
             chunk_overlap=50,
+            embeddings=mock_embeddings,
         )
         
         # Load all documents from repository
@@ -308,18 +322,22 @@ class TestGameRepositoryIngestion:
         assert has_cpp, "Should have loaded C++ source files"
     
     @pytest.mark.unit
-    @patch('ingest.OpenAIEmbeddings')
     def test_chunk_game_documents(
-        self, mock_embeddings, mock_game_repo_structure, tmp_path
+        self, mock_game_repo_structure, tmp_path
     ):
-        """Test that game documents are properly chunked."""
-        mock_embeddings.return_value = MagicMock()
+        """Test that game documents are properly chunked.
+        
+        Uses HuggingFace embeddings (default, no API key required).
+        """
+        # Create mock embeddings to avoid downloading models during tests
+        mock_embeddings = MagicMock()
         
         agent = DocumentIngestionAgent(
             collection_name="test_chunking",
             persist_directory=str(tmp_path / "chroma_db"),
             chunk_size=200,  # Smaller chunks for testing
             chunk_overlap=50,
+            embeddings=mock_embeddings,
         )
         
         # Load and chunk documents
@@ -335,7 +353,6 @@ class TestGameRepositoryIngestion:
             assert "doc_type" in chunk.metadata
     
     @pytest.mark.integration
-    @pytest.mark.requires_api_key
     @pytest.mark.slow
     def test_ingest_real_game_repo(self, tmp_path):
         """
@@ -343,21 +360,22 @@ class TestGameRepositoryIngestion:
         
         This test requires:
         1. GITHUB_TOKEN environment variable with access to the private repository
-        2. OPENAI_API_KEY environment variable
+        
+        Uses HuggingFace embeddings by default (no API key required).
+        To use OpenAI instead, set EMBEDDING_PROVIDER=openai and OPENAI_API_KEY.
         
         This test will be skipped if:
-        - Credentials are not available
+        - GITHUB_TOKEN is not available
         - The repository cannot be accessed (invalid token or insufficient permissions)
-        - API quota is exceeded
+        - API rate limits are exceeded (if using OpenAI)
         
         Note: The Mittenzx/Adastrea repository is private. Ensure your GitHub token
         has the 'repo' scope and access to Mittenzx/Adastrea.
         """
         github_token = os.environ.get("GITHUB_TOKEN")
-        openai_key = os.environ.get("OPENAI_API_KEY")
         
-        if not github_token or not openai_key:
-            pytest.skip("GitHub token or OpenAI API key not available")
+        if not github_token:
+            pytest.skip("GitHub token not available")
         
         # Clone the repository
         clone_dir = tmp_path / "adastrea_clone"
@@ -465,16 +483,20 @@ class TestGameRepositoryIngestion:
         assert GAME_REPO_NAME == "Adastrea"
     
     @pytest.mark.unit
-    @patch('ingest.OpenAIEmbeddings')
     def test_document_metadata_enrichment_for_game_files(
-        self, mock_embeddings, mock_game_repo_structure, tmp_path
+        self, mock_game_repo_structure, tmp_path
     ):
-        """Test that game-specific file types have proper metadata."""
-        mock_embeddings.return_value = MagicMock()
+        """Test that game-specific file types have proper metadata.
+        
+        Uses HuggingFace embeddings (default, no API key required).
+        """
+        # Create mock embeddings to avoid downloading models during tests
+        mock_embeddings = MagicMock()
         
         agent = DocumentIngestionAgent(
             collection_name="test_metadata",
             persist_directory=str(tmp_path / "chroma_db"),
+            embeddings=mock_embeddings,
         )
         
         # Load documents

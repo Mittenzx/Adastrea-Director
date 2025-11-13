@@ -25,31 +25,35 @@ from ingest import DocumentIngestionAgent
 
 
 class TestDocumentIngestionAgentInitialization:
-    """Test initialization of DocumentIngestionAgent."""
+    """Test initialization of DocumentIngestionAgent.
+    
+    Uses HuggingFace embeddings by default (no API key required).
+    """
 
-    @patch('ingest.OpenAIEmbeddings')
-    def test_default_initialization(self, mock_embeddings):
+    def test_default_initialization(self):
         """Test agent initializes with default parameters."""
-        mock_embeddings.return_value = Mock()
+        # Use mock embeddings to avoid downloading models during tests
+        mock_embeddings = Mock()
         
-        agent = DocumentIngestionAgent()
+        agent = DocumentIngestionAgent(embeddings=mock_embeddings)
         
         assert agent.collection_name == "adastrea_docs"
         assert agent.persist_directory == "./chroma_db"
         assert agent.chunk_size == 1000
         assert agent.chunk_overlap == 200
-        mock_embeddings.assert_called_once()
+        assert agent.embeddings == mock_embeddings
 
-    @patch('ingest.OpenAIEmbeddings')
-    def test_custom_initialization(self, mock_embeddings):
+    def test_custom_initialization(self):
         """Test agent initializes with custom parameters."""
-        mock_embeddings.return_value = Mock()
+        # Use mock embeddings to avoid downloading models during tests
+        mock_embeddings = Mock()
         
         agent = DocumentIngestionAgent(
             collection_name="test_collection",
             persist_directory="./test_db",
             chunk_size=500,
             chunk_overlap=100,
+            embeddings=mock_embeddings,
         )
         
         assert agent.collection_name == "test_collection"
@@ -57,12 +61,12 @@ class TestDocumentIngestionAgentInitialization:
         assert agent.chunk_size == 500
         assert agent.chunk_overlap == 100
 
-    @patch('ingest.OpenAIEmbeddings')
-    def test_text_splitter_configuration(self, mock_embeddings):
+    def test_text_splitter_configuration(self):
         """Test that text splitter is configured correctly."""
-        mock_embeddings.return_value = Mock()
+        # Use mock embeddings to avoid downloading models during tests
+        mock_embeddings = Mock()
         
-        agent = DocumentIngestionAgent(chunk_size=800, chunk_overlap=150)
+        agent = DocumentIngestionAgent(chunk_size=800, chunk_overlap=150, embeddings=mock_embeddings)
         
         assert agent.text_splitter._chunk_size == 800
         assert agent.text_splitter._chunk_overlap == 150
