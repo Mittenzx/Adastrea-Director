@@ -134,21 +134,18 @@ def example_5_integration():
     print("=" * 60)
     
     print("\nExample code for integrating with your agents:")
-    
-    print("""
-# In your agent code:
-from cost_tracker import cost_tracker, track_langchain_call
-
-class QueryAgent:
-    def process_query(self, query: str) -> str:
-        # Make LLM call
-        response = self.chain.invoke({"question": query})
-        
-        # Track the cost
-        track_langchain_call(response, "query_agent")
-        
-        return response["answer"]
-""")
+    print("# In your agent code:")
+    print("from cost_tracker import cost_tracker, track_langchain_call")
+    print("")
+    print("class QueryAgent:")
+    print("    def process_query(self, query: str) -> str:")
+    print("        # Make LLM call")
+    print("        response = self.chain.invoke({\"question\": query})")
+    print("")
+    print("        # Track the cost")
+    print("        track_langchain_call(response, \"query_agent\")")
+    print("")
+    print("        return response[\"answer\"]")
     
     print("\nThis automatically extracts token usage from LangChain responses")
     print("and tracks costs for each component.")

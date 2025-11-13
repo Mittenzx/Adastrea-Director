@@ -42,7 +42,9 @@ This document provides a detailed analysis of API costs for operating the Adastr
 
 ## OpenAI Pricing Overview
 
-### Current OpenAI API Pricing (as of November 2025)
+### Current OpenAI API Pricing
+
+> **Disclaimer:** Pricing information below is based on publicly available data as of January 2025. Prices may change; please verify against [OpenAI's official pricing page](https://openai.com/pricing) for the most current rates.
 
 #### Language Models (LLMs)
 
