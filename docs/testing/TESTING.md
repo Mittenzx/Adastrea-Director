@@ -95,7 +95,8 @@ pytest tests/test_document_loaders.py::TestDocumentIngestionAgentInitialization:
 # Run all game repo tests (unit tests with mock data)
 pytest tests/test_game_repo_ingestion.py -v -m unit
 
-# Run with real repository (requires GITHUB_TOKEN and OPENAI_API_KEY)
+# Run with real repository (requires GITHUB_TOKEN, uses HuggingFace embeddings by default)
+# Optional: Set EMBEDDING_PROVIDER=openai and OPENAI_API_KEY to use OpenAI embeddings
 pytest tests/test_game_repo_ingestion.py -v -m integration --requires-api-key
 
 # View game repo test categories
