@@ -64,3 +64,7 @@ temp/
 # OS
 Thumbs.db
 coverage.xml
+
+# Cost tracking data
+api_costs.json
+cost_report.json
