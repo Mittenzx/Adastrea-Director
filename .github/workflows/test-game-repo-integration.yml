@@ -79,12 +79,17 @@ jobs:
       - name: Check for secrets
         id: check_secrets
         run: |
-          if [ -n "${{ secrets.GAME_REPO_TOKEN }}" ] && [ -n "${{ secrets.OPENAI_API_KEY }}" ]; then
+          if [ -n "${{ secrets.GAME_REPO_TOKEN }}" ]; then
             echo "secrets_available=true" >> $GITHUB_OUTPUT
-            echo "✅ Secrets are configured"
+            echo "✅ GitHub token is configured"
+            if [ -n "${{ secrets.OPENAI_API_KEY }}" ]; then
+              echo "✅ OpenAI API key is configured (optional - using OpenAI embeddings)"
+            else
+              echo "ℹ️  Using HuggingFace embeddings (default - no API key required)"
+            fi
           else
             echo "secrets_available=false" >> $GITHUB_OUTPUT
-            echo "⚠️  Secrets not configured - skipping integration tests"
+            echo "⚠️  GitHub token not configured - skipping integration tests"
             echo "See docs/guides/SETUP_GITHUB_SECRETS.md for setup instructions"
           fi
           
@@ -94,6 +99,8 @@ jobs:
           pytest tests/test_game_repo_ingestion.py -v -s -m integration --tb=short
         env:
           GITHUB_TOKEN: ${{ secrets.GAME_REPO_TOKEN }}
+          # OPENAI_API_KEY is optional - uses HuggingFace embeddings by default
+          # Set EMBEDDING_PROVIDER=openai if you want to use OpenAI instead
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           
       - name: Display test summary
@@ -101,7 +108,8 @@ jobs:
         run: |
           echo "✅ Integration tests completed"
           echo "These tests validate ingestion from the Mittenzx/Adastrea repository"
-          echo "Tests may skip if repository is inaccessible or API rate limits are hit"
+          echo "Uses HuggingFace embeddings by default (no API key required)"
+          echo "Tests may skip if repository is inaccessible"
           
       - name: Skip message
         if: steps.check_secrets.outputs.secrets_available == 'false'
@@ -110,8 +118,9 @@ jobs:
           echo ""
           echo "To enable integration testing:"
           echo "1. Follow instructions in docs/guides/SETUP_GITHUB_SECRETS.md"
-          echo "2. Add GAME_REPO_TOKEN and OPENAI_API_KEY secrets"
-          echo "3. Re-run this workflow"
+          echo "2. Add GAME_REPO_TOKEN secret (required)"
+          echo "3. Optionally add OPENAI_API_KEY to use OpenAI embeddings"
+          echo "4. Re-run this workflow"
 
   test-script:
     name: Test Script Functionality
