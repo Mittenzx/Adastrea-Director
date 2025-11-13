@@ -108,9 +108,9 @@
 **Status:** SKIPPED  
 **Reason:** Missing credentials  
 **Requirements:**
-- GITHUB_TOKEN environment variable
-- OPENAI_API_KEY environment variable
+- GITHUB_TOKEN environment variable (required)
 - Access to Mittenzx/Adastrea repository
+- OPENAI_API_KEY environment variable (optional - uses HuggingFace embeddings by default)
 
 **What it would test:**
 - Actual repository cloning
@@ -211,16 +211,16 @@ Ingestion Statistics:
    - Requires GitHub Personal Access Token with `repo` scope
    - No token available in test environment
 
-2. **OpenAI API**
-   - Embedding generation requires API key
-   - No key available in test environment
+2. **Embedding Provider**
+   - Uses HuggingFace embeddings by default (no API key required)
+   - OpenAI embeddings optional (requires API key)
    - Mock embeddings used in unit tests
 
 ### Workaround Used
 
 All unit tests use:
 - Mock data structures
-- Mocked OpenAI embeddings
+- Mocked embeddings (HuggingFace or OpenAI depending on configuration)
 - Temporary directories for databases
 - No network calls
 
@@ -238,12 +238,15 @@ This allows comprehensive testing without credentials while validating all core 
 
 # Set environment variables
 export GITHUB_TOKEN="ghp_your_token_here"
-export OPENAI_API_KEY="sk_your_key_here"
+
+# Optional: Use OpenAI embeddings instead of HuggingFace (default)
+# export OPENAI_API_KEY="sk_your_key_here"
+# export EMBEDDING_PROVIDER="openai"
 ```
 
 ### Run Integration Tests
 ```bash
-# Run integration tests
+# Run integration tests (uses HuggingFace embeddings by default)
 pytest tests/test_game_repo_ingestion.py -v -m integration
 
 # Or run all tests
@@ -254,7 +257,7 @@ pytest tests/test_game_repo_ingestion.py -v
 With credentials, the integration test will:
 1. Clone Mittenzx/Adastrea repository
 2. Load all documents (docs, source, config)
-3. Create embeddings via OpenAI
+3. Create embeddings via HuggingFace (default) or OpenAI (if configured)
 4. Store in ChromaDB
 5. Verify document count > 0
 6. Validate database statistics
@@ -266,8 +269,8 @@ With credentials, the integration test will:
 ### For CI/CD Integration
 
 1. **Add Repository Secrets**
-   - `GAME_REPO_TOKEN`: GitHub token with repo access
-   - `OPENAI_API_KEY`: OpenAI API key
+   - `GAME_REPO_TOKEN`: GitHub token with repo access (required)
+   - `OPENAI_API_KEY`: OpenAI API key (optional - uses HuggingFace by default)
 
 2. **Update GitHub Actions Workflow**
    ```yaml
@@ -275,20 +278,26 @@ With credentials, the integration test will:
      run: pytest tests/test_game_repo_ingestion.py -v -m integration
      env:
        GITHUB_TOKEN: ${{ secrets.GAME_REPO_TOKEN }}
-       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+       # Optional: Use OpenAI embeddings
+       # OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+       # EMBEDDING_PROVIDER: openai
    ```
 
 3. **Optional: Make Repository Public**
    - If Mittenzx/Adastrea becomes public
    - Integration tests can run without token
-   - Only OPENAI_API_KEY needed
+   - Still uses HuggingFace embeddings by default (no API key needed)
 
 ### For Local Development
 
 1. **Create `.env` file** (already in .gitignore)
    ```bash
+   # Required
    GITHUB_TOKEN=ghp_your_token
-   OPENAI_API_KEY=sk_your_key
+   
+   # Optional: Only if using OpenAI embeddings
+   # EMBEDDING_PROVIDER=openai
+   # OPENAI_API_KEY=sk_your_key
    ```
 
 2. **Run tests locally**
@@ -311,8 +320,8 @@ With credentials, the integration test will:
 - Timestamp tracking
 
 ### What Needs Credentials ⚠️
-- Real repository cloning
-- OpenAI embedding generation
+- Real repository cloning (requires GITHUB_TOKEN)
+- Embedding generation (uses HuggingFace by default, no API key needed; OpenAI optional)
 - Database persistence
 - End-to-end integration
 
@@ -323,7 +332,7 @@ The implementation is **production-ready** with:
 - ✅ Comprehensive mock testing
 - ✅ No security issues
 - ✅ Well-documented
-- ⚠️ Integration test pending credentials
+- ⚠️ Integration test pending GitHub token (embeddings work without API key)
 
 ---
 
