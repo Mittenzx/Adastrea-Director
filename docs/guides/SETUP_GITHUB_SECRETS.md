@@ -42,35 +42,20 @@ Example token format: `ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`
 
 ---
 
-## Step 2: (Optional) Get OpenAI API Key
+## Step 2: (Optional) Setup OpenAI Embeddings
 
-**Note:** This step is **optional**. The system uses HuggingFace embeddings by default, which work locally without an API key. Only follow this step if you want to use OpenAI embeddings for potentially better quality (requires API costs).
+**Note:** This step is **optional**. The system uses HuggingFace embeddings by default (no API key required).
 
-### 2.1 If You Already Have One
-
-1. Go to https://platform.openai.com/api-keys
-2. Find your existing key or create a new one
-3. Copy the key (starts with `sk-`)
-
-### 2.2 If You Need to Create One
-
-1. Go to https://platform.openai.com/api-keys
-2. Click **+ Create new secret key**
-3. Name it: `Adastrea Director Testing`
-4. Click **Create secret key**
-5. **IMPORTANT:** Copy the key immediately
-   - You won't be able to see it again!
-
-Example key format: `sk-proj-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`
-
-### 2.3 Skip This Step
-
-If you want to use the default HuggingFace embeddings (recommended for most users):
+**To use the default HuggingFace embeddings:**
 - Skip this step entirely
 - No API key needed
 - No API costs
 - Works completely offline after initial model download
-- Good quality embeddings for most use cases
+
+**To use OpenAI embeddings instead:**
+- See [OpenAI Embeddings Setup Guide](OPENAI_EMBEDDINGS_SETUP.md) for complete instructions
+- Requires OpenAI API key and incurs API costs
+- Potentially higher quality embeddings
 
 ---
 
@@ -93,7 +78,7 @@ If you want to use the default HuggingFace embeddings (recommended for most user
 
 ### 3.3 (Optional) Add OPENAI_API_KEY Secret
 
-**Only complete this step if you completed Step 2 and want to use OpenAI embeddings.**
+**Only complete this step if you want to use OpenAI embeddings (see [OpenAI Embeddings Setup Guide](OPENAI_EMBEDDINGS_SETUP.md)).**
 
 1. Click **New repository secret** again
 2. Fill in:
@@ -247,11 +232,7 @@ Or trigger it manually in a workflow:
 
 **Solution:**
 1. If you want to use HuggingFace instead (recommended): Don't set EMBEDDING_PROVIDER or set it to 'hf'
-2. If you want to use OpenAI:
-   - Verify key is active at https://platform.openai.com/api-keys
-   - Update the OPENAI_API_KEY secret
-   - Ensure you have billing set up on OpenAI account
-   - Set EMBEDDING_PROVIDER=openai in your environment
+2. If you want to use OpenAI: See [OpenAI Embeddings Setup Guide](OPENAI_EMBEDDINGS_SETUP.md) for troubleshooting
 
 ### Secrets Not Available in Workflow
 
@@ -268,11 +249,7 @@ Or trigger it manually in a workflow:
 
 **Solution:**
 1. Switch to HuggingFace embeddings (no rate limits): Remove EMBEDDING_PROVIDER or set to 'hf'
-2. If you must use OpenAI:
-   - Use smaller batch sizes in `ingest_game_repo.py`
-   - Add longer delays between batches
-   - Wait a few minutes before retrying
-   - Upgrade your OpenAI plan for higher rate limits
+2. If using OpenAI: See [OpenAI Embeddings Setup Guide](OPENAI_EMBEDDINGS_SETUP.md) for troubleshooting and optimization tips
 
 ---
 

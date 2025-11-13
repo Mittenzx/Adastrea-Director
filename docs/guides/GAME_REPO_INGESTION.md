@@ -34,13 +34,11 @@ This guide shows you how to:
    - Check the `repo` scope
    - Generate and copy the token
 
-2. **(Optional) OpenAI API Key**: Only needed if you want to use OpenAI embeddings instead of HuggingFace
-   ```bash
-   export EMBEDDING_PROVIDER="openai"
-   export OPENAI_API_KEY="your-api-key-here"
-   ```
+2. **(Optional) OpenAI Embeddings**: By default, uses HuggingFace embeddings (no API key required)
    
-   **Note:** By default, the system uses HuggingFace embeddings (no API key required, runs locally)
+   **To use OpenAI embeddings instead:**
+   - See [OpenAI Embeddings Setup Guide](OPENAI_EMBEDDINGS_SETUP.md) for complete instructions
+   - Requires API key and incurs costs
 
 ### Basic Usage
 
