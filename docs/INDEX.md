@@ -66,6 +66,7 @@ Getting started and troubleshooting:
 - [Troubleshooting](guides/TROUBLESHOOTING.md) - Common issues and solutions
 - [Error Handling](guides/ERROR_HANDLING.md) - Error handling guide
 - [Setup GitHub Secrets](guides/SETUP_GITHUB_SECRETS.md) - CI/CD configuration
+- [OpenAI Embeddings Setup](guides/OPENAI_EMBEDDINGS_SETUP.md) - Optional OpenAI configuration
 - [Repository Structure](guides/REPOSITORY_STRUCTURE.md) - Repository organization
 
 ### 📚 Usage Guides
@@ -127,6 +128,7 @@ Implementation summaries and PR documentation:
 **Installing Adastrea Director:**
 1. [Installation Guide](guides/INSTALLATION.md)
 2. [Troubleshooting](guides/TROUBLESHOOTING.md)
+3. [OpenAI Embeddings Setup](guides/OPENAI_EMBEDDINGS_SETUP.md) (Optional)
 
 **Using the GUI:**
 1. [GUI Quick Start](gui/GUI_QUICK_START.md)

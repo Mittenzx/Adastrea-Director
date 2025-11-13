@@ -109,7 +109,12 @@ pip install -r requirements.txt
 
 **📝 Note**: If you encounter issues (especially on Apple Silicon Macs or ARM systems), use the smart installer or see [INSTALLATION.md](docs/guides/INSTALLATION.md) for platform-specific instructions and troubleshooting.
 
-3. Set up your OpenAI API key (or other LLM provider):
+3. Set up your LLM API key:
+
+**For document embeddings:** The system uses **HuggingFace embeddings by default** (no API key required, works offline).
+- See [OpenAI Embeddings Setup Guide](docs/guides/OPENAI_EMBEDDINGS_SETUP.md) if you want to use OpenAI instead
+
+**For LLM queries:** Set up your preferred LLM provider:
 ```bash
 export OPENAI_API_KEY="your-api-key-here"
 ```
@@ -124,6 +129,7 @@ This is only needed if you want to ingest documents from the private Mittenzx/Ad
 - [Quick Start](docs/guides/QUICK_START_GAME_REPO.md) - 5-minute setup
 - [GitHub Secrets Setup](docs/guides/SETUP_GITHUB_SECRETS.md) - CI/CD integration
 - [Complete Guide](docs/guides/GAME_REPO_INGESTION.md) - Full documentation
+- [OpenAI Embeddings Setup](docs/guides/OPENAI_EMBEDDINGS_SETUP.md) - Optional OpenAI configuration
 
 ### Usage
 

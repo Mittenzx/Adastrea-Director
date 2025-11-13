@@ -205,14 +205,17 @@ python main.py --search-type mmr --retrieval-k 10 --fetch-k 30
 
 | Variable | Description |
 |----------|-------------|
-| `OPENAI_API_KEY` | OpenAI API key (required) |
+| `OPENAI_API_KEY` | OpenAI API key (required for LLM queries; embeddings use HuggingFace by default) |
+| `EMBEDDING_PROVIDER` | Embedding provider: `hf` (default) or `openai` (optional) |
+| `HUGGINGFACE_MODEL_NAME` | HuggingFace model name (default: `all-MiniLM-L6-v2`) |
 
 ## Troubleshooting
 
 ### Slow Queries
 - Try `--search-type similarity` for faster retrieval
 - Reduce `--retrieval-k` to 4-5
-- Check network connection to OpenAI API
+- Using HuggingFace embeddings (default) runs locally and should be fast
+- If using OpenAI embeddings, check network connection to OpenAI API
 
 ### Poor Relevance
 - Increase `--retrieval-k` to 8-10

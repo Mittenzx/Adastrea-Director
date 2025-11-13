@@ -9,7 +9,7 @@ This guide walks you through setting up GitHub secrets to enable full integratio
 You need:
 1. Admin access to the Mittenzx/Adastrea-Director repository (to add secrets)
 2. Access to the private Mittenzx/Adastrea game repository (to generate token with correct permissions)
-3. An OpenAI API account
+3. **(Optional)** An OpenAI API account - only needed if you want to use OpenAI embeddings instead of the default HuggingFace embeddings
 
 ---
 
@@ -42,24 +42,20 @@ Example token format: `ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`
 
 ---
 
-## Step 2: Get OpenAI API Key
+## Step 2: (Optional) Setup OpenAI Embeddings
 
-### 2.1 If You Already Have One
+**Note:** This step is **optional**. The system uses HuggingFace embeddings by default (no API key required).
 
-1. Go to https://platform.openai.com/api-keys
-2. Find your existing key or create a new one
-3. Copy the key (starts with `sk-`)
+**To use the default HuggingFace embeddings:**
+- Skip this step entirely
+- No API key needed
+- No API costs
+- Works completely offline after initial model download
 
-### 2.2 If You Need to Create One
-
-1. Go to https://platform.openai.com/api-keys
-2. Click **+ Create new secret key**
-3. Name it: `Adastrea Director Testing`
-4. Click **Create secret key**
-5. **IMPORTANT:** Copy the key immediately
-   - You won't be able to see it again!
-
-Example key format: `sk-proj-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`
+**To use OpenAI embeddings instead:**
+- See [OpenAI Embeddings Setup Guide](OPENAI_EMBEDDINGS_SETUP.md) for complete instructions
+- Requires OpenAI API key and incurs API costs
+- Potentially higher quality embeddings
 
 ---
 
@@ -80,7 +76,9 @@ Example key format: `sk-proj-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`
    - **Secret:** Paste the GitHub token you created (starts with `ghp_`)
 3. Click **Add secret**
 
-### 3.3 Add OPENAI_API_KEY Secret
+### 3.3 (Optional) Add OPENAI_API_KEY Secret
+
+**Only complete this step if you want to use OpenAI embeddings (see [OpenAI Embeddings Setup Guide](OPENAI_EMBEDDINGS_SETUP.md)).**
 
 1. Click **New repository secret** again
 2. Fill in:
@@ -90,8 +88,10 @@ Example key format: `sk-proj-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`
 
 ### 3.4 Verify Secrets Are Added
 
-You should now see two secrets listed:
+**Required secret:**
 - ✅ GAME_REPO_TOKEN
+
+**Optional secret (only if using OpenAI embeddings):**
 - ✅ OPENAI_API_KEY
 
 The values will be hidden (shown as `***`)
@@ -139,6 +139,8 @@ jobs:
           pytest tests/test_game_repo_ingestion.py -v -m integration
         env:
           GITHUB_TOKEN: ${{ secrets.GAME_REPO_TOKEN }}
+          # OPENAI_API_KEY is optional - uses HuggingFace by default
+          # Uncomment to use OpenAI embeddings: set EMBEDDING_PROVIDER=openai
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 ```
 
@@ -153,11 +155,14 @@ Save this file and commit it to enable automated testing.
 Before running in GitHub Actions, you can test locally:
 
 ```bash
-# Set the secrets as environment variables
+# Required: Set GitHub token
 export GITHUB_TOKEN="ghp_your_token_here"
-export OPENAI_API_KEY="sk_your_key_here"
 
-# Run integration tests
+# Optional: Set OpenAI API key (only if using OpenAI embeddings)
+# export OPENAI_API_KEY="sk_your_key_here"
+# export EMBEDDING_PROVIDER="openai"
+
+# Run integration tests (uses HuggingFace embeddings by default)
 pytest tests/test_game_repo_ingestion.py -v -m integration
 ```
 
@@ -192,6 +197,7 @@ Once secrets are set up, you can also run the actual ingestion script:
 
 ```bash
 # The script will automatically use GITHUB_TOKEN from environment
+# Uses HuggingFace embeddings by default (no API key required)
 python ingest_game_repo.py
 ```
 
@@ -202,6 +208,8 @@ Or trigger it manually in a workflow:
   run: python ingest_game_repo.py
   env:
     GITHUB_TOKEN: ${{ secrets.GAME_REPO_TOKEN }}
+    # OPENAI_API_KEY is optional - only needed if using OpenAI embeddings
+    # Add this if you want to use OpenAI: EMBEDDING_PROVIDER: openai
     OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 ```
 
@@ -218,14 +226,13 @@ Or trigger it manually in a workflow:
 2. Regenerate token if expired
 3. Update the GAME_REPO_TOKEN secret with new token
 
-### "API key not found" Error
+### "API key not found" Error (When Using OpenAI)
 
-**Problem:** OpenAI key not set or invalid
+**Problem:** OpenAI key not set or invalid (only relevant if you set EMBEDDING_PROVIDER=openai)
 
 **Solution:**
-1. Verify key is active at https://platform.openai.com/api-keys
-2. Update the OPENAI_API_KEY secret
-3. Ensure you have billing set up on OpenAI account
+1. If you want to use HuggingFace instead (recommended): Don't set EMBEDDING_PROVIDER or set it to 'hf'
+2. If you want to use OpenAI: See [OpenAI Embeddings Setup Guide](OPENAI_EMBEDDINGS_SETUP.md) for troubleshooting
 
 ### Secrets Not Available in Workflow
 
@@ -236,14 +243,13 @@ Or trigger it manually in a workflow:
 - For security, GitHub doesn't expose secrets to forked PRs
 - Run tests on branches in the main repository
 
-### "Rate limit exceeded"
+### "Rate limit exceeded" (When Using OpenAI)
 
-**Problem:** Too many API requests to OpenAI
+**Problem:** Too many API requests to OpenAI (only relevant if using OpenAI embeddings)
 
 **Solution:**
-1. Use smaller batch sizes in `ingest_game_repo.py`
-2. Add longer delays between batches
-3. Wait a few minutes before retrying
+1. Switch to HuggingFace embeddings (no rate limits): Remove EMBEDDING_PROVIDER or set to 'hf'
+2. If using OpenAI: See [OpenAI Embeddings Setup Guide](OPENAI_EMBEDDINGS_SETUP.md) for troubleshooting and optimization tips
 
 ---
 
@@ -270,10 +276,10 @@ Or trigger it manually in a workflow:
 
 Recommended rotation schedule:
 
-| Token Type | Rotation Frequency |
-|-----------|-------------------|
-| GitHub Personal Access Token | Every 90 days |
-| OpenAI API Key | Annually or when compromised |
+| Token Type | Rotation Frequency | Required? |
+|-----------|-------------------|-----------|
+| GitHub Personal Access Token | Every 90 days | **Yes** |
+| OpenAI API Key | Annually or when compromised | **No** (Optional) |
 
 ### How to Rotate
 
@@ -287,12 +293,16 @@ Recommended rotation schedule:
 ## Quick Reference
 
 ### Secret Names
-- `GAME_REPO_TOKEN` - GitHub Personal Access Token
-- `OPENAI_API_KEY` - OpenAI API Key
+- `GAME_REPO_TOKEN` - GitHub Personal Access Token (**Required**)
+- `OPENAI_API_KEY` - OpenAI API Key (**Optional** - only if using OpenAI embeddings)
+
+### Embedding Provider Options
+- **Default**: HuggingFace embeddings (no API key required, works offline)
+- **Optional**: OpenAI embeddings (requires API key and costs, potentially better quality)
 
 ### Required Scopes
 - GitHub Token: `repo` (full control of private repositories)
-- OpenAI Key: No special scopes, just valid API key
+- OpenAI Key: No special scopes, just valid API key (only if using OpenAI)
 
 ### Where to Add Secrets
 Repository → Settings → Secrets and variables → Actions
@@ -300,8 +310,10 @@ Repository → Settings → Secrets and variables → Actions
 ### How to Use in Workflow
 ```yaml
 env:
-  GITHUB_TOKEN: ${{ secrets.GAME_REPO_TOKEN }}
+  GITHUB_TOKEN: ${{ secrets.GAME_REPO_TOKEN }}  # Required
+  # OPENAI_API_KEY is optional - uses HuggingFace by default
   OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+  # To use OpenAI, also set: EMBEDDING_PROVIDER: openai
 ```
 
 ---

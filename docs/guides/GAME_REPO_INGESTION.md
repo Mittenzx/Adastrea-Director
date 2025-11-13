@@ -9,7 +9,7 @@ Adastrea Director is designed to help build the Mittenzx/Adastrea game. To provi
 **IMPORTANT:** The Mittenzx/Adastrea repository is **private**. You must have:
 - A GitHub account with access to the repository
 - A personal access token with `repo` scope
-- An OpenAI API key for document embedding
+- **(Optional)** An OpenAI API key for document embedding - uses HuggingFace by default (no API key required)
 
 This guide shows you how to:
 
@@ -22,12 +22,7 @@ This guide shows you how to:
 
 ### Prerequisites
 
-1. **OpenAI API Key**: Set your API key
-   ```bash
-   export OPENAI_API_KEY="your-api-key-here"
-   ```
-
-2. **GitHub Token** (for private repositories): Create a personal access token with `repo` scope
+1. **GitHub Token** (required for private repositories): Create a personal access token with `repo` scope
    ```bash
    export GITHUB_TOKEN="ghp_your_token_here"
    ```
@@ -38,6 +33,12 @@ This guide shows you how to:
    - Give it a name like "Adastrea Director Ingestion"
    - Check the `repo` scope
    - Generate and copy the token
+
+2. **(Optional) OpenAI Embeddings**: By default, uses HuggingFace embeddings (no API key required)
+   
+   **To use OpenAI embeddings instead:**
+   - See [OpenAI Embeddings Setup Guide](OPENAI_EMBEDDINGS_SETUP.md) for complete instructions
+   - Requires API key and incurs costs
 
 ### Basic Usage
 
@@ -222,7 +223,9 @@ jobs:
           python ingest_game_repo.py
         env:
           GITHUB_TOKEN: ${{ secrets.GAME_REPO_TOKEN }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          # Optional: Use OpenAI embeddings instead of HuggingFace (default)
+          # EMBEDDING_PROVIDER: openai
+          # OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           
       - name: Upload database artifact
         if: success()
@@ -411,10 +414,13 @@ Tracking file (auto-generated).
 
 | Variable | Required | Purpose |
 |----------|----------|---------|
-| `OPENAI_API_KEY` | Yes | OpenAI API authentication |
-| `GITHUB_TOKEN` | No* | GitHub authentication for private repos |
+| `GITHUB_TOKEN` | Yes* | GitHub authentication for private repos |
+| `EMBEDDING_PROVIDER` | No | Embedding provider: `hf` (default) or `openai` |
+| `OPENAI_API_KEY` | No** | OpenAI API authentication (only if using OpenAI embeddings) |
+| `HUGGINGFACE_MODEL_NAME` | No | HuggingFace model name (default: `all-MiniLM-L6-v2`) |
 
-\* Required only if the Mittenzx/Adastrea repository is private
+\* Required only if the Mittenzx/Adastrea repository is private  
+\*\* Required only if `EMBEDDING_PROVIDER=openai` is set
 
 ## Command Reference
 

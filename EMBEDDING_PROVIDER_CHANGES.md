@@ -35,7 +35,9 @@ python ingest.py --docs-dir /path/to/docs
 
 ### Using OpenAI
 
-Set the embedding provider to OpenAI:
+**For complete OpenAI setup instructions, see [OpenAI Embeddings Setup Guide](docs/guides/OPENAI_EMBEDDINGS_SETUP.md).**
+
+Quick setup:
 
 ```bash
 export EMBEDDING_PROVIDER=openai

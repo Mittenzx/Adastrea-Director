@@ -7,7 +7,9 @@ This document outlines how to test the query system optimizations implemented in
 Before testing, ensure you have:
 1. Python 3.9+ installed
 2. All dependencies installed: `pip install -r requirements.txt`
-3. OpenAI API key configured: `export OPENAI_API_KEY="your-key"`
+3. **(Optional)** OpenAI API key configured for LLM queries: `export OPENAI_API_KEY="your-key"`
+   - Note: Embeddings use HuggingFace by default (no API key required)
+   - To use OpenAI embeddings: `export EMBEDDING_PROVIDER="openai"`
 4. Test documents ingested into the database
 
 ## Syntax and Logic Validation
@@ -231,7 +233,8 @@ for query in queries:
 - Check for "(cached)" indicator in output
 
 ### Poor performance
-- Check network connection to OpenAI API
+- Using HuggingFace embeddings (default) runs locally and should be fast
+- If using OpenAI: Check network connection to OpenAI API
 - Try `--search-type similarity` for faster retrieval
 - Reduce `--retrieval-k` for fewer documents
 

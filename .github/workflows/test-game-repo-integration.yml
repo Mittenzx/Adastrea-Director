@@ -82,10 +82,9 @@ jobs:
           if [ -n "${{ secrets.GAME_REPO_TOKEN }}" ]; then
             echo "secrets_available=true" >> $GITHUB_OUTPUT
             echo "✅ GitHub token is configured"
+            echo "ℹ️  Using HuggingFace embeddings (default - no API key required)"
             if [ -n "${{ secrets.OPENAI_API_KEY }}" ]; then
-              echo "✅ OpenAI API key is configured (optional - using OpenAI embeddings)"
-            else
-              echo "ℹ️  Using HuggingFace embeddings (default - no API key required)"
+              echo "ℹ️  OpenAI API key is also configured (optional - can use with EMBEDDING_PROVIDER=openai)"
             fi
           else
             echo "secrets_available=false" >> $GITHUB_OUTPUT
