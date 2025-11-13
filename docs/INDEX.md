@@ -70,6 +70,7 @@ Getting started and troubleshooting:
 
 ### 📚 Usage Guides
 How to use Adastrea Director:
+- [**Populate Database**](guides/POPULATE_DATABASE.md) - **⭐ START HERE! Complete guide to populating the database**
 - [Document Ingestion](guides/DOCUMENT_INGESTION.md) - Ingestion system guide
 - [Documents to Ingest](guides/DOCS_TO_INGEST.md) - What to ingest
 - [Game Repository Ingestion](guides/GAME_REPO_INGESTION.md) - Game repo ingestion
