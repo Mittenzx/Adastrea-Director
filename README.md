@@ -12,7 +12,7 @@ Adastrea Director is an AI-powered tool that aims to revolutionize game developm
 - Context-aware documentation search across all project guides
 - Intelligent planning and task decomposition for development goals
 - Code generation assistance with multiple implementation approaches
-- 161 comprehensive tests (100% passing), production-ready stability
+- 230 comprehensive tests (100% passing), production-ready stability
 - **ROI: 210% return in 6 months** with 2-month payback period
 
 **Future Potential (Phases 3-4):** ⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐ 10/10
@@ -71,9 +71,13 @@ Phase 2 builds on Phase 1's foundation by adding **intelligent goal decompositio
    - Action plan generation
    - Effort estimation and prioritization
    
-3. **Phase 3: The Proactive Agent System** - 🔮 *Planned*
-   - Autonomous performance profiling
-   - Automated bug detection and reporting
+3. **Phase 3: The Proactive Agent System** - 🚀 *In Progress*
+   - Autonomous performance profiling and optimization
+   - Automated bug detection and crash analysis
+   - Code quality monitoring and refactoring suggestions
+   - **NEW:** Agent Orchestrator CLI for managing agents
+   - **NEW:** Real-time Dashboard UI for monitoring
+   - **NEW:** 120 comprehensive tests (100% passing)
    
 4. **Phase 4: The Creative Partner** - 🌟 *Vision*
    - AI-assisted content generation
@@ -244,6 +248,43 @@ python examples/phase2_example.py
 ```
 
 **📋 Want to learn more?** See [PHASE2_GUIDE.md](docs/phases/PHASE2_GUIDE.md) for comprehensive Phase 2 documentation with examples.
+
+#### Phase 3: Autonomous Agents (NEW!)
+
+Manage and monitor autonomous agents for performance profiling, bug detection, and code quality:
+
+1. **Agent Orchestrator CLI - Control agents from command line:**
+```bash
+# Start all agents
+python agent_orchestrator_cli.py start --all
+
+# Check agent status
+python agent_orchestrator_cli.py status
+
+# View recent events
+python agent_orchestrator_cli.py events --limit 20
+
+# Stop specific agent
+python agent_orchestrator_cli.py stop --agent performance
+```
+
+2. **Agent Dashboard - Real-time monitoring:**
+```bash
+# Start dashboard with auto-start
+python agent_dashboard.py --auto-start
+
+# Custom update interval
+python agent_dashboard.py --interval 2.0
+```
+
+3. **Run the Phase 3 demo:**
+```bash
+python examples/phase3_orchestrator_demo.py
+```
+
+**📋 Documentation:** 
+- [Agent Orchestration Guide](docs/phases/AGENT_ORCHESTRATION.md) - Complete CLI and Dashboard documentation
+- [PHASE3_GUIDE.md](PHASE3_GUIDE.md) - Autonomous agents user guide
 
 #### Graphical User Interface (GUI)
 

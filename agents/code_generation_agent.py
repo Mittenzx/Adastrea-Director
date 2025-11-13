@@ -6,8 +6,8 @@ Responsible for generating code suggestions and examples for tasks.
 
 from typing import List, Dict, Any
 
-from langchain.prompts import PromptTemplate
-from langchain.output_parsers import PydanticOutputParser
+from langchain_core.prompts import PromptTemplate
+from langchain_core.output_parsers import PydanticOutputParser
 from pydantic import BaseModel, Field
 
 from agents.models import Task, Implementation, FileModification, Duration
