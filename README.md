@@ -83,12 +83,13 @@ export GITHUB_TOKEN="ghp_your_token_here"
 python ingest_game_repo.py
 ```
 
-**Alternative: Use GitHub Actions (Recommended)**
-1. Add `GAME_REPO_TOKEN` secret in repository settings
-2. Go to Actions → "Populate Database with Adastrea Game Repository"
+**Alternative: Use GitHub Actions (Recommended) ⭐**
+1. Add `GAME_REPO_TOKEN` secret in [repository settings](https://github.com/Mittenzx/Adastrea-Director/settings/secrets/actions)
+2. Go to [Actions](https://github.com/Mittenzx/Adastrea-Director/actions) → "Populate Database with Adastrea Game Repository"
 3. Click "Run workflow"
 
-📖 **See [POPULATE_DATABASE.md](docs/guides/POPULATE_DATABASE.md) for complete instructions**
+📖 **Quick Setup**: [TRIGGER_DATABASE_POPULATION.md](docs/guides/TRIGGER_DATABASE_POPULATION.md)  
+📖 **Complete Guide**: [POPULATE_DATABASE.md](docs/guides/POPULATE_DATABASE.md)
 
 Once populated, all agents will have full context about your Adastrea game when providing assistance!
 
