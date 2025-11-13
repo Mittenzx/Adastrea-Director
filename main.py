@@ -116,6 +116,15 @@ class QueryAgent:
             # Set EMBEDDING_PROVIDER=openai to use OpenAI embeddings instead
             embedding_provider = os.environ.get("EMBEDDING_PROVIDER", "hf").lower()
             
+            # Validate provider value
+            valid_providers = ["hf", "huggingface", "openai"]
+            if embedding_provider not in valid_providers:
+                console.print(
+                    f"[yellow]Warning: Unknown EMBEDDING_PROVIDER '{embedding_provider}'. "
+                    f"Valid options: {', '.join(valid_providers)}. Defaulting to HuggingFace.[/yellow]"
+                )
+                embedding_provider = "hf"
+            
             if embedding_provider == "openai":
                 from langchain_openai import OpenAIEmbeddings
                 self.embeddings = OpenAIEmbeddings()
@@ -127,7 +136,16 @@ class QueryAgent:
                 except ImportError:
                     from langchain_community.embeddings import HuggingFaceEmbeddings
                 
-                self.embeddings = HuggingFaceEmbeddings(model_name=model_name)
+                try:
+                    self.embeddings = HuggingFaceEmbeddings(model_name=model_name)
+                except Exception as e:
+                    console.print(
+                        f"[red]Failed to initialize HuggingFace embeddings with model '{model_name}': {e}[/red]"
+                    )
+                    console.print(
+                        "[yellow]Please check that the model name is correct and that you have an internet connection for model download.[/yellow]"
+                    )
+                    sys.exit(1)
 
             # Load vector store
             self.vectorstore = Chroma(

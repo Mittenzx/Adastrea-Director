@@ -14,6 +14,7 @@ Tests cover:
 import os
 import sys
 from unittest.mock import Mock, patch
+from contextlib import contextmanager
 import pytest
 
 # Add parent directory to path for imports
@@ -28,6 +29,45 @@ from exceptions import (
 )
 
 
+@contextmanager
+def patch_hf_embeddings():
+    """
+    Context manager to patch HuggingFace embeddings in both possible import locations.
+    The code tries langchain_huggingface first, then falls back to langchain_community.
+    We patch both to ensure the mock works regardless of which package is installed.
+    """
+    # Create a mock that will be used for the embeddings
+    mock_embeddings_instance = Mock()
+    mock_embeddings_class = Mock(return_value=mock_embeddings_instance)
+    
+    # Patch both possible import paths
+    import sys
+    original_modules = sys.modules.copy()
+    fake_module_created = False
+    
+    try:
+        # Create fake module if langchain_huggingface doesn't exist
+        if 'langchain_huggingface' not in sys.modules:
+            fake_module = type(sys)('langchain_huggingface')
+            fake_module.HuggingFaceEmbeddings = mock_embeddings_class
+            sys.modules['langchain_huggingface'] = fake_module
+            fake_module_created = True
+            # Only patch langchain_community since langchain_huggingface is now mocked
+            with patch('langchain_community.embeddings.HuggingFaceEmbeddings', mock_embeddings_class):
+                yield mock_embeddings_class
+        else:
+            # Both modules exist, patch both
+            with patch('langchain_huggingface.HuggingFaceEmbeddings', mock_embeddings_class), \
+                 patch('langchain_community.embeddings.HuggingFaceEmbeddings', mock_embeddings_class):
+                yield mock_embeddings_class
+    finally:
+        # Restore original sys.modules
+        if fake_module_created:
+            for key in list(sys.modules.keys()):
+                if key not in original_modules:
+                    del sys.modules[key]
+
+
 class TestAPIKeyErrors:
     """Test error handling for missing or invalid API keys.
     
@@ -39,9 +79,7 @@ class TestAPIKeyErrors:
     def test_huggingface_no_key_required_ingest(self):
         """Test that HuggingFace embeddings work without API keys."""
         # Mock HuggingFace embeddings to avoid downloading models
-        with patch('langchain_community.embeddings.HuggingFaceEmbeddings') as mock_hf:
-            mock_hf.return_value = Mock()
-            
+        with patch_hf_embeddings():
             # Should succeed without any API key
             agent = DocumentIngestionAgent()
             assert agent is not None

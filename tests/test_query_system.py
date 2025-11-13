@@ -13,6 +13,7 @@ Tests cover:
 import os
 import sys
 from unittest.mock import Mock, patch
+from contextlib import contextmanager
 import pytest
 
 # Add parent directory to path for imports
@@ -21,133 +22,167 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from main import QueryAgent
 
 
+@contextmanager
+def patch_hf_embeddings():
+    """
+    Context manager to patch HuggingFace embeddings in both possible import locations.
+    The code tries langchain_huggingface first, then falls back to langchain_community.
+    We patch both to ensure the mock works regardless of which package is installed.
+    """
+    # Create a mock that will be used for the embeddings
+    mock_embeddings_instance = Mock()
+    mock_embeddings_class = Mock(return_value=mock_embeddings_instance)
+    
+    # Patch both possible import paths
+    import sys
+    original_modules = sys.modules.copy()
+    fake_module_created = False
+    
+    try:
+        # Create fake module if langchain_huggingface doesn't exist
+        if 'langchain_huggingface' not in sys.modules:
+            fake_module = type(sys)('langchain_huggingface')
+            fake_module.HuggingFaceEmbeddings = mock_embeddings_class
+            sys.modules['langchain_huggingface'] = fake_module
+            fake_module_created = True
+            # Only patch langchain_community since langchain_huggingface is now mocked
+            with patch('langchain_community.embeddings.HuggingFaceEmbeddings', mock_embeddings_class):
+                yield mock_embeddings_class
+        else:
+            # Both modules exist, patch both
+            with patch('langchain_huggingface.HuggingFaceEmbeddings', mock_embeddings_class), \
+                 patch('langchain_community.embeddings.HuggingFaceEmbeddings', mock_embeddings_class):
+                yield mock_embeddings_class
+    finally:
+        # Restore original sys.modules
+        if fake_module_created:
+            for key in list(sys.modules.keys()):
+                if key not in original_modules:
+                    del sys.modules[key]
+
+
 class TestQueryAgentInitialization:
     """Test initialization of QueryAgent."""
 
-    @patch('main.ConversationalRetrievalChain')
-    @patch('main.Chroma')
-    @patch('main.ChatOpenAI')
-    @patch('langchain_community.embeddings.HuggingFaceEmbeddings')
-    def test_default_initialization(self, mock_embeddings, mock_llm, mock_chroma, mock_chain):
+    def test_default_initialization(self):
         """Test agent initializes with default parameters."""
-        # Setup mocks
-        mock_embeddings.return_value = Mock()
-        mock_llm.return_value = Mock()
-        mock_collection = Mock()
-        mock_collection.count.return_value = 10
-        mock_vectorstore = Mock()
-        mock_vectorstore._collection = mock_collection
-        mock_vectorstore.as_retriever.return_value = Mock()
-        mock_chroma.return_value = mock_vectorstore
-        mock_chain.from_llm.return_value = Mock()
-        
-        agent = QueryAgent()
-        
-        assert agent.collection_name == "adastrea_docs"
-        assert agent.persist_directory == "./chroma_db"
-        assert agent.model_name == "gpt-3.5-turbo"
-        assert agent.temperature == 0.7
-        assert agent.search_type == "mmr"
-        assert agent.retrieval_k == 6
-        assert agent.fetch_k == 20
-        mock_embeddings.assert_called_once()
+        with patch_hf_embeddings() as mock_embeddings, \
+             patch('main.ChatOpenAI') as mock_llm, \
+             patch('main.Chroma') as mock_chroma, \
+             patch('main.ConversationalRetrievalChain') as mock_chain:
+            # Setup mocks
+            mock_llm.return_value = Mock()
+            mock_collection = Mock()
+            mock_collection.count.return_value = 10
+            mock_vectorstore = Mock()
+            mock_vectorstore._collection = mock_collection
+            mock_vectorstore.as_retriever.return_value = Mock()
+            mock_chroma.return_value = mock_vectorstore
+            mock_chain.from_llm.return_value = Mock()
+            
+            agent = QueryAgent()
+            
+            assert agent.collection_name == "adastrea_docs"
+            assert agent.persist_directory == "./chroma_db"
+            assert agent.model_name == "gpt-3.5-turbo"
+            assert agent.temperature == 0.7
+            assert agent.search_type == "mmr"
+            assert agent.retrieval_k == 6
+            assert agent.fetch_k == 20
+            mock_embeddings.assert_called_once()
 
-    @patch('main.ConversationalRetrievalChain')
-    @patch('main.Chroma')
-    @patch('main.ChatOpenAI')
-    @patch('langchain_community.embeddings.HuggingFaceEmbeddings')
-    def test_custom_initialization(self, mock_embeddings, mock_llm, mock_chroma, mock_chain):
+    def test_custom_initialization(self):
         """Test agent initializes with custom parameters."""
-        # Setup mocks
-        mock_embeddings.return_value = Mock()
-        mock_llm.return_value = Mock()
-        mock_collection = Mock()
-        mock_collection.count.return_value = 10
-        mock_vectorstore = Mock()
-        mock_vectorstore._collection = mock_collection
-        mock_vectorstore.as_retriever.return_value = Mock()
-        mock_chroma.return_value = mock_vectorstore
-        mock_chain.from_llm.return_value = Mock()
-        
-        agent = QueryAgent(
-            collection_name="test_collection",
-            persist_directory="./test_db",
-            model_name="gpt-4",
-            temperature=0.5,
-        )
-        
-        assert agent.collection_name == "test_collection"
-        assert agent.persist_directory == "./test_db"
-        assert agent.model_name == "gpt-4"
+        with patch_hf_embeddings() as mock_embeddings, \
+             patch('main.ChatOpenAI') as mock_llm, \
+             patch('main.Chroma') as mock_chroma, \
+             patch('main.ConversationalRetrievalChain') as mock_chain:
+            # Setup mocks
+            mock_llm.return_value = Mock()
+            mock_collection = Mock()
+            mock_collection.count.return_value = 10
+            mock_vectorstore = Mock()
+            mock_vectorstore._collection = mock_collection
+            mock_vectorstore.as_retriever.return_value = Mock()
+            mock_chroma.return_value = mock_vectorstore
+            mock_chain.from_llm.return_value = Mock()
+            
+            agent = QueryAgent(
+                collection_name="test_collection",
+                persist_directory="./test_db",
+                model_name="gpt-4",
+                temperature=0.5,
+            )
+            
+            assert agent.collection_name == "test_collection"
+            assert agent.persist_directory == "./test_db"
+            assert agent.model_name == "gpt-4"
         assert agent.temperature == 0.5
 
-    @patch('main.ConversationalRetrievalChain')
-    @patch('main.Chroma')
-    @patch('main.ChatOpenAI')
-    @patch('langchain_community.embeddings.HuggingFaceEmbeddings')
-    def test_llm_configuration(self, mock_embeddings, mock_llm, mock_chroma, mock_chain):
+    def test_llm_configuration(self):
         """Test that LLM is configured correctly."""
-        # Setup mocks
-        mock_embeddings.return_value = Mock()
-        mock_collection = Mock()
-        mock_collection.count.return_value = 10
-        mock_vectorstore = Mock()
-        mock_vectorstore._collection = mock_collection
-        mock_vectorstore.as_retriever.return_value = Mock()
-        mock_chroma.return_value = mock_vectorstore
-        mock_chain.from_llm.return_value = Mock()
-        
-        QueryAgent(model_name="gpt-4", temperature=0.3)
-        
-        mock_llm.assert_called_once_with(
-            model_name="gpt-4",
-            temperature=0.3,
-        )
+        with patch_hf_embeddings(), \
+             patch('main.ChatOpenAI') as mock_llm, \
+             patch('main.Chroma') as mock_chroma, \
+             patch('main.ConversationalRetrievalChain') as mock_chain:
+            # Setup mocks
+            mock_collection = Mock()
+            mock_collection.count.return_value = 10
+            mock_vectorstore = Mock()
+            mock_vectorstore._collection = mock_collection
+            mock_vectorstore.as_retriever.return_value = Mock()
+            mock_chroma.return_value = mock_vectorstore
+            mock_chain.from_llm.return_value = Mock()
+            
+            QueryAgent(model_name="gpt-4", temperature=0.3)
+            
+            mock_llm.assert_called_once_with(
+                model_name="gpt-4",
+                temperature=0.3,
+            )
 
-    @patch('main.ConversationalRetrievalChain')
-    @patch('main.Chroma')
-    @patch('main.ChatOpenAI')
-    @patch('langchain_community.embeddings.HuggingFaceEmbeddings')
-    @patch('main.sys.exit')
-    def test_empty_database_exits(self, mock_exit, mock_embeddings, mock_llm, mock_chroma, mock_chain):
+    def test_empty_database_exits(self):
         """Test that initialization exits when database is empty."""
-        # Setup mocks
-        mock_embeddings.return_value = Mock()
-        mock_collection = Mock()
-        mock_collection.count.return_value = 0  # Empty database
-        mock_vectorstore = Mock()
-        mock_vectorstore._collection = mock_collection
-        mock_chroma.return_value = mock_vectorstore
-        
-        QueryAgent()
-        
-        mock_exit.assert_called_once_with(1)
+        with patch_hf_embeddings(), \
+             patch('main.ChatOpenAI'), \
+             patch('main.Chroma') as mock_chroma, \
+             patch('main.ConversationalRetrievalChain'), \
+             patch('main.sys.exit') as mock_exit:
+            # Setup mocks
+            mock_collection = Mock()
+            mock_collection.count.return_value = 0  # Empty database
+            mock_vectorstore = Mock()
+            mock_vectorstore._collection = mock_collection
+            mock_chroma.return_value = mock_vectorstore
+            
+            QueryAgent()
+            
+            mock_exit.assert_called_once_with(1)
 
-    @patch('main.ConversationalRetrievalChain')
-    @patch('main.Chroma')
-    @patch('main.ChatOpenAI')
-    @patch('langchain_community.embeddings.HuggingFaceEmbeddings')
-    def test_retriever_configuration(self, mock_embeddings, mock_llm, mock_chroma, mock_chain):
+    def test_retriever_configuration(self):
         """Test that retriever is configured with correct search parameters."""
-        # Setup mocks
-        mock_embeddings.return_value = Mock()
-        mock_llm.return_value = Mock()
-        mock_collection = Mock()
-        mock_collection.count.return_value = 10
-        mock_vectorstore = Mock()
-        mock_vectorstore._collection = mock_collection
-        mock_retriever = Mock()
-        mock_vectorstore.as_retriever.return_value = mock_retriever
-        mock_chroma.return_value = mock_vectorstore
-        mock_chain.from_llm.return_value = Mock()
-        
-        QueryAgent()
-        
-        # Test MMR retriever configuration
-        mock_vectorstore.as_retriever.assert_called_once_with(
-            search_type="mmr",
-            search_kwargs={"k": 6, "fetch_k": 20}
-        )
+        with patch_hf_embeddings(), \
+             patch('main.ChatOpenAI') as mock_llm, \
+             patch('main.Chroma') as mock_chroma, \
+             patch('main.ConversationalRetrievalChain') as mock_chain:
+            # Setup mocks
+            mock_llm.return_value = Mock()
+            mock_collection = Mock()
+            mock_collection.count.return_value = 10
+            mock_vectorstore = Mock()
+            mock_vectorstore._collection = mock_collection
+            mock_retriever = Mock()
+            mock_vectorstore.as_retriever.return_value = mock_retriever
+            mock_chroma.return_value = mock_vectorstore
+            mock_chain.from_llm.return_value = Mock()
+            
+            QueryAgent()
+            
+            # Test MMR retriever configuration
+            mock_vectorstore.as_retriever.assert_called_once_with(
+                search_type="mmr",
+                search_kwargs={"k": 6, "fetch_k": 20}
+            )
 
 
 class TestProcessQuery:
@@ -156,12 +191,11 @@ class TestProcessQuery:
     @pytest.fixture
     def agent(self):
         """Create a test agent."""
-        with patch('langchain_community.embeddings.HuggingFaceEmbeddings') as mock_embeddings, \
+        with patch_hf_embeddings() as mock_embeddings, \
              patch('main.ChatOpenAI') as mock_llm, \
              patch('main.Chroma') as mock_chroma, \
              patch('main.ConversationalRetrievalChain') as mock_chain:
             
-            mock_embeddings.return_value = Mock()
             mock_llm.return_value = Mock()
             mock_collection = Mock()
             mock_collection.count.return_value = 10
@@ -260,12 +294,11 @@ class TestGetDatabaseInfo:
     @pytest.fixture
     def agent(self):
         """Create a test agent."""
-        with patch('langchain_community.embeddings.HuggingFaceEmbeddings') as mock_embeddings, \
+        with patch_hf_embeddings() as mock_embeddings, \
              patch('main.ChatOpenAI') as mock_llm, \
              patch('main.Chroma') as mock_chroma, \
              patch('main.ConversationalRetrievalChain') as mock_chain:
             
-            mock_embeddings.return_value = Mock()
             mock_llm.return_value = Mock()
             mock_collection = Mock()
             mock_collection.count.return_value = 10
@@ -310,12 +343,11 @@ class TestMemoryManagement:
     @pytest.fixture
     def agent(self):
         """Create a test agent."""
-        with patch('langchain_community.embeddings.HuggingFaceEmbeddings') as mock_embeddings, \
+        with patch_hf_embeddings() as mock_embeddings, \
              patch('main.ChatOpenAI') as mock_llm, \
              patch('main.Chroma') as mock_chroma, \
              patch('main.ConversationalRetrievalChain') as mock_chain:
             
-            mock_embeddings.return_value = Mock()
             mock_llm.return_value = Mock()
             mock_collection = Mock()
             mock_collection.count.return_value = 10
@@ -350,12 +382,11 @@ class TestQueryOptimization:
     @pytest.fixture
     def agent(self):
         """Create a test agent."""
-        with patch('langchain_community.embeddings.HuggingFaceEmbeddings') as mock_embeddings, \
+        with patch_hf_embeddings() as mock_embeddings, \
              patch('main.ChatOpenAI') as mock_llm, \
              patch('main.Chroma') as mock_chroma, \
              patch('main.ConversationalRetrievalChain') as mock_chain:
             
-            mock_embeddings.return_value = Mock()
             mock_llm.return_value = Mock()
             mock_collection = Mock()
             mock_collection.count.return_value = 10
@@ -385,12 +416,11 @@ class TestQueryOptimization:
 
     def test_custom_search_parameters(self):
         """Test agent initialization with custom search parameters."""
-        with patch('langchain_community.embeddings.HuggingFaceEmbeddings') as mock_embeddings, \
+        with patch_hf_embeddings() as mock_embeddings, \
              patch('main.ChatOpenAI') as mock_llm, \
              patch('main.Chroma') as mock_chroma, \
              patch('main.ConversationalRetrievalChain') as mock_chain:
             
-            mock_embeddings.return_value = Mock()
             mock_llm.return_value = Mock()
             mock_collection = Mock()
             mock_collection.count.return_value = 10
@@ -484,7 +514,7 @@ class TestErrorHandling:
 
     def test_missing_api_key_initialization(self):
         """Test initialization fails gracefully with missing API key."""
-        with patch('langchain_community.embeddings.HuggingFaceEmbeddings') as mock_embeddings, \
+        with patch_hf_embeddings() as mock_embeddings, \
              patch('main.sys.exit') as mock_exit:
             
             mock_embeddings.side_effect = Exception("OPENAI_API_KEY not found")
@@ -493,54 +523,51 @@ class TestErrorHandling:
             
             mock_exit.assert_called()
 
-    @patch('main.ConversationalRetrievalChain')
-    @patch('main.Chroma')
-    @patch('main.ChatOpenAI')
-    @patch('langchain_community.embeddings.HuggingFaceEmbeddings')
-    def test_invalid_model_name(self, mock_embeddings, mock_llm, mock_chroma, mock_chain):
+    def test_invalid_model_name(self):
         """Test handling of invalid model name."""
-        mock_embeddings.return_value = Mock()
-        mock_collection = Mock()
-        mock_collection.count.return_value = 10
-        mock_vectorstore = Mock()
-        mock_vectorstore._collection = mock_collection
-        mock_vectorstore.as_retriever.return_value = Mock()
-        mock_chroma.return_value = mock_vectorstore
-        mock_chain.from_llm.return_value = Mock()
-        
-        # Should not raise exception during initialization
-        agent = QueryAgent(model_name="invalid-model-999")
-        assert agent.model_name == "invalid-model-999"
+        with patch_hf_embeddings(), \
+             patch('main.ChatOpenAI') as mock_llm, \
+             patch('main.Chroma') as mock_chroma, \
+             patch('main.ConversationalRetrievalChain') as mock_chain:
+            mock_collection = Mock()
+            mock_collection.count.return_value = 10
+            mock_vectorstore = Mock()
+            mock_vectorstore._collection = mock_collection
+            mock_vectorstore.as_retriever.return_value = Mock()
+            mock_chroma.return_value = mock_vectorstore
+            mock_chain.from_llm.return_value = Mock()
+            
+            # Should not raise exception during initialization
+            agent = QueryAgent(model_name="invalid-model-999")
+            assert agent.model_name == "invalid-model-999"
 
-    @patch('main.ConversationalRetrievalChain')
-    @patch('main.Chroma')
-    @patch('main.ChatOpenAI')
-    @patch('langchain_community.embeddings.HuggingFaceEmbeddings')
-    def test_invalid_temperature(self, mock_embeddings, mock_llm, mock_chroma, mock_chain):
+    def test_invalid_temperature(self):
         """Test handling of invalid temperature value."""
-        mock_embeddings.return_value = Mock()
-        mock_collection = Mock()
-        mock_collection.count.return_value = 10
-        mock_vectorstore = Mock()
-        mock_vectorstore._collection = mock_collection
-        mock_vectorstore.as_retriever.return_value = Mock()
-        mock_chroma.return_value = mock_vectorstore
-        mock_chain.from_llm.return_value = Mock()
-        
-        # Should accept temperature value
-        agent = QueryAgent(temperature=1.5)  # Higher than recommended
-        assert agent.temperature == 1.5
+        with patch_hf_embeddings(), \
+             patch('main.ChatOpenAI') as mock_llm, \
+             patch('main.Chroma') as mock_chroma, \
+             patch('main.ConversationalRetrievalChain') as mock_chain:
+            mock_collection = Mock()
+            mock_collection.count.return_value = 10
+            mock_vectorstore = Mock()
+            mock_vectorstore._collection = mock_collection
+            mock_vectorstore.as_retriever.return_value = Mock()
+            mock_chroma.return_value = mock_vectorstore
+            mock_chain.from_llm.return_value = Mock()
+            
+            # Should accept temperature value
+            agent = QueryAgent(temperature=1.5)  # Higher than recommended
+            assert agent.temperature == 1.5
 
-    @patch('main.ConversationalRetrievalChain')
-    @patch('main.Chroma')
-    @patch('main.ChatOpenAI')
-    @patch('langchain_community.embeddings.HuggingFaceEmbeddings')
-    def test_database_connection_error(self, mock_embeddings, mock_llm, mock_chroma, mock_chain):
+    def test_database_connection_error(self):
         """Test handling of database connection errors."""
-        mock_embeddings.return_value = Mock()
-        mock_chroma.side_effect = Exception("Cannot connect to database")
-        
-        with patch('main.sys.exit') as mock_exit:
+        with patch_hf_embeddings(), \
+             patch('main.ChatOpenAI'), \
+             patch('main.Chroma') as mock_chroma, \
+             patch('main.ConversationalRetrievalChain'), \
+             patch('main.sys.exit') as mock_exit:
+            mock_chroma.side_effect = Exception("Cannot connect to database")
+            
             QueryAgent()
             mock_exit.assert_called()
 
@@ -551,12 +578,11 @@ class TestConversationalRetrieval:
     @pytest.fixture
     def agent(self):
         """Create a test agent."""
-        with patch('langchain_community.embeddings.HuggingFaceEmbeddings') as mock_embeddings, \
+        with patch_hf_embeddings() as mock_embeddings, \
              patch('main.ChatOpenAI') as mock_llm, \
              patch('main.Chroma') as mock_chroma, \
              patch('main.ConversationalRetrievalChain') as mock_chain:
             
-            mock_embeddings.return_value = Mock()
             mock_llm.return_value = Mock()
             mock_collection = Mock()
             mock_collection.count.return_value = 10
