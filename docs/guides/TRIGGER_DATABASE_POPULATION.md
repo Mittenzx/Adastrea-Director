@@ -30,7 +30,7 @@ The workflow needs a GitHub token to access the private mittenzx/adastrea reposi
 2. In the left sidebar, click **"Populate Database with Adastrea Game Repository"**
 3. Click the **"Run workflow"** button (top right)
 4. Select:
-   - **Branch**: `copilot/populate-db-with-adastrea-info` (or `main` after merging)
+   - **Branch**: `main` (or your current branch if running before merge)
    - **Force re-ingestion**: `false` (for first run, doesn't matter)
 5. Click **"Run workflow"**
 
