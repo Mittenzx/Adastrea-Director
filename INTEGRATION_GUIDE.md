@@ -689,6 +689,9 @@ Track these metrics to measure integration success:
 
 **Monthly Costs (Summary):**
 - OpenAI API (Phase 1-2): $4-65 for typical usage
+  - Light usage (solo developer, 5 queries/day, 1 planning session/week): ~$4-5/month
+  - Medium usage (solo developer, 20 queries/day, 3 sessions/week): ~$13-15/month
+  - Heavy usage (small team, 100 queries/day, 9 sessions/week): ~$44-65/month
 - Maintenance time: $500-1,000 (2-4 hours @ $250/hr)
 - **Total:** $504-1,065/month
 

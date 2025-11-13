@@ -4,6 +4,8 @@
 **Document Version:** 1.0  
 **Target Audience:** Project managers, developers, and stakeholders evaluating operational costs
 
+> **⚠️ Important:** API pricing can change. Always verify current pricing at [OpenAI's official pricing page](https://openai.com/api/pricing/) before making budget decisions.
+
 ---
 
 ## Executive Summary
@@ -911,7 +913,7 @@ class CostTracker:
             try:
                 with open(self.log_file, 'r') as f:
                     data = json.load(f)
-                    self.calls = [APICall(**call) for call in data]
+                    self.calls = [APICall.from_dict(call) for call in data]
             except Exception as e:
                 print(f"Warning: Could not load cost history: {e}")
     

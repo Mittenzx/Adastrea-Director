@@ -21,6 +21,7 @@ Usage:
 
 import json
 import os
+import threading
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, asdict
@@ -54,7 +55,8 @@ class CostTracker:
     cost analysis, budget alerts, and detailed reporting.
     """
     
-    # OpenAI pricing (per 1M tokens) - Updated November 2025
+    # OpenAI pricing (per 1M tokens) - Prices as of January 2025
+    # Note: Verify current pricing at https://openai.com/api/pricing/
     PRICING = {
         "gpt-4o": {"input": 2.50, "output": 10.00},
         "gpt-4-turbo": {"input": 10.00, "output": 30.00},
@@ -84,6 +86,7 @@ class CostTracker:
         self.daily_budget = daily_budget
         self.monthly_budget = monthly_budget
         self.calls: List[APICall] = []
+        self._lock = threading.Lock()
         self._load_history()
     
     def _load_history(self):
@@ -127,7 +130,8 @@ class CostTracker:
             Cost in USD
         """
         if model not in self.PRICING:
-            print(f"Warning: Unknown model '{model}', cost not tracked accurately")
+            print(f"Warning: Unknown model '{model}'. Using GPT-4 pricing as upper bound estimate. "
+                  f"Please update PRICING dictionary in cost_tracker.py if this is a valid model.")
             # Use GPT-4 pricing as upper bound estimate
             pricing = self.PRICING.get("gpt-4", {"input": 30.0, "output": 60.0})
         else:
@@ -157,24 +161,25 @@ class CostTracker:
         Returns:
             Cost of this API call in USD
         """
-        cost = self._calculate_cost(model, input_tokens, output_tokens)
-        
-        call = APICall(
-            timestamp=datetime.now().isoformat(),
-            component=component,
-            model=model,
-            input_tokens=input_tokens,
-            output_tokens=output_tokens,
-            cost=cost
-        )
-        
-        self.calls.append(call)
-        self._save_history()
-        
-        # Check budgets and alert if exceeded
-        self._check_budgets()
-        
-        return cost
+        with self._lock:
+            cost = self._calculate_cost(model, input_tokens, output_tokens)
+            
+            call = APICall(
+                timestamp=datetime.now().isoformat(),
+                component=component,
+                model=model,
+                input_tokens=input_tokens,
+                output_tokens=output_tokens,
+                cost=cost
+            )
+            
+            self.calls.append(call)
+            self._save_history()
+            
+            # Check budgets and alert if exceeded
+            self._check_budgets()
+            
+            return cost
     
     def _check_budgets(self):
         """Check if budgets are exceeded and print warnings."""
@@ -430,11 +435,12 @@ class CostTracker:
             "by_model": self.get_breakdown_by_model(days)
         }
         
-        if self.daily_budget:
-            report["budgets"] = {"daily": self.daily_budget}
-        if self.monthly_budget:
-            report["budgets"] = report.get("budgets", {})
-            report["budgets"]["monthly"] = self.monthly_budget
+        if self.daily_budget or self.monthly_budget:
+            report["budgets"] = {}
+            if self.daily_budget:
+                report["budgets"]["daily"] = self.daily_budget
+            if self.monthly_budget:
+                report["budgets"]["monthly"] = self.monthly_budget
         
         try:
             with open(filename, 'w') as f:
@@ -464,8 +470,32 @@ class CostTracker:
             print(f"Cleared {removed_count} old records (kept last {days} days)")
 
 
-# Global cost tracker instance
-cost_tracker = CostTracker()
+# Global cost tracker instance with lazy initialization support
+_cost_tracker = None
+
+def get_cost_tracker(
+    log_file: str = "api_costs.json",
+    daily_budget: Optional[float] = None,
+    monthly_budget: Optional[float] = None
+) -> CostTracker:
+    """
+    Get or create the global cost tracker instance.
+    
+    Args:
+        log_file: Path to JSON file for storing cost history
+        daily_budget: Optional daily budget limit in USD
+        monthly_budget: Optional monthly budget limit in USD
+        
+    Returns:
+        CostTracker instance
+    """
+    global _cost_tracker
+    if _cost_tracker is None:
+        _cost_tracker = CostTracker(log_file, daily_budget, monthly_budget)
+    return _cost_tracker
+
+# For backward compatibility
+cost_tracker = get_cost_tracker()
 
 
 def track_langchain_call(response: Any, component: str) -> float:
@@ -532,9 +562,12 @@ def set_budgets(daily: Optional[float] = None, monthly: Optional[float] = None):
     Usage:
         set_budgets(daily=5.0, monthly=100.0)
     """
+    import logging
+    logger = logging.getLogger(__name__)
+    
     cost_tracker.daily_budget = daily
     cost_tracker.monthly_budget = monthly
-    print(f"Budget set: Daily=${daily}, Monthly=${monthly}")
+    logger.info(f"Budget set: Daily=${daily}, Monthly=${monthly}")
 
 
 if __name__ == "__main__":

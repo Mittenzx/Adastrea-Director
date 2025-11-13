@@ -169,6 +169,10 @@ if __name__ == "__main__":
     print("=" * 60 + "\n")
     
     # Cleanup
-    if os.path.exists("example_cost_report.json"):
+    try:
         os.remove("example_cost_report.json")
         print("Cleaned up example files.")
+    except FileNotFoundError:
+        pass  # File already removed or never created
+    except Exception as e:
+        print(f"Could not clean up: {e}")
