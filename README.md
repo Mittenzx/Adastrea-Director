@@ -358,6 +358,7 @@ not actual directory names. All files are in the root directory.
 
 **Integration & Analysis:**
 - [Integration Guide](INTEGRATION_GUIDE.md) - Step-by-step integration into your workflow
+- [API Cost Analysis](API_COST_ANALYSIS.md) - Comprehensive API cost analysis and optimization strategies
 - [Improvements Roadmap](IMPROVEMENTS.md) - Planned enhancements and priorities
 - [Project Analysis](ADASTREA_DIRECTOR_ANALYSIS.md) - Comprehensive value analysis and ROI
 

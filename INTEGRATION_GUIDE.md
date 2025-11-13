@@ -679,10 +679,18 @@ Track these metrics to measure integration success:
 
 ### Cost Tracking
 
-**Monthly Costs:**
-- OpenAI API (Phase 1-2): $50-100
+> **📊 For detailed API cost analysis, see [API_COST_ANALYSIS.md](API_COST_ANALYSIS.md)**
+> 
+> This comprehensive document provides:
+> - Detailed breakdown by component and usage scenario
+> - Token usage estimates and optimization strategies
+> - Cost tracking implementation with code examples
+> - Monthly and annual projections with ROI calculations
+
+**Monthly Costs (Summary):**
+- OpenAI API (Phase 1-2): $4-65 for typical usage
 - Maintenance time: $500-1,000 (2-4 hours @ $250/hr)
-- **Total:** $550-1,100/month
+- **Total:** $504-1,065/month
 
 **Time Savings:**
 - Documentation lookup: 15 hours/month @ $50/hr = $750
