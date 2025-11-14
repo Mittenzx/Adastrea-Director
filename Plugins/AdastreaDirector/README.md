@@ -8,19 +8,29 @@ This plugin integrates the Adastrea Director AI system directly into Unreal Engi
 
 ## Current Status
 
-**Phase 1: Plugin Shell (Week 1) - In Progress**
+**Phase 1: Plugin Shell - Weeks 1-2 Complete ✅**
 
-This is the foundational plugin structure. The plugin currently provides:
+The plugin currently provides:
+
+### Week 1: Project Setup ✅
 - ✅ Basic plugin structure and module organization
 - ✅ Runtime module for core functionality
 - ✅ Editor module for Unreal Editor integration
 - ✅ Build system configuration (.uplugin and .Build.cs files)
 
-**Coming Soon (Week 2-4):**
-- Python bridge for subprocess management
-- IPC socket communication between C++ and Python
+### Week 2: Python Bridge ✅
+- ✅ Python subprocess management (`FPythonProcessManager`)
+- ✅ IPC socket communication (`FIPCClient`)
+- ✅ High-level bridge interface (`FPythonBridge`)
+- ✅ Python IPC server with extensible handlers
+- ✅ JSON request/response serialization
+- ✅ Error handling and recovery mechanisms
+
+**Coming Soon (Week 3-4):**
+- Integration with existing RAG system and planning agents
+- Performance optimization (< 50ms latency)
 - Basic Slate UI panel for queries
-- Integration with existing RAG system
+- End-to-end testing
 
 ## Installation
 
@@ -67,8 +77,9 @@ The plugin uses a hybrid architecture as specified in `PLUGIN_DEVELOPMENT_FEASIB
 
 - **AdastreaDirector** (Runtime Module)
   - Core functionality accessible at runtime
-  - Python subprocess management (future)
-  - IPC communication layer (future)
+  - ✅ Python subprocess management (`FPythonProcessManager`)
+  - ✅ IPC communication layer (`FIPCClient`)
+  - ✅ High-level bridge (`FPythonBridge`)
   
 - **AdastreaDirectorEditor** (Editor Module)
   - Editor-only functionality
@@ -76,21 +87,38 @@ The plugin uses a hybrid architecture as specified in `PLUGIN_DEVELOPMENT_FEASIB
   - Menu and toolbar integration (future)
   - Asset actions (future)
 
+- **Python/** (Backend Scripts)
+  - ✅ `ipc_server.py` - IPC server with request routing
+  - ✅ `test_ipc.py` - Test script for IPC communication
+  - ✅ `README.md` - Backend documentation
+
 ## File Structure
 
 ```
 Plugins/AdastreaDirector/
 ├── AdastreaDirector.uplugin          # Plugin descriptor
 ├── README.md                         # This file
+├── WEEK1_COMPLETION.md               # Week 1 detailed report
+├── WEEK2_COMPLETION.md               # Week 2 detailed report
 ├── Resources/
 │   └── Icon128.txt                   # Plugin icon (placeholder)
+├── Python/                           # Backend scripts
+│   ├── ipc_server.py                 # IPC server
+│   ├── test_ipc.py                   # IPC test script
+│   └── README.md                     # Backend documentation
 ├── Source/
 │   ├── AdastreaDirector/             # Runtime module
 │   │   ├── AdastreaDirector.Build.cs
 │   │   ├── Public/
-│   │   │   └── AdastreaDirectorModule.h
+│   │   │   ├── AdastreaDirectorModule.h
+│   │   │   ├── PythonProcessManager.h
+│   │   │   ├── IPCClient.h
+│   │   │   └── PythonBridge.h
 │   │   └── Private/
-│   │       └── AdastreaDirectorModule.cpp
+│   │       ├── AdastreaDirectorModule.cpp
+│   │       ├── PythonProcessManager.cpp
+│   │       ├── IPCClient.cpp
+│   │       └── PythonBridge.cpp
 │   └── AdastreaDirectorEditor/       # Editor module
 │       ├── AdastreaDirectorEditor.Build.cs
 │       ├── Public/
@@ -106,18 +134,20 @@ Plugins/AdastreaDirector/
 
 ### Phase 1: Plugin Shell (Weeks 1-4)
 
-**Week 1: Project Setup** ✅ (Current)
+**Week 1: Project Setup** ✅ COMPLETE
 - [x] Create plugin folder structure
 - [x] Write .uplugin descriptor
 - [x] Create build scripts (.Build.cs)
 - [x] Set up version control
-- [ ] Test plugin loads in UE
+- [x] Documentation
 
-**Week 2: Python Bridge**
-- [ ] Implement subprocess management
-- [ ] Create IPC socket communication
-- [ ] Handle Python process lifecycle
-- [ ] Error handling and recovery
+**Week 2: Python Bridge** ✅ COMPLETE
+- [x] Implement subprocess management
+- [x] Create IPC socket communication
+- [x] Handle Python process lifecycle
+- [x] Error handling and recovery
+- [x] Python IPC server
+- [x] Test scripts and documentation
 
 **Week 3: Python Backend IPC**
 - [ ] Create Python IPC server
@@ -161,6 +191,81 @@ The plugin requires the Adastrea Director Python backend to be available. See th
 - ChromaDB for vector storage
 - LangChain for LLM orchestration
 - OpenAI API (or compatible alternative)
+
+## Usage
+
+### Testing the Python Bridge
+
+The Python bridge can be tested independently:
+
+1. **Start the IPC server:**
+   ```bash
+   cd Plugins/AdastreaDirector/Python
+   python ipc_server.py --port 5555
+   ```
+
+2. **Run the test script:**
+   ```bash
+   python test_ipc.py 5555
+   ```
+
+This will verify:
+- Server starts correctly
+- TCP socket communication works
+- JSON serialization is working
+- All request handlers respond correctly
+
+### C++ Integration (Week 2+)
+
+From C++ code, use the bridge like this:
+
+```cpp
+// Get the module
+FAdastreaDirectorModule& Module = FModuleManager::LoadModuleChecked<FAdastreaDirectorModule>("AdastreaDirector");
+
+// Get the Python bridge
+FPythonBridge* Bridge = Module.GetPythonBridge();
+
+if (Bridge && Bridge->IsReady())
+{
+    // Send a query
+    FString Response;
+    if (Bridge->SendRequest(TEXT("query"), TEXT("What is Unreal Engine?"), Response))
+    {
+        UE_LOG(LogAdastreaDirector, Log, TEXT("Response: %s"), *Response);
+    }
+}
+```
+
+### Python IPC Server
+
+The IPC server supports the following request types:
+
+- **ping** - Health check
+  ```json
+  {"type": "ping", "data": ""}
+  // Response: {"status": "success", "message": "pong"}
+  ```
+
+- **query** - Documentation queries
+  ```json
+  {"type": "query", "data": "Your question here"}
+  // Response: {"status": "success", "response": "...", "sources": [...]}
+  ```
+
+- **plan** - Task planning
+  ```json
+  {"type": "plan", "data": "Development goal"}
+  // Response: {"status": "success", "plan": {...}}
+  ```
+
+- **analyze** - Goal analysis
+  ```json
+  {"type": "analyze", "data": "Feature description"}
+  // Response: {"status": "success", "analysis": {...}}
+  ```
+
+See `Python/README.md` for detailed documentation on the IPC protocol.
 
 ## Configuration
 
