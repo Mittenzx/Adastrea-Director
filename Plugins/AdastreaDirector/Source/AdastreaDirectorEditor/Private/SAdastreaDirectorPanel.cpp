@@ -46,6 +46,7 @@ void SAdastreaDirectorPanel::Construct(const FArguments& InArgs)
 	IngestionStatusMessage = LOCTEXT("IngestionIdle", "Ready to ingest documents");
 	IngestionDetailsMessage = FText::GetEmpty();
 	CurrentResults = LOCTEXT("WelcomeMessage", "Welcome to Adastrea Director!\n\nEnter a query above and click 'Send Query' or press Enter to get started.\n\nExample: \"What is Unreal Engine?\"");
+	LastProgressUpdateTime = 0.0;
 	
 	// Setup progress file path
 	ProgressFilePath = FPaths::ProjectIntermediateDir() / TEXT("AdastreaDirector") / TEXT("ingestion_progress.json");
@@ -207,7 +208,7 @@ TSharedRef<SWidget> SAdastreaDirectorPanel::CreateIngestionTab()
 			.AutoWidth()
 			[
 				SNew(SButton)
-				.Text(LOCTEXT("BrowseButton", "Browse..."))
+				.Text(LOCTEXT("BrowseDocsButton", "Browse..."))
 				.OnClicked(this, &SAdastreaDirectorPanel::OnBrowseDocsPathClicked)
 			]
 		]
@@ -241,7 +242,7 @@ TSharedRef<SWidget> SAdastreaDirectorPanel::CreateIngestionTab()
 			.AutoWidth()
 			[
 				SNew(SButton)
-				.Text(LOCTEXT("BrowseButton", "Browse..."))
+				.Text(LOCTEXT("BrowseDbButton", "Browse..."))
 				.OnClicked(this, &SAdastreaDirectorPanel::OnBrowseDbPathClicked)
 			]
 		]
@@ -541,11 +542,23 @@ FReply SAdastreaDirectorPanel::OnStartIngestionClicked()
 	FString DocsPath = DocsPathBox->GetText().ToString().TrimStartAndEnd();
 	FString DbPath = DbPathBox->GetText().ToString().TrimStartAndEnd();
 
+	// Validate paths
 	if (DocsPath.IsEmpty() || DbPath.IsEmpty())
 	{
-		IngestionStatusMessage = LOCTEXT("IngestionError", "Error: Please specify both paths");
+		IngestionStatusMessage = LOCTEXT("IngestionErrorPathsEmpty", "Error: Please specify both paths");
 		return FReply::Handled();
 	}
+
+	// Validate docs directory exists
+	if (!FPaths::DirectoryExists(DocsPath))
+	{
+		IngestionStatusMessage = LOCTEXT("IngestionErrorDocsNotFound", "Error: Documentation folder does not exist");
+		return FReply::Handled();
+	}
+
+	// Sanitize paths (resolve to absolute paths)
+	DocsPath = FPaths::ConvertRelativePathToFull(DocsPath);
+	DbPath = FPaths::ConvertRelativePathToFull(DbPath);
 
 	// Create progress file directory if it doesn't exist
 	FString ProgressDir = FPaths::GetPath(ProgressFilePath);
@@ -568,7 +581,9 @@ FReply SAdastreaDirectorPanel::OnStartIngestionClicked()
 FReply SAdastreaDirectorPanel::OnStopIngestionClicked()
 {
 	// For now, just mark as not ingesting
-	// TODO: Send stop signal to Python backend
+	// TODO: Send stop signal to Python backend (e.g., via IPC stop_ingest request or process interruption).
+	//       This will require adding a cancellation mechanism to the Python ingestion loop.
+	//       The ingestion will continue in Python but UI will stop monitoring progress.
 	bIsIngesting = false;
 	IngestionStatusMessage = LOCTEXT("IngestionStopped", "Ingestion stopped by user");
 	
@@ -592,7 +607,7 @@ void SAdastreaDirectorPanel::StartIngestion(const FString& DocsPath, const FStri
 	
 	if (!RuntimeModule)
 	{
-		IngestionStatusMessage = LOCTEXT("IngestionError", "Error: Runtime module not available");
+		IngestionStatusMessage = LOCTEXT("IngestionErrorModuleNotAvailable", "Error: Runtime module not available");
 		bIsIngesting = false;
 		return;
 	}
@@ -601,7 +616,7 @@ void SAdastreaDirectorPanel::StartIngestion(const FString& DocsPath, const FStri
 	
 	if (!PythonBridge || !PythonBridge->IsReady())
 	{
-		IngestionStatusMessage = LOCTEXT("IngestionError", "Error: Python backend not ready");
+		IngestionStatusMessage = LOCTEXT("IngestionErrorBackendNotReady", "Error: Python backend not ready");
 		bIsIngesting = false;
 		return;
 	}
@@ -628,7 +643,7 @@ void SAdastreaDirectorPanel::StartIngestion(const FString& DocsPath, const FStri
 	}
 	else
 	{
-		IngestionStatusMessage = LOCTEXT("IngestionError", "Error: Failed to start ingestion");
+		IngestionStatusMessage = LOCTEXT("IngestionErrorFailedToStart", "Error: Failed to start ingestion");
 		bIsIngesting = false;
 	}
 }
@@ -699,10 +714,15 @@ void SAdastreaDirectorPanel::Tick(const FGeometry& AllottedGeometry, const doubl
 {
 	SCompoundWidget::Tick(AllottedGeometry, InCurrentTime, InDeltaTime);
 
-	// Update ingestion progress if ingesting
+	// Update ingestion progress if ingesting (throttled to every 100ms)
 	if (bIsIngesting)
 	{
-		UpdateIngestionProgress();
+		const double TimeSinceLastUpdate = InCurrentTime - LastProgressUpdateTime;
+		if (TimeSinceLastUpdate >= 0.1) // 100ms throttle
+		{
+			UpdateIngestionProgress();
+			LastProgressUpdateTime = InCurrentTime;
+		}
 	}
 }
 

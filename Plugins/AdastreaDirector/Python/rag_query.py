@@ -17,7 +17,7 @@ import os
 import sys
 import time
 import copy
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 
 # Add parent directory to path to import main modules
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
@@ -42,8 +42,7 @@ try:
     from llm_config import get_llm
     
 except ImportError as e:
-    print(f"Error: Missing required dependencies: {e}")
-    sys.exit(1)
+    raise ImportError(f"Missing required dependencies: {e}")
 
 
 class RAGQueryAgent:
@@ -79,7 +78,7 @@ class RAGQueryAgent:
         self.retrieval_k = retrieval_k
         self.fetch_k = fetch_k
         
-        # Simple in-memory cache for query results
+        # Simple in-memory FIFO cache for query results
         self.query_cache: Dict[str, Dict[str, Any]] = {}
         self.cache_max_size = 50
         

@@ -38,7 +38,6 @@ try:
     load_dotenv()
     
     from langchain_community.document_loaders import (
-        DirectoryLoader,
         TextLoader,
         PythonLoader,
         PyPDFLoader,
@@ -58,8 +57,7 @@ try:
         MARKDOWN_LOADER = TextLoader
         
 except ImportError as e:
-    print(f"Error: Missing required dependencies: {e}")
-    sys.exit(1)
+    raise ImportError(f"Missing required dependencies: {e}")
 
 
 class ProgressWriter:
@@ -292,7 +290,8 @@ class RAGIngestionAgent:
             documents = loader.load()
             return self._enrich_metadata(documents, file_path)
         except Exception as e:
-            print(f"Error loading {file_path}: {e}")
+            import logging
+            logging.error(f"Error loading {file_path} (type: {type(e).__name__}): {e}")
             return []
     
     def _enrich_metadata(self, documents: List[Any], file_path: str) -> List[Any]:
@@ -388,6 +387,10 @@ class RAGIngestionAgent:
         
         self.progress_writer.write(0, "Starting", f"Found {len(file_list)} files", "processing")
         
+        # Check if database exists once before loop
+        db_exists = Path(self.persist_directory).exists()
+        vectorstore = None
+        
         for idx, file_path in enumerate(file_list):
             try:
                 base_percent = (idx / len(file_list)) * 100
@@ -447,29 +450,41 @@ class RAGIngestionAgent:
                     "processing"
                 )
                 
-                if not Path(self.persist_directory).exists():
+                if not db_exists:
                     vectorstore = Chroma.from_documents(
                         documents=chunks,
                         embedding=self.embeddings,
                         collection_name=self.collection_name,
                         persist_directory=self.persist_directory,
                     )
+                    db_exists = True
                 else:
-                    vectorstore = Chroma(
-                        collection_name=self.collection_name,
-                        embedding_function=self.embeddings,
-                        persist_directory=self.persist_directory,
-                    )
+                    if vectorstore is None:
+                        vectorstore = Chroma(
+                            collection_name=self.collection_name,
+                            embedding_function=self.embeddings,
+                            persist_directory=self.persist_directory,
+                        )
                     vectorstore.add_documents(chunks)
                 
-                vectorstore.persist()
+                # Persist every 10 files for better performance
+                if (idx + 1) % 10 == 0 or (idx + 1) == len(file_list):
+                    vectorstore.persist()
                 
                 if delay_between_files > 0:
                     time.sleep(delay_between_files)
                 
             except Exception as e:
                 stats["errors"] += 1
-                print(f"Error processing {file_path}: {e}")
+                error_msg = f"Error processing {Path(file_path).name}: {str(e)}"
+                import logging
+                logging.error(error_msg)
+                self.progress_writer.write(
+                    int((idx + 1) / len(file_list) * 100),
+                    "Error",
+                    error_msg,
+                    "error"
+                )
         
         # Final progress update
         self.progress_writer.write(

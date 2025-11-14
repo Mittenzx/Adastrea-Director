@@ -217,13 +217,13 @@ FReply OnClearHistoryClicked()
 ### Python Backend
 
 **New Modules:**
-1. `rag_ingestion.py` (553 lines)
+1. `rag_ingestion.py` (516 lines)
    - `RAGIngestionAgent` class
    - `ProgressWriter` class
    - Hash-based change detection
    - Multi-format document loading
 
-2. `rag_query.py` (268 lines)
+2. `rag_query.py` (303 lines)
    - `RAGQueryAgent` class
    - Conversation management
    - Query caching

@@ -208,7 +208,7 @@ class IntegratedIPCServer(IPCServer):
             if not docs_dir:
                 return {
                     'status': 'error',
-                    'error': 'docs_dir parameter is required'
+                    'error': 'docs_dir parameter is required and must be a valid directory path'
                 }
             
             # Start ingestion

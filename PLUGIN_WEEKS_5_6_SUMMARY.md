@@ -266,7 +266,7 @@ User Input → Validation → IPC Request → Python Processing → Response Dis
 - Graceful error handling
 
 ### Query Optimization
-- 50-query LRU cache
+- 50-query FIFO cache
 - MMR retrieval for diversity
 - Conversation context preserved
 - Sub-second response for cached queries

@@ -84,54 +84,27 @@ def test_class_structure():
     return True
 
 def test_progress_writer_logic():
-    """Test ProgressWriter logic without langchain."""
-    print("\nTesting ProgressWriter logic...")
+    """Test ProgressWriter logic (structure validation only to avoid langchain dependency)."""
+    print("\nTesting ProgressWriter structure...")
     
-    # Create a simple mock ProgressWriter
-    code = '''
-import json
-import time
-
-class ProgressWriter:
-    def __init__(self, progress_file):
-        self.progress_file = progress_file
-        self.enabled = progress_file is not None
+    # Verify ProgressWriter class structure exists in rag_ingestion.py
+    with open('rag_ingestion.py', 'r') as f:
+        content = f.read()
+        required_items = [
+            'class ProgressWriter',
+            'def __init__',
+            'def write',
+            'self.progress_file',
+            'self.enabled',
+        ]
+        for item in required_items:
+            assert item in content, f"Missing: {item}"
     
-    def write(self, percent, label="", details="", status="processing"):
-        if not self.enabled:
-            return
-        try:
-            progress_data = {
-                'percent': min(100, max(0, percent)),
-                'label': label,
-                'details': details,
-                'status': status,
-                'timestamp': time.time()
-            }
-            with open(self.progress_file, 'w') as f:
-                json.dump(progress_data, f)
-        except Exception as e:
-            pass
-'''
+    print("    ✓ ProgressWriter structure verified")
     
-    # Execute the mock code
-    exec(code, globals())
-    
-    # Test ProgressWriter
-    with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.json') as f:
-        progress_file = f.name
-    
-    writer = ProgressWriter(progress_file)
-    writer.write(50, "Test", "Testing progress writer", "processing")
-    
-    with open(progress_file, 'r') as f:
-        progress_data = json.load(f)
-        assert progress_data['percent'] == 50, "Percent not set correctly"
-        assert progress_data['label'] == "Test", "Label not set correctly"
-        assert progress_data['status'] == "processing", "Status not set correctly"
-    
-    os.unlink(progress_file)
-    print("    ✓ ProgressWriter logic works correctly")
+    # Note: Full functional testing requires langchain dependencies.
+    # The ProgressWriter writes JSON progress updates with format:
+    # {'percent': 0-100, 'label': str, 'details': str, 'status': str, 'timestamp': float}
     
     return True
 

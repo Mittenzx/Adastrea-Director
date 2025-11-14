@@ -78,6 +78,9 @@ private:
 	/** Path to progress file for ingestion updates */
 	FString ProgressFilePath;
 
+	/** Time since last progress update check */
+	double LastProgressUpdateTime;
+
 	// Query tab methods
 	/** Called when the Send Query button is clicked */
 	FReply OnSendQueryClicked();
