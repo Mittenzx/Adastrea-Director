@@ -86,10 +86,9 @@ class IntegratedIPCServer(IPCServer):
         """
         logger.info("Initializing RAG system...")
         
-        # Import main module
+        # Import RAG query module (plugin version)
         try:
-            from main import QueryAgent
-            from exceptions import EmptyDatabaseError
+            from rag_query import RAGQueryAgent
             
             # Check if database exists
             if not os.path.exists(persist_directory):
@@ -98,7 +97,7 @@ class IntegratedIPCServer(IPCServer):
                 return
             
             # Initialize query agent
-            self.query_agent = QueryAgent(
+            self.query_agent = RAGQueryAgent(
                 collection_name=collection_name,
                 persist_directory=persist_directory
             )
@@ -108,8 +107,8 @@ class IntegratedIPCServer(IPCServer):
         except ImportError as e:
             logger.error(f"Failed to import required modules: {e}")
             raise
-        except EmptyDatabaseError:
-            logger.warning("Database is empty. Please ingest documents first.")
+        except ValueError as e:
+            logger.warning(f"Database initialization: {e}")
             logger.warning("Query functionality will be limited")
         except Exception as e:
             logger.error(f"Unexpected error initializing RAG: {e}")
@@ -139,6 +138,9 @@ class IntegratedIPCServer(IPCServer):
         """Register integrated request handlers."""
         if self.enable_rag:
             self.register_handler('query', self._handle_query_integrated)
+            self.register_handler('ingest', self._handle_ingest)
+            self.register_handler('db_info', self._handle_db_info)
+            self.register_handler('clear_history', self._handle_clear_history)
         
         if self.enable_planning:
             self.register_handler('analyze', self._handle_analyze_integrated)
@@ -162,26 +164,14 @@ class IntegratedIPCServer(IPCServer):
         
         try:
             # Use actual RAG system
-            response = self.query_agent.query(data)
-            
-            # Extract sources
-            sources = []
-            if hasattr(response, 'source_documents'):
-                for doc in response.source_documents[:3]:  # Top 3 sources
-                    sources.append({
-                        'content': doc.page_content[:200],  # First 200 chars
-                        'metadata': doc.metadata
-                    })
+            response = self.query_agent.process_query(data)
             
             return {
                 'status': 'success',
-                'response': (
-                    response.get('answer', '') if isinstance(response, dict)
-                    else getattr(response, 'answer', response) if hasattr(response, 'answer')
-                    else response if isinstance(response, str)
-                    else ''
-                ),
-                'sources': sources
+                'response': response.get('answer', ''),
+                'sources': response.get('source_documents', []),
+                'processing_time': response.get('processing_time', 0),
+                'cached': response.get('cached', False)
             }
             
         except Exception as e:
@@ -189,6 +179,119 @@ class IntegratedIPCServer(IPCServer):
             return {
                 'status': 'error',
                 'error': f"Query failed: {str(e)}"
+            }
+    
+    def _handle_ingest(self, data: str) -> Dict[str, Any]:
+        """
+        Handle document ingestion request.
+        
+        Args:
+            data: JSON string with ingestion parameters
+            
+        Returns:
+            Response with ingestion statistics
+        """
+        import json
+        from rag_ingestion import ingest_documents
+        
+        logger.info(f"Ingest request: {data}")
+        
+        try:
+            # Parse ingestion parameters
+            params = json.loads(data) if isinstance(data, str) else data
+            docs_dir = params.get('docs_dir', '')
+            progress_file = params.get('progress_file', None)
+            force_reingest = params.get('force_reingest', False)
+            collection_name = params.get('collection_name', 'adastrea_docs')
+            persist_dir = params.get('persist_dir', './chroma_db')
+            
+            if not docs_dir:
+                return {
+                    'status': 'error',
+                    'error': 'docs_dir parameter is required'
+                }
+            
+            # Start ingestion
+            stats = ingest_documents(
+                docs_dir=docs_dir,
+                collection_name=collection_name,
+                persist_dir=persist_dir,
+                progress_file=progress_file,
+                force_reingest=force_reingest
+            )
+            
+            return {
+                'status': 'success',
+                'stats': stats
+            }
+            
+        except Exception as e:
+            logger.error(f"Ingestion error: {e}")
+            return {
+                'status': 'error',
+                'error': f"Ingestion failed: {str(e)}"
+            }
+    
+    def _handle_db_info(self, data: str) -> Dict[str, Any]:
+        """
+        Handle database info request.
+        
+        Args:
+            data: Ignored
+            
+        Returns:
+            Database information
+        """
+        logger.info("Database info request")
+        
+        if not self.query_agent:
+            return {
+                'status': 'error',
+                'error': 'RAG system not initialized'
+            }
+        
+        try:
+            info = self.query_agent.get_database_info()
+            return {
+                'status': 'success',
+                'info': info
+            }
+        except Exception as e:
+            logger.error(f"DB info error: {e}")
+            return {
+                'status': 'error',
+                'error': f"Failed to get database info: {str(e)}"
+            }
+    
+    def _handle_clear_history(self, data: str) -> Dict[str, Any]:
+        """
+        Handle clear conversation history request.
+        
+        Args:
+            data: Ignored
+            
+        Returns:
+            Success response
+        """
+        logger.info("Clear history request")
+        
+        if not self.query_agent:
+            return {
+                'status': 'error',
+                'error': 'RAG system not initialized'
+            }
+        
+        try:
+            self.query_agent.clear_conversation_history()
+            return {
+                'status': 'success',
+                'message': 'Conversation history cleared'
+            }
+        except Exception as e:
+            logger.error(f"Clear history error: {e}")
+            return {
+                'status': 'error',
+                'error': f"Failed to clear history: {str(e)}"
             }
     
     def _handle_analyze_integrated(self, data: str) -> Dict[str, Any]:
