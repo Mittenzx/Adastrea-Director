@@ -11,16 +11,30 @@
 #include "Widgets/Layout/SScrollBox.h"
 #include "Widgets/Layout/SBox.h"
 #include "Widgets/Layout/SSeparator.h"
+#include "Widgets/Docking/SDockTab.h"
+#include "Widgets/Layout/SBorder.h"
+#include "Widgets/Layout/SGridPanel.h"
+#include "Widgets/Notifications/SProgressBar.h"
 #include "Styling/AppStyle.h"
 #include "Styling/SlateTypes.h"
 #include "Dom/JsonObject.h"
 #include "Serialization/JsonSerializer.h"
 #include "Serialization/JsonReader.h"
+#include "DesktopPlatformModule.h"
+#include "IDesktopPlatform.h"
+#include "Framework/Application/SlateApplication.h"
+#include "Misc/FileHelper.h"
+#include "Misc/Paths.h"
 
 #define LOCTEXT_NAMESPACE "AdastreaDirectorPanel"
 
 SAdastreaDirectorPanel::~SAdastreaDirectorPanel()
 {
+	// Clean up progress file if it exists
+	if (!ProgressFilePath.IsEmpty() && FPaths::FileExists(ProgressFilePath))
+	{
+		IFileManager::Get().Delete(*ProgressFilePath);
+	}
 }
 
 void SAdastreaDirectorPanel::Construct(const FArguments& InArgs)
