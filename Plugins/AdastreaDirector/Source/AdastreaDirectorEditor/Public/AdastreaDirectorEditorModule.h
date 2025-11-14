@@ -21,11 +21,21 @@ public:
 	virtual void ShutdownModule() override;
 
 private:
-	// Future: UI registration, menu extensions, and toolbar commands will be added here
-	
 	/** Registers menu extensions and toolbar buttons */
 	void RegisterMenuExtensions();
 	
 	/** Unregisters menu extensions */
 	void UnregisterMenuExtensions();
+
+	/** Registers the Adastrea Director tab spawner */
+	void RegisterTabSpawner();
+
+	/** Unregisters the Adastrea Director tab spawner */
+	void UnregisterTabSpawner();
+
+	/** Called when the Window menu is being constructed */
+	void OnSpawnPluginTab(TSharedRef<class SDockTab> Tab);
+
+	/** Creates the Adastrea Director panel widget */
+	TSharedRef<class SDockTab> SpawnAdastreaDirectorTab(const class FSpawnTabArgs& Args);
 };
