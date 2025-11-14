@@ -34,9 +34,10 @@ env/
 *~
 .DS_Store
 
-# Environment variables
+# Environment variables and local config
 .env
 .env.local
+.adastrea/
 
 # ChromaDB / Vector Database
 # Note: chroma_db/ directory itself is tracked, but most contents are ignored

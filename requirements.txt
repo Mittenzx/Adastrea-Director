@@ -55,6 +55,7 @@ click>=8.1.7,<9.0.0
 python-dotenv>=1.0.1,<2.0.0
 rich>=13.9.4,<14.0.0
 pydantic>=2.10.3,<3.0.0
+cryptography>=41.0.0,<44.0.0  # For secure API key storage
 
 # Development and testing
 pytest>=8.3.4,<9.0.0
