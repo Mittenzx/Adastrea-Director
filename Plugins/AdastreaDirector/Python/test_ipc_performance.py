@@ -14,7 +14,7 @@ import json
 import sys
 import time
 import statistics
-from typing import List, Tuple, Dict, Any
+from typing import List, Tuple, Dict
 
 
 class IPCPerformanceTester:
@@ -147,7 +147,7 @@ class IPCPerformanceTester:
             avg_latency = statistics.mean(latencies)
             max_latency = max(latencies)
             min_latency = min(latencies)
-            p95_latency = statistics.quantiles(latencies, n=20)[18]  # 95th percentile
+            p95_latency = statistics.quantiles(latencies, n=100)[94]  # 95th percentile
             
             print(f"  Average:  {avg_latency:.2f}ms")
             print(f"  Min:      {min_latency:.2f}ms")
@@ -178,7 +178,7 @@ class IPCPerformanceTester:
         if latencies:
             avg_latency = statistics.mean(latencies)
             max_latency = max(latencies)
-            p95_latency = statistics.quantiles(latencies, n=20)[18]
+            p95_latency = statistics.quantiles(latencies, n=100)[94]  # 95th percentile
             
             print(f"  Average:  {avg_latency:.2f}ms")
             print(f"  Max:      {max_latency:.2f}ms")

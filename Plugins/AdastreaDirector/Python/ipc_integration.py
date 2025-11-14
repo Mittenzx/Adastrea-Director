@@ -13,7 +13,7 @@ import os
 import sys
 import argparse
 import logging
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 
 # Add parent directory to path to import main modules
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
@@ -175,7 +175,12 @@ class IntegratedIPCServer(IPCServer):
             
             return {
                 'status': 'success',
-                'response': response.get('answer', ''),
+                'response': (
+                    response.get('answer', '') if isinstance(response, dict)
+                    else getattr(response, 'answer', response) if hasattr(response, 'answer')
+                    else response if isinstance(response, str)
+                    else ''
+                ),
                 'sources': sources
             }
             

@@ -22,7 +22,7 @@ import argparse
 import logging
 import threading
 import time
-from typing import Dict, Any, Optional, Callable
+from typing import Dict, Any
 from collections import defaultdict
 
 # Configure logging
@@ -74,9 +74,12 @@ class PerformanceMetrics:
             
             for req_type in self.request_count:
                 times = self.request_times[req_type]
-                avg_time = sum(times) / len(times) if times else 0
-                max_time = max(times) if times else 0
-                min_time = min(times) if times else 0
+                if times:
+                    avg_time = sum(times) / len(times)
+                    max_time = max(times)
+                    min_time = min(times)
+                else:
+                    avg_time = max_time = min_time = 0
                 
                 stats['by_type'][req_type] = {
                     'count': self.request_count[req_type],

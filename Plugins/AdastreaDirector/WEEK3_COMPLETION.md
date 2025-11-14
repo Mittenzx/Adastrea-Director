@@ -262,8 +262,8 @@ Request → Start Timer → Process → Record Metrics → Add Timing → Return
 
 | File | Purpose | LOC |
 |------|---------|-----|
-| test_ipc_performance.py | Performance testing | 319 |
-| ipc_integration.py | RAG/Agent integration | 340 |
+| test_ipc_performance.py | Performance testing | 290 |
+| ipc_integration.py | RAG/Agent integration | 343 |
 | WEEK3_COMPLETION.md | This report | 350+ |
 
 **Total New Code:** ~754 lines  
