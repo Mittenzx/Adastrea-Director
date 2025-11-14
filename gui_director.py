@@ -4,6 +4,8 @@ import subprocess
 import threading
 import sys
 import os
+import json
+import tempfile
 from datetime import datetime
 from pathlib import Path
 
@@ -54,6 +56,10 @@ class AdastreaDirectorApp:
         
         # Conversation history
         self.conversation_history = []
+        
+        # Create a single ttk.Style instance to be reused
+        self.style = ttk.Style()
+        self.style.theme_use('default')
         
         # Create menu bar
         self.create_menu_bar()
@@ -256,21 +262,69 @@ class AdastreaDirectorApp:
         self.create_tooltip(self.increase_font_button, "Increase font size (max 20pt)")
         self.add_button_hover_effect(self.increase_font_button)
 
+        # --- Progress Bar Section (Initially hidden) ---
+        self.progress_card = tk.Frame(main_frame, bg=self.bg_tertiary, highlightthickness=1,
+                                     highlightbackground=self.border_color)
+        # Don't pack yet - will be shown when ingestion starts
+        
+        progress_inner = tk.Frame(self.progress_card, bg=self.bg_tertiary, padx=15, pady=12)
+        progress_inner.pack(fill=tk.X)
+        
+        # Progress label
+        self.progress_label = tk.Label(
+            progress_inner,
+            text="Processing documents...",
+            font=("Segoe UI", 10),
+            bg=self.bg_tertiary,
+            fg=self.fg_color,
+            anchor=tk.W
+        )
+        self.progress_label.pack(fill=tk.X, pady=(0, 8))
+        
+        # Progress bar with custom style (reuse existing style instance)
+        self.style.configure("Ingestion.Horizontal.TProgressbar",
+                       troughcolor=self.text_bg,
+                       background=self.accent_color,
+                       borderwidth=0,
+                       thickness=20)
+        
+        self.progress_bar = ttk.Progressbar(
+            progress_inner,
+            style="Ingestion.Horizontal.TProgressbar",
+            orient=tk.HORIZONTAL,
+            mode='determinate',
+            maximum=100
+        )
+        self.progress_bar.pack(fill=tk.X, pady=(0, 5))
+        
+        # Progress details label
+        self.progress_details = tk.Label(
+            progress_inner,
+            text="",
+            font=("Segoe UI", 9),
+            bg=self.bg_tertiary,
+            fg=self.fg_secondary,
+            anchor=tk.W
+        )
+        self.progress_details.pack(fill=tk.X)
+        
+        # Initialize progress tracking variables
+        self.progress_file = None
+        self.progress_poll_id = None
+
         # --- Tabbed Interface (Card-based design) ---
         tabs_card = tk.Frame(main_frame, bg=self.bg_tertiary, highlightthickness=1,
                             highlightbackground=self.border_color)
         tabs_card.pack(fill=tk.BOTH, expand=True, pady=(0, 15))
         
-        # Style the notebook for dark theme
-        style = ttk.Style()
-        style.theme_use('default')
-        style.configure('TNotebook', background=self.bg_tertiary, borderwidth=0)
-        style.configure('TNotebook.Tab', 
+        # Style the notebook for dark theme (reuse existing style instance)
+        self.style.configure('TNotebook', background=self.bg_tertiary, borderwidth=0)
+        self.style.configure('TNotebook.Tab', 
                        background=self.button_bg, 
                        foreground=self.fg_color,
                        padding=[20, 10],
                        font=("Segoe UI", 10))
-        style.map('TNotebook.Tab',
+        self.style.map('TNotebook.Tab',
                  background=[('selected', self.bg_tertiary)],
                  foreground=[('selected', self.accent_color)])
         
@@ -1444,6 +1498,56 @@ GitHub: Mittenzx/Adastrea-Director
         plural = "message" if count == 1 else "messages"
         self.stats_label.config(text=f"{count} {plural}")
     
+    def show_progress_bar(self, label_text="Processing..."):
+        """Show the progress bar with initial text."""
+        self.progress_label.config(text=label_text)
+        self.progress_details.config(text="")
+        self.progress_bar['value'] = 0
+        self.progress_card.pack(fill=tk.X, pady=(0, 15), before=self.notebook.master)
+    
+    def hide_progress_bar(self):
+        """Hide the progress bar."""
+        self.progress_card.pack_forget()
+        if self.progress_poll_id:
+            self.root.after_cancel(self.progress_poll_id)
+            self.progress_poll_id = None
+    
+    def update_progress(self, percent, label_text=None, details_text=None):
+        """Update the progress bar value and text."""
+        self.progress_bar['value'] = percent
+        if label_text:
+            self.progress_label.config(text=label_text)
+        if details_text:
+            self.progress_details.config(text=details_text)
+    
+    def poll_progress_file(self):
+        """Poll the progress file for updates."""
+        if not self.progress_file:
+            return
+        
+        try:
+            with open(self.progress_file, 'r') as f:
+                progress_data = json.load(f)
+            
+            percent = progress_data.get('percent', 0)
+            label = progress_data.get('label', 'Processing...')
+            details = progress_data.get('details', '')
+            
+            self.update_progress(percent, label, details)
+            
+            # Continue polling if not complete
+            if percent < 100:
+                self.progress_poll_id = self.root.after(100, self.poll_progress_file)
+        except FileNotFoundError:
+            # File is gone, stop polling
+            self.hide_progress_bar()
+        except json.JSONDecodeError:
+            # File might be being written, try again
+            self.progress_poll_id = self.root.after(100, self.poll_progress_file)
+        except IOError:
+            # Other IO error, stop polling
+            self.hide_progress_bar()
+    
     def run_query_event(self, event):
         """Handler for pressing Enter in the query box."""
         self.run_query()
@@ -1478,11 +1582,28 @@ GitHub: Mittenzx/Adastrea-Director
         # Use absolute path for the script to ensure it can be found
         script_path = os.path.join(SCRIPT_DIR, script_name)
         command = [PYTHON_EXECUTABLE, script_path] + list(args)
+        
+        # Enable progress tracking for ingest.py
+        show_progress = script_name == 'ingest.py'
+        if show_progress:
+            # Create a temporary progress file (using NamedTemporaryFile for security)
+            temp_file = tempfile.NamedTemporaryFile(
+                mode='w', 
+                suffix='.json', 
+                prefix='adastrea_progress_',
+                delete=False
+            )
+            self.progress_file = temp_file.name
+            temp_file.close()  # Close but don't delete (delete=False)
+            command.extend(['--progress-file', self.progress_file])
+            self.show_progress_bar("Preparing to ingest documents...")
+            # Start polling the progress file
+            self.progress_poll_id = self.root.after(500, self.poll_progress_file)
 
-        thread = threading.Thread(target=self._execute_command, args=(command,))
+        thread = threading.Thread(target=self._execute_command, args=(command, show_progress))
         thread.start()
 
-    def _execute_command(self, command):
+    def _execute_command(self, command, show_progress=False):
         """The actual command execution logic."""
         try:
             # Use CREATE_NO_WINDOW on Windows to prevent console window from appearing
@@ -1498,13 +1619,23 @@ GitHub: Mittenzx/Adastrea-Director
                 output += f"\n--- ERROR ---\n{stderr}"
             
             # Schedule the UI update to run on the main thread
-            self.root.after(0, self._update_ui_after_execution, output, process.returncode)
+            self.root.after(0, self._update_ui_after_execution, output, process.returncode, show_progress)
 
         except Exception as e:
-            self.root.after(0, self._update_ui_after_execution, str(e), 1)
+            self.root.after(0, self._update_ui_after_execution, str(e), 1, show_progress)
 
-    def _update_ui_after_execution(self, output, returncode):
+    def _update_ui_after_execution(self, output, returncode, show_progress=False):
         """Updates the GUI elements after the script has finished."""
+        # Clean up progress tracking if it was used
+        if show_progress:
+            self.hide_progress_bar()
+            if self.progress_file and os.path.exists(self.progress_file):
+                try:
+                    os.remove(self.progress_file)
+                except OSError:
+                    pass
+            self.progress_file = None
+        
         # Clean up the output
         output = output.strip()
         
@@ -1513,6 +1644,9 @@ GitHub: Mittenzx/Adastrea-Director
                 # Add assistant response to conversation
                 self.add_to_conversation("Assistant", output)
             self.update_status("Ready • Waiting for your question", "success")
+            # Refresh ingest list after successful ingestion
+            if show_progress:
+                self.refresh_ingest_list()
         else:
             # Add error to conversation
             error_message = f"Error occurred:\n{output}"
