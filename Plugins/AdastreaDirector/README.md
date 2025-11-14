@@ -229,7 +229,7 @@ Plugins/AdastreaDirector/
 ## Requirements
 
 ### Unreal Engine
-- Unreal Engine 5.6 or higher
+- Unreal Engine 5.1 or higher
 - Supported platforms: Windows, Mac, Linux
 
 ### Dependencies
