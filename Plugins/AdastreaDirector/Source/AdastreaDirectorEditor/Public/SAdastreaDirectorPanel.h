@@ -8,10 +8,12 @@
 
 class SMultiLineEditableTextBox;
 class SEditableTextBox;
+class STextBlock;
+class SProgressBar;
 
 /**
  * Main Slate panel widget for Adastrea Director.
- * Provides UI for querying the Python backend and displaying results.
+ * Provides UI for querying the Python backend, managing documents, and displaying results.
  */
 class SAdastreaDirectorPanel : public SCompoundWidget
 {
@@ -25,7 +27,11 @@ public:
 	/** Called when the widget is destroyed */
 	virtual ~SAdastreaDirectorPanel();
 
+	/** Tick method for updating progress */
+	virtual void Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime) override;
+
 private:
+	// Query tab widgets
 	/** Query input text box */
 	TSharedPtr<SEditableTextBox> QueryInputBox;
 
@@ -41,6 +47,41 @@ private:
 	/** Is a query currently being processed */
 	bool bIsProcessing;
 
+	// Ingestion tab widgets
+	/** Docs directory path text box */
+	TSharedPtr<SEditableTextBox> DocsPathBox;
+
+	/** Database path text box */
+	TSharedPtr<SEditableTextBox> DbPathBox;
+
+	/** Ingestion progress bar */
+	TSharedPtr<SProgressBar> IngestionProgressBar;
+
+	/** Ingestion status text */
+	TSharedPtr<STextBlock> IngestionStatusText;
+
+	/** Ingestion details text */
+	TSharedPtr<STextBlock> IngestionDetailsText;
+
+	/** Is ingestion currently running */
+	bool bIsIngesting;
+
+	/** Ingestion progress (0-1) */
+	float IngestionProgress;
+
+	/** Ingestion status message */
+	FText IngestionStatusMessage;
+
+	/** Ingestion details message */
+	FText IngestionDetailsMessage;
+
+	/** Path to progress file for ingestion updates */
+	FString ProgressFilePath;
+
+	/** Time since last progress update check */
+	double LastProgressUpdateTime;
+
+	// Query tab methods
 	/** Called when the Send Query button is clicked */
 	FReply OnSendQueryClicked();
 
@@ -61,4 +102,39 @@ private:
 
 	/** Get the enabled state of the send button */
 	bool IsSendButtonEnabled() const;
+
+	/** Called when Clear History button is clicked */
+	FReply OnClearHistoryClicked();
+
+	// Ingestion tab methods
+	/** Called when Browse button is clicked for docs path */
+	FReply OnBrowseDocsPathClicked();
+
+	/** Called when Browse button is clicked for database path */
+	FReply OnBrowseDbPathClicked();
+
+	/** Called when Start Ingestion button is clicked */
+	FReply OnStartIngestionClicked();
+
+	/** Called when Stop Ingestion button is clicked */
+	FReply OnStopIngestionClicked();
+
+	/** Helper to check if ingestion can start */
+	bool CanStartIngestion() const;
+
+	/** Helper to check if ingestion can be stopped */
+	bool CanStopIngestion() const;
+
+	/** Update ingestion progress from progress file */
+	void UpdateIngestionProgress();
+
+	/** Helper to send ingestion request to Python backend */
+	void StartIngestion(const FString& DocsPath, const FString& DbPath);
+
+	// Utility methods
+	/** Create the Query tab content */
+	TSharedRef<SWidget> CreateQueryTab();
+
+	/** Create the Ingestion tab content */
+	TSharedRef<SWidget> CreateIngestionTab();
 };
