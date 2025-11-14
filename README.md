@@ -402,7 +402,12 @@ not actual directory names. All files are in the root directory.
 
 ## Documentation
 
-📚 **[Complete Documentation Index](docs/INDEX.md)** - Comprehensive, organized documentation hub
+### 📚 Documentation Indices
+
+**Three ways to navigate the documentation:**
+1. **[INDEX.md](INDEX.md)** - 🌟 **Master Index** - Complete project overview, code structure, and all documentation
+2. **[docs/INDEX.md](docs/INDEX.md)** - 📖 **Documentation Hub** - Organized guides, tutorials, and references
+3. **[CODE_REFERENCE.md](CODE_REFERENCE.md)** - 💻 **Code Reference** - Python modules, APIs, and development guide
 
 ### Quick Links
 
@@ -434,7 +439,10 @@ not actual directory names. All files are in the root directory.
 - [Design Index](docs/design/DESIGN_INDEX.md) - Complete guide to all design documentation
 - [UI/UX Design System](docs/design/UI_UX_DESIGN_SYSTEM.md) - Complete design system
 
-**For complete documentation, see [docs/INDEX.md](docs/INDEX.md)**
+**For complete documentation:**
+- 🌟 **[INDEX.md](INDEX.md)** - Start here for complete overview
+- 📖 **[docs/INDEX.md](docs/INDEX.md)** - Organized documentation hub
+- 💻 **[CODE_REFERENCE.md](CODE_REFERENCE.md)** - Developer code guide
 
 ## Contributing
 
