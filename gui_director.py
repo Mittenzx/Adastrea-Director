@@ -1527,9 +1527,17 @@ GitHub: Mittenzx/Adastrea-Director
         # Enable progress tracking for ingest.py
         show_progress = script_name == 'ingest.py'
         if show_progress:
-            # Create a temporary progress file
+            # Create a temporary progress file (using NamedTemporaryFile for security)
             import tempfile
-            self.progress_file = tempfile.mktemp(suffix='.json', prefix='adastrea_progress_')
+            # Create file and keep it open to prevent race conditions
+            temp_file = tempfile.NamedTemporaryFile(
+                mode='w', 
+                suffix='.json', 
+                prefix='adastrea_progress_',
+                delete=False
+            )
+            self.progress_file = temp_file.name
+            temp_file.close()  # Close but don't delete (delete=False)
             command.extend(['--progress-file', self.progress_file])
             self.show_progress_bar("Preparing to ingest documents...")
             # Start polling the progress file
