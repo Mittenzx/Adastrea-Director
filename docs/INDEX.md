@@ -10,6 +10,14 @@ Welcome to the comprehensive documentation for Adastrea Director! This index hel
 - [Installation Guide](guides/INSTALLATION.md) - Setup instructions
 - [Quick Start: Game Repo](guides/QUICK_START_GAME_REPO.md) - 5-minute game repository setup
 
+**Looking for other indices?**
+- [**Master Index**](../INDEX.md) - Complete project overview and code structure
+- [**Code Reference**](../CODE_REFERENCE.md) - Developer guide and API documentation
+- [**Quick Reference**](../DOCUMENTATION_QUICK_REFERENCE.md) - Fast lookup card
+
+**For maintainers:**
+- [**Indexing System Guide**](INDEXING_SYSTEM.md) - How to maintain the index system
+
 ## 📖 Documentation Categories
 
 ### 🎯 Project Overview
