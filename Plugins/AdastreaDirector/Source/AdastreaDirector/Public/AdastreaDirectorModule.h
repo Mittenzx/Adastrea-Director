@@ -5,6 +5,9 @@
 #include "CoreMinimal.h"
 #include "Modules/ModuleManager.h"
 
+// Custom log category for Adastrea Director
+DECLARE_LOG_CATEGORY_EXTERN(LogAdastreaDirector, Log, All);
+
 /**
  * Runtime module for Adastrea Director plugin.
  * Provides core functionality for AI-powered development assistance.
