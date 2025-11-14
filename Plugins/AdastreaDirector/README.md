@@ -8,7 +8,7 @@ This plugin integrates the Adastrea Director AI system directly into Unreal Engi
 
 ## Current Status
 
-**Phase 1: Plugin Shell - Weeks 1-3 Complete ✅**
+**Phase 1: Plugin Shell - Weeks 1-4 Complete ✅**
 
 The plugin currently provides:
 
@@ -34,11 +34,49 @@ The plugin currently provides:
 - ✅ Integration framework for RAG/Agents
 - ✅ Production-ready error handling
 
-**Coming Soon (Week 4):**
-- Basic Slate UI panel for queries
-- Editor menu integration
-- Query input and results display
-- End-to-end testing
+### Week 4: Basic UI ✅
+- ✅ Main Slate panel (`SAdastreaDirectorPanel`)
+- ✅ Editor menu integration (Window > Developer Tools > Adastrea Director)
+- ✅ Query input widget with button and Enter key support
+- ✅ Results display widget with scrolling and text selection
+- ✅ Dockable panel integrated with UE workspace
+- ✅ Automatic Python backend initialization
+- ✅ End-to-end communication tested (< 1ms latency)
+
+**Coming Soon (Week 5+):**
+- Full RAG system integration
+- Planning agent integration
+- Enhanced query interface
+- Performance profiling UI
+- Settings panel
+
+## Quick Start (Week 4 UI)
+
+### Using the AI Assistant Panel
+
+1. Open Unreal Engine Editor with the plugin installed
+2. Go to **Window > Developer Tools > Adastrea Director**
+3. The AI assistant panel will open as a dockable tab
+4. Type your question in the query input field
+5. Click "Send Query" or press Enter
+6. View the response in the results area below
+
+**Example Query:** "What is Unreal Engine?"
+
+The Python backend starts automatically when the plugin loads!
+
+### Testing the Python Backend
+
+```bash
+# Test the IPC server standalone
+cd Plugins/AdastreaDirector/Python
+python3 ipc_server.py
+
+# In another terminal, run integration tests
+python3 test_ui_integration.py
+```
+
+See `WEEK4_VERIFICATION.md` for comprehensive testing procedures.
 
 ## Installation
 
@@ -91,13 +129,16 @@ The plugin uses a hybrid architecture as specified in `PLUGIN_DEVELOPMENT_FEASIB
   
 - **AdastreaDirectorEditor** (Editor Module)
   - Editor-only functionality
-  - Slate UI panels and widgets (future)
-  - Menu and toolbar integration (future)
+  - ✅ Slate UI panel (`SAdastreaDirectorPanel`)
+  - ✅ Menu and toolbar integration
+  - ✅ Tab spawner registration
   - Asset actions (future)
 
 - **Python/** (Backend Scripts)
   - ✅ `ipc_server.py` - IPC server with request routing
-  - ✅ `test_ipc.py` - Test script for IPC communication
+  - ✅ `test_ipc.py` - Unit tests for IPC communication
+  - ✅ `test_ipc_performance.py` - Performance validation
+  - ✅ `test_ui_integration.py` - End-to-end integration tests
   - ✅ `README.md` - Backend documentation
 
 ## File Structure

@@ -15,11 +15,17 @@ void FAdastreaDirectorModule::StartupModule()
 	UE_LOG(LogAdastreaDirector, Log, TEXT("AdastreaDirector Runtime Module: StartupModule"));
 
 	// Initialize Python bridge
-	// Note: Actual initialization is deferred to allow configuration
-	// For now, we just create the bridge instance
 	PythonBridge = MakeUnique<FPythonBridge>();
 	
-	UE_LOG(LogAdastreaDirector, Log, TEXT("Python Bridge created. Call InitializePythonBridge() to start communication."));
+	// Automatically initialize the Python bridge with default settings
+	if (InitializePythonBridge())
+	{
+		UE_LOG(LogAdastreaDirector, Log, TEXT("Python Bridge initialized successfully"));
+	}
+	else
+	{
+		UE_LOG(LogAdastreaDirector, Warning, TEXT("Python Bridge initialization failed. Python backend may not be available."));
+	}
 }
 
 void FAdastreaDirectorModule::ShutdownModule()

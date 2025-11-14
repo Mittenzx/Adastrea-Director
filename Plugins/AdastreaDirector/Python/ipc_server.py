@@ -24,6 +24,7 @@ import threading
 import time
 from typing import Dict, Any
 from collections import defaultdict
+from textwrap import dedent
 
 # Configure logging
 logging.basicConfig(
@@ -345,10 +346,44 @@ class IPCServer:
         """
         logger.info(f"Query received: {data}")
         
-        # Placeholder response
+        # Provide sample responses for testing
+        if "unreal engine" in data.lower() or "what is unreal engine" in data.lower():
+            result_text = dedent("""
+                Unreal Engine is a comprehensive suite of real-time 3D creation tools developed by Epic Games. 
+
+                Key Features:
+                • High-fidelity real-time rendering
+                • Advanced physics and collision systems
+                • Blueprint visual scripting system
+                • C++ programming support
+                • Cross-platform development (PC, Console, Mobile, VR/AR)
+                • Built-in multiplayer and networking
+                • Marketplace with thousands of assets
+                • Industry-leading graphics capabilities
+
+                Unreal Engine is widely used for:
+                - Video game development (AAA and indie games)
+                - Film and television production
+                - Architectural visualization
+                - Automotive design
+                - Virtual production and cinematography
+
+                The engine is free to use with a royalty model for commercial products.
+            """).strip()
+        else:
+            result_text = dedent(f"""
+                This is a response to your query: "{data}"
+
+                Currently, this is a placeholder response from the Python backend IPC server.
+
+                The query handler is working correctly and can communicate with the Unreal Engine plugin UI.
+
+                To integrate with the full RAG system and planning agents, the actual implementation will be connected in future phases.
+            """).strip()
+        
         return {
             'status': 'success',
-            'response': f"Query processed: {data}",
+            'result': result_text,
             'sources': []
         }
 
