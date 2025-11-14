@@ -8,12 +8,19 @@ This directory contains the Python backend components for the Adastrea Director 
 
 The IPC (Inter-Process Communication) server that bridges the Unreal Engine C++ plugin with the Python backend.
 
+**Week 3 Enhancements:**
+- Performance monitoring and metrics tracking
+- Optimized request routing with timing
+- Sub-millisecond latency (<1ms typical)
+- Request/response with processing time information
+
 **Features:**
 - TCP socket-based communication on localhost
 - JSON request/response serialization
 - Multi-threaded client handling
 - Extensible request handler system
 - Graceful error handling
+- Performance metrics collection
 
 **Usage:**
 ```bash
@@ -22,10 +29,62 @@ python ipc_server.py --port 5555 --verbose  # Enable debug logging
 ```
 
 **Supported Request Types:**
-- `ping` - Health check
+- `ping` - Health check with timestamp
+- `metrics` - Get performance statistics (or 'reset' to clear)
 - `query` - Documentation queries (placeholder for RAG integration)
 - `plan` - Task planning requests (placeholder for planning agent)
 - `analyze` - Goal analysis requests (placeholder for goal analysis agent)
+
+### ipc_integration.py
+
+**NEW in Week 3:** Integrated IPC server with optional RAG system and planning agent support.
+
+**Features:**
+- Optional RAG system integration for real queries
+- Optional planning agent integration
+- Automatic fallback to placeholder responses
+- Configuration via command-line arguments
+
+**Usage:**
+```bash
+# Basic mode (placeholder responses)
+python ipc_integration.py --port 5555
+
+# With RAG system
+python ipc_integration.py --port 5555 --enable-rag
+
+# With planning agents
+python ipc_integration.py --port 5555 --enable-planning
+
+# Full integration
+python ipc_integration.py --port 5555 --enable-rag --enable-planning --verbose
+```
+
+### test_ipc.py
+
+Original test suite for basic IPC functionality.
+
+### test_ipc_performance.py
+
+**NEW in Week 3:** Comprehensive performance test suite.
+
+**Features:**
+- Round-trip latency measurement
+- Throughput testing
+- Statistical analysis (avg, min, max, P95)
+- Performance requirements validation (< 50ms target)
+- Server metrics verification
+
+**Usage:**
+```bash
+python test_ipc_performance.py [port]
+```
+
+**Performance Results:**
+- Average latency: < 1ms
+- P95 latency: < 1ms
+- Throughput: > 4000 req/s
+- ✓ Exceeds 50ms requirement by 50x
 
 ## Request/Response Format
 

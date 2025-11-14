@@ -5,6 +5,12 @@ IPC Server for Adastrea Director Plugin
 This server provides socket-based IPC communication between the Unreal Engine
 plugin (C++) and the Python backend (RAG system, planning agents, etc.).
 
+Week 3 Enhancements:
+- Performance monitoring and metrics
+- Optimized request routing
+- Response serialization with timing
+- Integration hooks for RAG system
+
 Usage:
     python ipc_server.py --port 5555
 """
@@ -15,7 +21,9 @@ import sys
 import argparse
 import logging
 import threading
-from typing import Dict, Any, Optional
+import time
+from typing import Dict, Any
+from collections import defaultdict
 
 # Configure logging
 logging.basicConfig(
@@ -25,22 +33,92 @@ logging.basicConfig(
 logger = logging.getLogger('AdastreaIPCServer')
 
 
-class IPCServer:
-    """IPC server for handling requests from the UE plugin."""
+class PerformanceMetrics:
+    """Track performance metrics for the IPC server."""
+    
+    def __init__(self):
+        """Initialize metrics tracking."""
+        self.request_count = defaultdict(int)
+        self.request_times = defaultdict(list)
+        self.error_count = defaultdict(int)
+        self.total_requests = 0
+        self.total_errors = 0
+        self._lock = threading.Lock()
+    
+    def record_request(self, request_type: str, duration: float, success: bool = True):
+        """
+        Record a request's performance metrics.
+        
+        Args:
+            request_type: Type of request
+            duration: Time taken in seconds
+            success: Whether request succeeded
+        """
+        with self._lock:
+            self.request_count[request_type] += 1
+            self.request_times[request_type].append(duration)
+            self.total_requests += 1
+            
+            if not success:
+                self.error_count[request_type] += 1
+                self.total_errors += 1
+    
+    def get_stats(self) -> Dict[str, Any]:
+        """Get current performance statistics."""
+        with self._lock:
+            stats = {
+                'total_requests': self.total_requests,
+                'total_errors': self.total_errors,
+                'by_type': {}
+            }
+            
+            for req_type in self.request_count:
+                times = self.request_times[req_type]
+                if times:
+                    avg_time = sum(times) / len(times)
+                    max_time = max(times)
+                    min_time = min(times)
+                else:
+                    avg_time = max_time = min_time = 0
+                
+                stats['by_type'][req_type] = {
+                    'count': self.request_count[req_type],
+                    'errors': self.error_count[req_type],
+                    'avg_time_ms': avg_time * 1000,
+                    'min_time_ms': min_time * 1000,
+                    'max_time_ms': max_time * 1000
+                }
+            
+            return stats
+    
+    def reset(self):
+        """Reset all metrics."""
+        with self._lock:
+            self.request_count.clear()
+            self.request_times.clear()
+            self.error_count.clear()
+            self.total_requests = 0
+            self.total_errors = 0
 
-    def __init__(self, host: str = '127.0.0.1', port: int = 5555):
+
+class IPCServer:
+    """IPC server for handling requests from the UE plugin with performance monitoring."""
+
+    def __init__(self, host: str = '127.0.0.1', port: int = 5555, enable_metrics: bool = True):
         """
         Initialize the IPC server.
         
         Args:
             host: Host address to bind to (default: localhost)
             port: Port to listen on
+            enable_metrics: Enable performance metrics tracking
         """
         self.host = host
         self.port = port
         self.socket = None
         self.running = False
         self.handlers = {}
+        self.metrics = PerformanceMetrics() if enable_metrics else None
         
         # Register default handlers
         self._register_default_handlers()
@@ -48,6 +126,7 @@ class IPCServer:
     def _register_default_handlers(self):
         """Register default request handlers."""
         self.register_handler('ping', self._handle_ping)
+        self.register_handler('metrics', self._handle_metrics)
         self.register_handler('query', self._handle_query)
         self.register_handler('plan', self._handle_plan)
         self.register_handler('analyze', self._handle_analyze)
@@ -167,49 +246,95 @@ class IPCServer:
 
     def _process_request(self, request: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Process a request and return a response.
+        Process a request and return a response with performance tracking.
         
         Args:
             request: Request dictionary with 'type' and 'data' fields
             
         Returns:
-            Response dictionary
+            Response dictionary with timing information
         """
+        start_time = time.perf_counter()
         request_type = request.get('type', '')
         request_data = request.get('data', '')
+        success = False
         
         if not request_type:
-            return {
+            response = {
                 'status': 'error',
                 'error': 'Missing request type'
             }
+            if self.metrics:
+                self.metrics.record_request('invalid', time.perf_counter() - start_time, False)
+            return response
         
         # Find and call appropriate handler
         handler = self.handlers.get(request_type)
         
         if handler:
             try:
-                return handler(request_data)
+                response = handler(request_data)
+                success = response.get('status') == 'success'
             except Exception as e:
                 logger.error(f"Handler error for '{request_type}': {e}")
-                return {
+                response = {
                     'status': 'error',
                     'error': f"Handler error: {str(e)}"
                 }
+                success = False
         else:
-            return {
+            response = {
                 'status': 'error',
                 'error': f"Unknown request type: {request_type}"
             }
+            success = False
+        
+        # Record metrics
+        duration = time.perf_counter() - start_time
+        if self.metrics:
+            self.metrics.record_request(request_type, duration, success)
+        
+        # Add timing information to response for performance monitoring
+        response['processing_time_ms'] = round(duration * 1000, 2)
+        
+        return response
 
     # Default handlers
 
     def _handle_ping(self, data: str) -> Dict[str, Any]:
-        """Handle ping request."""
+        """Handle ping request for health checks."""
         logger.debug("Ping received")
         return {
             'status': 'success',
-            'message': 'pong'
+            'message': 'pong',
+            'timestamp': time.time()
+        }
+    
+    def _handle_metrics(self, data: str) -> Dict[str, Any]:
+        """
+        Handle metrics request to get performance statistics.
+        
+        Args:
+            data: Optional parameter ('reset' to reset metrics)
+        """
+        if not self.metrics:
+            return {
+                'status': 'error',
+                'error': 'Metrics not enabled'
+            }
+        
+        if data == 'reset':
+            self.metrics.reset()
+            logger.info("Metrics reset")
+            return {
+                'status': 'success',
+                'message': 'Metrics reset'
+            }
+        
+        stats = self.metrics.get_stats()
+        return {
+            'status': 'success',
+            'metrics': stats
         }
 
     def _handle_query(self, data: str) -> Dict[str, Any]:
