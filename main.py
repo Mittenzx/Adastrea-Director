@@ -520,6 +520,28 @@ def main():
     parser = argparse.ArgumentParser(
         description="Adastrea Director - AI Game Development Assistant"
     )
+    
+    # Config management arguments
+    parser.add_argument(
+        "--set-api-key",
+        type=str,
+        metavar="PROVIDER",
+        choices=["gemini", "openai"],
+        help="Save API key to local config (provider: gemini or openai)",
+    )
+    parser.add_argument(
+        "--clear-api-key",
+        type=str,
+        metavar="PROVIDER",
+        choices=["gemini", "openai"],
+        help="Remove API key from local config (provider: gemini or openai)",
+    )
+    parser.add_argument(
+        "--show-config",
+        action="store_true",
+        help="Show configuration file location and status",
+    )
+    
     parser.add_argument(
         "--collection-name",
         type=str,
@@ -565,6 +587,58 @@ def main():
     )
 
     args = parser.parse_args()
+    
+    # Handle config management commands
+    if args.set_api_key:
+        try:
+            import config_manager
+            from getpass import getpass
+            
+            console.print(f"\n[cyan]Setting API key for {args.set_api_key}[/cyan]")
+            api_key = getpass(f"Enter your {args.set_api_key.upper()} API key: ")
+            
+            if api_key:
+                config_manager.set_api_key(args.set_api_key, api_key)
+                console.print(f"[green]✓ API key saved to {config_manager.get_config_location()}[/green]")
+                console.print("[dim]The key will be used automatically in future sessions.[/dim]\n")
+            else:
+                console.print("[yellow]No API key provided. Operation cancelled.[/yellow]\n")
+        except Exception as e:
+            console.print(f"[red]Failed to save API key: {e}[/red]\n")
+        return
+    
+    if args.clear_api_key:
+        try:
+            import config_manager
+            
+            config_manager.clear_api_key(args.clear_api_key)
+            console.print(f"[green]✓ API key for {args.clear_api_key} removed from local config[/green]\n")
+        except Exception as e:
+            console.print(f"[red]Failed to clear API key: {e}[/red]\n")
+        return
+    
+    if args.show_config:
+        try:
+            import config_manager
+            
+            console.print("\n[cyan]Configuration Status:[/cyan]")
+            console.print(f"Location: [dim]{config_manager.get_config_location()}[/dim]")
+            console.print(f"Exists: [dim]{config_manager.config_exists()}[/dim]")
+            
+            if config_manager.config_exists():
+                console.print("\n[cyan]Stored API Keys:[/cyan]")
+                for provider in ["gemini", "openai"]:
+                    key = config_manager.get_api_key(provider)
+                    if key:
+                        # Show first 8 and last 4 characters
+                        masked_key = f"{key[:8]}...{key[-4:]}" if len(key) > 12 else "***"
+                        console.print(f"  {provider}: [dim]{masked_key}[/dim]")
+                    else:
+                        console.print(f"  {provider}: [dim]not set[/dim]")
+            console.print()
+        except Exception as e:
+            console.print(f"[red]Failed to show config: {e}[/red]\n")
+        return
     
     # Validate arguments
     if args.retrieval_k <= 0:

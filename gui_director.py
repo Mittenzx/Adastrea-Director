@@ -943,7 +943,7 @@ Type your question below to get started! 🚀
         """Opens a dialog to ask for the API key."""
         dialog = tk.Toplevel(self.root)
         dialog.title("Set Gemini API Key")
-        dialog.geometry("450x180")
+        dialog.geometry("450x230")
         dialog.configure(bg=self.bg_color)
         dialog.transient(self.root)
         dialog.grab_set()
@@ -978,13 +978,45 @@ Type your question below to get started! 🚀
         key_entry.pack(pady=10, padx=20)
         key_entry.focus()
         
+        # Add checkbox for saving the API key
+        save_var = tk.BooleanVar(value=True)  # Default to saving
+        checkbox_frame = tk.Frame(dialog, bg=self.bg_color)
+        checkbox_frame.pack(pady=(0, 10), padx=20)
+        
+        save_checkbox = tk.Checkbutton(
+            checkbox_frame,
+            text="Save API key for future sessions",
+            variable=save_var,
+            bg=self.bg_color,
+            fg=self.fg_secondary,
+            selectcolor=self.text_bg,
+            activebackground=self.bg_color,
+            activeforeground=self.fg_color,
+            font=("Segoe UI", 9),
+            cursor="hand2"
+        )
+        save_checkbox.pack(anchor=tk.W)
+        
         def on_ok():
             key = key_entry.get()
             if key:
                 os.environ['GEMINI_KEY'] = key
                 os.environ['GOOGLE_API_KEY'] = key  # Also set for compatibility
-                self.update_status("API Key set successfully • Ready to ingest or query", "success")
-                self.add_to_conversation("System", "Gemini API Key configured successfully.", is_system=True)
+                
+                # Save to local config if checkbox is selected
+                if save_var.get():
+                    try:
+                        import config_manager
+                        config_manager.set_api_key("gemini", key)
+                        self.update_status("API Key saved successfully • Ready to ingest or query", "success")
+                        self.add_to_conversation("System", "Gemini API Key saved to local configuration.", is_system=True)
+                    except Exception as e:
+                        self.update_status(f"API Key set for session only (save failed: {e})", "warning")
+                        self.add_to_conversation("System", "Gemini API Key set for current session.", is_system=True)
+                else:
+                    self.update_status("API Key set successfully • Ready to ingest or query", "success")
+                    self.add_to_conversation("System", "Gemini API Key configured for current session.", is_system=True)
+                
                 dialog.destroy()
             else:
                 messagebox.showwarning("Invalid Input", "Please enter a valid API key.")
@@ -1034,8 +1066,26 @@ Type your question below to get started! 🚀
 
     def check_api_key_on_startup(self):
         """Checks if the API key is set and prompts the user if not."""
-        # Check for Gemini API key (primary) or Google API key (compatibility)
-        if not (os.getenv("GEMINI_KEY") or os.getenv("GOOGLE_API_KEY")):
+        # Check for Gemini API key in local config, environment, or compatibility var
+        has_key = False
+        
+        # Check local config first
+        try:
+            import config_manager
+            stored_key = config_manager.get_api_key("gemini")
+            if stored_key:
+                os.environ['GEMINI_KEY'] = stored_key
+                os.environ['GOOGLE_API_KEY'] = stored_key
+                has_key = True
+        except Exception:
+            pass
+        
+        # Check environment variables
+        if not has_key and (os.getenv("GEMINI_KEY") or os.getenv("GOOGLE_API_KEY")):
+            has_key = True
+        
+        # Prompt for key if not found
+        if not has_key:
             self.root.after(500, self.set_api_key)
 
     def ingest_folder(self):

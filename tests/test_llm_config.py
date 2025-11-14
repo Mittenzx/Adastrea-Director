@@ -232,6 +232,67 @@ class TestLLMConfiguration:
                 elif key in os.environ:
                     del os.environ[key]
 
+    def test_stored_config_priority(self):
+        """Test that stored config takes priority over environment variables."""
+        env_backup = {}
+        for key in ['LLM_PROVIDER', 'GEMINI_KEY', 'GOOGLE_API_KEY', 'OPENAI_API_KEY']:
+            env_backup[key] = os.environ.get(key)
+            if key in os.environ:
+                del os.environ[key]
+        
+        # Set env var
+        os.environ['GEMINI_KEY'] = 'env-key'
+        
+        try:
+            # Mock the stored config to return a different key
+            with patch('llm_config.CONFIG_MANAGER_AVAILABLE', True):
+                with patch('llm_config.get_stored_api_key', return_value='stored-key'):
+                    with patch('langchain_google_genai.ChatGoogleGenerativeAI') as mock_gemini:
+                        mock_gemini.return_value = Mock()
+                        from llm_config import get_llm
+                        
+                        get_llm()
+                        
+                        # Verify the stored key was used, not the env var
+                        call_kwargs = mock_gemini.call_args[1]
+                        assert call_kwargs['google_api_key'] == 'stored-key'
+        finally:
+            for key, value in env_backup.items():
+                if value is not None:
+                    os.environ[key] = value
+                elif key in os.environ:
+                    del os.environ[key]
+
+    def test_fallback_to_env_when_no_stored_config(self):
+        """Test that environment variables are used when stored config is not available."""
+        env_backup = {}
+        for key in ['LLM_PROVIDER', 'GEMINI_KEY', 'GOOGLE_API_KEY', 'OPENAI_API_KEY']:
+            env_backup[key] = os.environ.get(key)
+            if key in os.environ:
+                del os.environ[key]
+        
+        os.environ['GEMINI_KEY'] = 'env-key'
+        
+        try:
+            # Mock the stored config to return None
+            with patch('llm_config.CONFIG_MANAGER_AVAILABLE', True):
+                with patch('llm_config.get_stored_api_key', return_value=None):
+                    with patch('langchain_google_genai.ChatGoogleGenerativeAI') as mock_gemini:
+                        mock_gemini.return_value = Mock()
+                        from llm_config import get_llm
+                        
+                        get_llm()
+                        
+                        # Verify the env var was used as fallback
+                        call_kwargs = mock_gemini.call_args[1]
+                        assert call_kwargs['google_api_key'] == 'env-key'
+        finally:
+            for key, value in env_backup.items():
+                if value is not None:
+                    os.environ[key] = value
+                elif key in os.environ:
+                    del os.environ[key]
+
 
 if __name__ == '__main__':
     pytest.main([__file__, '-v'])

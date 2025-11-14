@@ -161,10 +161,32 @@ pip install -r requirements.txt
 **For document embeddings:** The system uses **HuggingFace embeddings by default** (no API key required, works offline).
 - See [OpenAI Embeddings Setup Guide](docs/guides/OPENAI_EMBEDDINGS_SETUP.md) if you want to use OpenAI instead
 
-**For LLM queries:** Set up your preferred LLM provider:
+**For LLM queries:** Set up your preferred LLM provider. You have three options:
+
+**Option A: Save to local config (Recommended - persists across repository clones)**
 ```bash
+# Via CLI
+python main.py --set-api-key gemini
+
+# Via GUI
+# When prompted, check "Save API key for future sessions"
+```
+Keys are securely stored in `~/.adastrea/config.json` and encrypted with a machine-specific key.
+
+**Option B: Use environment variable**
+```bash
+export GEMINI_KEY="your-api-key-here"
+# or for OpenAI
 export OPENAI_API_KEY="your-api-key-here"
 ```
+
+**Option C: Use .env file**
+```bash
+cp .env.example .env
+# Edit .env and add your GEMINI_KEY
+```
+
+**Priority:** Local config → .env file → environment variables
 
 4. **(Optional)** Set up GitHub token for game repository ingestion:
 ```bash

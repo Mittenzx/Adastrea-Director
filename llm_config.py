@@ -16,6 +16,11 @@ Environment Variables:
 
 import os
 from typing import Optional
+try:
+    from config_manager import get_api_key as get_stored_api_key
+    CONFIG_MANAGER_AVAILABLE = True
+except ImportError:
+    CONFIG_MANAGER_AVAILABLE = False
 
 
 def get_llm(model_name: Optional[str] = None, temperature: float = 0.7):
@@ -50,10 +55,22 @@ def get_llm(model_name: Optional[str] = None, temperature: float = 0.7):
         from langchain_openai import ChatOpenAI
         
         model = model_name or os.environ.get("OPENAI_MODEL", "gpt-3.5-turbo")
-        return ChatOpenAI(
-            model_name=model,
-            temperature=temperature
-        )
+        
+        # Priority: stored config -> OPENAI_API_KEY env var
+        api_key = None
+        if CONFIG_MANAGER_AVAILABLE:
+            api_key = get_stored_api_key("openai")
+        if not api_key:
+            api_key = os.environ.get("OPENAI_API_KEY")
+        
+        kwargs = {
+            "model_name": model,
+            "temperature": temperature
+        }
+        if api_key:
+            kwargs["api_key"] = api_key
+        
+        return ChatOpenAI(**kwargs)
     else:
         # Default to Google Gemini (recommended provider)
         from langchain_google_genai import ChatGoogleGenerativeAI
@@ -62,8 +79,12 @@ def get_llm(model_name: Optional[str] = None, temperature: float = 0.7):
         # Use gemini-1.5-pro for complex planning tasks
         model = model_name or os.environ.get("GEMINI_MODEL", "gemini-1.5-flash")
         
-        # GEMINI_KEY is the primary env var, but also support GOOGLE_API_KEY for compatibility
-        api_key = os.environ.get("GEMINI_KEY") or os.environ.get("GOOGLE_API_KEY")
+        # Priority: stored config -> GEMINI_KEY env var -> GOOGLE_API_KEY env var
+        api_key = None
+        if CONFIG_MANAGER_AVAILABLE:
+            api_key = get_stored_api_key("gemini")
+        if not api_key:
+            api_key = os.environ.get("GEMINI_KEY") or os.environ.get("GOOGLE_API_KEY")
         
         return ChatGoogleGenerativeAI(
             model=model,
