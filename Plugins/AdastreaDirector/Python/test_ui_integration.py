@@ -37,8 +37,16 @@ def send_query(sock: socket.socket, query: str) -> dict:
     request_json = json.dumps(request) + '\n'
     sock.sendall(request_json.encode('utf-8'))
     
-    # Receive response
-    response_data = sock.recv(8192)
+    # Receive response - loop until we get complete message with newline
+    response_data = b''
+    while True:
+        chunk = sock.recv(4096)
+        if not chunk:
+            break
+        response_data += chunk
+        if b'\n' in chunk:
+            break
+    
     response = json.loads(response_data.decode('utf-8').strip())
     
     return response

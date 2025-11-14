@@ -11,7 +11,7 @@
 #include "Widgets/Layout/SScrollBox.h"
 #include "Widgets/Layout/SBox.h"
 #include "Widgets/Layout/SSeparator.h"
-#include "EditorStyleSet.h"
+#include "Styling/AppStyle.h"
 #include "Styling/SlateTypes.h"
 #include "Dom/JsonObject.h"
 #include "Serialization/JsonSerializer.h"
@@ -120,7 +120,7 @@ void SAdastreaDirectorPanel::Construct(const FArguments& InArgs)
 				+ SScrollBox::Slot()
 				[
 					SAssignNew(ResultsDisplay, SMultiLineEditableTextBox)
-					.Text(this, &SAdastreaDirectorPanel::CurrentResults)
+					.Text_Lambda([this]() { return CurrentResults; })
 					.IsReadOnly(true)
 					.AutoWrapText(true)
 				]
@@ -159,15 +159,18 @@ FReply SAdastreaDirectorPanel::OnSendQueryClicked()
 		return FReply::Handled();
 	}
 
-	// Set processing state
-	bIsProcessing = true;
+	// Set processing state with RAII guard to ensure it's reset
+	struct FProcessingGuard
+	{
+		bool& Flag;
+		FProcessingGuard(bool& InFlag) : Flag(InFlag) { Flag = true; }
+		~FProcessingGuard() { Flag = false; }
+	} ProcessingGuard(bIsProcessing);
+	
 	UpdateResults(TEXT("Processing query..."));
 
 	// Send query to Python backend
 	SendQueryToPython(QueryString);
-
-	// Reset processing state
-	bIsProcessing = false;
 
 	return FReply::Handled();
 }
@@ -212,16 +215,34 @@ void SAdastreaDirectorPanel::SendQueryToPython(const FString& Query)
 		
 		if (FJsonSerializer::Deserialize(Reader, JsonObject) && JsonObject.IsValid())
 		{
-			FString Status = JsonObject->GetStringField(TEXT("status"));
+			FString Status;
+			if (!JsonObject->TryGetStringField(TEXT("status"), Status))
+			{
+				UE_LOG(LogAdastreaDirectorEditor, Error, TEXT("Response missing 'status' field"));
+				UpdateResults(TEXT("Error: Invalid response format (missing 'status')."));
+				return;
+			}
 			
 			if (Status == TEXT("success"))
 			{
-				FString Result = JsonObject->GetStringField(TEXT("result"));
+				FString Result;
+				if (!JsonObject->TryGetStringField(TEXT("result"), Result))
+				{
+					UE_LOG(LogAdastreaDirectorEditor, Error, TEXT("Response missing 'result' field"));
+					UpdateResults(TEXT("Error: Invalid response format (missing 'result')."));
+					return;
+				}
 				UpdateResults(FString::Printf(TEXT("Query: %s\n\nResponse:\n%s"), *Query, *Result));
 			}
 			else
 			{
-				FString Error = JsonObject->GetStringField(TEXT("error"));
+				FString Error;
+				if (!JsonObject->TryGetStringField(TEXT("error"), Error))
+				{
+					UE_LOG(LogAdastreaDirectorEditor, Error, TEXT("Response missing 'error' field"));
+					UpdateResults(TEXT("Error: Invalid response format (missing 'error')."));
+					return;
+				}
 				UpdateResults(FString::Printf(TEXT("Error: %s"), *Error));
 			}
 		}

@@ -43,7 +43,7 @@ void FAdastreaDirectorEditorModule::RegisterTabSpawner()
 		.SetDisplayName(LOCTEXT("AdastreaDirectorTabTitle", "Adastrea Director"))
 		.SetTooltipText(LOCTEXT("AdastreaDirectorTabTooltip", "Opens the Adastrea Director AI assistant panel"))
 		.SetGroup(WorkspaceMenu::GetMenuStructure().GetDeveloperToolsCategory())
-		.SetIcon(FSlateIcon(FEditorStyle::GetStyleSetName(), "LevelEditor.Tabs.Cinematics"));
+		.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "LevelEditor.Tabs.Cinematics"));
 
 	UE_LOG(LogAdastreaDirectorEditor, Log, TEXT("Registered Adastrea Director tab spawner"));
 }
