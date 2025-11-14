@@ -280,7 +280,8 @@ bool FIPCClient::WaitForSocket(float TimeoutSeconds, bool bWaitForRead) const
 	{
 		if (bWaitForRead)
 		{
-			if (Socket->HasPendingData(0))
+			uint32 PendingDataSize = 0;
+			if (Socket->HasPendingData(PendingDataSize))
 			{
 				return true;
 			}

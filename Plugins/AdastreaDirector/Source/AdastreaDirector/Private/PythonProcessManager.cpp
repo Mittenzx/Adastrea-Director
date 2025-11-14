@@ -108,7 +108,8 @@ void FPythonProcessManager::StopPythonProcess()
 		FPlatformProcess::Sleep(0.2f);
 		
 		// Force kill if still running
-		if (FPlatformProcess::IsProcRunning(ProcessHandle))
+		FProcHandle HandleCopy = ProcessHandle;
+		if (FPlatformProcess::IsProcRunning(HandleCopy))
 		{
 			UE_LOG(LogAdastreaDirector, Warning, TEXT("Forcing Python process termination."));
 			FPlatformProcess::TerminateProc(ProcessHandle, false);
@@ -152,5 +153,6 @@ bool FPythonProcessManager::VerifyProcessAlive() const
 		return false;
 	}
 
-	return FPlatformProcess::IsProcRunning(ProcessHandle);
+	FProcHandle HandleCopy = ProcessHandle;
+	return FPlatformProcess::IsProcRunning(HandleCopy);
 }
