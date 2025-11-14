@@ -37,12 +37,14 @@ void FAdastreaDirectorEditorModule::ShutdownModule()
 
 void FAdastreaDirectorEditorModule::RegisterTabSpawner()
 {
+	FWorkspaceMenuStructureModule& WorkspaceMenuModule = FModuleManager::LoadModuleChecked<FWorkspaceMenuStructureModule>("WorkspaceMenuStructure");
+	
 	FGlobalTabmanager::Get()->RegisterNomadTabSpawner(
 		AdastreaDirectorTabName,
 		FOnSpawnTab::CreateRaw(this, &FAdastreaDirectorEditorModule::SpawnAdastreaDirectorTab))
 		.SetDisplayName(LOCTEXT("AdastreaDirectorTabTitle", "Adastrea Director"))
 		.SetTooltipText(LOCTEXT("AdastreaDirectorTabTooltip", "Opens the Adastrea Director AI assistant panel"))
-		.SetGroup(FWorkspaceMenuStructureModule::Get().GetWorkspaceMenuStructure().GetDeveloperToolsCategory())
+		.SetGroup(WorkspaceMenuModule.GetWorkspaceMenuStructure().GetDeveloperToolsCategory())
 		.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "LevelEditor.Tabs.Cinematics"));
 
 	UE_LOG(LogAdastreaDirectorEditor, Log, TEXT("Registered Adastrea Director tab spawner"));
