@@ -267,7 +267,7 @@ echo $OPENAI_API_KEY
 | Query Response | < 3s | Send query in UI |
 | Cached Query | < 100ms | Repeat same query |
 | Ingestion Rate | 1-2 files/s | Ingest 10 files, time it |
-| Memory Usage | < 1GB | Monitor during ingestion |
+| Memory Usage | < 1GB total (peak), avg 500MB | Monitor during ingestion |
 
 ---
 
