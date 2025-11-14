@@ -399,7 +399,7 @@ find . -name "*.md" -type f
 grep -r "\[.*\](.*)" docs/
 
 # Check if referenced files exist (basic)
-grep -o '(\([^)]*\).md)' INDEX.md | while read link; do
+grep -o '\([^)]*\.md\)' INDEX.md | while read link; do
     file=$(echo $link | sed 's/[()]//g')
     [ ! -f "$file" ] && echo "Missing: $file"
 done
@@ -486,7 +486,7 @@ For questions about the indexing system:
 
 ## Last Updated
 
-**Date:** 2025-11-14  
+**Date:** 2024-11-14  
 **Version:** 1.0  
 **Maintainer:** Documentation Team
 
