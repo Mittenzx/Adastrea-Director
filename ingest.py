@@ -122,6 +122,45 @@ except ImportError as e:
 console = Console(legacy_windows=False)
 
 
+class ProgressWriter:
+    """Helper class to write progress updates to a file for GUI integration."""
+    
+    def __init__(self, progress_file: Optional[str] = None):
+        """
+        Initialize the progress writer.
+        
+        Args:
+            progress_file: Path to file where progress updates will be written (JSON format)
+        """
+        self.progress_file = progress_file
+        self.enabled = progress_file is not None
+    
+    def write(self, percent: float, label: str = "", details: str = ""):
+        """
+        Write progress update to file.
+        
+        Args:
+            percent: Progress percentage (0-100)
+            label: Main progress label
+            details: Detailed progress information
+        """
+        if not self.enabled:
+            return
+        
+        try:
+            import json
+            progress_data = {
+                'percent': min(100, max(0, percent)),
+                'label': label,
+                'details': details
+            }
+            with open(self.progress_file, 'w') as f:
+                json.dump(progress_data, f)
+        except Exception as e:
+            # Silently fail - don't interrupt ingestion if progress writing fails
+            pass
+
+
 class DocumentIngestionAgent:
     """Agent responsible for ingesting documents into the vector database."""
 
@@ -132,6 +171,7 @@ class DocumentIngestionAgent:
         chunk_size: int = 1000,
         chunk_overlap: int = 200,
         embeddings: Optional[Any] = None,
+        progress_writer: Optional[ProgressWriter] = None,
     ):
         """
         Initialize the document ingestion agent.
@@ -144,11 +184,13 @@ class DocumentIngestionAgent:
             embeddings: Optional embeddings instance. If not provided, will use
                        EMBEDDING_PROVIDER environment variable to select provider.
                        Defaults to HuggingFace embeddings ('all-MiniLM-L6-v2').
+            progress_writer: Optional ProgressWriter instance for GUI progress updates
             
         Raises:
             ValidationError: If chunk_size or chunk_overlap are invalid
             APIKeyError: If OpenAI is selected and API key is missing or invalid
         """
+        self.progress_writer = progress_writer or ProgressWriter()
         # Validate configuration
         if chunk_size <= 0:
             raise ValidationError("chunk_size", chunk_size, "Must be greater than 0")
@@ -754,8 +796,16 @@ class DocumentIngestionAgent:
                 total=len(file_list)
             )
             
-            for file_path in file_list:
+            for idx, file_path in enumerate(file_list):
                 try:
+                    # Update GUI progress
+                    percent = (idx / len(file_list)) * 100
+                    self.progress_writer.write(
+                        percent,
+                        f"Processing file {idx + 1} of {len(file_list)}",
+                        f"Checking: {Path(file_path).name}"
+                    )
+                    
                     # Check if file has changed
                     has_changed, old_hash, current_hash = self._check_file_changed(file_path, force_reingest)
                     
@@ -770,6 +820,11 @@ class DocumentIngestionAgent:
                         continue
                     
                     # Load the file
+                    self.progress_writer.write(
+                        percent,
+                        f"Processing file {idx + 1} of {len(file_list)}",
+                        f"Loading: {Path(file_path).name}"
+                    )
                     documents = self.load_single_file(file_path)
                     
                     if not documents:
@@ -781,6 +836,11 @@ class DocumentIngestionAgent:
                     documents = self._enrich_document_metadata(documents, file_hash=current_hash)
                     
                     # Chunk the documents
+                    self.progress_writer.write(
+                        percent,
+                        f"Processing file {idx + 1} of {len(file_list)}",
+                        f"Chunking: {Path(file_path).name}"
+                    )
                     chunks = self.chunk_documents(documents)
                     
                     if not chunks:
@@ -799,6 +859,11 @@ class DocumentIngestionAgent:
                     
                     # Ingest the chunks
                     try:
+                        self.progress_writer.write(
+                            percent,
+                            f"Processing file {idx + 1} of {len(file_list)}",
+                            f"Ingesting: {Path(file_path).name} ({len(chunks)} chunks)"
+                        )
                         # Check if database exists
                         if not Path(self.persist_directory).exists():
                             # Database doesn't exist, create it
@@ -843,6 +908,10 @@ class DocumentIngestionAgent:
                     stats["errors"] += 1
                     console.print(f"[red]✗ Error processing {Path(file_path).name}: {e}[/red]")
                     progress.update(task, advance=1)
+        
+        # Final progress update
+        self.progress_writer.write(100, "Ingestion complete!", 
+                                   f"Processed {stats['added'] + stats['updated']} files")
         
         return stats
 
@@ -1400,11 +1469,19 @@ def main():
         help="Use legacy ingestion mode (load all files at once). "
              "By default, incremental mode is used.",
     )
+    parser.add_argument(
+        "--progress-file",
+        type=str,
+        help="File path to write progress updates (JSON format) for GUI integration",
+    )
 
     args = parser.parse_args()
 
     # Print banner
     console.print("\n[bold cyan]🤖 Adastrea Director - Document Ingestion[/bold cyan]\n")
+
+    # Create progress writer if requested
+    progress_writer = ProgressWriter(args.progress_file) if args.progress_file else None
 
     # Initialize agent
     agent = DocumentIngestionAgent(
@@ -1412,6 +1489,7 @@ def main():
         persist_directory=args.persist_dir,
         chunk_size=args.chunk_size,
         chunk_overlap=args.chunk_overlap,
+        progress_writer=progress_writer,
     )
 
     # Show stats if requested
