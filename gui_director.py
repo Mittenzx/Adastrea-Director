@@ -4,6 +4,8 @@ import subprocess
 import threading
 import sys
 import os
+import json
+import tempfile
 from datetime import datetime
 from pathlib import Path
 
@@ -54,6 +56,10 @@ class AdastreaDirectorApp:
         
         # Conversation history
         self.conversation_history = []
+        
+        # Create a single ttk.Style instance to be reused
+        self.style = ttk.Style()
+        self.style.theme_use('default')
         
         # Create menu bar
         self.create_menu_bar()
@@ -275,10 +281,8 @@ class AdastreaDirectorApp:
         )
         self.progress_label.pack(fill=tk.X, pady=(0, 8))
         
-        # Progress bar with custom style
-        style = ttk.Style()
-        style.theme_use('default')
-        style.configure("Ingestion.Horizontal.TProgressbar",
+        # Progress bar with custom style (reuse existing style instance)
+        self.style.configure("Ingestion.Horizontal.TProgressbar",
                        troughcolor=self.text_bg,
                        background=self.accent_color,
                        borderwidth=0,
@@ -313,16 +317,14 @@ class AdastreaDirectorApp:
                             highlightbackground=self.border_color)
         tabs_card.pack(fill=tk.BOTH, expand=True, pady=(0, 15))
         
-        # Style the notebook for dark theme
-        style = ttk.Style()
-        style.theme_use('default')
-        style.configure('TNotebook', background=self.bg_tertiary, borderwidth=0)
-        style.configure('TNotebook.Tab', 
+        # Style the notebook for dark theme (reuse existing style instance)
+        self.style.configure('TNotebook', background=self.bg_tertiary, borderwidth=0)
+        self.style.configure('TNotebook.Tab', 
                        background=self.button_bg, 
                        foreground=self.fg_color,
                        padding=[20, 10],
                        font=("Segoe UI", 10))
-        style.map('TNotebook.Tab',
+        self.style.map('TNotebook.Tab',
                  background=[('selected', self.bg_tertiary)],
                  foreground=[('selected', self.accent_color)])
         
@@ -1468,11 +1470,10 @@ GitHub: Mittenzx/Adastrea-Director
     
     def poll_progress_file(self):
         """Poll the progress file for updates."""
-        if not self.progress_file or not os.path.exists(self.progress_file):
+        if not self.progress_file:
             return
         
         try:
-            import json
             with open(self.progress_file, 'r') as f:
                 progress_data = json.load(f)
             
@@ -1485,9 +1486,15 @@ GitHub: Mittenzx/Adastrea-Director
             # Continue polling if not complete
             if percent < 100:
                 self.progress_poll_id = self.root.after(100, self.poll_progress_file)
-        except (json.JSONDecodeError, IOError):
+        except FileNotFoundError:
+            # File is gone, stop polling
+            self.hide_progress_bar()
+        except json.JSONDecodeError:
             # File might be being written, try again
             self.progress_poll_id = self.root.after(100, self.poll_progress_file)
+        except IOError:
+            # Other IO error, stop polling
+            self.hide_progress_bar()
     
     def run_query_event(self, event):
         """Handler for pressing Enter in the query box."""
@@ -1528,8 +1535,6 @@ GitHub: Mittenzx/Adastrea-Director
         show_progress = script_name == 'ingest.py'
         if show_progress:
             # Create a temporary progress file (using NamedTemporaryFile for security)
-            import tempfile
-            # Create file and keep it open to prevent race conditions
             temp_file = tempfile.NamedTemporaryFile(
                 mode='w', 
                 suffix='.json', 
@@ -1575,7 +1580,7 @@ GitHub: Mittenzx/Adastrea-Director
             if self.progress_file and os.path.exists(self.progress_file):
                 try:
                     os.remove(self.progress_file)
-                except:
+                except OSError:
                     pass
             self.progress_file = None
         

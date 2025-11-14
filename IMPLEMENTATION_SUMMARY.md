@@ -58,7 +58,7 @@ Reports progress at four key stages:
 - ✅ CodeQL scan passed (0 alerts)
 - Fixed initial issue with insecure `tempfile.mktemp()`
 - Proper file handling and cleanup
-- No race conditions
+- Race conditions when reading/writing the progress file are handled gracefully via exception catching and robust polling logic
 
 ### Testing
 - Unit tests for ProgressWriter class

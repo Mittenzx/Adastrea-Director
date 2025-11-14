@@ -48,6 +48,7 @@ import argparse
 import time
 import random
 import hashlib
+import json
 from pathlib import Path
 from typing import List, Dict, Any, Optional, Tuple
 from exceptions import (
@@ -148,7 +149,6 @@ class ProgressWriter:
             return
         
         try:
-            import json
             progress_data = {
                 'percent': min(100, max(0, percent)),
                 'label': label,
@@ -157,8 +157,8 @@ class ProgressWriter:
             with open(self.progress_file, 'w') as f:
                 json.dump(progress_data, f)
         except Exception as e:
-            # Silently fail - don't interrupt ingestion if progress writing fails
-            pass
+            # Don't interrupt ingestion if progress writing fails, but log the error for debugging
+            print(f"[ProgressWriter] Failed to write progress update: {e}", file=sys.stderr)
 
 
 class DocumentIngestionAgent:
@@ -798,10 +798,12 @@ class DocumentIngestionAgent:
             
             for idx, file_path in enumerate(file_list):
                 try:
-                    # Update GUI progress
-                    percent = (idx / len(file_list)) * 100
+                    # Calculate base progress for this file (each file represents a portion of total progress)
+                    base_percent = (idx / len(file_list)) * 100
+                    
+                    # Update GUI progress - Checking stage
                     self.progress_writer.write(
-                        percent,
+                        base_percent,
                         f"Processing file {idx + 1} of {len(file_list)}",
                         f"Checking: {Path(file_path).name}"
                     )
@@ -819,9 +821,10 @@ class DocumentIngestionAgent:
                         )
                         continue
                     
-                    # Load the file
+                    # Update GUI progress - Loading stage (25% through this file)
+                    loading_percent = base_percent + (0.25 / len(file_list)) * 100
                     self.progress_writer.write(
-                        percent,
+                        loading_percent,
                         f"Processing file {idx + 1} of {len(file_list)}",
                         f"Loading: {Path(file_path).name}"
                     )
@@ -835,9 +838,10 @@ class DocumentIngestionAgent:
                     # Enrich metadata with hash
                     documents = self._enrich_document_metadata(documents, file_hash=current_hash)
                     
-                    # Chunk the documents
+                    # Update GUI progress - Chunking stage (50% through this file)
+                    chunking_percent = base_percent + (0.5 / len(file_list)) * 100
                     self.progress_writer.write(
-                        percent,
+                        chunking_percent,
                         f"Processing file {idx + 1} of {len(file_list)}",
                         f"Chunking: {Path(file_path).name}"
                     )
@@ -857,10 +861,12 @@ class DocumentIngestionAgent:
                         stats["added"] += 1
                         action = "+ Added"
                     
+                    # Update GUI progress - Ingesting stage (75% through this file)
                     # Ingest the chunks
                     try:
+                        ingesting_percent = base_percent + (0.75 / len(file_list)) * 100
                         self.progress_writer.write(
-                            percent,
+                            ingesting_percent,
                             f"Processing file {idx + 1} of {len(file_list)}",
                             f"Ingesting: {Path(file_path).name} ({len(chunks)} chunks)"
                         )
