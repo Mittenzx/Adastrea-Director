@@ -630,8 +630,9 @@ def main():
                 for provider in ["gemini", "openai"]:
                     key = config_manager.get_api_key(provider)
                     if key:
-                        # Show first 8 and last 4 characters
-                        masked_key = f"{key[:8]}...{key[-4:]}" if len(key) > 12 else "***"
+                        # Show first 8 and last 4 characters only if key is long enough
+                        # Ensures at least 8 characters are hidden (20 - 8 - 4 = 8)
+                        masked_key = f"{key[:8]}...{key[-4:]}" if len(key) >= 20 else "***"
                         console.print(f"  {provider}: [dim]{masked_key}[/dim]")
                     else:
                         console.print(f"  {provider}: [dim]not set[/dim]")

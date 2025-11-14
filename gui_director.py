@@ -1078,6 +1078,8 @@ Type your question below to get started! 🚀
                 os.environ['GOOGLE_API_KEY'] = stored_key
                 has_key = True
         except Exception:
+            # Silently fail if config_manager is not available or config loading fails
+            # This allows the app to continue and prompt for API key normally
             pass
         
         # Check environment variables

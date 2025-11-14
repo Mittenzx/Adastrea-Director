@@ -12,7 +12,7 @@ Adastrea Director now supports secure local storage of API keys, eliminating the
 - **Encryption**: Keys are encrypted using PBKDF2HMAC with machine-specific salt
 - **Secure Permissions**: Config directory (700) and file (600) have secure permissions on Unix-like systems
 - **Multiple Providers**: Supports Gemini and OpenAI API keys
-- **Priority System**: Local config → Environment variables → .env file
+- **Priority System**: Local config → Environment variables (including .env)
 
 ## Quick Start
 
@@ -69,9 +69,9 @@ The system checks for API keys in this order:
 
 1. **Local Config** (`~/.adastrea/config.json`) - **Highest Priority**
 2. **Environment Variables** (`GEMINI_KEY`, `OPENAI_API_KEY`)
-3. **.env File** (in repository root)
+   *(Includes both shell environment variables and values loaded from a `.env` file in the repository root. The `.env` file is loaded into environment variables at startup, so both sources are treated identically at runtime.)*
 
-This means if you have a key saved in local config, it will be used even if you also have an environment variable set.
+This means if you have a key saved in local config, it will be used even if you also have an environment variable set (regardless of whether it was set in the shell or loaded from a `.env` file).
 
 ## Managing Stored Keys
 

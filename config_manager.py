@@ -56,7 +56,7 @@ def _get_machine_key() -> bytes:
     config to the specific machine.
 
     Returns:
-        32-byte encryption key
+        Base64-urlsafe-encoded bytes representing a 32-byte key (44 bytes when encoded)
     """
     import socket
     import getpass
@@ -85,7 +85,7 @@ def _encrypt_value(value: str) -> str:
         value: The value to encrypt
 
     Returns:
-        Base64-encoded encrypted value
+        Fernet token (base64-encoded encrypted value)
     """
     if not value:
         return ""
@@ -93,7 +93,7 @@ def _encrypt_value(value: str) -> str:
     key = _get_machine_key()
     f = Fernet(key)
     encrypted = f.encrypt(value.encode())
-    return base64.urlsafe_b64encode(encrypted).decode()
+    return encrypted.decode()  # Fernet tokens are already base64-encoded
 
 
 def _decrypt_value(encrypted_value: str) -> str:
@@ -101,7 +101,7 @@ def _decrypt_value(encrypted_value: str) -> str:
     Decrypt a configuration value.
 
     Args:
-        encrypted_value: The base64-encoded encrypted value
+        encrypted_value: The Fernet token (base64-encoded encrypted value)
 
     Returns:
         Decrypted value
@@ -112,7 +112,7 @@ def _decrypt_value(encrypted_value: str) -> str:
     try:
         key = _get_machine_key()
         f = Fernet(key)
-        encrypted = base64.urlsafe_b64decode(encrypted_value.encode())
+        encrypted = encrypted_value.encode()
         decrypted = f.decrypt(encrypted)
         return decrypted.decode()
     except Exception:

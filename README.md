@@ -186,7 +186,7 @@ cp .env.example .env
 # Edit .env and add your GEMINI_KEY
 ```
 
-**Priority:** Local config → .env file → environment variables
+**Priority:** Local config → Environment variables (including .env file)
 
 4. **(Optional)** Set up GitHub token for game repository ingestion:
 ```bash
