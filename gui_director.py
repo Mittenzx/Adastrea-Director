@@ -864,6 +864,7 @@ class AdastreaDirectorApp:
         edit_menu.add_command(label="Clear Conversation", command=self.clear_conversation, accelerator="Ctrl+L")
         edit_menu.add_separator()
         edit_menu.add_command(label="Set API Key", command=self.set_api_key, accelerator="Ctrl+K")
+        edit_menu.add_command(label="Settings...", command=self.open_settings, accelerator="Ctrl+,")
         
         # Help menu
         help_menu = Menu(menubar, tearoff=0, bg=self.button_bg, fg=self.fg_color,
@@ -959,6 +960,7 @@ class AdastreaDirectorApp:
         self.root.bind("<Control-L>", lambda e: self.clear_conversation())
         self.root.bind("<Control-e>", lambda e: self.export_conversation())
         self.root.bind("<Control-E>", lambda e: self.export_conversation())
+        self.root.bind("<Control-comma>", lambda e: self.open_settings())
         # Note: Ctrl+C is handled separately for copy
     
     def show_welcome_message(self):
@@ -1111,6 +1113,335 @@ Type your question below to get started! 🚀
             relief=tk.FLAT,
             padx=24,  # More padding for UE5 style
             pady=8,   # Better vertical padding
+            cursor="hand2",
+            font=("Segoe UI", 10),
+            borderwidth=1,
+            highlightthickness=1,
+            highlightbackground=self.button_bg
+        ).pack(side=tk.LEFT, padx=5)
+    
+    def open_settings(self):
+        """Opens a comprehensive settings dialog."""
+        dialog = tk.Toplevel(self.root)
+        dialog.title("Settings")
+        dialog.geometry("550x600")
+        dialog.configure(bg=self.bg_color)
+        dialog.transient(self.root)
+        dialog.grab_set()
+        
+        # Center the dialog
+        dialog.update_idletasks()
+        x = (dialog.winfo_screenwidth() // 2) - (dialog.winfo_width() // 2)
+        y = (dialog.winfo_screenheight() // 2) - (dialog.winfo_height() // 2)
+        dialog.geometry(f"+{x}+{y}")
+        
+        # Main container with scrollbar
+        main_container = tk.Frame(dialog, bg=self.bg_color)
+        main_container.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
+        
+        # Title
+        title_label = tk.Label(
+            main_container,
+            text="⚙️ Settings",
+            font=("Segoe UI", 14, "bold"),
+            bg=self.bg_color,
+            fg=self.accent_color
+        )
+        title_label.pack(anchor=tk.W, pady=(0, 20))
+        
+        # API Keys Section
+        api_section = tk.LabelFrame(
+            main_container,
+            text="API Keys",
+            font=("Segoe UI", 10, "bold"),
+            bg=self.bg_color,
+            fg=self.fg_color,
+            padx=15,
+            pady=10
+        )
+        api_section.pack(fill=tk.X, pady=(0, 15))
+        
+        # LLM Provider Selection
+        llm_frame = tk.Frame(api_section, bg=self.bg_color)
+        llm_frame.pack(fill=tk.X, pady=(5, 10))
+        
+        tk.Label(
+            llm_frame,
+            text="LLM Provider:",
+            bg=self.bg_color,
+            fg=self.fg_color,
+            font=("Segoe UI", 10)
+        ).pack(side=tk.LEFT, padx=(0, 10))
+        
+        llm_provider_var = tk.StringVar(value=os.getenv("LLM_PROVIDER", "gemini"))
+        llm_providers = [("Gemini (Recommended)", "gemini"), ("OpenAI", "openai")]
+        
+        for text, value in llm_providers:
+            tk.Radiobutton(
+                llm_frame,
+                text=text,
+                variable=llm_provider_var,
+                value=value,
+                bg=self.bg_color,
+                fg=self.fg_color,
+                selectcolor=self.text_bg,
+                activebackground=self.bg_color,
+                activeforeground=self.fg_color,
+                font=("Segoe UI", 9)
+            ).pack(side=tk.LEFT, padx=5)
+        
+        # Gemini API Key
+        gemini_frame = tk.Frame(api_section, bg=self.bg_color)
+        gemini_frame.pack(fill=tk.X, pady=(0, 10))
+        
+        tk.Label(
+            gemini_frame,
+            text="Gemini API Key:",
+            bg=self.bg_color,
+            fg=self.fg_color,
+            font=("Segoe UI", 10)
+        ).pack(anchor=tk.W, pady=(0, 5))
+        
+        gemini_key_entry = tk.Entry(
+            gemini_frame,
+            show='•',
+            font=("Segoe UI", 9),
+            bg=self.text_bg,
+            fg=self.fg_color,
+            insertbackground=self.fg_color,
+            relief=tk.FLAT,
+            highlightthickness=1,
+            highlightbackground=self.button_bg,
+            highlightcolor=self.accent_color
+        )
+        gemini_key_entry.pack(fill=tk.X, pady=(0, 5))
+        
+        # Try to load existing key
+        try:
+            import config_manager
+            existing_key = config_manager.get_api_key("gemini")
+            if existing_key:
+                gemini_key_entry.insert(0, existing_key)
+        except:
+            pass
+        
+        # OpenAI API Key
+        openai_frame = tk.Frame(api_section, bg=self.bg_color)
+        openai_frame.pack(fill=tk.X, pady=(0, 10))
+        
+        tk.Label(
+            openai_frame,
+            text="OpenAI API Key:",
+            bg=self.bg_color,
+            fg=self.fg_color,
+            font=("Segoe UI", 10)
+        ).pack(anchor=tk.W, pady=(0, 5))
+        
+        openai_key_entry = tk.Entry(
+            openai_frame,
+            show='•',
+            font=("Segoe UI", 9),
+            bg=self.text_bg,
+            fg=self.fg_color,
+            insertbackground=self.fg_color,
+            relief=tk.FLAT,
+            highlightthickness=1,
+            highlightbackground=self.button_bg,
+            highlightcolor=self.accent_color
+        )
+        openai_key_entry.pack(fill=tk.X, pady=(0, 5))
+        
+        # Try to load existing key
+        try:
+            import config_manager
+            existing_key = config_manager.get_api_key("openai")
+            if existing_key:
+                openai_key_entry.insert(0, existing_key)
+        except:
+            pass
+        
+        # Embedding Provider Selection
+        embedding_frame = tk.Frame(api_section, bg=self.bg_color)
+        embedding_frame.pack(fill=tk.X, pady=(5, 0))
+        
+        tk.Label(
+            embedding_frame,
+            text="Embedding Provider:",
+            bg=self.bg_color,
+            fg=self.fg_color,
+            font=("Segoe UI", 10)
+        ).pack(side=tk.LEFT, padx=(0, 10))
+        
+        embedding_provider_var = tk.StringVar(value=os.getenv("EMBEDDING_PROVIDER", "huggingface"))
+        embedding_providers = [("HuggingFace (Free)", "huggingface"), ("OpenAI", "openai")]
+        
+        for text, value in embedding_providers:
+            tk.Radiobutton(
+                embedding_frame,
+                text=text,
+                variable=embedding_provider_var,
+                value=value,
+                bg=self.bg_color,
+                fg=self.fg_color,
+                selectcolor=self.text_bg,
+                activebackground=self.bg_color,
+                activeforeground=self.fg_color,
+                font=("Segoe UI", 9)
+            ).pack(side=tk.LEFT, padx=5)
+        
+        # Display Settings Section
+        display_section = tk.LabelFrame(
+            main_container,
+            text="Display",
+            font=("Segoe UI", 10, "bold"),
+            bg=self.bg_color,
+            fg=self.fg_color,
+            padx=15,
+            pady=10
+        )
+        display_section.pack(fill=tk.X, pady=(0, 15))
+        
+        # Default Font Size
+        font_frame = tk.Frame(display_section, bg=self.bg_color)
+        font_frame.pack(fill=tk.X, pady=(5, 10))
+        
+        tk.Label(
+            font_frame,
+            text="Default Font Size:",
+            bg=self.bg_color,
+            fg=self.fg_color,
+            font=("Segoe UI", 10)
+        ).pack(side=tk.LEFT, padx=(0, 10))
+        
+        font_size_var = tk.IntVar(value=self.current_font_size)
+        font_spinbox = tk.Spinbox(
+            font_frame,
+            from_=8,
+            to=20,
+            textvariable=font_size_var,
+            width=5,
+            font=("Segoe UI", 9),
+            bg=self.text_bg,
+            fg=self.fg_color,
+            buttonbackground=self.button_bg,
+            relief=tk.FLAT
+        )
+        font_spinbox.pack(side=tk.LEFT)
+        
+        tk.Label(
+            font_frame,
+            text="pt",
+            bg=self.bg_color,
+            fg=self.fg_secondary,
+            font=("Segoe UI", 9)
+        ).pack(side=tk.LEFT, padx=(5, 0))
+        
+        # Auto-save Settings
+        autosave_var = tk.BooleanVar(value=True)
+        autosave_check = tk.Checkbutton(
+            display_section,
+            text="Auto-save settings",
+            variable=autosave_var,
+            bg=self.bg_color,
+            fg=self.fg_color,
+            selectcolor=self.text_bg,
+            activebackground=self.bg_color,
+            activeforeground=self.fg_color,
+            font=("Segoe UI", 9),
+            cursor="hand2"
+        )
+        autosave_check.pack(anchor=tk.W, pady=(0, 5))
+        
+        # Show timestamps
+        timestamps_var = tk.BooleanVar(value=True)
+        timestamps_check = tk.Checkbutton(
+            display_section,
+            text="Show timestamps in conversation",
+            variable=timestamps_var,
+            bg=self.bg_color,
+            fg=self.fg_color,
+            selectcolor=self.text_bg,
+            activebackground=self.bg_color,
+            activeforeground=self.fg_color,
+            font=("Segoe UI", 9),
+            cursor="hand2"
+        )
+        timestamps_check.pack(anchor=tk.W)
+        
+        # Button Frame
+        button_frame = tk.Frame(dialog, bg=self.bg_color)
+        button_frame.pack(side=tk.BOTTOM, pady=(0, 20))
+        
+        def save_settings():
+            """Save all settings."""
+            try:
+                import config_manager
+                
+                # Save LLM provider
+                os.environ['LLM_PROVIDER'] = llm_provider_var.get()
+                
+                # Save Gemini API key
+                gemini_key = gemini_key_entry.get().strip()
+                if gemini_key:
+                    config_manager.set_api_key("gemini", gemini_key)
+                    os.environ['GEMINI_KEY'] = gemini_key
+                    os.environ['GOOGLE_API_KEY'] = gemini_key
+                
+                # Save OpenAI API key
+                openai_key = openai_key_entry.get().strip()
+                if openai_key:
+                    config_manager.set_api_key("openai", openai_key)
+                    os.environ['OPENAI_API_KEY'] = openai_key
+                
+                # Save embedding provider
+                os.environ['EMBEDDING_PROVIDER'] = embedding_provider_var.get()
+                
+                # Apply font size
+                new_font_size = font_size_var.get()
+                if 8 <= new_font_size <= 20:
+                    self.current_font_size = new_font_size
+                    self.response_font.configure(size=self.current_font_size)
+                    self.response_text.tag_config("user", font=("Segoe UI", self.current_font_size, "bold"))
+                
+                self.update_status("Settings saved successfully", "success")
+                self.add_to_conversation("System", "Settings updated and saved.", is_system=True)
+                dialog.destroy()
+                
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to save settings: {e}")
+        
+        def cancel_settings():
+            dialog.destroy()
+        
+        # Save button
+        tk.Button(
+            button_frame,
+            text="Save",
+            command=save_settings,
+            bg=self.accent_color,
+            fg="#20232b",
+            activebackground=self.accent_hover,
+            activeforeground="#20232b",
+            relief=tk.FLAT,
+            padx=30,
+            pady=8,
+            cursor="hand2",
+            font=("Segoe UI", 10),
+            borderwidth=0
+        ).pack(side=tk.LEFT, padx=5)
+        
+        # Cancel button
+        tk.Button(
+            button_frame,
+            text="Cancel",
+            command=cancel_settings,
+            bg=self.button_bg,
+            fg=self.fg_color,
+            activebackground=self.button_active,
+            activeforeground=self.fg_color,
+            relief=tk.FLAT,
+            padx=30,
+            pady=8,
             cursor="hand2",
             font=("Segoe UI", 10),
             borderwidth=1,
@@ -1433,6 +1764,7 @@ Editing:
 • Ctrl+C - Copy last response
 • Ctrl+L - Clear conversation
 • Ctrl+K - Set API Key
+• Ctrl+, - Open Settings dialog
 
 Actions:
 • Enter or Ctrl+Enter - Send question
