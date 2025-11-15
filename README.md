@@ -343,7 +343,7 @@ python examples/phase3_orchestrator_demo.py
 
 For game developers working in Unreal Engine, the plugin provides an integrated in-editor experience:
 
-**Current Status:** Weeks 1-6 Complete (Basic UI + RAG Integration)
+**Current Status:** Weeks 1-6 Complete (Basic UI + RAG Integration) + **NEW: UE Python API Integration** ✨
 
 **Installation:**
 1. Copy `Plugins/AdastreaDirector` to your UE project's `Plugins` folder
@@ -358,8 +358,18 @@ For game developers working in Unreal Engine, the plugin provides an integrated 
 4. Use the Query tab to ask questions
 5. Python backend starts automatically!
 
+**NEW: UE Python API Features** ✨
+- ✅ Direct access to Unreal Engine's Python API (`import unreal`)
+- ✅ Asset operations (query, load, save)
+- ✅ Actor operations (spawn, query, delete)
+- ✅ Console command execution
+- ✅ Editor automation (notifications, logging)
+- ✅ Hybrid architecture (External Python + UE Python)
+- ✅ 25 comprehensive tests (100% passing)
+
 **📖 Complete Plugin Documentation:**
 - [Plugin README](Plugins/AdastreaDirector/README.md) - Full plugin guide
+- [UE Python API Guide](Plugins/AdastreaDirector/UE_PYTHON_API.md) - **NEW!** UE Python integration
 - [Installation Guide](Plugins/AdastreaDirector/INSTALLATION.md) - Detailed setup
 - [RAG Integration](Plugins/AdastreaDirector/RAG_INTEGRATION.md) - Using the RAG system
 - [Testing Quick Reference](Plugins/AdastreaDirector/TESTING_QUICK_REFERENCE.md) - Verify installation

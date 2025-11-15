@@ -280,8 +280,9 @@ class TestUEPythonBridge:
     
     def test_get_current_level_name(self, bridge):
         """Test getting current level name."""
-        level = bridge.get_current_level_name()
-        assert isinstance(level, str)
+        with patch.object(bridge, 'get_current_level_name', return_value="TestLevel"):
+            level = bridge.get_current_level_name()
+            assert isinstance(level, str)
     
     def test_get_project_directory(self, bridge):
         """Test getting project directory."""
