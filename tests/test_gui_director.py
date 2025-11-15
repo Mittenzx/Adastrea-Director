@@ -396,5 +396,36 @@ class TestGUIIntegration:
         pass
 
 
+class TestModuleImports:
+    """Test that the GUI module and its dependencies can be imported."""
+    
+    def test_gui_director_imports(self):
+        """Test that gui_director module can be imported."""
+        try:
+            import gui_director
+            assert hasattr(gui_director, 'AdastreaDirectorApp')
+            assert hasattr(gui_director, 'main')
+        except ImportError as e:
+            pytest.fail(f"Failed to import gui_director: {e}")
+    
+    def test_required_dependencies(self):
+        """Test that required dependencies are available."""
+        required_modules = [
+            'tkinter',
+            'threading',
+            'subprocess',
+            'json',
+            'os',
+            'sys',
+            'datetime'
+        ]
+        
+        for module_name in required_modules:
+            try:
+                __import__(module_name)
+            except ImportError:
+                pytest.fail(f"Required module '{module_name}' not available")
+
+
 if __name__ == '__main__':
     pytest.main([__file__, '-v'])
