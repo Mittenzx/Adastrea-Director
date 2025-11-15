@@ -4,6 +4,21 @@
 
 ---
 
+## 🎯 First: Choose Your Deployment Mode
+
+**Are you wondering about the GUI vs Plugin?**
+
+📖 Read: **[CHOOSING_DEPLOYMENT_MODE.md](CHOOSING_DEPLOYMENT_MODE.md)** - Quick guide to choosing between standalone and plugin
+
+**Key Points:**
+- ✅ **One AI system** with two deployment modes (standalone Python or UE plugin)
+- ✅ **Same backend** powers both—no duplication
+- ✅ **Use both!** Standalone for quick tests, plugin for integrated workflow
+
+📊 For complete architecture details: **[ARCHITECTURE_ANALYSIS.md](ARCHITECTURE_ANALYSIS.md)**
+
+---
+
 ## 📚 Three Ways to Navigate
 
 Choose the documentation index that best fits your needs:
