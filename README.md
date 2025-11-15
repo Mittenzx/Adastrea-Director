@@ -24,6 +24,26 @@ Adastrea Director is an AI-powered tool that aims to revolutionize game developm
 
 *Based on comprehensive analysis: [ADASTREA_DIRECTOR_ANALYSIS.md](ADASTREA_DIRECTOR_ANALYSIS.md)*
 
+## Architecture: One System, Two Deployment Options
+
+Adastrea Director is **one AI system** with **two deployment modes**:
+
+### 🖥️ Standalone Mode (Python GUI/CLI)
+- **Purpose:** Development, testing, and standalone use
+- **Technology:** Python + tkinter/CLI
+- **Best for:** Rapid prototyping, testing, non-UE users
+- **Status:** ✅ Fully functional (Phases 1-3)
+
+### 🎮 Plugin Mode (Unreal Engine)
+- **Purpose:** Integrated in-editor workflow
+- **Technology:** C++ (UE Plugin) + same Python backend
+- **Best for:** Game developers working in Unreal Engine
+- **Status:** 🚀 In development (Weeks 1-6 complete: basic UI + RAG)
+
+**Key Point:** Both modes use the **same Python backend** (RAG, Planning, Agents). The plugin is not a separate implementation—it's a wrapper that integrates the standalone system into Unreal Engine via IPC.
+
+📖 **See:** [ARCHITECTURE_ANALYSIS.md](ARCHITECTURE_ANALYSIS.md) for complete architecture details
+
 ## Current Phase: Phase 2 Complete - Ready for Phase 3
 
 Phase 2 has been **completed successfully** with intelligent goal decomposition, task planning, and code generation capabilities. The system can now break down high-level development goals into concrete, actionable tasks with dependencies, priorities, and effort estimates.
@@ -202,6 +222,17 @@ This is only needed if you want to ingest documents from the private Mittenzx/Ad
 
 ### Usage
 
+**💡 Which mode should I use?**
+
+| Use Case | Recommended Mode | Why |
+|----------|------------------|-----|
+| Working in Unreal Engine | 🎮 **Plugin** | Integrated workflow, no context switching |
+| Testing/prototyping new features | 🖥️ **Standalone** | Faster iteration, easier debugging |
+| Non-UE game development | 🖥️ **Standalone** | Works with any project type |
+| Plugin is not yet feature-complete | 🖥️ **Standalone** | All features available immediately |
+
+Both modes share the same AI backend, so you get the same quality of results!
+
 #### Planning System (Phase 2 - NEW!)
 
 Create implementation plans for your development goals:
@@ -308,7 +339,38 @@ python examples/phase3_orchestrator_demo.py
 - [Agent Orchestration Guide](docs/phases/AGENT_ORCHESTRATION.md) - Complete CLI and Dashboard documentation
 - [PHASE3_GUIDE.md](PHASE3_GUIDE.md) - Autonomous agents user guide
 
-#### Graphical User Interface (GUI)
+#### Unreal Engine Plugin
+
+For game developers working in Unreal Engine, the plugin provides an integrated in-editor experience:
+
+**Current Status:** Weeks 1-6 Complete (Basic UI + RAG Integration)
+
+**Installation:**
+1. Copy `Plugins/AdastreaDirector` to your UE project's `Plugins` folder
+2. Regenerate project files (right-click .uproject → Generate Visual Studio project files)
+3. Build your project
+4. Launch Unreal Engine Editor
+
+**Usage:**
+1. Open **Window → Developer Tools → Adastrea Director**
+2. The AI assistant panel opens as a dockable tab
+3. Use the Ingestion tab to add your documentation
+4. Use the Query tab to ask questions
+5. Python backend starts automatically!
+
+**📖 Complete Plugin Documentation:**
+- [Plugin README](Plugins/AdastreaDirector/README.md) - Full plugin guide
+- [Installation Guide](Plugins/AdastreaDirector/INSTALLATION.md) - Detailed setup
+- [RAG Integration](Plugins/AdastreaDirector/RAG_INTEGRATION.md) - Using the RAG system
+- [Testing Quick Reference](Plugins/AdastreaDirector/TESTING_QUICK_REFERENCE.md) - Verify installation
+
+**Coming Soon (Weeks 7-16):**
+- Planning agent integration (task breakdown in UE)
+- Performance profiling UI
+- Bug detection integration
+- Code quality monitoring
+
+#### Graphical User Interface (GUI - Standalone)
 
 For a more user-friendly experience, you can use the enhanced GUI application:
 

@@ -10,6 +10,22 @@
 
 Create an **AI Game Director** - a comprehensive system that understands natural language commands to assist with and eventually automate parts of the game development lifecycle in Unreal Engine. The system evolves across four phases, from a context-aware assistant to a creative development partner.
 
+### Architecture: Two Deployment Modes
+
+**Standalone Python (GUI/CLI):**
+- Development and testing platform
+- Rapid prototyping of new features
+- Standalone tool for non-UE users
+- All phases fully implemented
+
+**Unreal Engine Plugin:**
+- Integrated in-editor workflow
+- Uses same Python backend via IPC
+- Progressive feature integration (Weeks 1-16)
+- Target: Marketplace distribution
+
+📖 **See:** [ARCHITECTURE_ANALYSIS.md](ARCHITECTURE_ANALYSIS.md) for complete details
+
 ---
 
 ## Project Overview
@@ -943,7 +959,157 @@ We welcome contributions! See CONTRIBUTING.md for:
 
 ---
 
+## Unreal Engine Plugin Development Timeline
+
+### Overview
+
+The Unreal Engine plugin development runs in **parallel** with the standalone Python development. The plugin wraps the same Python backend that powers the GUI/CLI tools, providing an integrated in-editor experience.
+
+### Architecture Principle
+
+```
+┌─────────────────────────────────────┐
+│  Python Backend (Shared)            │
+│  - RAG System                       │
+│  - Planning Agents                  │
+│  - Autonomous Agents                │
+│  └─> Used by both GUI and Plugin   │
+└─────────────────────────────────────┘
+         ↑                    ↑
+         │                    │
+    ┌────┴────┐          ┌────┴────────┐
+    │   GUI   │          │   Plugin    │
+    │ tkinter │          │ Slate UI +  │
+    │   CLI   │          │ C++ Bridge  │
+    └─────────┘          └─────────────┘
+```
+
+### Plugin Development Schedule (16 Weeks)
+
+#### Weeks 1-4: Plugin Shell ✅ COMPLETE
+
+**Week 1:** Project Setup (COMPLETE)
+- ✅ Plugin structure and module organization
+- ✅ Build system configuration
+- ✅ Documentation foundation
+
+**Week 2:** Python Bridge (COMPLETE)
+- ✅ Python subprocess management
+- ✅ IPC socket communication
+- ✅ High-level bridge interface
+- ✅ Error handling and recovery
+
+**Week 3:** Python Backend IPC (COMPLETE)
+- ✅ IPC server with request routing
+- ✅ Performance optimization (<1ms latency)
+- ✅ Response serialization
+- ✅ Integration framework
+
+**Week 4:** Basic UI (COMPLETE)
+- ✅ Main Slate panel
+- ✅ Editor menu integration
+- ✅ Query input/results widgets
+- ✅ Dockable panel support
+
+#### Weeks 5-6: RAG Integration ✅ COMPLETE
+
+**Week 5:** Document Ingestion (COMPLETE)
+- ✅ Port ingest.py to plugin context (`rag_ingestion.py`)
+- ✅ UI for selecting docs folder
+- ✅ Progress tracking with live updates
+- ✅ ChromaDB integration
+
+**Week 6:** Query System (COMPLETE)
+- ✅ Port main.py query system (`rag_query.py`)
+- ✅ UI for entering queries and viewing results
+- ✅ Conversation history management
+- ✅ Result caching for performance
+
+**Status:** ✅ Plugin successfully queries same RAG system as GUI!
+
+#### Weeks 7-12: Planning Features ⏳ IN PROGRESS
+
+**Week 7-8:** Planning Agent Integration
+- ⏳ Port goal_analysis_agent.py
+- ⏳ Port task_decomposition_agent.py
+- ⏳ IPC handlers for planning requests
+
+**Week 9-10:** Planning UI
+- ⏳ Goal input and analysis display
+- ⏳ Task tree visualization
+- ⏳ Dependency graph rendering
+- ⏳ Export plans from UE
+
+**Week 11-12:** Code Generation Integration
+- ⏳ Port code_generation_agent.py
+- ⏳ UI for viewing code suggestions
+- ⏳ Multiple implementation approaches display
+- ⏳ Copy/export generated code
+
+#### Weeks 13-16: Polish & Release ⏳ PLANNED
+
+**Week 13-14:** Testing & Refinement
+- ⏳ Cross-platform testing (Windows, Mac, Linux)
+- ⏳ Performance optimization
+- ⏳ Bug fixes and stability
+- ⏳ Documentation completion
+
+**Week 15-16:** Marketplace Preparation
+- ⏳ Marketplace submission materials
+- ⏳ Video demonstration
+- ⏳ User guides and tutorials
+- ⏳ Final testing with real projects
+
+### Plugin vs Standalone: Development Strategy
+
+**Standalone Python (GUI/CLI):**
+- **Role:** Rapid prototyping and testing platform
+- **Priority:** Implement features here first (faster iteration)
+- **Maintenance:** Bug fixes, keep in sync with backend
+- **Users:** Developers, testers, non-UE users
+
+**Unreal Engine Plugin:**
+- **Role:** Production deployment for game developers
+- **Priority:** Feature parity + UE-specific enhancements
+- **Maintenance:** Full support, marketplace updates
+- **Users:** UE game developers (primary target)
+
+**Workflow:**
+1. Prototype feature in Python (fast iteration)
+2. Test with GUI/CLI
+3. Integrate into plugin once proven
+4. Both modes use same backend
+
+**Result:** Faster development, lower risk, better quality
+
+### Current Status (Week 6)
+
+**Completed:**
+- ✅ Plugin infrastructure (C++ bridge, IPC, UI framework)
+- ✅ RAG system fully integrated (ingestion + query)
+- ✅ End-to-end communication verified
+- ✅ Performance targets exceeded (50x better than target)
+
+**Next Steps (Week 7):**
+- ⏳ Begin planning agent integration
+- ⏳ Design planning UI in Slate
+- ⏳ Test with real game projects
+
+📖 **Plugin Documentation:**
+- [Plugin README](Plugins/AdastreaDirector/README.md)
+- [Week 5-6 Completion Report](PLUGIN_WEEKS_5_6_SUMMARY.md)
+- [RAG Integration Guide](Plugins/AdastreaDirector/RAG_INTEGRATION.md)
+- [Testing Quick Reference](Plugins/AdastreaDirector/TESTING_QUICK_REFERENCE.md)
+
+---
+
 ## Changelog
+
+### 2025-11-15
+- Added architecture clarification (GUI vs Plugin)
+- Added Unreal Engine Plugin Development Timeline
+- Clarified parallel development strategy
+- Added Week 1-6 plugin completion status
 
 ### 2025-11-12
 - Initial ROADMAP.md creation
