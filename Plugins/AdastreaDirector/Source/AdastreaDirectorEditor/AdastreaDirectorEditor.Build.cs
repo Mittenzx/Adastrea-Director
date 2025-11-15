@@ -43,7 +43,6 @@ public class AdastreaDirectorEditor : ModuleRules
 				"UnrealEd",
 				"EditorStyle",
 				"ToolMenus",
-				"WorkspaceMenuStructure",
 				"Projects",
 				"Json",
 				"JsonUtilities",
