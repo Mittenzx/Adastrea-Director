@@ -85,7 +85,7 @@ cp -r Plugins/AdastreaDirector <YourProject>/Plugins/
 | **RAG Queries** | ✅ Full | ✅ Full | Same backend |
 | **Goal Analysis** | ✅ Full | ⏳ Week 7-8 | Coming to plugin |
 | **Task Decomposition** | ✅ Full | ⏳ Week 7-8 | Coming to plugin |
-| **Code Generation** | ✅ Full | ⏳ Week 9-10 | Coming to plugin |
+| **Code Generation** | ✅ Full | ⏳ Week 11-12 | Coming to plugin |
 | **Performance Profiling** | ✅ Full | ⏳ Week 13+ | Coming to plugin |
 | **Bug Detection** | ✅ Full | ⏳ Week 13+ | Coming to plugin |
 | **Code Quality** | ✅ Full | ⏳ Week 13+ | Coming to plugin |
