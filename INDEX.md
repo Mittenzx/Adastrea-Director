@@ -32,6 +32,11 @@ Welcome to the Adastrea Director comprehensive documentation index! This is your
 - **[CONTRIBUTING.md](CONTRIBUTING.md)** - How to contribute to the project
 - **[LICENSE](LICENSE)** - Project license information
 
+### Architecture Documentation (NEW! ✨)
+- **[ARCHITECTURE_ANALYSIS.md](ARCHITECTURE_ANALYSIS.md)** - Complete technical analysis: GUI vs Plugin
+- **[ARCHITECTURE_REVIEW_SUMMARY.md](ARCHITECTURE_REVIEW_SUMMARY.md)** - Executive summary for stakeholders
+- **[CHOOSING_DEPLOYMENT_MODE.md](CHOOSING_DEPLOYMENT_MODE.md)** - Quick guide: When to use GUI vs Plugin
+
 ### 📂 Organized Documentation Hub
 **[docs/INDEX.md](docs/INDEX.md)** - The comprehensive documentation index covering:
 - Installation & Setup Guides
