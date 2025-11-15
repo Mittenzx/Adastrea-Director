@@ -5,7 +5,6 @@
 #include "Modules/ModuleManager.h"
 #include "Framework/Docking/TabManager.h"
 #include "Widgets/Docking/SDockTab.h"
-#include "WorkspaceMenuStructure.h"
 #include "ToolMenus.h"
 
 // Define custom log category for AdastreaDirectorEditor
