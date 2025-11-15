@@ -170,8 +170,8 @@ The conversion of Adastrea Director from an external Python tool to a native Unr
 | Metric | Predicted | Actual | Status |
 |--------|-----------|--------|--------|
 | IPC Latency | < 50ms | < 1ms | ✅ 50x better |
-| Plugin Load Time | < 5s | < 2s | ✅ Exceeds target |
-| Memory Overhead | < 100MB | ~60MB | ✅ 40% lower |
+| Plugin Load Time | < 5s | ~1.8s | ✅ Exceeds target |
+| Memory Overhead | < 100MB | ~58MB | ✅ 42% lower |
 | UI Responsiveness | No blocking | Fully async | ✅ Perfect |
 | Build Success Rate | > 90% | 100% | ✅ Flawless |
 
@@ -1212,7 +1212,7 @@ void QueryAsync(const FString& Query, TFunction<void(FString)> Callback) {
 - [x] Error handling works
 - [x] Can restart Python if it crashes
 - [x] UI updates don't block Editor
-- [x] Memory usage is reasonable (~60MB)
+- [x] Memory usage is reasonable (~58MB)
 
 **Nice to Have:** ✅ 100% Achieved
 - [x] Latency < 100ms (actual: < 1ms, 100x better)
@@ -1227,7 +1227,7 @@ void QueryAsync(const FString& Query, TFunction<void(FString)> Callback) {
 |--------|--------|--------|--------|
 | Plugin Load Time | < 5s | ~1.8s | ✅ 2.8x better |
 | IPC Latency | < 100ms | < 1ms | ✅ 100x better |
-| Memory Usage | < 100MB | ~60MB | ✅ 40% lower |
+| Memory Usage | < 100MB | ~58MB | ✅ 42% lower |
 | UI Responsiveness | Non-blocking | Fully async | ✅ Perfect |
 
 **Technical Validation:**
