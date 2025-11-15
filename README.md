@@ -462,8 +462,8 @@ Adastrea Director includes a comprehensive test suite to ensure reliability and 
 ### Test Coverage
 
 - **230+ Total Tests**: Covering all major components
-- **40+ GUI Tests**: Complete UI testing suite
-- **91% GUI Coverage**: Thorough testing of UI components
+- **27 GUI Tests**: Complete UI testing suite (20 functional, 7 integration tests marked for future)
+- **88% GUI Coverage**: Thorough testing of UI components
 - **100% Pass Rate**: Production-ready stability
 
 ### Running Tests

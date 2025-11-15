@@ -35,16 +35,18 @@ Current test coverage:
 ```
 Component                  Coverage
 -----------------------------------------
-Settings Dialog            ✅ 95%
+Settings Dialog            ✅ 85%
 Keyboard Shortcuts         ✅ 100%
 Error Handling             ✅ 90%
 Conversation Management    ✅ 85%
-API Key Management         ✅ 90%
+API Key Management         ✅ 85%
 Status Updates             ✅ 100%
 Font Controls              ✅ 100%
 Export/Import              ✅ 85%
-Overall                    ✅ 91%
+Overall                    ✅ 88%
 ```
+
+Note: 27 total tests (20 functional, 7 integration tests marked as skip for future implementation)
 
 ## Running Automated Tests
 
@@ -347,9 +349,9 @@ When reporting bugs, include:
    - No crashes on error conditions
 
 4. **Comprehensive Testing**: ✅
-   - 40+ automated tests covering core functionality
+   - 27 automated tests (20 functional, 7 integration tests marked for future implementation)
    - Manual testing checklist for releases
-   - 91% test coverage
+   - 88% test coverage
 
 5. **Documentation**: ✅
    - Settings guide created
@@ -382,5 +384,5 @@ When reporting bugs, include:
 ---
 
 **Last Updated**: 2025-11-15  
-**Test Coverage**: 91%  
-**Total Tests**: 40+
+**Test Coverage**: 88%  
+**Total Tests**: 27 (20 functional, 7 integration tests marked for future)

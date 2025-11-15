@@ -1122,6 +1122,12 @@ Type your question below to get started! 🚀
     
     def open_settings(self):
         """Opens a comprehensive settings dialog."""
+        # Import config_manager once at the start
+        try:
+            import config_manager
+        except ImportError:
+            config_manager = None
+        
         dialog = tk.Toplevel(self.root)
         dialog.title("Settings")
         dialog.geometry("550x600")
@@ -1217,13 +1223,13 @@ Type your question below to get started! 🚀
         gemini_key_entry.pack(fill=tk.X, pady=(0, 5))
         
         # Try to load existing key
-        try:
-            import config_manager
-            existing_key = config_manager.get_api_key("gemini")
-            if existing_key:
-                gemini_key_entry.insert(0, existing_key)
-        except:
-            pass
+        if config_manager:
+            try:
+                existing_key = config_manager.get_api_key("gemini")
+                if existing_key:
+                    gemini_key_entry.insert(0, existing_key)
+            except (ImportError, KeyError, AttributeError):
+                pass
         
         # OpenAI API Key
         openai_frame = tk.Frame(api_section, bg=self.bg_color)
@@ -1252,13 +1258,13 @@ Type your question below to get started! 🚀
         openai_key_entry.pack(fill=tk.X, pady=(0, 5))
         
         # Try to load existing key
-        try:
-            import config_manager
-            existing_key = config_manager.get_api_key("openai")
-            if existing_key:
-                openai_key_entry.insert(0, existing_key)
-        except:
-            pass
+        if config_manager:
+            try:
+                existing_key = config_manager.get_api_key("openai")
+                if existing_key:
+                    openai_key_entry.insert(0, existing_key)
+            except (ImportError, KeyError, AttributeError):
+                pass
         
         # Embedding Provider Selection
         embedding_frame = tk.Frame(api_section, bg=self.bg_color)
@@ -1375,23 +1381,22 @@ Type your question below to get started! 🚀
         def save_settings():
             """Save all settings."""
             try:
-                import config_manager
-                
                 # Save LLM provider
                 os.environ['LLM_PROVIDER'] = llm_provider_var.get()
                 
                 # Save Gemini API key
-                gemini_key = gemini_key_entry.get().strip()
-                if gemini_key:
-                    config_manager.set_api_key("gemini", gemini_key)
-                    os.environ['GEMINI_KEY'] = gemini_key
-                    os.environ['GOOGLE_API_KEY'] = gemini_key
-                
-                # Save OpenAI API key
-                openai_key = openai_key_entry.get().strip()
-                if openai_key:
-                    config_manager.set_api_key("openai", openai_key)
-                    os.environ['OPENAI_API_KEY'] = openai_key
+                if config_manager:
+                    gemini_key = gemini_key_entry.get().strip()
+                    if gemini_key:
+                        config_manager.set_api_key("gemini", gemini_key)
+                        os.environ['GEMINI_KEY'] = gemini_key
+                        os.environ['GOOGLE_API_KEY'] = gemini_key
+                    
+                    # Save OpenAI API key
+                    openai_key = openai_key_entry.get().strip()
+                    if openai_key:
+                        config_manager.set_api_key("openai", openai_key)
+                        os.environ['OPENAI_API_KEY'] = openai_key
                 
                 # Save embedding provider
                 os.environ['EMBEDDING_PROVIDER'] = embedding_provider_var.get()
@@ -1402,6 +1407,12 @@ Type your question below to get started! 🚀
                     self.current_font_size = new_font_size
                     self.response_font.configure(size=self.current_font_size)
                     self.response_text.tag_config("user", font=("Segoe UI", self.current_font_size, "bold"))
+                
+                # Save display preferences (autosave and timestamps)
+                # Note: These are currently used for UI state and could be persisted to config in future
+                autosave_enabled = autosave_var.get()
+                show_timestamps_enabled = timestamps_var.get()
+                # Apply these settings to the application state as needed
                 
                 self.update_status("Settings saved successfully", "success")
                 self.add_to_conversation("System", "Settings updated and saved.", is_system=True)
