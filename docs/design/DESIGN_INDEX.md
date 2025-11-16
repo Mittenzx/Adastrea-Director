@@ -12,6 +12,8 @@ This index provides a comprehensive overview of all UI/UX design documentation f
 Start here to understand the design principles, visual language, and component specifications:
 1. [UI/UX Design System](UI_UX_DESIGN_SYSTEM.md) - Core design principles and system
 2. [Visual Design Guide](DESIGN_GUIDE.md) - Visual specifications and examples
+3. [Interface Mockups](UE_INTERFACE_MOCKUPS.md) ✨ **NEW** - Complete visual mockups
+4. [Mockups Quick Reference](INTERFACE_MOCKUPS_QUICK_REFERENCE.md) ✨ **NEW** - Condensed mockups
 
 ### For Developers
 Start here to implement UI components with code examples:
@@ -34,6 +36,10 @@ Design Documentation/
 │   ├── UI_UX_DESIGN_SYSTEM.md ⭐ (Start here for design principles)
 │   ├── DESIGN_GUIDE.md (Visual specifications)
 │   └── COMPONENT_LIBRARY.md (Code implementations)
+│
+├── Visual Mockups ✨ NEW
+│   ├── UE_INTERFACE_MOCKUPS.md (Comprehensive interface mockups)
+│   └── INTERFACE_MOCKUPS_QUICK_REFERENCE.md (Quick reference guide)
 │
 ├── Implementation Documentation
 │   ├── GUI_IMPROVEMENTS.md (Feature documentation)
@@ -337,10 +343,54 @@ We welcome feedback on the design system:
 
 ---
 
+## Visual Mockups ✨ NEW
+
+### UE Interface Mockups (UE_INTERFACE_MOCKUPS.md)
+
+**Purpose**: Comprehensive visual mockups of all interfaces
+
+**Contents**:
+- Main Query Interface mockup
+- Document Ingestion Interface mockup
+- Settings Panel mockup
+- Integrated UE5 Editor View mockup
+- Standalone Python GUI mockup
+- Color palette visualization
+- Typography specifications
+- Icon reference
+- Interaction states
+- Layout principles
+- Future enhancements preview
+
+**Best For**: Visualizing the complete interface, understanding layout, planning implementation
+
+**Size**: ~43KB | ~565 lines
+
+---
+
+### Interface Mockups Quick Reference (INTERFACE_MOCKUPS_QUICK_REFERENCE.md)
+
+**Purpose**: Condensed quick reference guide
+
+**Contents**:
+- All major interfaces in compact format
+- Color reference
+- Layout specs
+- Icon reference
+- Typography reference
+- Future phases preview
+
+**Best For**: Quick lookups, rapid prototyping, sharing with team
+
+**Size**: ~15KB | ~315 lines
+
+---
+
 ## Version History
 
 | Version | Date       | Changes                                    |
 |---------|------------|--------------------------------------------|
+| 1.1     | 2025-11-16 | Added comprehensive interface mockups      |
 | 1.0     | 2025-11-08 | Initial design documentation created       |
 
 ---
