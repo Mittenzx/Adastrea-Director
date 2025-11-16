@@ -307,19 +307,58 @@ All IPC tests passed!
 
 **Goal:** Verify backend performance and reliability
 
+**What you're checking:** The communication between C++ and Python is fast and reliable, even under heavy use. This ensures the plugin will feel responsive and won't slow down Unreal Engine.
+
+**Why this matters:** If communication is slow (like a laggy video call), the plugin will feel sluggish and frustrate users. We need it to be nearly instant.
+
+**Key concept - Performance metrics:**
+We measure how long operations take (latency) and how much data can be processed (throughput). Good performance means users don't notice any delay.
+
+**Skill level:** Basic - running test scripts
+
+**Time needed:** 1-2 minutes
+
 ### Essential Checks
-- [ ] Performance metrics working
-- [ ] All handlers implemented
-- [ ] Latency < 1ms for ping
-- [ ] Concurrent requests handled
+- [ ] Performance metrics working (the system can track its own speed)
+- [ ] All handlers implemented (all types of requests are supported)
+- [ ] Latency < 1ms for ping (communication is nearly instant)
+- [ ] Concurrent requests handled (multiple requests at once work)
 
 ### Quick Test
+
 ```bash
-cd Python
+# Navigate to Python backend folder
+cd Plugins/AdastreaDirector/Python
+
+# Run the performance test script
 python test_ipc_performance.py
+# This script:
+# 1. Sends 100 test requests
+# 2. Measures how long each takes
+# 3. Calculates average, min, and max times
+# 4. Reports if performance meets targets
 ```
 
-**Expected:** Average latency < 1ms ✅
+**Expected Output:**
+```
+Testing IPC Performance...
+Sending 100 requests...
+Average latency: 0.42ms
+Min: 0.15ms, Max: 2.1ms
+✅ Performance target met! (target: < 50ms average)
+```
+
+**What the numbers mean:**
+- **Average latency**: Typical time for one request (should be well under 50ms)
+- **Min**: Fastest request (shows best-case performance)
+- **Max**: Slowest request (shows worst-case performance)
+- Our target is < 50ms average, but we typically achieve < 1ms (50x better!)
+
+**If performance is slow:**
+- Close other programs that might be using resources
+- Check if antivirus is scanning files
+- Ensure computer isn't in power-saving mode
+- On Windows, check Windows Defender isn't blocking localhost
 
 **Full Details:** [TESTING_CHECKLIST_WEEKS_1_6.md#week-3-python-backend-ipc-testing](TESTING_CHECKLIST_WEEKS_1_6.md#week-3-python-backend-ipc-testing)
 
@@ -329,18 +368,71 @@ python test_ipc_performance.py
 
 **Goal:** Verify UI loads and communicates
 
-### Essential Checks
-- [ ] Panel opens in UE
-- [ ] Query input works
-- [ ] Send button functional
-- [ ] Results display updates
+**What you're checking:** The user interface appears in Unreal Engine and you can interact with it to send queries and see results. This is what users will actually use to access the AI features.
 
-### Quick Test
-**Manual in Unreal Editor:**
-1. Window → Developer Tools → Adastrea Director
-2. Type "test query"
-3. Click "Send Query"
-4. Verify response appears
+**Why this matters:** All the backend functionality is useless if users can't access it! The UI is the "front door" to the plugin's AI capabilities.
+
+**Key concept - Slate UI:**
+Slate is Unreal Engine's framework for building editor interfaces. It handles windows, buttons, text boxes, and all the visual elements you interact with.
+
+**Skill level:** Very easy - just clicking and typing in Unreal Engine
+
+**Time needed:** 3-5 minutes
+
+### Essential Checks
+- [ ] Panel opens in UE (the Adastrea Director window appears)
+- [ ] Query input works (you can type in the text box)
+- [ ] Send button functional (clicking the button does something)
+- [ ] Results display updates (responses show up in the results area)
+
+### Quick Test - Manual in Unreal Editor
+
+**Step-by-step instructions:**
+
+1. **Open Unreal Engine Editor**
+   - Launch Unreal Engine
+   - Open your test project
+
+2. **Open the Adastrea Director Panel**
+   - Go to the menu bar at the top
+   - Click **Window** → **Developer Tools** → **Adastrea Director**
+   - ✅ A new dockable panel should appear
+
+3. **Check the Interface**
+   - ✅ Should see a text input box at the top
+   - ✅ Should see a "Send Query" button
+   - ✅ Should see a results display area below
+   - ✅ Panel should be dockable (can drag it around)
+
+4. **Test Query Functionality**
+   - Click in the text input box
+   - Type: "test query"
+   - Click the "Send Query" button (or press Enter)
+   - ✅ Should see a response appear in the results area
+   - ✅ Response should appear within 1-2 seconds
+
+5. **Test Multiple Queries**
+   - Send another query
+   - ✅ New response should appear below the first one
+   - ✅ Should be able to scroll if responses get long
+
+**What a successful test looks like:**
+- Panel opens without errors
+- Can type in the input box
+- Button responds when clicked
+- Results show up in the display area
+- No freezing or crashes
+
+**If the panel doesn't open:**
+- Check Edit → Plugins → search "Adastrea Director" → should be Enabled
+- Check Output Log (Window → Output Log) for error messages
+- Try restarting Unreal Engine
+- Verify Week 1 tests passed (plugin must load correctly first)
+
+**If queries don't work:**
+- Check Python backend is running (see Week 2 tests)
+- Look for error messages in the Output Log
+- Verify Week 2 tests passed (Python connection must work)
 
 **Full Details:** [TESTING_CHECKLIST_WEEKS_1_6.md#week-4-basic-ui-testing](TESTING_CHECKLIST_WEEKS_1_6.md#week-4-basic-ui-testing)
 
@@ -350,23 +442,105 @@ python test_ipc_performance.py
 
 **Goal:** Verify document ingestion works
 
-### Essential Checks
-- [ ] Ingestion UI functional
-- [ ] Progress bar updates
-- [ ] Documents ingested
-- [ ] ChromaDB created
+**What you're checking:** The plugin can read documentation files, process them, and store them in a database so the AI can search through them to answer questions.
 
-### Quick Test
+**Why this matters:** The AI needs to learn about your project from documentation. Ingestion is like teaching the AI by having it read all your docs.
+
+**Key concepts:**
+- **Document ingestion**: Reading files and preparing them for AI processing
+- **ChromaDB**: A database that stores documents in a way the AI can search efficiently
+- **RAG (Retrieval-Augmented Generation)**: AI technique that searches documents to find relevant information before answering questions
+
+**Skill level:** Basic for automated test; Easy for manual test
+
+**Time needed:** 2-3 minutes for test; 5-30 minutes for real ingestion (depends on document count)
+
+### Essential Checks
+- [ ] Ingestion UI functional (the ingestion tab works)
+- [ ] Progress bar updates (shows real-time progress)
+- [ ] Documents ingested (files are processed successfully)
+- [ ] ChromaDB created (database folder is created)
+
+### Quick Automated Test
+
 ```bash
-cd Python
+# Navigate to Python backend folder
+cd Plugins/AdastreaDirector/Python
+
+# Run the RAG modules test
 python test_rag_modules.py
+# This script:
+# 1. Checks that RAG ingestion modules exist
+# 2. Verifies they can be imported
+# 3. Tests basic functionality
+# 4. Doesn't actually ingest documents (that's the manual test)
 ```
 
-**Manual in UE:**
-1. Open Ingestion tab
-2. Select test docs folder
-3. Click "Start Ingestion"
-4. Verify progress reaches 100%
+**Expected Output:**
+```
+Testing RAG Modules...
+✅ rag_ingestion module found
+✅ rag_query module found  
+✅ Required classes exist
+✅ Basic functionality works
+All RAG module tests passed!
+```
+
+### Manual Test in Unreal Engine
+
+**This tests the actual document ingestion process:**
+
+1. **Prepare Test Documents** (first time only)
+   ```bash
+   # Create a test docs folder with some sample files
+   mkdir test_docs
+   echo "# Test Document 1" > test_docs/doc1.md
+   echo "This is a test document for ingestion." >> test_docs/doc1.md
+   echo "# Test Document 2" > test_docs/doc2.md
+   echo "Another test document with different content." >> test_docs/doc2.md
+   ```
+
+2. **Open Adastrea Director in UE**
+   - Window → Developer Tools → Adastrea Director
+
+3. **Switch to Ingestion Tab**
+   - ✅ Should see "Ingestion" tab at the top of the panel
+   - Click it
+
+4. **Select Documents Folder**
+   - Click "Browse" button next to "Docs Path"
+   - Navigate to your test_docs folder
+   - Select it
+   - ✅ Path should appear in the text box
+
+5. **Select Database Location**
+   - Click "Browse" button next to "DB Path"
+   - Choose where to save the database (e.g., create a "test_db" folder)
+   - ✅ Path should appear in the text box
+
+6. **Start Ingestion**
+   - Click "Start Ingestion" button
+   - ✅ Progress bar should start moving
+   - ✅ Status label should show "Processing file X of Y"
+   - ✅ Progress bar should reach 100%
+   - ✅ Status should show "Ingestion complete!"
+
+7. **Verify Results**
+   - Check that the database folder was created
+   - Check Output Log for any errors
+   - Documents are now ready for querying (Week 6)
+
+**What you should see:**
+- Progress bar smoothly goes from 0% to 100%
+- Status updates with current file being processed
+- No error messages
+- Completion message when done
+
+**If ingestion fails:**
+- Check folder paths are correct and exist
+- Verify you have read/write permissions
+- Check Output Log for specific error messages
+- Make sure ChromaDB is installed: `pip install chromadb`
 
 **Full Details:** [TESTING_CHECKLIST_WEEKS_1_6.md#week-5-document-ingestion-testing](TESTING_CHECKLIST_WEEKS_1_6.md#week-5-document-ingestion-testing)
 
@@ -376,32 +550,125 @@ python test_rag_modules.py
 
 **Goal:** Verify query system works end-to-end
 
-### Essential Checks
-- [ ] Queries return responses
-- [ ] Responses are contextual
-- [ ] Conversation history works
-- [ ] Cache improves performance
+**What you're checking:** The AI can answer questions based on the documents you ingested, maintain conversation context, and provide relevant, accurate responses.
 
-### Quick Test
+**Why this matters:** This is the core AI feature! Everything else was building up to this - users asking questions and getting intelligent answers based on their project documentation.
+
+**Key concepts:**
+- **Query**: A question you ask the AI
+- **Context-aware**: The AI remembers previous questions and provides relevant follow-up answers
+- **Conversation history**: Like a chat - each question and answer builds on the previous ones
+- **Caching**: Storing answers to common questions so responses are faster next time
+
+**Skill level:** Easy for manual test; Basic for automated test
+
+**Time needed:** 5-10 minutes
+
+### Essential Checks
+- [ ] Queries return responses (AI answers your questions)
+- [ ] Responses are contextual (answers are relevant to your docs)
+- [ ] Conversation history works (AI remembers previous questions)
+- [ ] Cache improves performance (repeat questions are instant)
+
+### Quick Automated Test
+
 ```bash
-cd Python
-# Start server first
+# Navigate to Python backend folder
+cd Plugins/AdastreaDirector/Python
+
+# Start the IPC server in the background
 python ipc_server.py --port 5555 &
+# Wait for server to start
 sleep 2
 
 # Run UI integration tests
 python test_ui_integration.py
+# This script:
+# 1. Sends test queries to the server
+# 2. Verifies responses are received
+# 3. Checks conversation history
+# 4. Tests cache performance
 
-# Cleanup
-pkill -f ipc_server.py
+# Cleanup: Stop the server
+pkill -f ipc_server.py  # Mac/Linux
+# On Windows, close the command prompt or use Task Manager
 ```
 
-**Manual in UE:**
-1. Open Query tab
-2. Send: "What is Unreal Engine?"
-3. Verify contextual response
-4. Send follow-up question
-5. Verify context maintained
+**Expected Output:**
+```
+Testing UI Integration...
+✅ Server connection successful
+✅ Basic query works
+✅ Context-aware query works
+✅ Conversation history maintained
+✅ Cache improves performance
+All integration tests passed!
+```
+
+### Manual Test in Unreal Engine
+
+**This tests the actual user experience of asking questions:**
+
+**Prerequisites:** You must have completed Week 5 (ingested documents) first!
+
+1. **Open Adastrea Director**
+   - Window → Developer Tools → Adastrea Director
+
+2. **Switch to Query Tab**
+   - Click the "Query" tab
+   - ✅ Should see the query interface
+
+3. **Ask a Simple Question**
+   - Type: "What is Unreal Engine?"
+   - Click "Send Query" or press Enter
+   - ✅ Should receive a response within 1-3 seconds
+   - ✅ Response should be coherent and relevant
+   - Note: If you haven't ingested UE docs, you might get a generic response
+
+4. **Test Context Awareness**
+   - Ask a follow-up: "What are its main features?"
+   - ✅ AI should understand "its" refers to Unreal Engine from previous question
+   - ✅ Response should be contextually appropriate
+
+5. **Test Conversation History**
+   - Ask another related question: "How do I use it?"
+   - ✅ AI should still remember the conversation context
+   - ✅ Answers should build on previous questions
+
+6. **Test Cache Performance**
+   - Repeat the first question: "What is Unreal Engine?"
+   - ✅ Response should come back much faster (< 100ms)
+   - ✅ Answer should be identical to the first time
+
+7. **Test Clear History**
+   - Click "Clear History" button (if available)
+   - Ask: "What is it?" (no context)
+   - ✅ AI shouldn't know what "it" refers to anymore
+   - ✅ Might ask for clarification or give generic response
+
+**What good responses look like:**
+- Answer the question directly
+- Reference information from your ingested documents
+- Are coherent and well-structured
+- Take 1-3 seconds for first query, < 100ms for cached queries
+- Follow-up questions understand the conversation context
+
+**If queries don't work:**
+- Verify documents were ingested (Week 5)
+- Check Python backend is running
+- Look for errors in Output Log
+- Ensure you have an LLM API key configured (check main repo docs)
+
+**If responses are irrelevant:**
+- Check that relevant documents were ingested
+- Try more specific questions
+- Verify the ingested documents actually contain the information
+
+**If responses are slow:**
+- First query is always slower (1-3 sec) - this is normal
+- Repeat queries should be cached and fast
+- Check internet connection (if using cloud LLM)
+- Check computer performance (low memory can slow things down)
 
 **Full Details:** [TESTING_CHECKLIST_WEEKS_1_6.md#week-6-query-system-testing](TESTING_CHECKLIST_WEEKS_1_6.md#week-6-query-system-testing)
 
@@ -409,55 +676,223 @@ pkill -f ipc_server.py
 
 ## 🔧 Common Issues & Quick Fixes
 
-### Plugin Won't Load
+**Stuck? Start here!** These are the most common problems and their solutions.
+
+### Issue 1: Plugin Won't Load in Unreal Engine
+
+**Symptoms:**
+- Plugin doesn't appear in Edit → Plugins
+- Unreal Engine shows compile errors
+- Plugin list shows "Failed to load"
+
+**Quick Fixes:**
+
+**Fix A: Regenerate Project Files**
 ```bash
-# Regenerate project files
-cd /path/to/UEProject
-# Windows: Right-click .uproject → Generate VS files
-# Linux/Mac: ./GenerateProjectFiles.sh
+# Navigate to your project folder
+cd /path/to/YourProject
+
+# Windows: Right-click YourProject.uproject → "Generate Visual Studio project files"
+# Mac: Right-click YourProject.uproject → "Generate Xcode project files"  
+# Linux: Run the script
+./GenerateProjectFiles.sh
+```
+**What this does:** Updates project configuration files so Unreal Engine knows about the plugin.
+
+**Fix B: Rebuild the Project**
+- Open project in Visual Studio/Xcode
+- Build → Clean Solution
+- Build → Rebuild Solution
+- **What this does:** Recompiles all code from scratch, fixing most build issues.
+
+**Fix C: Check Plugin Location**
+```bash
+# Plugin must be in the right place:
+YourProject/Plugins/AdastreaDirector/AdastreaDirector.uplugin
+# Not in a subfolder, not in the wrong project!
 ```
 
-### Python Won't Connect
+---
+
+### Issue 2: Python Backend Won't Connect
+
+**Symptoms:**
+- UI tests fail with "connection refused"
+- Output Log shows "Failed to connect to Python backend"
+- Queries don't work
+
+**Quick Fixes:**
+
+**Fix A: Verify Python Installation**
 ```bash
-# Check Python is installed
+# Check Python is installed and version is 3.9+
 python --version
+# Should show: Python 3.9.x or higher
 
-# Check dependencies
-cd Plugins/AdastreaDirector/Python
-pip install -r requirements.txt
-
-# Test server manually
-python ipc_server.py --port 5555
+# If "command not found":
+# - Install Python from python.org
+# - Restart terminal after installing
 ```
 
-### Ingestion Fails
+**Fix B: Install Python Dependencies**
 ```bash
-# Check ChromaDB
+# Navigate to Python backend
+cd Plugins/AdastreaDirector/Python
+
+# Install all required packages
+pip install -r requirements.txt
+# This might take a few minutes
+
+# If you see "pip: command not found":
+# Try: pip3 instead of pip
+# Or: python -m pip install -r requirements.txt
+```
+
+**Fix C: Test Server Manually**
+```bash
+# Try starting the server yourself
+cd Plugins/AdastreaDirector/Python
+python ipc_server.py --port 5555
+
+# Should see: "Server listening on localhost:5555"
+# If you see an error, read the message - it usually tells you what's wrong
+
+# Common errors:
+# "Address already in use" → Port 5555 is busy, try port 5556 instead
+# "Module not found" → Install dependencies (Fix B above)
+```
+
+**Fix D: Check Firewall**
+- Windows: Check Windows Defender isn't blocking Python
+- Mac: System Preferences → Security & Privacy → Firewall → Allow Python
+- The server only uses localhost (127.0.0.1), no external network access needed
+
+---
+
+### Issue 3: Document Ingestion Fails
+
+**Symptoms:**
+- Progress bar doesn't move
+- Error message during ingestion
+- Database folder not created
+
+**Quick Fixes:**
+
+**Fix A: Install AI Libraries**
+```bash
+# ChromaDB and LangChain are required for ingestion
 pip install chromadb langchain
 
-# Verify folder permissions
-ls -la /path/to/docs/folder
+# If that doesn't work, try:
+pip install --upgrade chromadb langchain
 
-# Test standalone
-cd Python
-python -c "from rag_ingestion import RAGIngestionAgent; print('OK')"
+# Verify installation:
+python -c "import chromadb; print('ChromaDB OK')"
+python -c "import langchain; print('LangChain OK')"
 ```
 
-### Queries Return Nothing
+**Fix B: Check Folder Permissions**
 ```bash
-# Check database exists
-ls -la /path/to/chroma_db/
+# Make sure you can read the docs folder
+ls -la /path/to/docs/folder
+# Should see files listed
 
-# Test RAG modules
-cd Python
+# Make sure you can write to DB folder  
+# Try creating a test file
+touch /path/to/db/folder/test.txt
+# If error, you don't have write permission - choose different folder
+
+# Windows equivalent:
+dir C:\path\to\docs\folder
+echo test > C:\path\to\db\folder\test.txt
+```
+
+**Fix C: Test RAG Modules**
+```bash
+cd Plugins/AdastreaDirector/Python
 python test_rag_modules.py
+# This verifies ingestion code is working
 
-# Check LLM API key
+# If test fails, check error message for specific problem
+```
+
+**Fix D: Try Smaller Test**
+- Instead of ingesting hundreds of files, try 2-3 files first
+- Put test files in a simple folder (no spaces in path)
+- Use simple .txt or .md files
+- If that works, the issue is with specific files or large volumes
+
+---
+
+### Issue 4: Queries Return Nothing or Errors
+
+**Symptoms:**
+- Send query but get no response
+- Response says "no documents found"
+- Error messages about API keys
+
+**Quick Fixes:**
+
+**Fix A: Verify Database Exists**
+```bash
+# Check that ingestion created the database
+ls -la /path/to/chroma_db/
+# Should see database files
+
+# Windows:
+dir C:\path\to\chroma_db\
+
+# If folder is empty or doesn't exist:
+# You need to complete Week 5 (document ingestion) first!
+```
+
+**Fix B: Test RAG System**
+```bash
+cd Plugins/AdastreaDirector/Python
+python test_rag_modules.py
+# Verifies RAG components are working
+```
+
+**Fix C: Check API Key (if using cloud LLM)**
+```bash
+# Check if API key is set (for OpenAI, Gemini, etc.)
+# Linux/Mac:
 echo $GEMINI_KEY
 echo $OPENAI_API_KEY
+
+# Windows:
+echo %GEMINI_KEY%
+echo %OPENAI_API_KEY%
+
+# If empty, you need to set the API key
+# See main repository docs for API key setup
 ```
 
-**Full Troubleshooting:** [TESTING_CHECKLIST_WEEKS_1_6.md#troubleshooting-guide](TESTING_CHECKLIST_WEEKS_1_6.md#troubleshooting-guide)
+**Fix D: Try Basic Query First**
+- Instead of complex questions, try: "Hello"
+- If that works, the system is functional
+- If not, check Output Log for specific errors
+
+---
+
+### Still Stuck?
+
+1. **Check the Output Log** (Window → Developer Tools → Output Log)
+   - Error messages usually explain what's wrong
+   - Filter for "AdastreaDirector" to see plugin-specific messages
+
+2. **Read the Full Troubleshooting Guide**
+   - [Comprehensive troubleshooting](TESTING_CHECKLIST_WEEKS_1_6.md#troubleshooting-guide)
+   - Covers advanced issues and platform-specific problems
+
+3. **Ask for Help**
+   - Create an issue on [GitHub](https://github.com/Mittenzx/Adastrea-Director/issues)
+   - Include: What you were doing, error messages, your OS/UE version
+   - Be specific - "doesn't work" doesn't help; error messages do!
+
+4. **Start Over from Week 1**
+   - Sometimes it helps to verify each week passes before moving forward
+   - Ensures foundation is solid before testing advanced features
 
 ---
 

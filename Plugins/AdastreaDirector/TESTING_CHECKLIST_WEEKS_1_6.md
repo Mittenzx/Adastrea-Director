@@ -1793,9 +1793,229 @@ RAG System (Week 5-6)
 
 ---
 
+## Glossary of Terms
+
+**New to the terminology?** Here's a plain-language guide to technical terms used in this document.
+
+### General Terms
+
+**Plugin**
+- What: An add-on that extends Unreal Engine's functionality
+- Like: A browser extension or phone app
+- Example: Adastrea Director adds AI assistance to Unreal Engine
+
+**Module**
+- What: A self-contained component of the plugin
+- Like: A chapter in a book
+- Example: Runtime module handles core functionality; Editor module handles UI
+
+**API (Application Programming Interface)**
+- What: A way for programs to talk to each other
+- Like: A menu in a restaurant (you don't need to know how they cook, just what you can order)
+- Example: The Python backend has an API that the C++ plugin calls
+
+**Repository/Repo**
+- What: Where code is stored and version-controlled
+- Like: A shared folder with history tracking
+- Example: The Adastrea Director GitHub repository
+
+### Development Terms
+
+**C++**
+- What: A programming language
+- Why: Unreal Engine is built with C++, so plugins often use it
+- Note: The plugin's connection to Unreal Engine is in C++
+
+**Python**
+- What: A programming language
+- Why: Great for AI/ML tasks, easier to write than C++
+- Note: The plugin's AI features are in Python
+
+**Build/Compile**
+- What: Converting human-readable code into executable programs
+- Like: Translating a recipe into a finished meal
+- Why: Computers can't run code directly; it must be compiled first
+
+**IDE (Integrated Development Environment)**
+- What: Software for writing and building code
+- Examples: Visual Studio (Windows), Xcode (Mac)
+- Why: Makes coding easier with features like auto-complete and debugging
+
+### Unreal Engine Terms
+
+**UE/Unreal Engine**
+- What: A professional game development platform by Epic Games
+- Used for: AAA games, indie games, simulations, architectural visualizations
+- Note: The target environment for this plugin
+
+**Slate**
+- What: Unreal Engine's UI framework
+- Like: Building blocks for creating windows, buttons, and interfaces
+- Example: The Adastrea Director panel is built with Slate
+
+**Editor**
+- What: The Unreal Engine development environment (not the game itself)
+- Where: What you see when you open a .uproject file
+- Note: The plugin runs in the Editor, helping you build your game
+
+**.uplugin file**
+- What: Plugin descriptor file (tells UE about the plugin)
+- Format: JSON (structured text)
+- Contains: Plugin name, version, modules, dependencies
+
+### Communication Terms
+
+**IPC (Inter-Process Communication)**
+- What: How separate programs talk to each other
+- Like: Two people having a phone conversation
+- Example: C++ plugin and Python backend use IPC via sockets
+
+**Socket**
+- What: A communication endpoint (like a phone number)
+- Types: Network socket (our case) or file socket
+- Example: Python server listens on port 5555 for connections
+
+**Port**
+- What: A numbered channel for network communication
+- Like: An apartment number in a building
+- Example: Port 5555 is where the Python server listens
+
+**Request/Response**
+- What: One program asks, another answers
+- Like: Question and answer
+- Example: Plugin sends "query" request, Python sends back "result" response
+
+**Latency**
+- What: Time delay between request and response
+- Goal: Lower is better
+- Example: < 50ms means under 0.05 seconds (nearly instant)
+
+### AI/ML Terms
+
+**RAG (Retrieval-Augmented Generation)**
+- What: AI technique that searches documents before answering
+- Like: Looking up information in a book before answering a question
+- Why: Makes AI answers more accurate and relevant
+- Example: Searches your docs to answer project-specific questions
+
+**LLM (Large Language Model)**
+- What: AI model trained on vast amounts of text
+- Examples: GPT-4, Gemini, Claude
+- What it does: Understands and generates human-like text
+- Note: The "brain" that answers your questions
+
+**Embedding**
+- What: Converting text into numbers AI can understand
+- Like: Translating words into coordinates on a map
+- Why: Allows AI to find similar content
+- Example: Helps find relevant docs when you ask a question
+
+**Vector Database**
+- What: Database that stores embeddings
+- Example: ChromaDB
+- Why: Enables fast similarity search
+- Note: Where ingested documents are stored
+
+**Document Ingestion**
+- What: Reading and processing documents for AI use
+- Steps: Load → Split → Embed → Store
+- Like: Reading a book and taking organized notes
+- Example: Processing your project docs so AI can search them
+
+**Query**
+- What: A question or search request
+- Like: Asking a librarian for help finding information
+- Example: "What is Unreal Engine?" is a query
+
+**Context**
+- What: Background information that makes answers relevant
+- Like: Understanding a conversation by remembering what was said before
+- Example: Remembering previous questions in a conversation
+
+**Cache**
+- What: Storing results to avoid repeating work
+- Like: Writing down an answer so you don't have to look it up again
+- Why: Makes responses much faster
+- Example: Repeat queries answered instantly from cache
+
+### Testing Terms
+
+**Automated Test**
+- What: A program that tests other programs automatically
+- Like: A robot that checks if things work
+- Example: test_ipc.py runs tests without human interaction
+
+**Manual Test**
+- What: A human following steps to verify something works
+- Like: Following a recipe to see if it produces the right dish
+- Example: Opening the UI and clicking buttons
+
+**Test Case**
+- What: A specific scenario to test
+- Like: One question on an exam
+- Example: "Verify plugin loads without errors"
+
+**Success Criteria**
+- What: What "passing" looks like
+- Like: A rubric for grading
+- Example: "Plugin appears in Edit → Plugins"
+
+**Edge Case**
+- What: An unusual or extreme scenario
+- Like: Testing if a bridge holds up in a hurricane, not just normal weather
+- Example: Sending 1000 characters instead of 10
+
+**Regression**
+- What: When something that worked before stops working
+- Like: A fixed bug coming back
+- Why: Changes can accidentally break existing features
+
+### Performance Terms
+
+**Throughput**
+- What: How much work gets done per unit time
+- Like: Cars per hour through a toll booth
+- Example: Files ingested per second
+
+**Benchmark**
+- What: A standard to measure performance against
+- Like: A time to beat in a race
+- Example: Target average latency < 50ms
+
+**Bottleneck**
+- What: The slowest part that limits overall performance
+- Like: Narrowest part of an hourglass
+- Example: Slow disk can bottleneck ingestion
+
+**Memory Leak**
+- What: Program using more and more memory over time
+- Like: A faucet that won't stop dripping
+- Bad: Eventually runs out of memory and crashes
+
+### Platform Terms
+
+**Cross-platform**
+- What: Works on multiple operating systems
+- Like: A universal adapter that works everywhere
+- Example: Plugin works on Windows, Mac, and Linux
+
+**Windows/Mac/Linux**
+- What: Different operating systems
+- Differences: Use different development tools and have different file systems
+- Note: Plugin must be tested on all to ensure compatibility
+
+---
+
 ## Conclusion
 
 This comprehensive testing checklist ensures all components of the Adastrea Director plugin (Weeks 1-6) are thoroughly validated. Each week builds upon the previous, creating a robust, well-tested foundation for the plugin.
+
+**For New Testers:**
+- Take your time - testing thoroughly is better than testing quickly
+- Don't skip the prerequisites - proper setup is crucial
+- When in doubt, check the glossary above or the troubleshooting guide
+- It's okay to ask for help - create a GitHub issue with specific questions
+- Your testing helps make the plugin better for everyone!
 
 **Testing Status:**
 - **Automated Tests:** Available for structure, IPC, and Python modules
