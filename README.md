@@ -521,6 +521,8 @@ not actual directory names. All files are in the root directory.
 **Design System:**
 - [Design Index](docs/design/DESIGN_INDEX.md) - Complete guide to all design documentation
 - [UI/UX Design System](docs/design/UI_UX_DESIGN_SYSTEM.md) - Complete design system
+- [Visual Mockups](docs/design/UE_INTERFACE_MOCKUPS.md) ✨ **NEW** - Interface mockups and design specs
+- [Mockups Summary](VISUAL_MOCKUPS_SUMMARY.md) ✨ **NEW** - Visual mockups overview
 
 **For complete documentation:**
 - 🌟 **[INDEX.md](INDEX.md)** - Start here for complete overview
