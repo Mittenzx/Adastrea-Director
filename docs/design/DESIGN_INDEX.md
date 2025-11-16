@@ -364,7 +364,7 @@ We welcome feedback on the design system:
 
 **Best For**: Visualizing the complete interface, understanding layout, planning implementation
 
-**Size**: ~29KB | ~650 lines
+**Size**: ~43KB | ~565 lines
 
 ---
 
@@ -382,7 +382,7 @@ We welcome feedback on the design system:
 
 **Best For**: Quick lookups, rapid prototyping, sharing with team
 
-**Size**: ~11KB | ~400 lines
+**Size**: ~15KB | ~315 lines
 
 ---
 

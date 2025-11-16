@@ -7,14 +7,14 @@ Visual mockups showing how Adastrea Director looks in Unreal Editor and as a sta
 ### Main Mockup Documents
 
 1. **[UE Interface Mockups](UE_INTERFACE_MOCKUPS.md)** - Complete visual guide
-   - 29KB, 650+ lines
+   - 43KB, 565 lines
    - All interfaces with detailed annotations
    - Color palettes, typography, icons
    - Layout principles and specifications
    - Future enhancement previews
 
 2. **[Quick Reference](INTERFACE_MOCKUPS_QUICK_REFERENCE.md)** - Condensed guide
-   - 11KB, 400 lines
+   - 15KB, 315 lines
    - Essential mockups only
    - Fast reference for colors, layouts, icons
    - Perfect for quick lookups
