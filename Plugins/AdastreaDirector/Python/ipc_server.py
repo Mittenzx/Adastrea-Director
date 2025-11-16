@@ -446,6 +446,11 @@ def main():
         action='store_true',
         help='Enable verbose logging'
     )
+    parser.add_argument(
+        '--enable-ue-python',
+        action='store_true',
+        help='Enable UE Python API integration (requires running in UE)'
+    )
     
     args = parser.parse_args()
     
@@ -454,6 +459,17 @@ def main():
     
     # Create and start server
     server = IPCServer(host=args.host, port=args.port)
+    
+    # Register UE Python API handlers if enabled
+    if args.enable_ue_python:
+        try:
+            from ue_python_integration import register_ue_python_handlers
+            register_ue_python_handlers(server)
+            logger.info("UE Python API integration enabled")
+        except ImportError as e:
+            logger.warning(f"Could not enable UE Python API: {e}")
+        except Exception as e:
+            logger.error(f"Error enabling UE Python API: {e}")
     
     try:
         server.start()
