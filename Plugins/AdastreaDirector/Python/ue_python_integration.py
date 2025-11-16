@@ -19,7 +19,6 @@ This provides the best of both worlds:
 """
 
 import logging
-import json
 from typing import Dict, Any, Optional
 
 # Try to import UE Python API
@@ -27,8 +26,7 @@ try:
     from ue_python_api import (
         UEPythonBridge,
         is_running_in_ue,
-        get_bridge,
-        LogLevel
+        get_bridge
     )
     UE_PYTHON_AVAILABLE = True
 except ImportError:
@@ -347,14 +345,36 @@ class UEPythonIPCHandler:
         
         try:
             actor_class = data.get("actor_class", "")
-            location = tuple(data.get("location", [0.0, 0.0, 0.0]))
-            rotation = tuple(data.get("rotation", [0.0, 0.0, 0.0]))
+            location_data = data.get("location", [0.0, 0.0, 0.0])
+            rotation_data = data.get("rotation", [0.0, 0.0, 0.0])
             actor_name = data.get("name")
             
             if not actor_class:
                 return {
                     "status": "error",
                     "error": "Missing 'actor_class' field"
+                }
+            
+            # Validate location and rotation
+            if not isinstance(location_data, list) or len(location_data) != 3:
+                return {
+                    "status": "error",
+                    "error": "Location must be a list of exactly 3 numeric values"
+                }
+            if not isinstance(rotation_data, list) or len(rotation_data) != 3:
+                return {
+                    "status": "error",
+                    "error": "Rotation must be a list of exactly 3 numeric values"
+                }
+            
+            # Validate that values are numeric
+            try:
+                location = tuple(float(v) for v in location_data)
+                rotation = tuple(float(v) for v in rotation_data)
+            except (ValueError, TypeError) as e:
+                return {
+                    "status": "error",
+                    "error": f"Location and rotation values must be numeric: {e}"
                 }
             
             actor = self.bridge.spawn_actor(
@@ -365,9 +385,13 @@ class UEPythonIPCHandler:
             )
             
             if actor:
+                try:
+                    actor_name_str = actor.get_name()
+                except Exception:
+                    actor_name_str = str(actor)
                 return {
                     "status": "success",
-                    "actor_name": actor.get_name() if hasattr(actor, 'get_name') else str(actor),
+                    "actor_name": actor_name_str,
                     "message": "Actor spawned successfully"
                 }
             else:

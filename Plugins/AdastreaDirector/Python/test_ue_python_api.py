@@ -9,8 +9,7 @@ These tests use mocks for development/CI purposes.
 
 import pytest
 import sys
-from unittest.mock import Mock, MagicMock, patch
-from dataclasses import dataclass
+from unittest.mock import Mock, patch
 
 
 # Mock the unreal module for testing outside UE

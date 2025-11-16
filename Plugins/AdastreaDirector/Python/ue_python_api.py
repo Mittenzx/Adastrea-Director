@@ -27,9 +27,8 @@ Usage:
     bridge.execute_console_command("stat fps")
 """
 
-import sys
 import logging
-from typing import List, Dict, Any, Optional, Union
+from typing import List, Dict, Any, Optional
 from dataclasses import dataclass, field
 from enum import Enum
 
@@ -50,8 +49,18 @@ except ImportError:
     logger.warning("Unreal Python API not available - running outside UE environment")
     # Create stub for development/testing outside UE
     class unreal:
-        """Stub for development outside Unreal Engine"""
-        pass
+        """Stub for development outside Unreal Engine.
+        Any access will raise an ImportError with a clear message."""
+        def __getattr__(self, name):
+            raise ImportError(
+                "The 'unreal' Python API is not available outside Unreal Engine. "
+                f"Attempted to access attribute '{name}'."
+            )
+        def __call__(self, *args, **kwargs):
+            raise ImportError(
+                "The 'unreal' Python API is not available outside Unreal Engine. "
+                "Attempted to call the stub 'unreal' object."
+            )
 
 
 @dataclass
@@ -103,11 +112,31 @@ class UEPythonBridge:
                 "This module must be run inside Unreal Engine's Python environment."
             )
         
-        self.editor_util = unreal.EditorUtilityLibrary
-        self.asset_tools = unreal.AssetToolsHelpers.get_asset_tools()
-        self.editor_actor_subsystem = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
-        self.editor_asset_subsystem = unreal.get_editor_subsystem(unreal.EditorAssetSubsystem)
-        self.static_mesh_editor_subsystem = unreal.get_editor_subsystem(unreal.StaticMeshEditorSubsystem)
+        try:
+            self.editor_util = unreal.EditorUtilityLibrary
+        except Exception as e:
+            logger.error(f"Failed to initialize EditorUtilityLibrary subsystem: {e}")
+            raise RuntimeError("Could not initialize EditorUtilityLibrary subsystem") from e
+        try:
+            self.asset_tools = unreal.AssetToolsHelpers.get_asset_tools()
+        except Exception as e:
+            logger.error(f"Failed to initialize AssetToolsHelpers subsystem: {e}")
+            raise RuntimeError("Could not initialize AssetToolsHelpers subsystem") from e
+        try:
+            self.editor_actor_subsystem = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
+        except Exception as e:
+            logger.error(f"Failed to initialize EditorActorSubsystem: {e}")
+            raise RuntimeError("Could not initialize EditorActorSubsystem") from e
+        try:
+            self.editor_asset_subsystem = unreal.get_editor_subsystem(unreal.EditorAssetSubsystem)
+        except Exception as e:
+            logger.error(f"Failed to initialize EditorAssetSubsystem: {e}")
+            raise RuntimeError("Could not initialize EditorAssetSubsystem") from e
+        try:
+            self.static_mesh_editor_subsystem = unreal.get_editor_subsystem(unreal.StaticMeshEditorSubsystem)
+        except Exception as e:
+            logger.error(f"Failed to initialize StaticMeshEditorSubsystem: {e}")
+            raise RuntimeError("Could not initialize StaticMeshEditorSubsystem") from e
         
         logger.info("UE Python Bridge initialized successfully")
     
@@ -211,6 +240,12 @@ class UEPythonBridge:
         Example:
             materials = bridge.find_assets_by_class("Material", "/Game/Materials")
             meshes = bridge.find_assets_by_class("StaticMesh")
+        
+        Note:
+            This function searches recursively through all subdirectories under the
+            specified path. For large projects, this can be slow. Consider using a
+            more specific path (e.g., "/Game/Materials" instead of "/Game") to
+            improve performance when possible.
         """
         try:
             asset_registry = unreal.AssetRegistryHelpers.get_asset_registry()
@@ -299,22 +334,33 @@ class UEPythonBridge:
         Get all actors of a specific class in the current level.
         
         Args:
-            actor_class: Actor class name (e.g., "StaticMeshActor", "PointLight")
+            actor_class: Actor class name (e.g., "StaticMeshActor", "PointLight") or full class path 
+                        (e.g., "/Script/MyGame.MyCustomActor")
             
         Returns:
             List of UEActorInfo objects for matching actors
             
         Example:
             actors = bridge.get_all_actors_of_class("StaticMeshActor")
+            actors = bridge.get_all_actors_of_class("/Script/MyGame.MyCustomActor")
             for actor in actors:
                 print(f"Actor: {actor.actor_name} at {actor.location}")
+        
+        Note:
+            For custom actor classes (e.g., defined in your game or plugins), provide the full class path.
         """
         try:
             # Get the current world
             world = unreal.EditorLevelLibrary.get_editor_world()
             
+            # Determine class path
+            if actor_class.startswith("/Script/") or "/" in actor_class or "." in actor_class:
+                class_path = actor_class
+            else:
+                class_path = f"/Script/Engine.{actor_class}"
+            
             # Get all actors of the specified class
-            actor_class_obj = unreal.load_class(None, f"/Script/Engine.{actor_class}")
+            actor_class_obj = unreal.load_class(None, class_path)
             actors = unreal.GameplayStatics.get_all_actors_of_class(world, actor_class_obj)
             
             actor_infos = []
@@ -387,7 +433,8 @@ class UEPythonBridge:
         Spawn a new actor in the current level.
         
         Args:
-            actor_class: Class name of actor to spawn
+            actor_class: Class name of actor to spawn (e.g., "StaticMeshActor") or full class path
+                        (e.g., "/Script/MyGame.MyCustomActor")
             location: Spawn location (x, y, z)
             rotation: Spawn rotation (roll, pitch, yaw)
             actor_name: Optional name for the actor
@@ -401,9 +448,18 @@ class UEPythonBridge:
                 location=(100.0, 200.0, 50.0),
                 actor_name="MySpawnedActor"
             )
+            actor = bridge.spawn_actor(
+                "/Script/MyGame.MyCustomActor",
+                location=(100.0, 200.0, 50.0)
+            )
         """
         try:
-            actor_class_obj = unreal.load_class(None, f"/Script/Engine.{actor_class}")
+            # Support both short class names and full class paths
+            if actor_class.startswith("/Script/") or "/" in actor_class or "." in actor_class:
+                class_path = actor_class
+            else:
+                class_path = f"/Script/Engine.{actor_class}"
+            actor_class_obj = unreal.load_class(None, class_path)
             
             spawn_location = unreal.Vector(location[0], location[1], location[2])
             spawn_rotation = unreal.Rotator(rotation[0], rotation[1], rotation[2])
@@ -586,20 +642,17 @@ class UEPythonBridge:
             bridge.show_notification("Operation complete!", severity="Success")
         """
         try:
-            # Map severity to Unreal notification type
-            severity_map = {
-                "Info": unreal.NotificationInfo,
-                "Warning": unreal.NotificationInfo,
-                "Error": unreal.NotificationInfo,
-                "Success": unreal.NotificationInfo,
-            }
-            
             # Create and show notification
             notification = unreal.NotificationInfo()
             notification.text = unreal.Text(message)
             notification.fade_in_duration = 0.5
             notification.fade_out_duration = 0.5
             notification.expire_duration = duration
+            
+            # Set severity if supported by Unreal API
+            if hasattr(notification, "severity"):
+                severity_enum = getattr(unreal.NotificationSeverity, severity.upper(), unreal.NotificationSeverity.INFO)
+                notification.severity = severity_enum
             
             unreal.NotificationLibrary.show_notification(notification)
             logger.info(f"Showed notification: {message}")

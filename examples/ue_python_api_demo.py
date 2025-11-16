@@ -29,7 +29,6 @@ if os.path.exists(plugin_python_dir):
 
 try:
     from ue_python_api import (
-        UEPythonBridge,
         is_running_in_ue,
         get_bridge,
         LogLevel
