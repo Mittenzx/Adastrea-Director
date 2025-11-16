@@ -98,7 +98,7 @@ cd Plugins/AdastreaDirector/Python
 python test_ipc.py 5555
 # Expected: Should see "All IPC tests passed!" at the end
 
-# Test 2: RAG modules structure  
+# Test 2: RAG modules structure
 # What it tests: AI document processing modules are set up correctly
 python test_rag_modules.py
 # Expected: Should see checkmarks (✅) for each module check
@@ -193,6 +193,7 @@ The plugin was built over 6 weeks, with each week adding new features. Testing f
 cd Plugins/AdastreaDirector
 
 # Check source code folders exist
+# The '-la' flags mean "list all files (including hidden ones) with detailed information"
 ls -la Source/
 # Expected: Should see AdastreaDirector/ and AdastreaDirectorEditor/ folders
 
@@ -295,7 +296,15 @@ All IPC tests passed!
 
 **If tests fail:**
 - Check Python is installed: `python --version`
-- Check port 5555 isn't already in use: `netstat -an | grep 5555` (Mac/Linux) or `netstat -an | findstr 5555` (Windows)
+- Check port 5555 isn't already in use:
+  - **Mac/Linux:**
+    ```bash
+    netstat -an | grep 5555
+    ```
+  - **Windows:**
+    ```cmd
+    netstat -an | findstr 5555
+    ```
 - Make sure you're in the correct directory
 - Check firewall isn't blocking localhost connections
 
@@ -480,7 +489,7 @@ python test_rag_modules.py
 ```
 Testing RAG Modules...
 ✅ rag_ingestion module found
-✅ rag_query module found  
+✅ rag_query module found
 ✅ Required classes exist
 ✅ Basic functionality works
 All RAG module tests passed!
@@ -693,7 +702,8 @@ All integration tests passed!
 cd /path/to/YourProject
 
 # Windows: Right-click YourProject.uproject → "Generate Visual Studio project files"
-# Mac: Right-click YourProject.uproject → "Generate Xcode project files"  
+# Mac: Either right-click YourProject.uproject → "Generate Xcode project files" (newer UE versions)
+#      or run ./GenerateProjectFiles.sh (works on all versions)
 # Linux: Run the script
 ./GenerateProjectFiles.sh
 ```
@@ -727,7 +737,7 @@ YourProject/Plugins/AdastreaDirector/AdastreaDirector.uplugin
 ```bash
 # Check Python is installed and version is 3.9+
 python --version
-# Should show: Python 3.9.x or higher
+# Expected: Python 3.9.x or higher
 
 # If "command not found":
 # - Install Python from python.org
@@ -759,6 +769,9 @@ python ipc_server.py --port 5555
 
 # Common errors:
 # "Address already in use" → Port 5555 is busy, try port 5556 instead
+#   ⚠️ If you change the port here, you may also need to update the port number 
+#   in other places (e.g., plugin config, test scripts, client code) where 5555 
+#   is hardcoded, or connections may fail.
 # "Module not found" → Install dependencies (Fix B above)
 ```
 
@@ -854,17 +867,20 @@ python test_rag_modules.py
 ```
 
 **Fix C: Check API Key (if using cloud LLM)**
+
+> ⚠️ **Security Warning:** The commands below will display your API key in plain text. Avoid running these in shared environments or where your terminal output may be logged.
+
+**Recommended: Check if API key is set (without displaying its value)**
 ```bash
-# Check if API key is set (for OpenAI, Gemini, etc.)
-# Linux/Mac:
-echo $GEMINI_KEY
-echo $OPENAI_API_KEY
+# Linux/Mac (bash/zsh):
+[ -z "$GEMINI_KEY" ] && echo "GEMINI_KEY: Not set" || echo "GEMINI_KEY: Set"
+[ -z "$OPENAI_API_KEY" ] && echo "OPENAI_API_KEY: Not set" || echo "OPENAI_API_KEY: Set"
 
-# Windows:
-echo %GEMINI_KEY%
-echo %OPENAI_API_KEY%
+# Windows (cmd):
+if "%GEMINI_KEY%"=="" (echo GEMINI_KEY: Not set) else (echo GEMINI_KEY: Set)
+if "%OPENAI_API_KEY%"=="" (echo OPENAI_API_KEY: Not set) else (echo OPENAI_API_KEY: Set)
 
-# If empty, you need to set the API key
+# If "Not set", you need to set the API key
 # See main repository docs for API key setup
 ```
 

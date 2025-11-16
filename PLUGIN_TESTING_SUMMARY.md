@@ -158,7 +158,7 @@ Comprehensive testing documentation has been created for the Adastrea Director p
 
 ### Step 1: Understand What You're Testing (5 minutes)
 
-Read the "New to Adastrea Director?" section in the [full testing checklist](Plugins/AdastreaDirector/TESTING_CHECKLIST_WEEKS_1_6.md).
+Read the "New to Adastrea Director?" section in the [full testing checklist](Plugins/AdastreaDirector/TESTING_CHECKLIST_WEEKS_1_6.md#new-to-adastrea-director).
 
 **You'll learn:**
 - What the plugin does
@@ -197,6 +197,8 @@ Work through each week in order:
 - Week 4: User interface (20 min)
 - Week 5: Document ingestion (30 min)
 - Week 6: AI question answering (30 min)
+
+**Note on time estimates:** These are approximate times for experienced testers. If you're new to testing or these tools, allow 2-3x longer for your first time through.
 
 **Take breaks!** Testing requires focus. It's better to do one week well than rush through all six.
 

@@ -151,7 +151,7 @@ Run these commands to verify your environment:
 # Check Python version (should show 3.9 or higher)
 python --version
 
-# Check Git is installed
+# Check Git is installed (same command works on Windows, Mac, and Linux)
 git --version
 
 # Check pip (Python package manager) works
@@ -192,11 +192,15 @@ cd Adastrea-Director
 # Find your test project location
 # Example: ~/Documents/Unreal Projects/MyTestProject
 
-# Create Plugins folder if it doesn't exist
+# Create Plugins folder if it doesn't exist (Mac/Linux)
 mkdir -p /path/to/TestProject/Plugins
 
-# Copy the plugin
+# Copy the plugin (Mac/Linux)
 cp -r Plugins/AdastreaDirector /path/to/TestProject/Plugins/
+
+# Windows equivalent:
+# mkdir "C:\Path\To\TestProject\Plugins"
+# xcopy /E /I "Plugins\AdastreaDirector" "C:\Path\To\TestProject\Plugins\AdastreaDirector"
 
 # Explanation:
 # - "cp -r" means copy recursively (entire folder)
@@ -238,10 +242,10 @@ pip3 install -r requirements.txt
 
 #### Step 4: Verify Setup
 
-After setup, your structure should look like:
+After setup, your structure should look like this (note: "TestProject" is a placeholder - use your actual project name):
 
 ```
-TestProject/
+TestProject/                     ← Your project folder (use your actual name)
 ├── Content/
 ├── Config/
 ├── Plugins/
@@ -1891,6 +1895,16 @@ RAG System (Week 5-6)
 - Example: < 50ms means under 0.05 seconds (nearly instant)
 
 ### AI/ML Terms
+
+**AI (Artificial Intelligence)**
+- What: Computer systems that can perform tasks that typically require human intelligence
+- Like: Teaching computers to think, learn, and solve problems
+- Example: Voice assistants, image recognition, game AI
+
+**ML (Machine Learning)**
+- What: A subset of AI where computer systems learn from data to make predictions or decisions
+- Like: Teaching a computer to recognize patterns, like sorting photos by content
+- Example: Spam filters, recommendation systems, predictive text
 
 **RAG (Retrieval-Augmented Generation)**
 - What: AI technique that searches documents before answering
