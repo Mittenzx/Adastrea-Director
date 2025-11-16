@@ -6,8 +6,8 @@ This guide covers the installation and setup of the Adastrea Director plugin for
 
 ### Required
 - **Unreal Engine 5.0 or higher**
-  - Recommended: UE 5.3, 5.4, or 5.5 (LTS)
-  - Backward compatible: UE 5.1, 5.2
+  - Recommended: UE 5.6+ (latest)
+  - Also compatible: UE 5.3, 5.4, 5.5 (LTS), 5.1, 5.2
   
 - **Platform Support**
   - Windows 10/11 (x64)
