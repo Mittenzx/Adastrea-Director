@@ -130,7 +130,7 @@ class IPCServer:
         result = self.rag.query(data)
         return {
             'status': 'success',
-            'response': result.answer,
+            'result': result.answer,
             'sources': result.sources
         }
 ```

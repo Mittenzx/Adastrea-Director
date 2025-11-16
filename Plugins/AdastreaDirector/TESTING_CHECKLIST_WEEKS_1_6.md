@@ -1113,7 +1113,7 @@ print(f'Speedup: {time1/time2:.1f}x')
 ```json
 {
   "status": "success",
-  "response": "...",
+  "result": "...",
   "sources": [
     {"filename": "doc1.md", "relevance": 0.95},
     {"filename": "doc2.md", "relevance": 0.87}

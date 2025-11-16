@@ -310,7 +310,7 @@ The IPC server supports the following request types:
 - **query** - Documentation queries
   ```json
   {"type": "query", "data": "Your question here"}
-  // Response: {"status": "success", "response": "...", "sources": [...]}
+  // Response: {"status": "success", "result": "...", "sources": [...]}
   ```
 
 - **plan** - Task planning
