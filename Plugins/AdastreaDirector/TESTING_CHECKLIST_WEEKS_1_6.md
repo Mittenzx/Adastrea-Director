@@ -7,6 +7,57 @@
 
 ---
 
+## 👋 New to Adastrea Director?
+
+**Welcome!** If you're new to this project, start here to understand what you'll be testing.
+
+### What is Adastrea Director?
+
+Adastrea Director is an **AI-powered development assistant plugin for Unreal Engine**. Think of it as a smart helper that:
+- Answers questions about your game project's documentation
+- Helps plan development tasks
+- Provides code suggestions
+- Assists with performance analysis
+
+The plugin integrates AI capabilities directly into the Unreal Engine editor, so developers can get intelligent assistance without leaving their workspace.
+
+### How Does It Work?
+
+The plugin uses a **hybrid architecture**:
+- **C++ Plugin (runs in Unreal Engine)**: Provides the user interface and connects to the AI backend
+- **Python Backend (runs separately)**: Does the AI processing, including document analysis and query responses
+- **IPC Communication**: The C++ and Python parts talk to each other through network sockets
+
+### What Will You Be Testing?
+
+You'll be verifying that all components work correctly:
+1. **Week 1-2**: Plugin loads and connects to Python backend
+2. **Week 3-4**: User interface displays and communicates properly
+3. **Week 5-6**: AI features (document ingestion and question answering) work as expected
+
+### Do I Need Programming Experience?
+
+**For manual testing**: Basic computer skills are sufficient. You'll be:
+- Opening applications
+- Clicking buttons
+- Typing text
+- Observing results
+
+**For automated testing**: Some command-line experience helps, but we provide exact commands to copy and paste.
+
+### Key Terms to Know
+
+- **Plugin**: An add-on that extends Unreal Engine's functionality
+- **UE/Unreal Engine**: A game development platform by Epic Games
+- **IPC (Inter-Process Communication)**: How different programs talk to each other
+- **RAG (Retrieval-Augmented Generation)**: AI technique that searches documents to provide accurate answers
+- **Slate**: Unreal Engine's UI framework
+- **Module**: A logical component of the plugin (like Runtime or Editor)
+
+Don't worry if some terms are unfamiliar - we'll explain as we go!
+
+---
+
 ## Table of Contents
 
 1. [Overview](#overview)
@@ -31,30 +82,184 @@ This document provides a comprehensive testing checklist for the Adastrea Direct
 - **Success Criteria**: Expected outcomes and acceptance criteria
 - **Troubleshooting**: Common issues and solutions
 
+### How to Use This Document
+
+**If you're a beginner:**
+1. Start with the "New to Adastrea Director?" section above
+2. Review the [Testing Prerequisites](#testing-prerequisites) carefully
+3. Follow each week's tests in order
+4. Don't skip the explanatory text - it provides important context
+5. Use the [Troubleshooting Guide](#troubleshooting-guide) when you encounter issues
+
+**If you're experienced:**
+- Jump to specific weeks as needed
+- Use success criteria for quick validation
+- Reference troubleshooting for known issues
+
 ### Testing Prerequisites
 
-Before starting any testing, ensure you have:
+**What you need before starting:**
 
-- [ ] Unreal Engine 5.0+ installed
-- [ ] Visual Studio 2019+ (Windows) or Xcode (Mac) or appropriate C++ compiler
-- [ ] Python 3.9+ installed
-- [ ] Git installed for version control
-- [ ] Test UE project set up (recommended: blank project)
+#### Required Software (Must Have)
+
+- [ ] **Unreal Engine 5.0 or higher**
+  - *What it is*: The game development platform we're building the plugin for
+  - *Where to get it*: [Epic Games Launcher](https://www.unrealengine.com/download) (free)
+  - *Why you need it*: To test the plugin in its target environment
+  - *Version note*: UE 5.3+ recommended for best compatibility
+
+- [ ] **Python 3.9 or higher**
+  - *What it is*: A programming language the AI backend uses
+  - *Where to get it*: [python.org/downloads](https://www.python.org/downloads/)
+  - *Why you need it*: The AI processing happens in Python
+  - *How to check*: Open terminal/command prompt and type `python --version`
+
+- [ ] **C++ Compiler/IDE**
+  - *Windows*: Visual Studio 2019 or 2022 (Community Edition is free)
+  - *Mac*: Xcode 13+ (free from App Store)
+  - *Linux*: GCC 9+ or Clang 10+ (usually pre-installed)
+  - *Why you need it*: To compile the plugin's C++ code
+  - *Installation note*: For Visual Studio, install the "Game Development with C++" workload
+
+- [ ] **Git**
+  - *What it is*: Version control software to download the code
+  - *Where to get it*: [git-scm.com](https://git-scm.com/)
+  - *Why you need it*: To clone the repository and manage code
+  - *Alternative*: You can download the code as a ZIP file instead
+
+#### Recommended Setup
+
+- [ ] **Test Unreal Engine Project**
+  - Create a new blank project in UE for testing
+  - *Why*: Keeps your main projects separate from testing
+  - *How*: In Unreal Engine, File → New Project → Blank → Create
+
+- [ ] **Text Editor** (optional but helpful)
+  - Visual Studio Code, Sublime Text, or any code editor
+  - *Why*: To view configuration files and logs
+  
+- [ ] **Terminal/Command Line Access**
+  - *Windows*: Command Prompt or PowerShell
+  - *Mac/Linux*: Terminal application
+  - *Why*: To run automated tests and commands
+
+#### Checking Your Setup
+
+Run these commands to verify your environment:
+
+```bash
+# Check Python version (should show 3.9 or higher)
+python --version
+
+# Check Git is installed
+git --version
+
+# Check pip (Python package manager) works
+pip --version
+```
+
+If any command shows an error, that software needs to be installed.
 
 ### Testing Environment Setup
 
+**Step-by-step instructions for first-time setup:**
+
+#### Step 1: Get the Code
+
+**Option A: Clone with Git (Recommended)**
 ```bash
+# Open terminal/command prompt
+# Navigate to where you want to store the code
+cd ~/Documents  # or C:\Projects on Windows
+
 # Clone the repository
 git clone https://github.com/Mittenzx/Adastrea-Director.git
-cd Adastrea-Director
 
-# Copy plugin to test project
+# Enter the directory
+cd Adastrea-Director
+```
+
+**Option B: Download ZIP**
+1. Go to [GitHub repository](https://github.com/Mittenzx/Adastrea-Director)
+2. Click green "Code" button
+3. Click "Download ZIP"
+4. Extract to a folder on your computer
+5. Open terminal and navigate to that folder
+
+#### Step 2: Copy Plugin to Test Project
+
+```bash
+# Find your test project location
+# Example: ~/Documents/Unreal Projects/MyTestProject
+
+# Create Plugins folder if it doesn't exist
+mkdir -p /path/to/TestProject/Plugins
+
+# Copy the plugin
 cp -r Plugins/AdastreaDirector /path/to/TestProject/Plugins/
 
-# Install Python dependencies
-cd Plugins/AdastreaDirector/Python
-pip install -r requirements.txt
+# Explanation:
+# - "cp -r" means copy recursively (entire folder)
+# - First path is source (where plugin is now)
+# - Second path is destination (where plugin should go)
 ```
+
+**Windows Command Prompt equivalent:**
+```cmd
+mkdir "C:\Path\To\TestProject\Plugins"
+xcopy /E /I "Plugins\AdastreaDirector" "C:\Path\To\TestProject\Plugins\AdastreaDirector"
+```
+
+#### Step 3: Install Python Dependencies
+
+The Python backend needs additional libraries to work.
+
+```bash
+# Navigate to Python backend folder
+cd Plugins/AdastreaDirector/Python
+
+# Install required libraries
+pip install -r requirements.txt
+
+# What this does:
+# - Reads requirements.txt (list of needed libraries)
+# - Downloads and installs each library
+# - May take a few minutes depending on internet speed
+```
+
+**If you see permission errors:**
+```bash
+# Try adding --user flag
+pip install --user -r requirements.txt
+
+# Or use pip3 instead of pip
+pip3 install -r requirements.txt
+```
+
+#### Step 4: Verify Setup
+
+After setup, your structure should look like:
+
+```
+TestProject/
+├── Content/
+├── Config/
+├── Plugins/
+│   └── AdastreaDirector/        ← Plugin is here
+│       ├── AdastreaDirector.uplugin
+│       ├── Source/
+│       ├── Python/
+│       └── Resources/
+└── TestProject.uproject
+```
+
+**Verification checklist:**
+- [ ] Plugin folder exists in TestProject/Plugins/
+- [ ] AdastreaDirector.uplugin file is present
+- [ ] Python dependencies installed without errors
+- [ ] Can open TestProject in Unreal Engine
+
+**You're now ready to begin testing!** Start with [Week 1](#week-1-project-setup-testing).
 
 ---
 
@@ -62,9 +267,30 @@ pip install -r requirements.txt
 
 **Goal:** Verify plugin structure meets Unreal Engine standards and loads correctly.
 
+**What This Week Tests:** 
+Week 1 focuses on the basic foundation - making sure the plugin files are organized correctly and that Unreal Engine can find and load the plugin. Think of it like checking that all the pieces of a puzzle are present before trying to assemble it.
+
+**For New Testers:**
+- Most tests in this week are about checking files exist and have the right format
+- You don't need to understand the code itself, just verify things are in the right place
+- If you're not comfortable with command-line scripts, focus on the manual tests
+- Automated tests (Python scripts) are provided to make checking faster, but they're optional
+
+**What You'll Be Checking:**
+1. File structure (folders and files are organized correctly)
+2. Configuration files (settings files are valid and complete)
+3. Plugin loads in Unreal Engine (appears in the plugins list)
+4. Modules initialize (plugin starts up without errors)
+
 ### 1.1 Automated Structure Validation
 
 **Purpose:** Verify all required files and directories exist.
+
+**What this test does:** Runs a Python script that automatically checks if all the necessary plugin files are in the right places. It's like a checklist that verifies itself!
+
+**Skill level needed:** Basic - just copy and paste commands
+
+**How long it takes:** Less than 30 seconds
 
 ```bash
 # Navigate to plugin directory
