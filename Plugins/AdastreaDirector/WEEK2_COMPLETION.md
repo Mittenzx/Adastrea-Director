@@ -280,7 +280,7 @@ request = {'type': 'ping', 'data': ''}
 **Test 3: Query Request**
 ```python
 request = {'type': 'query', 'data': 'What is Unreal Engine?'}
-# Result: ✅ Response: {"status": "success", "response": "Query processed: ..."}
+# Result: ✅ Response: {"status": "success", "result": "Query processed: ..."}
 ```
 
 **Test 4: Multiple Concurrent Connections**

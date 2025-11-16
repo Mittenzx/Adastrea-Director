@@ -43,7 +43,7 @@ def test_ipc_server(port=5555):
         print(f"  Request:  {request}")
         print(f"  Response: {response_data}")
         assert response_data['status'] == 'success', "Query failed"
-        assert 'response' in response_data, "No response field"
+        assert 'result' in response_data, "No result field"
         print("  ✓ Passed\n")
         
         # Test 3: Plan

@@ -222,7 +222,7 @@ The Adastrea Director Unreal Engine plugin now includes full RAG (Retrieval-Augm
 ```json
 {
   "status": "success|error",
-  "response": "answer text",
+  "result": "answer text",
   "sources": [...],
   "processing_time": 1.23,
   "cached": false
@@ -408,7 +408,7 @@ result = agent.process_query("What is Unreal Engine?")
 ```json
 {
   "status": "success",
-  "response": "Unreal Engine is...",
+  "result": "Unreal Engine is...",
   "sources": [
     {
       "content": "...",

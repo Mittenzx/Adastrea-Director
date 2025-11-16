@@ -168,7 +168,7 @@ class IntegratedIPCServer(IPCServer):
             
             return {
                 'status': 'success',
-                'response': response.get('answer', ''),
+                'result': response.get('answer', ''),
                 'sources': response.get('source_documents', []),
                 'processing_time': response.get('processing_time', 0),
                 'cached': response.get('cached', False)
