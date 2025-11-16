@@ -98,10 +98,13 @@ All plugins include these headers:
 ```
 
 ### Available Menu Categories
-1. **GetLevelEditorCategory()** - For main editor tools and panels
-2. **GetDeveloperToolsCategory()** - For developer tools
-3. **GetDeveloperToolsLogCategory()** - For log and console windows
-4. **GetDeveloperToolsDebugCategory()** - For debugging tools
+
+**Verified methods that exist in IWorkspaceMenuStructure:**
+
+1. **GetLevelEditorCategory()** - For main editor tools and panels (Used by Cesium, Houdini)
+2. **GetDeveloperToolsLogCategory()** - For log and console windows (Used by UnrealEnginePython)
+
+**Note:** `GetDeveloperToolsCategory()` and `GetDeveloperToolsDebugCategory()` were mentioned in some documentation but do not exist in the actual IWorkspaceMenuStructure interface. Use `GetLevelEditorCategory()` for general developer tools.
 
 ### Best Practices
 
@@ -163,9 +166,9 @@ Based on the research, the Adastrea Director plugin should:
 2. **Update Build.cs File**: Ensure WorkspaceMenuStructure module is included
 
 3. **Choose Appropriate Category**:
-   - If it's a main AI assistant panel → Use `GetDeveloperToolsCategory()`
-   - If it's specifically a developer tool → Keep `GetDeveloperToolsCategory()`
-   - If it's a level editing tool → Consider `GetLevelEditorCategory()`
+   - For main editor panels and tools → Use `GetLevelEditorCategory()` (most common)
+   - For console/log windows → Use `GetDeveloperToolsLogCategory()`
+   - **Note:** Use `GetLevelEditorCategory()` for developer tools - it's the standard used by major plugins
 
 4. **Consider Tab Manager Type**: Decide between GlobalTabManager vs LevelEditor TabManager
 

@@ -69,19 +69,17 @@ if (Target.bBuildEditor == true)
 
 ### 3. Available Menu Categories
 
+**Verified methods that actually exist in IWorkspaceMenuStructure:**
+
 ```cpp
-// Main editor tools and panels
+// Main editor tools and panels (Used by Cesium, Houdini)
 WorkspaceMenu::GetMenuStructure().GetLevelEditorCategory()
 
-// Developer tools
-WorkspaceMenu::GetMenuStructure().GetDeveloperToolsCategory()
-
-// Log and console windows
+// Log and console windows (Used by UnrealEnginePython)
 WorkspaceMenu::GetMenuStructure().GetDeveloperToolsLogCategory()
-
-// Debugging tools
-WorkspaceMenu::GetMenuStructure().GetDeveloperToolsDebugCategory()
 ```
+
+**Important:** `GetDeveloperToolsCategory()` and `GetDeveloperToolsDebugCategory()` do NOT exist in the interface. Use `GetLevelEditorCategory()` for developer tools.
 
 ## Implementation Patterns
 
@@ -96,7 +94,7 @@ void FMyModule::StartupModule()
         TabName,
         FOnSpawnTab::CreateStatic(&SpawnMyTab))
         .SetDisplayName(LOCTEXT("TabTitle", "My Tool"))
-        .SetGroup(WorkspaceMenu::GetMenuStructure().GetDeveloperToolsCategory());
+        .SetGroup(WorkspaceMenu::GetMenuStructure().GetLevelEditorCategory());
 }
 ```
 
@@ -153,16 +151,20 @@ void FMyModule::RegisterEditorTabs()
    - No WorkspaceMenuStructure headers in `AdastreaDirectorEditorModule.cpp`
    - No editor guards around workspace menu code
 
-3. **Potential Category Mismatch**
-   - Currently using `GetDeveloperToolsCategory()`
-   - May need `GetLevelEditorCategory()` for AI assistant panel
+3. **Incorrect API Method**
+   - Using `GetDeveloperToolsCategory()` which doesn't exist
+   - Should use `GetLevelEditorCategory()` (verified in Cesium and Houdini)
 
 ### Current Code Location
 File: `Plugins/AdastreaDirector/Source/AdastreaDirectorEditor/Private/AdastreaDirectorEditorModule.cpp`
 Line: 43
 
 ```cpp
+// INCORRECT - this method doesn't exist
 .SetGroup(WorkspaceMenu::GetMenuStructure().GetDeveloperToolsCategory())
+
+// CORRECT - verified in production plugins
+.SetGroup(WorkspaceMenu::GetMenuStructure().GetLevelEditorCategory())
 ```
 
 ## Recommended Fixes
@@ -193,11 +195,13 @@ Add near top of file:
 #endif
 ```
 
-### Fix 3: Consider Category Choice
+### Fix 3: Use Correct Category Method
 
-For an AI assistant panel, `GetDeveloperToolsCategory()` is appropriate. Alternatives:
-- `GetLevelEditorCategory()` - if it's a level editing tool
-- `GetDeveloperToolsDebugCategory()` - if it's primarily for debugging
+For an AI assistant panel, use `GetLevelEditorCategory()` (verified method):
+- `GetLevelEditorCategory()` - Standard for editor tools (Used by Cesium, Houdini)
+- `GetDeveloperToolsLogCategory()` - Only for console/log windows (Used by UnrealEnginePython)
+
+**DO NOT USE:** `GetDeveloperToolsCategory()` or `GetDeveloperToolsDebugCategory()` - these methods do not exist in the IWorkspaceMenuStructure interface.
 
 ## Additional Plugins Researched
 
