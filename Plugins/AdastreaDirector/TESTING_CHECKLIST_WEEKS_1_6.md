@@ -7,6 +7,57 @@
 
 ---
 
+## 👋 New to Adastrea Director?
+
+**Welcome!** If you're new to this project, start here to understand what you'll be testing.
+
+### What is Adastrea Director?
+
+Adastrea Director is an **AI-powered development assistant plugin for Unreal Engine**. Think of it as a smart helper that:
+- Answers questions about your game project's documentation
+- Helps plan development tasks
+- Provides code suggestions
+- Assists with performance analysis
+
+The plugin integrates AI capabilities directly into the Unreal Engine editor, so developers can get intelligent assistance without leaving their workspace.
+
+### How Does It Work?
+
+The plugin uses a **hybrid architecture**:
+- **C++ Plugin (runs in Unreal Engine)**: Provides the user interface and connects to the AI backend
+- **Python Backend (runs separately)**: Does the AI processing, including document analysis and query responses
+- **IPC Communication**: The C++ and Python parts talk to each other through network sockets
+
+### What Will You Be Testing?
+
+You'll be verifying that all components work correctly:
+1. **Week 1-2**: Plugin loads and connects to Python backend
+2. **Week 3-4**: User interface displays and communicates properly
+3. **Week 5-6**: AI features (document ingestion and question answering) work as expected
+
+### Do I Need Programming Experience?
+
+**For manual testing**: Basic computer skills are sufficient. You'll be:
+- Opening applications
+- Clicking buttons
+- Typing text
+- Observing results
+
+**For automated testing**: Some command-line experience helps, but we provide exact commands to copy and paste.
+
+### Key Terms to Know
+
+- **Plugin**: An add-on that extends Unreal Engine's functionality
+- **UE/Unreal Engine**: A game development platform by Epic Games
+- **IPC (Inter-Process Communication)**: How different programs talk to each other
+- **RAG (Retrieval-Augmented Generation)**: AI technique that searches documents to provide accurate answers
+- **Slate**: Unreal Engine's UI framework
+- **Module**: A logical component of the plugin (like Runtime or Editor)
+
+Don't worry if some terms are unfamiliar - we'll explain as we go!
+
+---
+
 ## Table of Contents
 
 1. [Overview](#overview)
@@ -31,30 +82,188 @@ This document provides a comprehensive testing checklist for the Adastrea Direct
 - **Success Criteria**: Expected outcomes and acceptance criteria
 - **Troubleshooting**: Common issues and solutions
 
+### How to Use This Document
+
+**If you're a beginner:**
+1. Start with the "New to Adastrea Director?" section above
+2. Review the [Testing Prerequisites](#testing-prerequisites) carefully
+3. Follow each week's tests in order
+4. Don't skip the explanatory text - it provides important context
+5. Use the [Troubleshooting Guide](#troubleshooting-guide) when you encounter issues
+
+**If you're experienced:**
+- Jump to specific weeks as needed
+- Use success criteria for quick validation
+- Reference troubleshooting for known issues
+
 ### Testing Prerequisites
 
-Before starting any testing, ensure you have:
+**What you need before starting:**
 
-- [ ] Unreal Engine 5.0+ installed
-- [ ] Visual Studio 2019+ (Windows) or Xcode (Mac) or appropriate C++ compiler
-- [ ] Python 3.9+ installed
-- [ ] Git installed for version control
-- [ ] Test UE project set up (recommended: blank project)
+#### Required Software (Must Have)
+
+- [ ] **Unreal Engine 5.0 or higher**
+  - *What it is*: The game development platform we're building the plugin for
+  - *Where to get it*: [Epic Games Launcher](https://www.unrealengine.com/download) (free)
+  - *Why you need it*: To test the plugin in its target environment
+  - *Version note*: UE 5.3+ recommended for best compatibility
+
+- [ ] **Python 3.9 or higher**
+  - *What it is*: A programming language the AI backend uses
+  - *Where to get it*: [python.org/downloads](https://www.python.org/downloads/)
+  - *Why you need it*: The AI processing happens in Python
+  - *How to check*: Open terminal/command prompt and type `python --version`
+
+- [ ] **C++ Compiler/IDE**
+  - *Windows*: Visual Studio 2019 or 2022 (Community Edition is free)
+  - *Mac*: Xcode 13+ (free from App Store)
+  - *Linux*: GCC 9+ or Clang 10+ (usually pre-installed)
+  - *Why you need it*: To compile the plugin's C++ code
+  - *Installation note*: For Visual Studio, install the "Game Development with C++" workload
+
+- [ ] **Git**
+  - *What it is*: Version control software to download the code
+  - *Where to get it*: [git-scm.com](https://git-scm.com/)
+  - *Why you need it*: To clone the repository and manage code
+  - *Alternative*: You can download the code as a ZIP file instead
+
+#### Recommended Setup
+
+- [ ] **Test Unreal Engine Project**
+  - Create a new blank project in UE for testing
+  - *Why*: Keeps your main projects separate from testing
+  - *How*: In Unreal Engine, File → New Project → Blank → Create
+
+- [ ] **Text Editor** (optional but helpful)
+  - Visual Studio Code, Sublime Text, or any code editor
+  - *Why*: To view configuration files and logs
+  
+- [ ] **Terminal/Command Line Access**
+  - *Windows*: Command Prompt or PowerShell
+  - *Mac/Linux*: Terminal application
+  - *Why*: To run automated tests and commands
+
+#### Checking Your Setup
+
+Run these commands to verify your environment:
+
+```bash
+# Check Python version (should show 3.9 or higher)
+python --version
+
+# Check Git is installed (same command works on Windows, Mac, and Linux)
+git --version
+
+# Check pip (Python package manager) works
+pip --version
+```
+
+If any command shows an error, that software needs to be installed.
 
 ### Testing Environment Setup
 
+**Step-by-step instructions for first-time setup:**
+
+#### Step 1: Get the Code
+
+**Option A: Clone with Git (Recommended)**
 ```bash
+# Open terminal/command prompt
+# Navigate to where you want to store the code
+cd ~/Documents  # or C:\Projects on Windows
+
 # Clone the repository
 git clone https://github.com/Mittenzx/Adastrea-Director.git
-cd Adastrea-Director
 
-# Copy plugin to test project
+# Enter the directory
+cd Adastrea-Director
+```
+
+**Option B: Download ZIP**
+1. Go to [GitHub repository](https://github.com/Mittenzx/Adastrea-Director)
+2. Click green "Code" button
+3. Click "Download ZIP"
+4. Extract to a folder on your computer
+5. Open terminal and navigate to that folder
+
+#### Step 2: Copy Plugin to Test Project
+
+```bash
+# Find your test project location
+# Example: ~/Documents/Unreal Projects/MyTestProject
+
+# Create Plugins folder if it doesn't exist (Mac/Linux)
+mkdir -p /path/to/TestProject/Plugins
+
+# Copy the plugin (Mac/Linux)
 cp -r Plugins/AdastreaDirector /path/to/TestProject/Plugins/
 
-# Install Python dependencies
-cd Plugins/AdastreaDirector/Python
-pip install -r requirements.txt
+# Windows equivalent:
+# mkdir "C:\Path\To\TestProject\Plugins"
+# xcopy /E /I "Plugins\AdastreaDirector" "C:\Path\To\TestProject\Plugins\AdastreaDirector"
+
+# Explanation:
+# - "cp -r" means copy recursively (entire folder)
+# - First path is source (where plugin is now)
+# - Second path is destination (where plugin should go)
 ```
+
+**Windows Command Prompt equivalent:**
+```cmd
+mkdir "C:\Path\To\TestProject\Plugins"
+xcopy /E /I "Plugins\AdastreaDirector" "C:\Path\To\TestProject\Plugins\AdastreaDirector"
+```
+
+#### Step 3: Install Python Dependencies
+
+The Python backend needs additional libraries to work.
+
+```bash
+# Navigate to Python backend folder
+cd Plugins/AdastreaDirector/Python
+
+# Install required libraries
+pip install -r requirements.txt
+
+# What this does:
+# - Reads requirements.txt (list of needed libraries)
+# - Downloads and installs each library
+# - May take a few minutes depending on internet speed
+```
+
+**If you see permission errors:**
+```bash
+# Try adding --user flag
+pip install --user -r requirements.txt
+
+# Or use pip3 instead of pip
+pip3 install -r requirements.txt
+```
+
+#### Step 4: Verify Setup
+
+After setup, your structure should look like this (note: "TestProject" is a placeholder - use your actual project name):
+
+```
+TestProject/                     ← Your project folder (use your actual name)
+├── Content/
+├── Config/
+├── Plugins/
+│   └── AdastreaDirector/        ← Plugin is here
+│       ├── AdastreaDirector.uplugin
+│       ├── Source/
+│       ├── Python/
+│       └── Resources/
+└── TestProject.uproject
+```
+
+**Verification checklist:**
+- [ ] Plugin folder exists in TestProject/Plugins/
+- [ ] AdastreaDirector.uplugin file is present
+- [ ] Python dependencies installed without errors
+- [ ] Can open TestProject in Unreal Engine
+
+**You're now ready to begin testing!** Start with [Week 1](#week-1-project-setup-testing).
 
 ---
 
@@ -62,9 +271,30 @@ pip install -r requirements.txt
 
 **Goal:** Verify plugin structure meets Unreal Engine standards and loads correctly.
 
+**What This Week Tests:** 
+Week 1 focuses on the basic foundation - making sure the plugin files are organized correctly and that Unreal Engine can find and load the plugin. Think of it like checking that all the pieces of a puzzle are present before trying to assemble it.
+
+**For New Testers:**
+- Most tests in this week are about checking files exist and have the right format
+- You don't need to understand the code itself, just verify things are in the right place
+- If you're not comfortable with command-line scripts, focus on the manual tests
+- Automated tests (Python scripts) are provided to make checking faster, but they're optional
+
+**What You'll Be Checking:**
+1. File structure (folders and files are organized correctly)
+2. Configuration files (settings files are valid and complete)
+3. Plugin loads in Unreal Engine (appears in the plugins list)
+4. Modules initialize (plugin starts up without errors)
+
 ### 1.1 Automated Structure Validation
 
 **Purpose:** Verify all required files and directories exist.
+
+**What this test does:** Runs a Python script that automatically checks if all the necessary plugin files are in the right places. It's like a checklist that verifies itself!
+
+**Skill level needed:** Basic - just copy and paste commands
+
+**How long it takes:** Less than 30 seconds
 
 ```bash
 # Navigate to plugin directory
@@ -1567,9 +1797,239 @@ RAG System (Week 5-6)
 
 ---
 
+## Glossary of Terms
+
+**New to the terminology?** Here's a plain-language guide to technical terms used in this document.
+
+### General Terms
+
+**Plugin**
+- What: An add-on that extends Unreal Engine's functionality
+- Like: A browser extension or phone app
+- Example: Adastrea Director adds AI assistance to Unreal Engine
+
+**Module**
+- What: A self-contained component of the plugin
+- Like: A chapter in a book
+- Example: Runtime module handles core functionality; Editor module handles UI
+
+**API (Application Programming Interface)**
+- What: A way for programs to talk to each other
+- Like: A menu in a restaurant (you don't need to know how they cook, just what you can order)
+- Example: The Python backend has an API that the C++ plugin calls
+
+**Repository/Repo**
+- What: Where code is stored and version-controlled
+- Like: A shared folder with history tracking
+- Example: The Adastrea Director GitHub repository
+
+### Development Terms
+
+**C++**
+- What: A programming language
+- Why: Unreal Engine is built with C++, so plugins often use it
+- Note: The plugin's connection to Unreal Engine is in C++
+
+**Python**
+- What: A programming language
+- Why: Great for AI/ML tasks, easier to write than C++
+- Note: The plugin's AI features are in Python
+
+**Build/Compile**
+- What: Converting human-readable code into executable programs
+- Like: Translating a recipe into a finished meal
+- Why: Computers can't run code directly; it must be compiled first
+
+**IDE (Integrated Development Environment)**
+- What: Software for writing and building code
+- Examples: Visual Studio (Windows), Xcode (Mac)
+- Why: Makes coding easier with features like auto-complete and debugging
+
+### Unreal Engine Terms
+
+**UE/Unreal Engine**
+- What: A professional game development platform by Epic Games
+- Used for: AAA games, indie games, simulations, architectural visualizations
+- Note: The target environment for this plugin
+
+**Slate**
+- What: Unreal Engine's UI framework
+- Like: Building blocks for creating windows, buttons, and interfaces
+- Example: The Adastrea Director panel is built with Slate
+
+**Editor**
+- What: The Unreal Engine development environment (not the game itself)
+- Where: What you see when you open a .uproject file
+- Note: The plugin runs in the Editor, helping you build your game
+
+**.uplugin file**
+- What: Plugin descriptor file (tells UE about the plugin)
+- Format: JSON (structured text)
+- Contains: Plugin name, version, modules, dependencies
+
+### Communication Terms
+
+**IPC (Inter-Process Communication)**
+- What: How separate programs talk to each other
+- Like: Two people having a phone conversation
+- Example: C++ plugin and Python backend use IPC via sockets
+
+**Socket**
+- What: A communication endpoint (like a phone number)
+- Types: Network socket (our case) or file socket
+- Example: Python server listens on port 5555 for connections
+
+**Port**
+- What: A numbered channel for network communication
+- Like: An apartment number in a building
+- Example: Port 5555 is where the Python server listens
+
+**Request/Response**
+- What: One program asks, another answers
+- Like: Question and answer
+- Example: Plugin sends "query" request, Python sends back "result" response
+
+**Latency**
+- What: Time delay between request and response
+- Goal: Lower is better
+- Example: < 50ms means under 0.05 seconds (nearly instant)
+
+### AI/ML Terms
+
+**AI (Artificial Intelligence)**
+- What: Computer systems that can perform tasks that typically require human intelligence
+- Like: Teaching computers to think, learn, and solve problems
+- Example: Voice assistants, image recognition, game AI
+
+**ML (Machine Learning)**
+- What: A subset of AI where computer systems learn from data to make predictions or decisions
+- Like: Teaching a computer to recognize patterns, like sorting photos by content
+- Example: Spam filters, recommendation systems, predictive text
+
+**RAG (Retrieval-Augmented Generation)**
+- What: AI technique that searches documents before answering
+- Like: Looking up information in a book before answering a question
+- Why: Makes AI answers more accurate and relevant
+- Example: Searches your docs to answer project-specific questions
+
+**LLM (Large Language Model)**
+- What: AI model trained on vast amounts of text
+- Examples: GPT-4, Gemini, Claude
+- What it does: Understands and generates human-like text
+- Note: The "brain" that answers your questions
+
+**Embedding**
+- What: Converting text into numbers AI can understand
+- Like: Translating words into coordinates on a map
+- Why: Allows AI to find similar content
+- Example: Helps find relevant docs when you ask a question
+
+**Vector Database**
+- What: Database that stores embeddings
+- Example: ChromaDB
+- Why: Enables fast similarity search
+- Note: Where ingested documents are stored
+
+**Document Ingestion**
+- What: Reading and processing documents for AI use
+- Steps: Load → Split → Embed → Store
+- Like: Reading a book and taking organized notes
+- Example: Processing your project docs so AI can search them
+
+**Query**
+- What: A question or search request
+- Like: Asking a librarian for help finding information
+- Example: "What is Unreal Engine?" is a query
+
+**Context**
+- What: Background information that makes answers relevant
+- Like: Understanding a conversation by remembering what was said before
+- Example: Remembering previous questions in a conversation
+
+**Cache**
+- What: Storing results to avoid repeating work
+- Like: Writing down an answer so you don't have to look it up again
+- Why: Makes responses much faster
+- Example: Repeat queries answered instantly from cache
+
+### Testing Terms
+
+**Automated Test**
+- What: A program that tests other programs automatically
+- Like: A robot that checks if things work
+- Example: test_ipc.py runs tests without human interaction
+
+**Manual Test**
+- What: A human following steps to verify something works
+- Like: Following a recipe to see if it produces the right dish
+- Example: Opening the UI and clicking buttons
+
+**Test Case**
+- What: A specific scenario to test
+- Like: One question on an exam
+- Example: "Verify plugin loads without errors"
+
+**Success Criteria**
+- What: What "passing" looks like
+- Like: A rubric for grading
+- Example: "Plugin appears in Edit → Plugins"
+
+**Edge Case**
+- What: An unusual or extreme scenario
+- Like: Testing if a bridge holds up in a hurricane, not just normal weather
+- Example: Sending 1000 characters instead of 10
+
+**Regression**
+- What: When something that worked before stops working
+- Like: A fixed bug coming back
+- Why: Changes can accidentally break existing features
+
+### Performance Terms
+
+**Throughput**
+- What: How much work gets done per unit time
+- Like: Cars per hour through a toll booth
+- Example: Files ingested per second
+
+**Benchmark**
+- What: A standard to measure performance against
+- Like: A time to beat in a race
+- Example: Target average latency < 50ms
+
+**Bottleneck**
+- What: The slowest part that limits overall performance
+- Like: Narrowest part of an hourglass
+- Example: Slow disk can bottleneck ingestion
+
+**Memory Leak**
+- What: Program using more and more memory over time
+- Like: A faucet that won't stop dripping
+- Bad: Eventually runs out of memory and crashes
+
+### Platform Terms
+
+**Cross-platform**
+- What: Works on multiple operating systems
+- Like: A universal adapter that works everywhere
+- Example: Plugin works on Windows, Mac, and Linux
+
+**Windows/Mac/Linux**
+- What: Different operating systems
+- Differences: Use different development tools and have different file systems
+- Note: Plugin must be tested on all to ensure compatibility
+
+---
+
 ## Conclusion
 
 This comprehensive testing checklist ensures all components of the Adastrea Director plugin (Weeks 1-6) are thoroughly validated. Each week builds upon the previous, creating a robust, well-tested foundation for the plugin.
+
+**For New Testers:**
+- Take your time - testing thoroughly is better than testing quickly
+- Don't skip the prerequisites - proper setup is crucial
+- When in doubt, check the glossary above or the troubleshooting guide
+- It's okay to ask for help - create a GitHub issue with specific questions
+- Your testing helps make the plugin better for everyone!
 
 **Testing Status:**
 - **Automated Tests:** Available for structure, IPC, and Python modules
