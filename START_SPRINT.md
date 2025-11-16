@@ -72,12 +72,12 @@ code TASKS_2_WEEKS.md
 **@Copilot - Your Focus:**
 - Week 1: Agent Orchestration (#1), Remote Control Foundation (#3)
 - Week 2: WebSocket (#7), Agent Enhancement (#8)
-- Total: ~44-58 hours of work
+- Total: ~52-68 hours of work
 
 **@Mittenzx - Your Focus:**
 - Week 1: Plugin Week 7-8 Features (#2), Documentation (#4)
 - Week 2: Plugin Planning Integration (#9), Dashboard (#11)
-- Total: ~42-57 hours of work
+- Total: ~38-53 hours of work
 
 ### Step 3: Open Your Working Checklist
 ```bash

@@ -81,6 +81,8 @@ Phase 2 builds on Phase 1's foundation by adding **intelligent goal decompositio
 - 📖 **[Full Task List](TASKS_2_WEEKS.md)** - Detailed descriptions of all 14 tasks
 - 📊 **[Task Board](TASK_BOARD.md)** - Quick status overview and burndown chart
 - ✅ **[Sprint Checklist](SPRINT_CHECKLIST.md)** - Daily tracking checklist
+- 📝 **[Task List Summary](TASK_LIST_SUMMARY.md)** - High-level summary of all tasks and progress
+- 🚀 **[Start Sprint Guide](START_SPRINT.md)** - Step-by-step instructions to kick off the sprint
 
 **This Sprint Focus:**
 1. 🎯 Agent Orchestration CLI & Dashboard

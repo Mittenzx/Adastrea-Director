@@ -247,7 +247,7 @@ Enhance Performance Profiling Agent to use Remote Control API for real data coll
 **Tasks:**
 - [ ] Extend `PerformanceProfilingAgent` with Remote Control
 - [ ] Implement console command execution (`stat fps`, `stat gpu`, `stat memory`)
-- [ ] Add PIE (Play-in-Editor) automation
+- [ ] Add Play In Editor (PIE) automation
 - [ ] Create performance metric collection from real UE data
 - [ ] Implement automated benchmarking workflow
 - [ ] Add performance report generation
@@ -481,14 +481,14 @@ Plugin UI is functional but could be more polished and user-friendly.
 - Week 1: Tasks #1, #3, #5
 - Week 2: Tasks #7, #8, #10
 
-**Total Hours:** ~44-58 hours (intense 2-week sprint)
+**Total Hours:** ~52-68 hours (intense 2-week sprint)
 
 ### @Mittenzx Focus Areas
 **Primary:** Plugin Development & Documentation
 - Week 1: Tasks #2, #4
 - Week 2: Tasks #9, #11, #12
 
-**Total Hours:** ~42-57 hours (intense 2-week sprint)
+**Total Hours:** ~38-53 hours (intense 2-week sprint)
 
 ---
 
