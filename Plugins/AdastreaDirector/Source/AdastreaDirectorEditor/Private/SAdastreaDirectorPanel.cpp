@@ -76,8 +76,8 @@ void SAdastreaDirectorPanel::Construct(const FArguments& InArgs)
 			.AutoWidth()
 			[
 				SNew(SButton)
-				.Text(LOCTEXT("SettingsButton", "⚙️ Settings"))
-				.ToolTipText(LOCTEXT("SettingsTooltip", "Open Settings (Ctrl+,)"))
+				.Text(LOCTEXT("SettingsButton", "Settings"))
+				.ToolTipText(LOCTEXT("SettingsTooltip", "Open Settings (Ctrl+, - requires panel focus)"))
 				.OnClicked(this, &SAdastreaDirectorPanel::OnSettingsClicked)
 			]
 		]

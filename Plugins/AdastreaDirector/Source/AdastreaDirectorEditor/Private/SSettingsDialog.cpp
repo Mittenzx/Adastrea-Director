@@ -41,7 +41,7 @@ void SSettingsDialog::Construct(const FArguments& InArgs, TSharedPtr<SWindow> In
 			.Padding(0.0f, 0.0f, 0.0f, 20.0f)
 			[
 				SNew(STextBlock)
-				.Text(LOCTEXT("SettingsTitle", "⚙️ Settings"))
+				.Text(LOCTEXT("SettingsTitle", "Settings"))
 				.Font(FCoreStyle::GetDefaultFontStyle("Bold", 14))
 			]
 
@@ -140,7 +140,7 @@ TSharedRef<SWidget> SSettingsDialog::CreateAPIKeysSection()
 					.Style(FAppStyle::Get(), "RadioButton")
 					.IsChecked(LLMProvider == TEXT("gemini") ? ECheckBoxState::Checked : ECheckBoxState::Unchecked)
 					.OnCheckStateChanged_Lambda([this](ECheckBoxState NewState) {
-						if (NewState == ECheckBoxState::Checked)
+						if (NewState == ECheckBoxState::Checked && LLMProvider != TEXT("gemini"))
 						{
 							OnLLMProviderChanged(TEXT("gemini"));
 						}
@@ -158,7 +158,7 @@ TSharedRef<SWidget> SSettingsDialog::CreateAPIKeysSection()
 					.Style(FAppStyle::Get(), "RadioButton")
 					.IsChecked(LLMProvider == TEXT("openai") ? ECheckBoxState::Checked : ECheckBoxState::Unchecked)
 					.OnCheckStateChanged_Lambda([this](ECheckBoxState NewState) {
-						if (NewState == ECheckBoxState::Checked)
+						if (NewState == ECheckBoxState::Checked && LLMProvider != TEXT("openai"))
 						{
 							OnLLMProviderChanged(TEXT("openai"));
 						}
@@ -192,7 +192,7 @@ TSharedRef<SWidget> SSettingsDialog::CreateAPIKeysSection()
 					.IsPassword(true)
 					.Text(FText::FromString(GeminiAPIKey))
 					.OnTextChanged_Lambda([this](const FText& NewText) {
-						GeminiAPIKey = NewText.ToString();
+						GeminiAPIKey = NewText.ToString().TrimStartAndEnd();
 					})
 				]
 			]
@@ -219,7 +219,7 @@ TSharedRef<SWidget> SSettingsDialog::CreateAPIKeysSection()
 					.IsPassword(true)
 					.Text(FText::FromString(OpenAIAPIKey))
 					.OnTextChanged_Lambda([this](const FText& NewText) {
-						OpenAIAPIKey = NewText.ToString();
+						OpenAIAPIKey = NewText.ToString().TrimStartAndEnd();
 					})
 				]
 			]
@@ -247,7 +247,7 @@ TSharedRef<SWidget> SSettingsDialog::CreateAPIKeysSection()
 					.Style(FAppStyle::Get(), "RadioButton")
 					.IsChecked(EmbeddingProvider == TEXT("huggingface") ? ECheckBoxState::Checked : ECheckBoxState::Unchecked)
 					.OnCheckStateChanged_Lambda([this](ECheckBoxState NewState) {
-						if (NewState == ECheckBoxState::Checked)
+						if (NewState == ECheckBoxState::Checked && EmbeddingProvider != TEXT("huggingface"))
 						{
 							OnEmbeddingProviderChanged(TEXT("huggingface"));
 						}
@@ -265,7 +265,7 @@ TSharedRef<SWidget> SSettingsDialog::CreateAPIKeysSection()
 					.Style(FAppStyle::Get(), "RadioButton")
 					.IsChecked(EmbeddingProvider == TEXT("openai") ? ECheckBoxState::Checked : ECheckBoxState::Unchecked)
 					.OnCheckStateChanged_Lambda([this](ECheckBoxState NewState) {
-						if (NewState == ECheckBoxState::Checked)
+						if (NewState == ECheckBoxState::Checked && EmbeddingProvider != TEXT("openai"))
 						{
 							OnEmbeddingProviderChanged(TEXT("openai"));
 						}
@@ -451,6 +451,11 @@ void SSettingsDialog::LoadSettings()
 	
 	FString FontSizeStr = LoadConfigValue(TEXT("DefaultFontSize"), TEXT("10"));
 	DefaultFontSize = FCString::Atoi(*FontSizeStr);
+	// Validate font size is within allowed range
+	if (DefaultFontSize < 8 || DefaultFontSize > 20)
+	{
+		DefaultFontSize = 10; // Reset to default if out of bounds or invalid
+	}
 	
 	FString AutoSaveStr = LoadConfigValue(TEXT("AutoSaveSettings"), TEXT("true"));
 	bAutoSaveSettings = AutoSaveStr == TEXT("true");
@@ -470,25 +475,21 @@ void SSettingsDialog::SaveSettings()
 	SaveConfigValue(TEXT("ShowTimestamps"), bShowTimestamps ? TEXT("true") : TEXT("false"));
 }
 
-FString SSettingsDialog::LoadConfigValue(const FString& Key, const FString& DefaultValue)
+TMap<FString, FString> SSettingsDialog::LoadConfigMap(const FString& ConfigPath)
 {
-	// Get config file path
-	FString ConfigPath = FPaths::ProjectSavedDir() / TEXT("AdastreaDirector") / TEXT("config.ini");
+	TMap<FString, FString> ConfigMap;
 	
-	// Check if file exists
 	if (!FPaths::FileExists(ConfigPath))
 	{
-		return DefaultValue;
+		return ConfigMap;
 	}
 	
-	// Load the file
 	FString FileContent;
 	if (!FFileHelper::LoadFileToString(FileContent, *ConfigPath))
 	{
-		return DefaultValue;
+		return ConfigMap;
 	}
 	
-	// Parse key=value pairs
 	TArray<FString> Lines;
 	FileContent.ParseIntoArrayLines(Lines);
 	
@@ -503,14 +504,20 @@ FString SSettingsDialog::LoadConfigValue(const FString& Key, const FString& Defa
 		FString LineKey, LineValue;
 		if (TrimmedLine.Split(TEXT("="), &LineKey, &LineValue))
 		{
-			if (LineKey.TrimStartAndEnd() == Key)
-			{
-				return LineValue.TrimStartAndEnd();
-			}
+			ConfigMap.Add(LineKey.TrimStartAndEnd(), LineValue.TrimStartAndEnd());
 		}
 	}
 	
-	return DefaultValue;
+	return ConfigMap;
+}
+
+FString SSettingsDialog::LoadConfigValue(const FString& Key, const FString& DefaultValue)
+{
+	FString ConfigPath = FPaths::ProjectSavedDir() / TEXT("AdastreaDirector") / TEXT("config.ini");
+	TMap<FString, FString> ConfigMap = LoadConfigMap(ConfigPath);
+	
+	const FString* Value = ConfigMap.Find(Key);
+	return Value ? *Value : DefaultValue;
 }
 
 void SSettingsDialog::SaveConfigValue(const FString& Key, const FString& Value)
@@ -526,32 +533,8 @@ void SSettingsDialog::SaveConfigValue(const FString& Key, const FString& Value)
 		PlatformFile.CreateDirectoryTree(*ConfigDir);
 	}
 	
-	// Load existing content
-	TMap<FString, FString> ConfigMap;
-	if (FPaths::FileExists(ConfigPath))
-	{
-		FString FileContent;
-		if (FFileHelper::LoadFileToString(FileContent, *ConfigPath))
-		{
-			TArray<FString> Lines;
-			FileContent.ParseIntoArrayLines(Lines);
-			
-			for (const FString& Line : Lines)
-			{
-				FString TrimmedLine = Line.TrimStartAndEnd();
-				if (TrimmedLine.IsEmpty() || TrimmedLine.StartsWith(TEXT("#")))
-				{
-					continue;
-				}
-				
-				FString LineKey, LineValue;
-				if (TrimmedLine.Split(TEXT("="), &LineKey, &LineValue))
-				{
-					ConfigMap.Add(LineKey.TrimStartAndEnd(), LineValue.TrimStartAndEnd());
-				}
-			}
-		}
-	}
+	// Load existing content using helper
+	TMap<FString, FString> ConfigMap = LoadConfigMap(ConfigPath);
 	
 	// Update or add the key
 	ConfigMap.FindOrAdd(Key) = Value;
@@ -559,26 +542,22 @@ void SSettingsDialog::SaveConfigValue(const FString& Key, const FString& Value)
 	// Write back to file
 	FString NewContent;
 	NewContent += TEXT("# Adastrea Director Configuration\n");
-	NewContent += TEXT("# Auto-generated file\n\n");
+	NewContent += TEXT("# Auto-generated file\n");
+	NewContent += TEXT("# Note: Manual edits to this file may be overwritten when saving from the UI\n\n");
 	
-	for (const auto& Pair : ConfigMap)
+	// Sort keys for deterministic output
+	TArray<FString> SortedKeys;
+	ConfigMap.GetKeys(SortedKeys);
+	SortedKeys.Sort();
+	for (const FString& SortedKey : SortedKeys)
 	{
-		NewContent += FString::Printf(TEXT("%s=%s\n"), *Pair.Key, *Pair.Value);
+		NewContent += FString::Printf(TEXT("%s=%s\n"), *SortedKey, *ConfigMap[SortedKey]);
 	}
 	
-	FFileHelper::SaveStringToFile(NewContent, *ConfigPath);
-}
-
-FString SSettingsDialog::DecryptAPIKey(const FString& EncryptedKey)
-{
-	// Placeholder for decryption - to be implemented with proper encryption
-	return EncryptedKey;
-}
-
-FString SSettingsDialog::EncryptAPIKey(const FString& Key)
-{
-	// Placeholder for encryption - to be implemented with proper encryption
-	return Key;
+	if (!FFileHelper::SaveStringToFile(NewContent, *ConfigPath))
+	{
+		UE_LOG(LogAdastreaDirectorEditor, Error, TEXT("Failed to save settings to: %s"), *ConfigPath);
+	}
 }
 
 #undef LOCTEXT_NAMESPACE

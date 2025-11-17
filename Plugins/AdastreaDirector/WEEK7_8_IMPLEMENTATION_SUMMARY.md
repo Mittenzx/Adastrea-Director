@@ -188,8 +188,9 @@ This document summarizes the implementation of Week 7-8 features for the Adastre
 - **Date:** November 17, 2025
 
 **Security Features:**
-- Password-masked API key inputs
-- Config file stored in project Saved directory (gitignored)
+- Password-masked API key inputs (visual security in UI only)
+- API keys stored in plaintext in config file (no encryption at rest)
+- Config file stored in project Saved directory (gitignored by default)
 - No hardcoded secrets
 - Proper file permissions handling
 - Input validation on all fields
@@ -313,7 +314,7 @@ Commit 4: Update SPRINT_CHECKLIST and add testing documentation
 1. **API Key Encryption**: Currently not encrypted on disk
    - **Impact:** Low (stored in gitignored Saved folder)
    - **Future:** Consider encryption similar to Python config_manager.py
-   - **Mitigation:** File permissions restrict access
+   - **Mitigation:** Password masking only hides API keys in the UI (visual security); API keys are stored in plaintext in the config file (no encryption at rest). File permissions restrict access.
 
 2. **Config Format**: Simple INI format
    - **Impact:** None for current features

@@ -58,8 +58,7 @@ private:
 	// Helper methods
 	void LoadSettings();
 	void SaveSettings();
+	TMap<FString, FString> LoadConfigMap(const FString& ConfigPath);
 	FString LoadConfigValue(const FString& Key, const FString& DefaultValue);
 	void SaveConfigValue(const FString& Key, const FString& Value);
-	FString DecryptAPIKey(const FString& EncryptedKey);
-	FString EncryptAPIKey(const FString& Key);
 };

@@ -104,11 +104,13 @@ The settings dialog allows you to configure:
 Settings are stored in your project's Saved directory:
 - Path: `<Project>/Saved/AdastreaDirector/config.ini`
 - Format: Simple key=value pairs for easy editing if needed
+- **Security Note**: API keys are stored in plaintext. Keep this file secure and ensure it's in your .gitignore
+- **Note**: Manual edits to comments may be overwritten when saving from the UI
 
 ### Keyboard Shortcuts
 
 - `Enter` - Send query (when focused on query input)
-- `Ctrl+,` - Open Settings dialog
+- `Ctrl+,` - Open Settings dialog (requires panel to have focus)
 - More shortcuts coming in future updates!
 
 ### Error Handling
