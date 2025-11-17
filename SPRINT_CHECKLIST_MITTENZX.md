@@ -25,7 +25,7 @@
 
 ## Week 1: High Priority Tasks
 
-### Task #2: Plugin Week 7-8 Features (10-15h) - @Mittenzx
+### Task \#2: Plugin Week 7-8 Features (10-15h) - @Mittenzx
 **Status:** 🔴 Not Started
 
 **Context & Background:**
@@ -197,7 +197,7 @@ FInputChord(EKeys::A, EModifierKey::Control | EModifierKey::Shift)
 
 ---
 
-### Task #4: Documentation (4-6h) - @Mittenzx
+### Task \#4: Documentation (4-6h) - @Mittenzx
 **Status:** 🔴 Not Started
 
 **Context & Background:**
@@ -307,7 +307,7 @@ See also:
 
 ## Week 2: High Priority Tasks
 
-### Task #9: Plugin Planning (12-16h) - @Mittenzx
+### Task \#9: Plugin Planning (12-16h) - @Mittenzx
 **Status:** 🔴 Not Started
 
 **Context & Background:**
@@ -559,7 +559,7 @@ Plugins/AdastreaDirector/Python/planning/
 
 ## Week 2: Medium Priority Tasks
 
-### Task #11: Dashboard Enhancement (6-8h) - @Mittenzx
+### Task \#11: Dashboard Enhancement (6-8h) - @Mittenzx
 **Status:** 🔴 Not Started
 
 **Context & Background:**
@@ -641,7 +641,7 @@ The `agent_dashboard.py` provides basic monitoring of autonomous agents. With Ph
 
 ---
 
-### Task #12: Plugin Testing (6-8h) - @Mittenzx
+### Task \#12: Plugin Testing (6-8h) - @Mittenzx
 **Status:** 🔴 Not Started
 
 **Context & Background:**
@@ -747,7 +747,7 @@ pytest Tests/Unit/Python/ -v
 
 ## Optional Tasks (If Time Permits)
 
-### Task #6: GUI Theme System (4-6h) - @Mittenzx
+### Task \#6: GUI Theme System (4-6h) - @Mittenzx
 **Status:** 🟡 Optional
 
 **Quick Overview:**
@@ -764,7 +764,7 @@ Add theme support to standalone GUI for better user experience.
 
 ---
 
-### Task #14: Plugin UI Polish (4-6h) - @Mittenzx
+### Task \#14: Plugin UI Polish (4-6h) - @Mittenzx
 **Status:** 🟡 Optional
 
 **Quick Overview:**
