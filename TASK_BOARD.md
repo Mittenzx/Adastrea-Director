@@ -88,7 +88,7 @@
 |------|---------------|-----------------|-------|
 | Week 1 | ✅ 20-28h COMPLETE (Tasks #1, #3) | 6-8h (Task #5) | 6-8h remaining |
 | Week 2 | 18-22h (Tasks #7, #8) | 8-10h (Task #10) | 26-32h |
-| **Total** | **20-28h complete, 18-22h remaining** | **14-18h** | **32-48h remaining** |
+| **Total** | **20-28h complete, 18-22h remaining** | **14-18h** | **32-40h remaining** |
 
 **Focus:** Remote Control API, Agent Enhancement, Testing
 
@@ -162,7 +162,7 @@ Week 2:
 - [x] Agent orchestrator running all 3 Phase 3 agents ✅
 - [x] Remote Control client successfully connects to Unreal Engine ✅
 - [ ] Plugin has Settings dialog with API key management
-- [x] All high-priority tasks at least 80% complete ✅ (2/3 complete = 67%, Task #2 pending)
+- [ ] All high-priority tasks at least 80% complete (2/3 complete = 67%, Task #2 pending)
 - [x] Documentation updated for new features ✅
 - [x] Code reviewed and merged to main ✅
 
