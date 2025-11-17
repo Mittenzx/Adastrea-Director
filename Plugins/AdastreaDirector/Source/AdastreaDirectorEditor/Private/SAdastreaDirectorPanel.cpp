@@ -26,6 +26,7 @@
 #include "Framework/Application/SlateApplication.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
+#include "Misc/MessageDialog.h"
 
 #define LOCTEXT_NAMESPACE "AdastreaDirectorPanel"
 
@@ -473,6 +474,17 @@ bool SAdastreaDirectorPanel::IsSendButtonEnabled() const
 
 FReply SAdastreaDirectorPanel::OnClearHistoryClicked()
 {
+	// Show confirmation dialog
+	const FText Title = LOCTEXT("ClearHistoryTitle", "Clear Conversation History");
+	const FText Message = LOCTEXT("ClearHistoryMessage", "Are you sure you want to clear the conversation history?\n\nThis action cannot be undone.");
+	
+	EAppReturnType::Type UserResponse = FMessageDialog::Open(EAppMsgType::YesNo, Message, &Title);
+	
+	if (UserResponse != EAppReturnType::Yes)
+	{
+		return FReply::Handled();
+	}
+
 	// Get the Python bridge
 	FAdastreaDirectorModule* RuntimeModule = FModuleManager::GetModulePtr<FAdastreaDirectorModule>("AdastreaDirector");
 	
@@ -496,7 +508,7 @@ FReply SAdastreaDirectorPanel::OnClearHistoryClicked()
 
 	if (bSuccess)
 	{
-		UpdateResults(TEXT("Conversation history cleared."));
+		UpdateResults(TEXT("✓ Conversation history cleared successfully."));
 	}
 	else
 	{
