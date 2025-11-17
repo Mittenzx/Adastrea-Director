@@ -1,4 +1,17 @@
 # Sprint Checklist - November 17-30, 2025
+
+> **⚠️ NOTICE: This checklist has been split into two specialized versions:**
+> 
+> - **For AI Agents (@Copilot):** Use [SPRINT_CHECKLIST_COPILOT.md](SPRINT_CHECKLIST_COPILOT.md)
+>   - Concise, action-focused, technical specifications
+> 
+> - **For Human Team Members (@Mittenzx):** Use [SPRINT_CHECKLIST_MITTENZX.md](SPRINT_CHECKLIST_MITTENZX.md)
+>   - Detailed guidance, learning resources, step-by-step instructions
+>
+> **This file is kept for reference but may not be actively maintained.**
+
+---
+
 ## Quick Daily Reference
 
 **Instructions:** Check off items as they're completed. Update status emoji.
