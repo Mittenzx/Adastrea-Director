@@ -9,10 +9,9 @@ Tests the dashboard functionality including:
 - UI rendering
 """
 
-import pytest
 import time
 from agent_dashboard import AgentDashboard
-from agents.phase3 import EventType, AgentStatus
+from agents.phase3 import EventType
 
 
 class TestAgentDashboard:
@@ -234,6 +233,7 @@ class TestAgentDashboardIntegration:
         """
         
         anomalies = bug_agent.analyze_logs(log_content)
+        assert anomalies is not None and len(anomalies) > 0
         
         # Give time for events to propagate
         time.sleep(0.1)

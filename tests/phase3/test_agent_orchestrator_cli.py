@@ -9,9 +9,8 @@ Tests the orchestrator functionality including:
 - CLI commands
 """
 
-import pytest
 from agent_orchestrator_cli import AgentOrchestrator
-from agents.phase3 import EventType, AgentStatus
+from agents.phase3 import EventType
 
 
 class TestAgentOrchestrator:
