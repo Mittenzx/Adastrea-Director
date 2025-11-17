@@ -8,7 +8,7 @@
 
 ## Week 1: High Priority
 
-### Task \#1: Agent Orchestration (8-12h)
+### Task 1: Agent Orchestration (8-12h)
 **Status:** 🔴 Not Started
 
 **Action Items:**
@@ -30,7 +30,7 @@
 
 ---
 
-### Task \#3: Remote Control Foundation (12-16h)
+### Task 3: Remote Control Foundation (12-16h)
 **Status:** 🔴 Not Started
 
 **Action Items:**
@@ -58,7 +58,7 @@
 
 ---
 
-### Task \#5: Integration Testing (6-8h)
+### Task 5: Integration Testing (6-8h)
 **Status:** 🔴 Not Started
 
 **Action Items:**
@@ -81,7 +81,7 @@
 
 ## Week 2: High Priority
 
-### Task \#7: WebSocket Integration (8-10h)
+### Task 7: WebSocket Integration (8-10h)
 **Status:** 🔴 Not Started
 
 **Action Items:**
@@ -102,11 +102,11 @@
 - Unit tests
 - Examples
 
-**Dependencies:** Task \#3 (Remote Control Foundation)
+**Dependencies:** Task 3 (Remote Control Foundation)
 
 ---
 
-### Task \#8: Agent Enhancement (10-12h)
+### Task 8: Agent Enhancement (10-12h)
 **Status:** 🔴 Not Started
 
 **Action Items:**
@@ -129,11 +129,11 @@
 - Automated benchmarking workflow
 - Integration tests
 
-**Dependencies:** Task \#3, Task \#7
+**Dependencies:** Task 3, Task 7
 
 ---
 
-### Task \#10: Version Control (8-10h)
+### Task 10: Version Control (8-10h)
 **Status:** 🔴 Not Started
 
 **Action Items:**
@@ -156,11 +156,11 @@
 - Configuration system
 - Tests
 
-**Dependencies:** Task \#3
+**Dependencies:** Task 3
 
 ---
 
-### Task \#13: Cost Tracking (4-6h) - Optional
+### Task 13: Cost Tracking (4-6h) - Optional
 **Status:** 🟡 Optional
 
 **Action Items:**

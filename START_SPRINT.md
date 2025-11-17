@@ -88,13 +88,13 @@ code TASKS_2_WEEKS.md
 ### Step 2: Check Your Assignments
 
 **@Copilot - Your Focus:**
-- Week 1: Agent Orchestration (\#1), Remote Control Foundation (\#3)
-- Week 2: WebSocket (\#7), Agent Enhancement (\#8)
+- Week 1: Agent Orchestration (Task 1), Remote Control Foundation (Task 3)
+- Week 2: WebSocket (Task 7), Agent Enhancement (Task 8)
 - Total: ~52-68 hours of work
 
 **@Mittenzx - Your Focus:**
-- Week 1: Plugin Week 7-8 Features (\#2), Documentation (\#4)
-- Week 2: Plugin Planning Integration (\#9), Dashboard (\#11)
+- Week 1: Plugin Week 7-8 Features (Task 2), Documentation (Task 4)
+- Week 2: Plugin Planning Integration (Task 9), Dashboard (Task 11)
 - Total: ~38-53 hours of work
 
 ### Step 3: Open Your Working Checklist
@@ -152,7 +152,7 @@ code TASK_BOARD.md
 ```markdown
 | Date | @Copilot | @Mittenzx | Notes |
 |------|----------|-----------|-------|
-| Nov 17 | Started Task \#3 | Started Task \#2 | Sprint kickoff |
+| Nov 17 | Started Task 3 | Started Task 2 | Sprint kickoff |
 ```
 
 **Format:** What you completed, what you're working on, any blockers
@@ -247,9 +247,9 @@ These are **nice-to-have enhancements**. Only do if ahead of schedule.
 
 ### Example Blocker Format:
 ```
-🚫 BLOCKER: Task \#8 waiting for Task \#3 (Remote Control client)
-   - Blocked by: @Copilot needs to merge Task \#3
-   - Can work on: Task \#10 (Version Control) in parallel
+🚫 BLOCKER: Task 8 waiting for Task 3 (Remote Control client)
+   - Blocked by: @Copilot needs to merge Task 3
+   - Can work on: Task 10 (Version Control) in parallel
    - Needs unblock by: Nov 25 to stay on track
 ```
 
@@ -290,14 +290,14 @@ Related to: TASKS_2_WEEKS.md Task \#X
 
 **Examples:**
 ```
-[Task \#3] Implement Remote Control client base class
+[Task 3] Implement Remote Control client base class
 
 - Created UnrealRemoteControlClient with HTTP support
 - Implemented get_property() and set_property() methods
 - Added error handling and retry logic
 - Wrote 15 unit tests (95% coverage)
 
-Related to: TASKS_2_WEEKS.md Task \#3
+Related to: TASKS_2_WEEKS.md Task 3
 ```
 
 ---
@@ -367,7 +367,7 @@ code PHASE3_GUIDE.md
 ## 💡 Pro Tips
 
 ### For @Copilot
-1. **Remote Control first** - Task \#3 is critical path for Week 2 tasks
+1. **Remote Control first** - Task 3 is critical path for Week 2 tasks
 2. **Test with real UE** - Set up a simple UE project early
 3. **Small commits** - Commit after each method works, don't wait for full feature
 4. **Unit test first** - Write tests before implementation for TDD
