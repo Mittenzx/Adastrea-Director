@@ -41,16 +41,34 @@ You now have **3 complementary documents** for managing this sprint:
 
 ---
 
-### 3. ✅ [SPRINT_CHECKLIST.md](SPRINT_CHECKLIST.md) - The Action List
-**Use this when:** You're working and want to track progress
+### 3a. ✅ [SPRINT_CHECKLIST_COPILOT.md](SPRINT_CHECKLIST_COPILOT.md) - The AI Agent Checklist
+**Use this when:** @Copilot is working and needs concise action items
 
 **Contains:**
-- Detailed sub-tasks for each main task
-- Checkboxes for incremental progress
-- Daily goal section
+- Concise task descriptions
+- Clear deliverables and technical specs
+- Direct action items
+- Command references
+- Minimal explanatory text
+
+**Length:** ~200 lines, AI-optimized
+
+**Update frequency:** Multiple times per day
+
+---
+
+### 3b. ✅ [SPRINT_CHECKLIST_MITTENZX.md](SPRINT_CHECKLIST_MITTENZX.md) - The Detailed Guide
+**Use this when:** @Mittenzx is working and needs comprehensive guidance
+
+**Contains:**
+- Detailed task descriptions with context
+- Step-by-step instructions
+- Learning resources and tips
+- Troubleshooting guides
+- Daily goal tracking
 - End-of-sprint review checklist
 
-**Length:** ~180 lines, working document
+**Length:** ~500 lines, comprehensive guide
 
 **Update frequency:** Multiple times per day
 
@@ -81,8 +99,11 @@ code TASKS_2_WEEKS.md
 
 ### Step 3: Open Your Working Checklist
 ```bash
-# This is your daily companion
-code SPRINT_CHECKLIST.md
+# For @Copilot (AI Agent) - concise action items
+code SPRINT_CHECKLIST_COPILOT.md
+
+# For @Mittenzx - detailed guide with context
+code SPRINT_CHECKLIST_MITTENZX.md
 
 # Check off items as you complete them
 # Update status emoji (🔴 → 🟡 → 🟢)
@@ -101,17 +122,19 @@ code TASK_BOARD.md
 ## 📅 Daily Workflow
 
 ### Morning Routine (5 minutes)
-1. Open `SPRINT_CHECKLIST.md`
+1. Open your checklist:
+   - **@Copilot**: `SPRINT_CHECKLIST_COPILOT.md`
+   - **@Mittenzx**: `SPRINT_CHECKLIST_MITTENZX.md`
 2. Review yesterday's completed items
 3. Set today's focus (3-5 sub-tasks)
-4. Update "Daily Goals" section
+4. Update "Daily Goals" section (Mittenzx version has this)
 5. Check for blockers
 
 ### During Work (Continuous)
 1. Work on assigned tasks
-2. Check off items in `SPRINT_CHECKLIST.md` as you complete them
+2. Check off items in your checklist as you complete them
 3. Refer to `TASKS_2_WEEKS.md` for details when needed
-4. Take notes in the "Notes" section
+4. Take notes in the "Notes" section (if using detailed version)
 
 ### Evening Routine (5 minutes)
 1. Update `TASK_BOARD.md` with today's progress
@@ -326,7 +349,11 @@ cat Python/adastrea_director_backend.py
 ### Documentation
 ```bash
 # Open all task documents
-code TASKS_2_WEEKS.md TASK_BOARD.md SPRINT_CHECKLIST.md
+code TASKS_2_WEEKS.md TASK_BOARD.md
+
+# Open your checklist (choose one based on your role)
+code SPRINT_CHECKLIST_COPILOT.md    # For @Copilot
+code SPRINT_CHECKLIST_MITTENZX.md   # For @Mittenzx
 
 # Update ROADMAP with progress
 code ROADMAP.md
@@ -386,7 +413,8 @@ Before starting the sprint, ensure:
 
 - [ ] Read `TASKS_2_WEEKS.md` overview section
 - [ ] Understand your assigned tasks (Week 1 + Week 2)
-- [ ] Have all 3 documents open in your editor
+- [ ] Have all task documents open in your editor
+- [ ] Know which checklist to use (@Copilot vs @Mittenzx version)
 - [ ] Know how to update each document
 - [ ] Understand the priority system (🔴🟡🟢)
 - [ ] Set up development environment (Python deps, UE, git)
