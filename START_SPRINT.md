@@ -41,16 +41,34 @@ You now have **3 complementary documents** for managing this sprint:
 
 ---
 
-### 3. ✅ [SPRINT_CHECKLIST.md](SPRINT_CHECKLIST.md) - The Action List
-**Use this when:** You're working and want to track progress
+### 3a. ✅ [SPRINT_CHECKLIST_COPILOT.md](SPRINT_CHECKLIST_COPILOT.md) - The AI Agent Checklist
+**Use this when:** @Copilot is working and needs concise action items
 
 **Contains:**
-- Detailed sub-tasks for each main task
-- Checkboxes for incremental progress
-- Daily goal section
+- Concise task descriptions
+- Clear deliverables and technical specs
+- Direct action items
+- Command references
+- Minimal explanatory text
+
+**Length:** ~200 lines, AI-optimized
+
+**Update frequency:** Multiple times per day
+
+---
+
+### 3b. ✅ [SPRINT_CHECKLIST_MITTENZX.md](SPRINT_CHECKLIST_MITTENZX.md) - The Detailed Guide
+**Use this when:** @Mittenzx is working and needs comprehensive guidance
+
+**Contains:**
+- Detailed task descriptions with context
+- Step-by-step instructions
+- Learning resources and tips
+- Troubleshooting guides
+- Daily goal tracking
 - End-of-sprint review checklist
 
-**Length:** ~180 lines, working document
+**Length:** ~500 lines, comprehensive guide
 
 **Update frequency:** Multiple times per day
 
@@ -70,19 +88,22 @@ code TASKS_2_WEEKS.md
 ### Step 2: Check Your Assignments
 
 **@Copilot - Your Focus:**
-- Week 1: Agent Orchestration (#1), Remote Control Foundation (#3)
-- Week 2: WebSocket (#7), Agent Enhancement (#8)
+- Week 1: Agent Orchestration (Task 1), Remote Control Foundation (Task 3)
+- Week 2: WebSocket (Task 7), Agent Enhancement (Task 8)
 - Total: ~52-68 hours of work
 
 **@Mittenzx - Your Focus:**
-- Week 1: Plugin Week 7-8 Features (#2), Documentation (#4)
-- Week 2: Plugin Planning Integration (#9), Dashboard (#11)
+- Week 1: Plugin Week 7-8 Features (Task 2), Documentation (Task 4)
+- Week 2: Plugin Planning Integration (Task 9), Dashboard (Task 11)
 - Total: ~38-53 hours of work
 
 ### Step 3: Open Your Working Checklist
 ```bash
-# This is your daily companion
-code SPRINT_CHECKLIST.md
+# For @Copilot (AI Agent) - concise action items
+code SPRINT_CHECKLIST_COPILOT.md
+
+# For @Mittenzx - detailed guide with context
+code SPRINT_CHECKLIST_MITTENZX.md
 
 # Check off items as you complete them
 # Update status emoji (🔴 → 🟡 → 🟢)
@@ -101,17 +122,19 @@ code TASK_BOARD.md
 ## 📅 Daily Workflow
 
 ### Morning Routine (5 minutes)
-1. Open `SPRINT_CHECKLIST.md`
+1. Open your checklist:
+   - **@Copilot**: `SPRINT_CHECKLIST_COPILOT.md`
+   - **@Mittenzx**: `SPRINT_CHECKLIST_MITTENZX.md`
 2. Review yesterday's completed items
 3. Set today's focus (3-5 sub-tasks)
-4. Update "Daily Goals" section
+4. Update "Daily Goals" section (Mittenzx version has this)
 5. Check for blockers
 
 ### During Work (Continuous)
 1. Work on assigned tasks
-2. Check off items in `SPRINT_CHECKLIST.md` as you complete them
+2. Check off items in your checklist as you complete them
 3. Refer to `TASKS_2_WEEKS.md` for details when needed
-4. Take notes in the "Notes" section
+4. Take notes in the "Notes" section (if using detailed version)
 
 ### Evening Routine (5 minutes)
 1. Update `TASK_BOARD.md` with today's progress
@@ -129,7 +152,7 @@ code TASK_BOARD.md
 ```markdown
 | Date | @Copilot | @Mittenzx | Notes |
 |------|----------|-----------|-------|
-| Nov 17 | Started Task #3 | Started Task #2 | Sprint kickoff |
+| Nov 17 | Started Task 3 | Started Task 2 | Sprint kickoff |
 ```
 
 **Format:** What you completed, what you're working on, any blockers
@@ -156,21 +179,21 @@ code TASK_BOARD.md
 
 ### 🔴 High Priority (Must Complete)
 These are **critical path** items. Failure to complete these means sprint failure.
-- Week 1: Tasks #1, #2, #3
-- Week 2: Tasks #7, #8, #9
+- Week 1: Tasks \#1, \#2, \#3
+- Week 2: Tasks \#7, \#8, \#9
 
 **Rule:** Work on these first. Don't start medium priority until high priority is 80%+ complete.
 
 ### 📋 Medium Priority (Should Complete)
 These are **important but not blocking**. Complete if time permits.
-- Week 1: Tasks #4, #5
-- Week 2: Tasks #10, #11, #12
+- Week 1: Tasks \#4, \#5
+- Week 2: Tasks \#10, \#11, \#12
 
 **Rule:** Start these if high priority is on track. Good for when you need a break from complex work.
 
 ### 🌟 Low Priority (Optional)
 These are **nice-to-have enhancements**. Only do if ahead of schedule.
-- Tasks #6, #13, #14
+- Tasks \#6, \#13, \#14
 
 **Rule:** Only work on these if all high and medium tasks are complete or blocked.
 
@@ -224,9 +247,9 @@ These are **nice-to-have enhancements**. Only do if ahead of schedule.
 
 ### Example Blocker Format:
 ```
-🚫 BLOCKER: Task #8 waiting for Task #3 (Remote Control client)
-   - Blocked by: @Copilot needs to merge Task #3
-   - Can work on: Task #10 (Version Control) in parallel
+🚫 BLOCKER: Task 8 waiting for Task 3 (Remote Control client)
+   - Blocked by: @Copilot needs to merge Task 3
+   - Can work on: Task 10 (Version Control) in parallel
    - Needs unblock by: Nov 25 to stay on track
 ```
 
@@ -255,26 +278,26 @@ Check off these as team achievements:
 Use this format for consistency:
 
 ```
-[Task #X] Brief description of change
+[Task \#X] Brief description of change
 
 Detailed description:
 - Implemented feature Y
 - Fixed issue Z
 - Updated documentation
 
-Related to: TASKS_2_WEEKS.md Task #X
+Related to: TASKS_2_WEEKS.md Task \#X
 ```
 
 **Examples:**
 ```
-[Task #3] Implement Remote Control client base class
+[Task 3] Implement Remote Control client base class
 
 - Created UnrealRemoteControlClient with HTTP support
 - Implemented get_property() and set_property() methods
 - Added error handling and retry logic
 - Wrote 15 unit tests (95% coverage)
 
-Related to: TASKS_2_WEEKS.md Task #3
+Related to: TASKS_2_WEEKS.md Task 3
 ```
 
 ---
@@ -326,7 +349,11 @@ cat Python/adastrea_director_backend.py
 ### Documentation
 ```bash
 # Open all task documents
-code TASKS_2_WEEKS.md TASK_BOARD.md SPRINT_CHECKLIST.md
+code TASKS_2_WEEKS.md TASK_BOARD.md
+
+# Open your checklist (choose one based on your role)
+code SPRINT_CHECKLIST_COPILOT.md    # For @Copilot
+code SPRINT_CHECKLIST_MITTENZX.md   # For @Mittenzx
 
 # Update ROADMAP with progress
 code ROADMAP.md
@@ -340,7 +367,7 @@ code PHASE3_GUIDE.md
 ## 💡 Pro Tips
 
 ### For @Copilot
-1. **Remote Control first** - Task #3 is critical path for Week 2 tasks
+1. **Remote Control first** - Task 3 is critical path for Week 2 tasks
 2. **Test with real UE** - Set up a simple UE project early
 3. **Small commits** - Commit after each method works, don't wait for full feature
 4. **Unit test first** - Write tests before implementation for TDD
@@ -386,7 +413,8 @@ Before starting the sprint, ensure:
 
 - [ ] Read `TASKS_2_WEEKS.md` overview section
 - [ ] Understand your assigned tasks (Week 1 + Week 2)
-- [ ] Have all 3 documents open in your editor
+- [ ] Have all task documents open in your editor
+- [ ] Know which checklist to use (@Copilot vs @Mittenzx version)
 - [ ] Know how to update each document
 - [ ] Understand the priority system (🔴🟡🟢)
 - [ ] Set up development environment (Python deps, UE, git)

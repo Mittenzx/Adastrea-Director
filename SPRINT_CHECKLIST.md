@@ -1,4 +1,17 @@
 # Sprint Checklist - November 17-30, 2025
+
+> **⚠️ NOTICE: This checklist has been split into two specialized versions:**
+> 
+> - **For AI Agents (@Copilot):** Use [SPRINT_CHECKLIST_COPILOT.md](SPRINT_CHECKLIST_COPILOT.md)
+>   - Concise, action-focused, technical specifications
+> 
+> - **For Human Team Members (@Mittenzx):** Use [SPRINT_CHECKLIST_MITTENZX.md](SPRINT_CHECKLIST_MITTENZX.md)
+>   - Detailed guidance, learning resources, step-by-step instructions
+>
+> **This file is kept for reference but may not be actively maintained.**
+
+---
+
 ## Quick Daily Reference
 
 **Instructions:** Check off items as they're completed. Update status emoji.
@@ -7,7 +20,7 @@
 
 ## 🎯 Week 1: Must Complete
 
-### Task #1: Agent Orchestration (8-12h) - @Copilot
+### Task 1: Agent Orchestration (8-12h) - @Copilot
 - [ ] Review `agent_orchestrator_cli.py` and `agent_dashboard.py`
 - [ ] Test CLI with Performance Agent
 - [ ] Test CLI with Bug Detection Agent  
@@ -22,7 +35,7 @@
 
 ---
 
-### Task #2: Plugin Week 7-8 Features (10-15h) - @Mittenzx
+### Task 2: Plugin Week 7-8 Features (10-15h) - @Mittenzx
 - [ ] Review `WEEK_7_8_COMPLETION.md`
 - [ ] Design Settings dialog for plugin (Slate)
 - [ ] Implement API key management UI
@@ -39,7 +52,7 @@
 
 ---
 
-### Task #3: Remote Control Foundation (12-16h) - @Copilot
+### Task 3: Remote Control Foundation (12-16h) - @Copilot
 - [ ] Review `REMOTE_CONTROL_IMPLEMENTATION_PLAN.md`
 - [ ] Create `remote_control/` directory
 - [ ] Create `remote_control/models.py` (data models)
@@ -62,7 +75,7 @@
 
 ## 📋 Week 1: Should Complete
 
-### Task #4: Documentation (4-6h) - @Mittenzx
+### Task 4: Documentation (4-6h) - @Mittenzx
 - [ ] Update `INDEX.md` with recent changes
 - [ ] Organize `docs/summaries/` directory
 - [ ] Update `ROADMAP.md` with Week 7-8 status
@@ -75,7 +88,7 @@
 
 ---
 
-### Task #5: Integration Testing (6-8h) - @Copilot
+### Task 5: Integration Testing (6-8h) - @Copilot
 - [ ] Create `tests/integration/phase3/` directory
 - [ ] Write agent coordination tests
 - [ ] Test Event Bus with multiple agents
@@ -92,7 +105,7 @@
 
 ## 🎯 Week 2: Must Complete
 
-### Task #7: WebSocket Integration (8-10h) - @Copilot
+### Task 7: WebSocket Integration (8-10h) - @Copilot
 - [ ] Create `remote_control/websocket_client.py`
 - [ ] Implement WebSocket connection
 - [ ] Add property subscription system
@@ -108,7 +121,7 @@
 
 ---
 
-### Task #8: Agent Enhancement (10-12h) - @Copilot
+### Task 8: Agent Enhancement (10-12h) - @Copilot
 - [ ] Extend `PerformanceProfilingAgent` base class
 - [ ] Add `execute_console_command()` method
 - [ ] Implement `collect_fps_metrics()` (stat fps)
@@ -126,7 +139,7 @@
 
 ---
 
-### Task #9: Plugin Planning (12-16h) - @Mittenzx
+### Task 9: Plugin Planning (12-16h) - @Mittenzx
 - [ ] Review Phase 2 agents (goal_analysis, task_decomposition)
 - [ ] Design planning UI mockup
 - [ ] Create goal input panel (Slate)
@@ -147,7 +160,7 @@
 
 ## 📋 Week 2: Should Complete
 
-### Task #10: Version Control (8-10h) - @Copilot
+### Task 10: Version Control (8-10h) - @Copilot
 - [ ] Create `version_control/` directory
 - [ ] Create `version_control/agent.py`
 - [ ] Implement `before_agent_action()` (branch creation)
@@ -165,7 +178,7 @@
 
 ---
 
-### Task #11: Dashboard Enhancement (6-8h) - @Mittenzx
+### Task 11: Dashboard Enhancement (6-8h) - @Mittenzx
 - [ ] Review current `agent_dashboard.py`
 - [ ] Design enhanced layout
 - [ ] Add agent status cards/panels
@@ -182,7 +195,7 @@
 
 ---
 
-### Task #12: Plugin Testing (6-8h) - @Mittenzx
+### Task 12: Plugin Testing (6-8h) - @Mittenzx
 - [ ] Design plugin test strategy
 - [ ] Create `Plugins/AdastreaDirector/Tests/` directory
 - [ ] Implement C++ unit tests for bridge
@@ -200,7 +213,7 @@
 
 ## 🌟 Optional (If Time Permits)
 
-### Task #6: GUI Theme System (4-6h) - @Mittenzx
+### Task 6: GUI Theme System (4-6h) - @Mittenzx
 - [ ] Design theme system architecture
 - [ ] Add theme selection to Settings
 - [ ] Implement light theme colors
@@ -211,7 +224,7 @@
 
 ---
 
-### Task #13: Cost Tracking (4-6h) - @Copilot
+### Task 13: Cost Tracking (4-6h) - @Copilot
 - [ ] Review `cost_tracker.py`
 - [ ] Add cost display in dashboard
 - [ ] Implement budget limits
@@ -222,7 +235,7 @@
 
 ---
 
-### Task #14: Plugin UI Polish (4-6h) - @Mittenzx
+### Task 14: Plugin UI Polish (4-6h) - @Mittenzx
 - [ ] Apply consistent styling
 - [ ] Add loading indicators
 - [ ] Improve error messages
