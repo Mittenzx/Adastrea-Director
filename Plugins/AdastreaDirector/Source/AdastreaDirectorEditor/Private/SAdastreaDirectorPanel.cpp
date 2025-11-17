@@ -1,6 +1,7 @@
 // Copyright (c) 2025 Mittenzx. All Rights Reserved.
 
 #include "SAdastreaDirectorPanel.h"
+#include "SSettingsDialog.h"
 #include "AdastreaDirectorEditorModule.h"
 #include "AdastreaDirectorModule.h"
 #include "PythonBridge.h"
@@ -60,9 +61,24 @@ void SAdastreaDirectorPanel::Construct(const FArguments& InArgs)
 		.AutoHeight()
 		.Padding(10.0f, 10.0f, 10.0f, 5.0f)
 		[
-			SNew(STextBlock)
-			.Text(LOCTEXT("PanelTitle", "Adastrea Director - AI Assistant"))
-			.Font(FCoreStyle::GetDefaultFontStyle("Bold", 16))
+			SNew(SHorizontalBox)
+			
+			+ SHorizontalBox::Slot()
+			.FillWidth(1.0f)
+			[
+				SNew(STextBlock)
+				.Text(LOCTEXT("PanelTitle", "Adastrea Director - AI Assistant"))
+				.Font(FCoreStyle::GetDefaultFontStyle("Bold", 16))
+			]
+			
+			+ SHorizontalBox::Slot()
+			.AutoWidth()
+			[
+				SNew(SButton)
+				.Text(LOCTEXT("SettingsButton", "⚙️ Settings"))
+				.ToolTipText(LOCTEXT("SettingsTooltip", "Open Settings (Ctrl+,)"))
+				.OnClicked(this, &SAdastreaDirectorPanel::OnSettingsClicked)
+			]
 		]
 
 		+ SVerticalBox::Slot()
@@ -490,6 +506,12 @@ FReply SAdastreaDirectorPanel::OnClearHistoryClicked()
 	return FReply::Handled();
 }
 
+FReply SAdastreaDirectorPanel::OnSettingsClicked()
+{
+	SSettingsDialog::OpenDialog();
+	return FReply::Handled();
+}
+
 FReply SAdastreaDirectorPanel::OnBrowseDocsPathClicked()
 {
 	IDesktopPlatform* DesktopPlatform = FDesktopPlatformModule::Get();
@@ -724,6 +746,18 @@ void SAdastreaDirectorPanel::Tick(const FGeometry& AllottedGeometry, const doubl
 			LastProgressUpdateTime = InCurrentTime;
 		}
 	}
+}
+
+FReply SAdastreaDirectorPanel::OnKeyDown(const FGeometry& MyGeometry, const FKeyEvent& InKeyEvent)
+{
+	// Handle Ctrl+, (Ctrl+Comma) for Settings
+	if (InKeyEvent.GetKey() == EKeys::Comma && InKeyEvent.IsControlDown())
+	{
+		SSettingsDialog::OpenDialog();
+		return FReply::Handled();
+	}
+
+	return SCompoundWidget::OnKeyDown(MyGeometry, InKeyEvent);
 }
 
 #undef LOCTEXT_NAMESPACE
