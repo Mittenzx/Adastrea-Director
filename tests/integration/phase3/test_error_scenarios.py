@@ -7,8 +7,6 @@ environments.
 
 import pytest
 import threading
-import time
-from datetime import datetime
 
 from agents.phase3.base_agent import BaseAutonomousAgent
 from agents.phase3.event_bus import Event, EventBus, EventType
@@ -41,7 +39,8 @@ class FaultyAgent(BaseAutonomousAgent):
         if self.event_handler:
             try:
                 self.event_bus.unsubscribe(EventType.PERFORMANCE_ALERT, self.event_handler)
-            except:
+            except Exception:
+                # Ignore errors during unsubscribe (handler may not be subscribed)
                 pass
     
     def _on_start(self) -> None:
@@ -291,8 +290,9 @@ class TestSharedStateErrorHandling:
                     status=AgentStatus.BUSY if i % 2 == 0 else AgentStatus.IDLE,
                     current_task=f"Task {i}"
                 )
-            except:
-                pass  # Ignore errors
+            except Exception:
+                # Ignore errors during state corruption testing
+                pass
         
         # State should still be retrievable
         state = shared_context.get_agent_state(agent_id)

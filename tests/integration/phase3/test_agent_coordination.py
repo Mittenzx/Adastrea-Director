@@ -38,7 +38,8 @@ class SimpleTestAgent(BaseAutonomousAgent):
             try:
                 self.event_bus.unsubscribe(EventType.PERFORMANCE_ALERT, handler)
                 self.event_bus.unsubscribe(EventType.BUG_DETECTED, handler)
-            except:
+            except Exception:
+                # Ignore errors during unsubscribe (handler may not be subscribed)
                 pass
         self.event_handlers.clear()
     
@@ -90,7 +91,8 @@ class ReactiveTestAgent(BaseAutonomousAgent):
             try:
                 self.event_bus.unsubscribe(EventType.AGENT_STARTED, handler)
                 self.event_bus.unsubscribe(EventType.PERFORMANCE_ALERT, handler)
-            except:
+            except Exception:
+                # Ignore errors during unsubscribe (handler may not be subscribed)
                 pass
         self.event_handlers.clear()
     

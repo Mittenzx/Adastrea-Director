@@ -9,7 +9,6 @@ import pytest
 import time
 import statistics
 from datetime import datetime
-from typing import List
 
 from agents.phase3.event_bus import Event, EventBus, EventType
 from agents.phase3.shared_state import SharedContext, Change
@@ -127,16 +126,20 @@ class TestEventBusPerformance(PerformanceBenchmark):
         
         # Benchmark subscription
         def subscribe_all():
+            local_event_bus = EventBus()
             for handler in handlers:
-                event_bus.subscribe(EventType.BUG_DETECTED, handler)
+                local_event_bus.subscribe(EventType.BUG_DETECTED, handler)
         
         results = self.measure_time(subscribe_all, iterations=10)
         self.print_benchmark_results("Subscribe 100 Handlers", results)
         
         # Benchmark unsubscription
         def unsubscribe_all():
+            local_event_bus = EventBus()
             for handler in handlers:
-                event_bus.unsubscribe(EventType.BUG_DETECTED, handler)
+                local_event_bus.subscribe(EventType.BUG_DETECTED, handler)
+            for handler in handlers:
+                local_event_bus.unsubscribe(EventType.BUG_DETECTED, handler)
         
         results = self.measure_time(unsubscribe_all, iterations=10)
         self.print_benchmark_results("Unsubscribe 100 Handlers", results)
@@ -411,7 +414,7 @@ class TestIntegrationPerformance(PerformanceBenchmark):
                 shared_context.register_agent(agent_id)
             
             # Subscribe to events
-            for agent_id in agent_ids:
+            for _ in agent_ids:
                 def make_handler():
                     def handler(event: Event):
                         pass

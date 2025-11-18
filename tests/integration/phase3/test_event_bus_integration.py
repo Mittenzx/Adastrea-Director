@@ -8,8 +8,6 @@ concurrent publishing, filtering, and ordering.
 import pytest
 import threading
 import time
-from datetime import datetime
-from typing import List
 
 from agents.phase3.event_bus import Event, EventBus, EventType
 
@@ -376,7 +374,7 @@ class TestEventBusReliability:
         assert len(history) == 1
     
     def test_unsubscribe_during_iteration(self, event_bus):
-        """Test unsubscribing a handler that doesn't exist."""
+        """Test unsubscribing handlers that don't exist or have already been unsubscribed."""
         def handler(event: Event):
             pass
         

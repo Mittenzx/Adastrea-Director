@@ -9,11 +9,9 @@ import pytest
 import threading
 import time
 from datetime import datetime
-from typing import List
 
 from agents.phase3.shared_state import (
     SharedContext,
-    AgentState,
     AgentStatus,
     ProjectInfo,
     CodeStructure,
@@ -266,9 +264,13 @@ class TestChangeTracking:
         assert len(recent_10) == 10
         assert len(recent_50) == 50
         
-        # Most recent changes should be at the end
-        assert recent_10[-1].change_id == "change_199"
-        assert recent_50[-1].change_id == "change_199"
+        # Most recent changes should be at the end and in correct order
+        expected_10 = [f"change_{i}" for i in range(190, 200)]
+        actual_10 = [c.change_id for c in recent_10]
+        assert actual_10 == expected_10
+        expected_50 = [f"change_{i}" for i in range(150, 200)]
+        actual_50 = [c.change_id for c in recent_50]
+        assert actual_50 == expected_50
 
 
 class TestConversationHistory:
@@ -464,8 +466,10 @@ class TestStateSnapshots:
         agent2.metrics.tasks_completed = 15
         
         # Verify snapshot preserved old state
-        assert snapshot["agents"][0]["tasks_completed"] == 10
-        assert snapshot["agents"][1]["tasks_completed"] == 5
+        agent1_snapshot = next(a for a in snapshot["agents"] if a["agent_id"] == "agent1")
+        agent2_snapshot = next(a for a in snapshot["agents"] if a["agent_id"] == "agent2")
+        assert agent1_snapshot["tasks_completed"] == 10
+        assert agent2_snapshot["tasks_completed"] == 5
         
         # Verify current state is different
         current_agent1 = shared_context.get_agent_state("agent1")
