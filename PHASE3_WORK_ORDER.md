@@ -78,7 +78,7 @@ Phase 3 core implementation is **COMPLETE**. This document provides a precise, s
    ```python
    # remote_control/http_client.py
    class UnrealHTTPClient:
-       def __init__(self, host: str, port: int)
+       def __init__(self, host: str, port: int) -> None
        def connect(self) -> bool
        def execute_console_command(self, command: str) -> CommandResult
        def get_property(self, object_path: str, property_name: str) -> Any
@@ -118,7 +118,7 @@ Phase 3 core implementation is **COMPLETE**. This document provides a precise, s
    ```python
    # remote_control/websocket_client.py
    class UnrealWebSocketClient:
-       def __init__(self, host: str, port: int)
+       def __init__(self, host: str, port: int) -> None
        async def connect(self) -> bool
        async def subscribe_to_property(self, object_path: str, property_name: str)
        async def on_property_changed(self, callback: Callable)
@@ -155,7 +155,15 @@ Phase 3 core implementation is **COMPLETE**. This document provides a precise, s
    # agents/phase3/performance_profiling_agent.py
    
    def collect_metrics_from_ue(self) -> PerformanceMetrics:
-       """Collect real metrics from Unreal Engine"""
+       """
+       Collect real performance metrics from Unreal Engine via Remote Control API.
+       
+       Returns:
+           PerformanceMetrics: An object containing FPS, memory usage, and GPU statistics.
+       
+       Raises:
+           ConnectionError: If Unreal Engine is not connected or metrics cannot be retrieved.
+       """
        # Execute: stat fps, stat memory, stat gpu
        # Parse console output
        # Return PerformanceMetrics
@@ -190,7 +198,23 @@ Phase 3 core implementation is **COMPLETE**. This document provides a precise, s
    # agents/phase3/code_quality_agent.py
    
    def analyze_blueprint(self, blueprint_path: str) -> QualityReport:
-       """Analyze Blueprint complexity (placeholder for Week 3-5)"""
+       """
+       Analyze Blueprint complexity and detect quality issues in a given Unreal Engine Blueprint (.uasset) file.
+       
+       Args:
+           blueprint_path (str): Path to the Blueprint .uasset file to be analyzed.
+       
+       Returns:
+           QualityReport: An object containing complexity metrics and detected anti-patterns.
+       
+       Raises:
+           NotImplementedError: This method is a placeholder and will be implemented in Weeks 3-5.
+       
+       Expected Behavior:
+           - Parse the Blueprint file and extract relevant metrics (e.g., node count, graph complexity).
+           - Identify common anti-patterns and code quality issues.
+           - Return a comprehensive QualityReport summarizing findings.
+       """
        # To be implemented with Blueprint support
        pass
    ```
@@ -199,7 +223,7 @@ Phase 3 core implementation is **COMPLETE**. This document provides a precise, s
    ```python
    # remote_control/manager.py
    class RemoteControlManager:
-       def __init__(self, event_bus: EventBus)
+       def __init__(self, event_bus: EventBus) -> None
        def connect_to_ue(self) -> bool
        def disconnect(self) -> None
        def is_connected(self) -> bool
@@ -316,7 +340,35 @@ Phase 3 core implementation is **COMPLETE**. This document provides a precise, s
    import unreal
    
    def export_blueprint_to_json(blueprint_path: str) -> str:
-       """Export Blueprint graph to JSON for analysis"""
+       """
+       Export Blueprint graph to JSON for analysis.
+       
+       Args:
+           blueprint_path (str): Path to the Blueprint asset in Unreal Engine.
+       
+       Returns:
+           str: A JSON string containing the node graph structure, with the following format:
+               {
+                   "nodes": [
+                       {
+                           "id": <node_id>,
+                           "type": <node_type>,
+                           "properties": { ... }
+                       },
+                       ...
+                   ],
+                   "connections": [
+                       {
+                           "from": <source_node_id>,
+                           "to": <target_node_id>,
+                           "type": <connection_type>
+                       },
+                       ...
+                   ],
+                   "metadata": { ... }
+               }
+           If an error occurs, returns an empty string ("").
+       """
        # Load Blueprint asset
        # Extract node graph
        # Serialize to JSON
@@ -457,7 +509,7 @@ Phase 3 core implementation is **COMPLETE**. This document provides a precise, s
    # validation/schema_manager.py
    
    class SchemaManager:
-       def __init__(self, schema_dir: str)
+       def __init__(self, schema_dir: str) -> None
        def load_schemas(self) -> None
        def get_schema(self, schema_type: str) -> Dict
        def validate_yaml(self, yaml_content: str, schema_type: str) -> ValidationResult
@@ -482,10 +534,22 @@ Phase 3 core implementation is **COMPLETE**. This document provides a precise, s
    # validation/yaml_validator.py
    
    class YAMLValidator:
-       def __init__(self, schema_manager: SchemaManager)
+       def __init__(self, schema_manager: SchemaManager) -> None
        
        def validate(self, yaml_content: str, schema_type: str) -> ValidationResult:
-           """Validate YAML against schema"""
+           """
+           Validate YAML against schema.
+           
+           Note: This method accepts unparsed YAML content as a string. If YAML parsing fails,
+           the validation result will indicate a parsing error separate from schema validation errors.
+           
+           Args:
+               yaml_content: Unparsed YAML content as a string
+               schema_type: Type of schema to validate against
+           
+           Returns:
+               ValidationResult containing both parsing and schema validation results
+           """
            # Parse YAML
            # Load schema
            # Validate
@@ -529,7 +593,23 @@ Phase 3 core implementation is **COMPLETE**. This document provides a precise, s
    # agents/code_generation_agent.py
    
    def generate_yaml_template(self, task: Task) -> str:
-       """Generate YAML with automatic validation"""
+       """
+       Generate YAML with automatic validation.
+       
+       Args:
+           task: Task containing YAML type and generation parameters.
+       
+       Returns:
+           Valid YAML string. If validation fails after auto-fix, returns YAML with embedded error comments.
+       
+       Validation:
+           - The generated YAML is validated against the schema.
+           - If validation fails, an auto-fix is attempted.
+           - If validation still fails after auto-fix, error messages are embedded as comments in the returned YAML.
+       
+       Exceptions:
+           - This method does not raise exceptions; it always returns a YAML string, with errors embedded if necessary.
+       """
        # Generate YAML using LLM
        yaml_content = self._generate_yaml_llm(task)
        
@@ -595,16 +675,17 @@ Phase 3 core implementation is **COMPLETE**. This document provides a precise, s
    # integrations/github_client.py
    
    class GitHubClient:
-       def __init__(self, token: str, repo: str)
+       def __init__(self, token: str, repo: str) -> None
        
-       def create_issue(self, issue: IssueData) -> str:
+       def create_issue(self, issue: IssueData) -> int:
            """Create a new GitHub Issue"""
            # Format issue body
            # Apply labels
            # Set assignees
            # Create issue via API
-           # Return issue URL
+           # Return issue number (int)
        
+       def get_issue_url(self, issue_number: int) -> str
        def add_comment(self, issue_number: int, comment: str) -> None
        def attach_file(self, issue_number: int, file_path: str) -> None
        def apply_labels(self, issue_number: int, labels: List[str]) -> None
@@ -662,7 +743,7 @@ Phase 3 core implementation is **COMPLETE**. This document provides a precise, s
        github_client = GitHubClient(self.config.github_token, self.config.github_repo)
        issue_body = IssueTemplate.bug_report(bug_report)
        
-       issue_url = github_client.create_issue(IssueData(
+       issue_number = github_client.create_issue(IssueData(
            title=bug_report.title,
            body=issue_body,
            labels=['bug', 'automated', bug_report.severity]
@@ -670,8 +751,10 @@ Phase 3 core implementation is **COMPLETE**. This document provides a precise, s
        
        # Attach logs if available
        if bug_report.log_file:
-           github_client.attach_file(issue_url, bug_report.log_file)
+           github_client.attach_file(issue_number, bug_report.log_file)
        
+       # Get issue URL for return
+       issue_url = github_client.get_issue_url(issue_number)
        return issue_url
    ```
 
@@ -821,7 +904,22 @@ Phase 3 core implementation is **COMPLETE**. This document provides a precise, s
    class BaseAutonomousAgent:
        def _track_llm_call(self, operation: str, 
                           prompt_tokens: int, completion_tokens: int) -> None:
-           """Track LLM API call costs"""
+           """
+           Track LLM API call costs.
+           
+           Attempts to record the cost of an LLM API call for this agent.
+           
+           If cost tracking is disabled, this method does nothing.
+           If an error occurs during cost tracking, the error is logged but not raised.
+           
+           Args:
+               operation: Name of the operation (e.g., 'analyze_code').
+               prompt_tokens: Number of tokens in the prompt.
+               completion_tokens: Number of tokens in the completion.
+           
+           Raises:
+               CostTrackingError: if tracking fails (logged but not raised).
+           """
            total_tokens = prompt_tokens + completion_tokens
            cost = self._calculate_cost(prompt_tokens, completion_tokens)
            
@@ -840,7 +938,17 @@ Phase 3 core implementation is **COMPLETE**. This document provides a precise, s
 2. **Add Cost Estimation**
    ```python
    def estimate_operation_cost(self, operation: str) -> CostEstimate:
-       """Estimate cost before executing expensive operation"""
+       """
+       Estimate the expected cost of an operation before execution.
+       
+       Args:
+           operation: Name of the operation to estimate.
+       
+       Returns:
+           CostEstimate: An object containing the expected cost and a confidence interval.
+               The confidence interval is defined as ±20% of the expected cost, based on historical data for similar operations.
+               If insufficient historical data is available, a default estimate is returned with a wider or unspecified confidence range.
+       """
        # Based on historical data
        # Return estimate with confidence interval
    ```
@@ -1165,9 +1273,9 @@ Per ROADMAP.md, Phase 3 is complete when:
 
 ```txt
 # requirements_phase3_enhancements.txt
-jsonschema>=4.0.0      # YAML validation
-PyGithub>=2.0.0        # GitHub API
-websockets>=12.0       # WebSocket client
+jsonschema>=4.23.0     # YAML validation
+PyGithub>=2.2.0,<3.0.0 # GitHub API
+websockets>=12.0,<13.0 # WebSocket client
 aiohttp>=3.9.0         # Async HTTP client
 ```
 
