@@ -44,8 +44,10 @@ Documentation for each development phase:
 
 **Phase 3 - Autonomous Agents** 🚀 In Progress
 - [**PHASE3_GUIDE.md**](../PHASE3_GUIDE.md) - **Main Phase 3 user guide** (Root directory)
+- [**Phase 3 Status**](phases/PHASE3_STATUS.md) - ✨ **NEW** Current progress and completed work
 - [**PHASE3_IMPLEMENTATION_SUMMARY.md**](../PHASE3_IMPLEMENTATION_SUMMARY.md) - Implementation details
 - [**PHASE3_ORCHESTRATION_SUMMARY.md**](../PHASE3_ORCHESTRATION_SUMMARY.md) - Orchestration overview
+- [**WEEK1_ORCHESTRATION_COMPLETION.md**](../WEEK1_ORCHESTRATION_COMPLETION.md) - Week 1 completion report
 - [Agent Orchestration](phases/AGENT_ORCHESTRATION.md) - CLI and Dashboard guide
 
 **Phase 4 - Creative Partner** 🌟 Vision
@@ -175,6 +177,7 @@ Unreal Engine remote control capabilities:
 ### 🧪 Testing
 Testing documentation and reports:
 - [Testing Guide](testing/TESTING.md) - Testing guidelines
+- [**Phase 3 Integration Testing**](testing/PHASE3_INTEGRATION_TESTING.md) - ✨ **NEW** Phase 3 integration tests guide
 - [Testing Optimizations](testing/TESTING_OPTIMIZATIONS.md) - Performance testing
 - [Test Summary](testing/TEST_SUMMARY.md) - Test results summary
 - [Run Integration Tests](testing/RUN_INTEGRATION_TESTS.md) - Integration testing guide
@@ -183,6 +186,7 @@ Testing documentation and reports:
 
 ### 📝 Summaries & Reports
 Implementation summaries and PR documentation:
+- **[Summaries Index](summaries/README.md)** - ✨ **NEW** Organized summaries (13 files, ~97K)
 - [Implementation Summary](summaries/IMPLEMENTATION_SUMMARY.md) - Implementation overview
 - [Optimization Summary](summaries/OPTIMIZATION_SUMMARY.md) - Optimization notes
 - [PR Summary](summaries/PR_SUMMARY.md) - Pull request summaries
