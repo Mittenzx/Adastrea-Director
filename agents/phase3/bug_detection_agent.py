@@ -246,7 +246,7 @@ class BugDetectionAgent(BaseAutonomousAgent):
             
             # Check for error/warning keywords
             line_lower = line.lower()
-            if 'error:' in line_lower or 'exception:' in line_lower:
+            if any(keyword in line_lower for keyword in ['error:', 'exception:', '[error]']):
                 anomalies.append(Anomaly(
                     anomaly_type="error",
                     severity="high",
@@ -255,7 +255,7 @@ class BugDetectionAgent(BaseAutonomousAgent):
                     timestamp=datetime.now(),
                     context={'line': line.strip()}
                 ))
-            elif 'warning:' in line_lower:
+            elif any(keyword in line_lower for keyword in ['warning:', '[warning]', '[warn]']):
                 anomalies.append(Anomaly(
                     anomaly_type="warning",
                     severity="medium",
