@@ -8,14 +8,14 @@ Adastrea Director is an AI-powered tool that aims to revolutionize game developm
 
 ## Value Proposition
 
-**Current Value (Phases 1-2):** ⭐⭐⭐⭐⭐⭐⭐ 7/10
+**Current Value (P1-P2):** ⭐⭐⭐⭐⭐⭐⭐ 7/10
 - Context-aware documentation search across all project guides
 - Intelligent planning and task decomposition for development goals
 - Code generation assistance with multiple implementation approaches
 - 230 comprehensive tests (100% passing), production-ready stability
 - **ROI: 210% return in 6 months** with 2-month payback period
 
-**Future Potential (Phases 3-4):** ⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐ 10/10
+**Future Potential (P3-P4):** ⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐ 10/10
 - Autonomous performance profiling and optimization in Unreal Engine
 - Automated bug detection and playtesting with reproduction steps
 - Real-time code quality monitoring and refactoring suggestions
@@ -32,7 +32,7 @@ Adastrea Director is **one AI system** with **two deployment modes**:
 - **Purpose:** Development, testing, and standalone use
 - **Technology:** Python + tkinter/CLI
 - **Best for:** Rapid prototyping, testing, non-UE users
-- **Status:** ✅ Fully functional (Phases 1-3)
+- **Status:** ✅ Fully functional (P1-P3)
 
 ### 🎮 Plugin Mode (Unreal Engine)
 - **Purpose:** Integrated in-editor workflow
@@ -44,38 +44,31 @@ Adastrea Director is **one AI system** with **two deployment modes**:
 
 📖 **See:** [ARCHITECTURE_ANALYSIS.md](ARCHITECTURE_ANALYSIS.md) for complete architecture details
 
-## Current Phase: Phase 2 Complete - Ready for Phase 3
+## Current Phase: P2 Complete - Ready for P3
 
-Phase 2 has been **completed successfully** with intelligent goal decomposition, task planning, and code generation capabilities. The system can now break down high-level development goals into concrete, actionable tasks with dependencies, priorities, and effort estimates.
+P2 has been **completed successfully** with intelligent goal decomposition, task planning, and code generation capabilities. The system can now break down high-level development goals into concrete, actionable tasks with dependencies, priorities, and effort estimates.
 
-**🎯 Status:** Phase 2 complete (PR #45) - Ready to begin Phase 3 (Autonomous Agents)
-Phase 2 introduces intelligent planning capabilities that transform high-level development goals into actionable implementation plans with code suggestions.
+**🎯 Status:** P2 complete (PR #45) - Ready to begin P3 (Autonomous Agents)
 
-### Features (Phase 2 - NEW!)
+P2 introduces intelligent planning capabilities that transform high-level development goals into actionable implementation plans with code suggestions, building on P1's foundation by adding **intelligent goal decomposition** - the ability to break down high-level development goals into concrete, actionable tasks with dependencies, priorities, and effort estimates.
 
-- **Goal Analysis**: Parse natural language development goals and classify them
-- **Task Decomposition**: Automatically break down goals into prioritized tasks
-- **Dependency Management**: Identify task dependencies and optimal execution order
-- **Code Generation**: Generate implementation approaches with code examples
-- **Feasibility Analysis**: Assess complexity and provide recommendations
-- **Plan Export**: Export plans in Markdown, JSON, or Text formats
-- **Interactive Planning CLI**: New dedicated planning interface
-Phase 2 builds on Phase 1's foundation by adding **intelligent goal decomposition** - the ability to break down high-level development goals into concrete, actionable tasks with dependencies, priorities, and effort estimates.
+### Features
 
-### Features (Phase 2)
-
-- ✅ **Phase 1 - Foundation**: RAG-based document understanding and Q&A
-- ✨ **Phase 2 - Planning** (NEW):
-  - **Goal Analysis**: Parse and understand development goals
-  - **Task Decomposition**: Break goals into actionable tasks
-  - **Dependency Management**: Identify task dependencies and create execution graphs
+- ✅ **P1: Foundation** - RAG-based document understanding and Q&A
+- ✨ **P2: The Planner** (Complete):
+  - **Goal Analysis**: Parse natural language development goals and classify them
+  - **Task Decomposition**: Automatically break down goals into prioritized tasks
+  - **Dependency Management**: Identify task dependencies and optimal execution order
+  - **Code Generation**: Generate implementation approaches with code examples
+  - **Feasibility Analysis**: Assess complexity and provide recommendations
+  - **Plan Export**: Export plans in Markdown, JSON, or Text formats
+  - **Interactive Planning CLI**: New dedicated planning interface
   - **Effort Estimation**: Estimate time and complexity for tasks
   - **Priority Assignment**: Intelligent task prioritization
-  - **Action Plans**: Generate comprehensive action plans with markdown export
 
 ## 📋 Current Sprint: 2-Week Task List (Nov 17-30, 2025)
 
-**Active Development:** Phase 3 Remote Control Integration + Plugin Week 7-8
+**Active Development:** P3 Remote Control Integration + Plugin P2.4.1 (Weeks 7-8)
 
 **Quick Access:**
 - 📖 **[Full Task List](TASKS_2_WEEKS.md)** - Detailed descriptions of all 14 tasks
@@ -98,18 +91,18 @@ Phase 2 builds on Phase 1's foundation by adding **intelligent goal decompositio
 
 ## Project Phases
 
-1. **Phase 1: The Foundation (Context-Aware Assistant)** - ✅ *Complete*
+1. **P1: Foundation (Context-Aware Assistant)** - ✅ *Complete*
    - RAG-based document understanding
    - Natural language query interface
    - Document ingestion and vector database
    
-2. **Phase 2: The Planner (Goal-Oriented Tasking)** - ✅ *Complete*
+2. **P2: The Planner (Goal-Oriented Tasking)** - ✅ *Complete*
    - Goal analysis and classification
    - Task decomposition with dependencies
    - Action plan generation
    - Effort estimation and prioritization
    
-3. **Phase 3: The Proactive Agent System** - 🚀 *In Progress*
+3. **P3: Autonomous Agents** - 🚀 *In Progress*
    - Autonomous performance profiling and optimization
    - Automated bug detection and crash analysis
    - Code quality monitoring and refactoring suggestions
@@ -118,7 +111,7 @@ Phase 2 builds on Phase 1's foundation by adding **intelligent goal decompositio
    - **NEW:** 120 comprehensive tests (100% passing)
    - **IN PROGRESS:** Remote Control API integration for Unreal Engine
    
-4. **Phase 4: The Creative Partner** - 🌟 *Vision*
+4. **P4: Creative Partner** - 🌟 *Vision*
    - AI-assisted content generation
    - Creative design suggestions
 
@@ -252,7 +245,7 @@ This is only needed if you want to ingest documents from the private Mittenzx/Ad
 
 Both modes share the same AI backend, so you get the same quality of results!
 
-#### Planning System (Phase 2 - NEW!)
+#### Planning System (P2 - Complete!)
 
 Create implementation plans for your development goals:
 
@@ -274,8 +267,7 @@ The planning system will:
 - Suggest implementation approaches with code examples
 - Export a complete plan for review
 
-#### Context-Aware Assistant (Phase 1)
-#### Phase 1: Context-Aware Assistant
+#### Context-Aware Assistant (P1)
 
 1. **Ingest your project documents:**
 ```bash
@@ -302,7 +294,7 @@ python main.py
 > What are the performance requirements?
 ```
 
-#### Phase 2: Goal Decomposition (NEW!)
+#### P2: Goal Decomposition
 
 1. **Interactive goal planning:**
 ```bash
@@ -314,14 +306,14 @@ python planning_cli.py --interactive
 python planning_cli.py --goal "Implement user authentication system" --output action_plan.md
 ```
 
-3. **Run the Phase 2 example:**
+3. **Run the P2 example:**
 ```bash
 python examples/phase2_example.py
 ```
 
-**📋 Want to learn more?** See [PHASE2_GUIDE.md](docs/phases/PHASE2_GUIDE.md) for comprehensive Phase 2 documentation with examples.
+**📋 Want to learn more?** See [PHASE2_GUIDE.md](docs/phases/PHASE2_GUIDE.md) for comprehensive P2 documentation with examples.
 
-#### Phase 3: Autonomous Agents (NEW!)
+#### P3: Autonomous Agents (In Progress!)
 
 Manage and monitor autonomous agents for performance profiling, bug detection, and code quality:
 
@@ -349,7 +341,7 @@ python agent_dashboard.py --auto-start
 python agent_dashboard.py --interval 2.0
 ```
 
-3. **Run the Phase 3 demo:**
+3. **Run the P3 demo:**
 ```bash
 python examples/phase3_orchestrator_demo.py
 ```
@@ -357,8 +349,8 @@ python examples/phase3_orchestrator_demo.py
 **📋 Documentation:** 
 - [Agent Orchestration Guide](docs/phases/AGENT_ORCHESTRATION.md) - Complete CLI and Dashboard documentation
 - [PHASE3_GUIDE.md](PHASE3_GUIDE.md) - Autonomous agents user guide
-- [Phase 3 Status](docs/phases/PHASE3_STATUS.md) - Current progress and completed work ✨ **NEW**
-- [Integration Testing Guide](docs/testing/PHASE3_INTEGRATION_TESTING.md) - Integration test documentation ✨ **NEW**
+- [P3 Status](docs/phases/PHASE3_STATUS.md) - Current progress and completed work ✨
+- [Integration Testing Guide](docs/testing/PHASE3_INTEGRATION_TESTING.md) - Integration test documentation ✨
 
 #### Unreal Engine Plugin
 
@@ -449,17 +441,17 @@ Adastrea-Director/
 ├── requirements.txt               # Python dependencies
 ├── ingest.py                      # Document ingestion script
 ├── ingest_game_repo.py            # Game repository ingestion (NEW!)
-├── main.py                        # Phase 1 CLI entry point
-├── planner.py                     # Phase 2 planning CLI (NEW!)
+├── main.py                        # P1 CLI entry point
+├── planner.py                     # P2 planning CLI
 ├── gui_director.py                # GUI application (enhanced)
-├── agents/                        # Phase 2 agent system (NEW!)
+├── agents/                        # P2 agent system
 │   ├── models.py                  # Data models for planning
 │   ├── goal_analysis_agent.py     # Goal analysis agent
 │   ├── task_decomposition_agent.py # Task decomposition agent
 │   └── code_generation_agent.py   # Code generation agent
 ├── tests/                         # Comprehensive test suite
-│   ├── test_planning_models.py    # Phase 2 model tests (NEW!)
-│   ├── test_planning_agents.py    # Phase 2 agent tests (NEW!)
+│   ├── test_planning_models.py    # P2 model tests
+│   ├── test_planning_agents.py    # P2 agent tests
 │   └── test_game_repo_ingestion.py # Game repo ingestion tests (NEW!)
 ├── docs/                          # Documentation (organized)
 │   ├── INDEX.md                   # Documentation index
@@ -471,30 +463,30 @@ Adastrea-Director/
 │   ├── testing/                   # Testing documentation
 │   └── summaries/                 # Implementation summaries
 │
-├── Phase 1 - Foundation
+├── P1: Foundation
 │   ├── ingest.py                  # Document ingestion script
 │   ├── main.py                    # CLI Q&A interface
 │   └── gui_director.py            # GUI application
 │
-├── Phase 2 - Planning (NEW!)
+├── P2: The Planner
 │   ├── planning_models.py         # Data models for goals and tasks
 │   ├── goal_analysis_agent.py     # Goal analysis and classification
 │   ├── task_decomposition_agent.py # Task decomposition and planning
 │   ├── planning_cli.py            # Planning CLI interface
-│   └── PHASE2_GUIDE.md            # Phase 2 user guide
+│   └── PHASE2_GUIDE.md            # P2 user guide
 │
 ├── examples/
-│   └── phase2_example.py          # Phase 2 demonstration code
+│   └── phase2_example.py          # P2 demonstration code
 │
 ├── Templates
 │   ├── GDD_TEMPLATE.md            # Game design document template
 │   └── SAMPLE_GDD.md              # Example game design document
 │
 └── tests/
-    ├── test_phase2_planning.py    # Tests for Phase 2 features
+    ├── test_phase2_planning.py    # Tests for P2 features
     └── ...                        # Additional tests
 
-Note: "Phase 1" and "Phase 2" labels above indicate logical groupings, 
+Note: "P1" and "P2" labels above indicate logical groupings, 
 not actual directory names. All files are in the root directory.
 ```
 
@@ -518,9 +510,9 @@ not actual directory names. All files are in the root directory.
 - [Project Plan](docs/guides/PROJECT_PLAN.md) - Detailed breakdown of all four phases
 - [Project Roadmap](ROADMAP.md) - Timeline, milestones, and phase details
 - [Agent System](AGENTS.md) - Architecture and design of the agent system
-- [Phase 2 Guide](docs/phases/PHASE2_GUIDE.md) - Complete guide to goal decomposition and planning
-- [Phase 2 Completion](docs/phases/PHASE2_COMPLETION.md) - Phase 2 completion report
-- [Phase 3 Guide](PHASE3_GUIDE.md) - Autonomous agents user guide
+- [P2 Guide](docs/phases/PHASE2_GUIDE.md) - Complete guide to goal decomposition and planning
+- [P2 Completion](docs/phases/PHASE2_COMPLETION.md) - P2 completion report
+- [P3 Guide](PHASE3_GUIDE.md) - Autonomous agents user guide
 
 **Integration & Analysis:**
 - [Integration Guide](INTEGRATION_GUIDE.md) - Step-by-step integration into your workflow
