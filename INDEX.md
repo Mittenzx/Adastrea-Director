@@ -57,11 +57,12 @@ Welcome to the Adastrea Director comprehensive documentation index! This is your
 
 ## 🎯 Phase Documentation
 
-### Phase 1: Foundation (RAG-based Assistant) ✅ Complete
+### P1: Foundation (RAG-based Assistant) ✅ Complete
+**Phase Code:** P1 | **Sub-stages:** P1.0-P1.4  
 **Overview:** Context-aware document understanding and Q&A system
 
 **Documentation:**
-- **[docs/phases/PHASE1_COMPLETION.md](docs/phases/PHASE1_COMPLETION.md)** - Phase 1 completion report
+- **[docs/phases/PHASE1_COMPLETION.md](docs/phases/PHASE1_COMPLETION.md)** - P1 completion report
 - **[docs/phases/PHASE1_RAG_COMPLETION_SUMMARY.md](docs/phases/PHASE1_RAG_COMPLETION_SUMMARY.md)** - RAG system summary
 
 **Key Features:**
@@ -69,15 +70,16 @@ Welcome to the Adastrea Director comprehensive documentation index! This is your
 - Natural language query interface
 - Context-aware responses
 
-### Phase 2: Planning (Goal-Oriented Tasking) ✅ Complete
+### P2: The Planner (Goal-Oriented Tasking) ✅ Complete
+**Phase Code:** P2 | **Sub-stages:** P2.0-P2.4  
 **Overview:** Intelligent goal decomposition and task planning
 
 **Documentation:**
-- **[docs/phases/PHASE2_GUIDE.md](docs/phases/PHASE2_GUIDE.md)** - Complete Phase 2 user guide
-- **[docs/phases/PHASE2_COMPLETION.md](docs/phases/PHASE2_COMPLETION.md)** - Phase 2 completion report
+- **[docs/phases/PHASE2_GUIDE.md](docs/phases/PHASE2_GUIDE.md)** - Complete P2 user guide
+- **[docs/phases/PHASE2_COMPLETION.md](docs/phases/PHASE2_COMPLETION.md)** - P2 completion report
 - **[docs/phases/PHASE2_STATUS.md](docs/phases/PHASE2_STATUS.md)** - Current status and readiness
 - **[docs/phases/PHASE2_SUMMARY.md](docs/phases/PHASE2_SUMMARY.md)** - Brief overview
-- **[docs/phases/PHASE2_TO_PHASE3_CHECKLIST.md](docs/phases/PHASE2_TO_PHASE3_CHECKLIST.md)** - Transition checklist
+- **[docs/phases/PHASE2_TO_PHASE3_CHECKLIST.md](docs/phases/PHASE2_TO_PHASE3_CHECKLIST.md)** - P2 to P3 transition checklist
 
 **Key Features:**
 - Goal analysis and classification
@@ -85,16 +87,28 @@ Welcome to the Adastrea Director comprehensive documentation index! This is your
 - Effort estimation and prioritization
 - Code generation with multiple approaches
 
-### Phase 3: Autonomous Agents 🚀 In Progress
+### P3: Autonomous Agents 🚀 In Progress
+**Phase Code:** P3 | **Sub-stages:** P3.0-P3.4  
 **Overview:** Proactive monitoring, bug detection, and code quality
 
+**Current Stage:** P3.1 (Performance Profiling Agent)
+
 **Documentation:**
-- **[PHASE3_GUIDE.md](PHASE3_GUIDE.md)** - Phase 3 user guide (main reference)
-- **[docs/phases/PHASE3_STATUS.md](docs/phases/PHASE3_STATUS.md)** - Current status and progress ✨ **NEW**
+- **[PHASE3_GUIDE.md](PHASE3_GUIDE.md)** - P3 user guide (main reference)
+- **[docs/phases/PHASE3_STATUS.md](docs/phases/PHASE3_STATUS.md)** - Current P3 status and progress ✨ **NEW**
 - **[PHASE3_IMPLEMENTATION_SUMMARY.md](PHASE3_IMPLEMENTATION_SUMMARY.md)** - Implementation details
 - **[PHASE3_ORCHESTRATION_SUMMARY.md](PHASE3_ORCHESTRATION_SUMMARY.md)** - Orchestration overview
 - **[docs/phases/AGENT_ORCHESTRATION.md](docs/phases/AGENT_ORCHESTRATION.md)** - CLI and Dashboard guide
-- **[WEEK1_ORCHESTRATION_COMPLETION.md](WEEK1_ORCHESTRATION_COMPLETION.md)** - Week 1 completion report ✨ **NEW**
+- **[WEEK1_ORCHESTRATION_COMPLETION.md](WEEK1_ORCHESTRATION_COMPLETION.md)** - P3.0 completion report ✨ **NEW**
+
+**Completed Sub-stages:**
+- ✅ **P3.0:** Infrastructure (Event Bus, Shared State, Remote Control Foundation)
+
+**In Progress:**
+- 🚀 **P3.1:** Performance Profiling Agent
+- ⏳ **P3.2:** Bug Detection Agent
+- ⏳ **P3.3:** Code Quality Agent
+- ⏳ **P3.4:** Integration & Polish
 
 **Key Features:**
 - Performance profiling and optimization
@@ -104,14 +118,15 @@ Welcome to the Adastrea Director comprehensive documentation index! This is your
 - Agent Orchestrator CLI
 - Event Bus for agent communication
 - Shared State management
-- Remote Control API foundation ✨ **NEW**
+- Remote Control API foundation
 
 **Agents:**
 - Performance Profiling Agent
 - Bug Detection Agent
 - Code Quality Agent
 
-### Phase 4: Creative Partner 🌟 Vision
+### P4: Creative Partner 🌟 Vision
+**Phase Code:** P4 | **Sub-stages:** P4.0-P4.3  
 **Overview:** AI-assisted content generation and creative design
 
 **Future Capabilities:**
@@ -143,6 +158,8 @@ Welcome to the Adastrea Director comprehensive documentation index! This is your
 
 ## 🔌 Plugin Development (Unreal Engine)
 
+**Plugin stages aligned with main phases:** P1.4, P2.4, P3.4, P4.3
+
 ### Plugin Documentation
 - **[Plugins/AdastreaDirector/README.md](Plugins/AdastreaDirector/README.md)** - Plugin overview
 - **[Plugins/AdastreaDirector/INSTALLATION.md](Plugins/AdastreaDirector/INSTALLATION.md)** - Plugin installation guide
@@ -150,10 +167,13 @@ Welcome to the Adastrea Director comprehensive documentation index! This is your
 - **[Plugins/AdastreaDirector/VERIFICATION.md](Plugins/AdastreaDirector/VERIFICATION.md)** - Plugin verification guide
 
 ### Plugin Development Journey
-- **[PLUGIN_DEVELOPMENT_FEASIBILITY.md](PLUGIN_DEVELOPMENT_FEASIBILITY.md)** - Feasibility analysis
-- **[PLUGIN_PHASE1_WEEK1_SUMMARY.md](PLUGIN_PHASE1_WEEK1_SUMMARY.md)** - Week 1 summary
-- **[PLUGIN_PHASE1_WEEK2_SUMMARY.md](PLUGIN_PHASE1_WEEK2_SUMMARY.md)** - Week 2 summary
-- **[PLUGIN_WEEKS_5_6_SUMMARY.md](PLUGIN_WEEKS_5_6_SUMMARY.md)** - Weeks 5-6 summary
+
+**P1.4: Plugin Shell (Weeks 1-4)** ✅ Complete
+- **[PLUGIN_PHASE1_WEEK1_SUMMARY.md](PLUGIN_PHASE1_WEEK1_SUMMARY.md)** - P1.4.0 Week 1 summary
+- **[PLUGIN_PHASE1_WEEK2_SUMMARY.md](PLUGIN_PHASE1_WEEK2_SUMMARY.md)** - P1.4.1 Week 2 summary
+
+**P2.4: Plugin Integration (Weeks 5-8)** ✅ Complete
+- **[PLUGIN_WEEKS_5_6_SUMMARY.md](PLUGIN_WEEKS_5_6_SUMMARY.md)** - P2.4.0 Weeks 5-6 summary (RAG)
 - **[Plugins/AdastreaDirector/WEEK1_COMPLETION.md](Plugins/AdastreaDirector/WEEK1_COMPLETION.md)** - Week 1 completion
 - **[Plugins/AdastreaDirector/WEEK2_COMPLETION.md](Plugins/AdastreaDirector/WEEK2_COMPLETION.md)** - Week 2 completion
 - **[Plugins/AdastreaDirector/WEEK3_COMPLETION.md](Plugins/AdastreaDirector/WEEK3_COMPLETION.md)** - Week 3 completion
