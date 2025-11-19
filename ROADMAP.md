@@ -950,7 +950,7 @@ Update ROADMAP.md in your PR if:
 - **PHASE3_GUIDE.md** - P3 user guide (main reference)
 - **docs/phases/PHASE3_STATUS.md** - Current P3 status and progress
 - **PHASE3_IMPLEMENTATION_SUMMARY.md** - P3 implementation details
-- **WEEK1_ORCHESTRATION_COMPLETION.md** - P3.0 completion report
+- **docs/completed/WEEK1_ORCHESTRATION_COMPLETION.md** - P3.0 completion report
 - **docs/guides/UNREAL_MCP_ASSESSMENT.md** - Unreal MCP Server evaluation
 - **docs/remote-control/REMOTE_CONTROL_API.md** - UE Remote Control integration guide
 
@@ -1117,7 +1117,7 @@ The Unreal Engine plugin development runs in **parallel** with the standalone Py
 - ✅ 88% GUI coverage, 100% pass rate
 
 **Documentation:**
-- ✅ [WEEK_7_8_COMPLETION.md](WEEK_7_8_COMPLETION.md) - Complete report
+- ✅ [docs/completed/WEEK_7_8_COMPLETION.md](docs/completed/WEEK_7_8_COMPLETION.md) - Complete report
 - ✅ [docs/gui/GUI_SETTINGS.md](docs/gui/GUI_SETTINGS.md) - Settings guide
 
 **Status:** ✅ P2.4 complete (November 15, 2025)
@@ -1191,9 +1191,9 @@ The Unreal Engine plugin development runs in **parallel** with the standalone Py
 
 📖 **Plugin Documentation:**
 - [Plugin README](Plugins/AdastreaDirector/README.md)
-- [Week 5-6 Completion Report](PLUGIN_WEEKS_5_6_SUMMARY.md)
-- [Week 7-8 Completion Report](WEEK_7_8_COMPLETION.md) ✨ **NEW**
-- [GUI Settings Guide](docs/gui/GUI_SETTINGS.md) ✨ **NEW**
+- [Week 5-6 Completion Report](docs/completed/PLUGIN_WEEKS_5_6_SUMMARY.md)
+- [Week 7-8 Completion Report](docs/completed/WEEK_7_8_COMPLETION.md)
+- [GUI Settings Guide](docs/gui/GUI_SETTINGS.md)
 - [RAG Integration Guide](Plugins/AdastreaDirector/RAG_INTEGRATION.md)
 - [Testing Quick Reference](Plugins/AdastreaDirector/TESTING_QUICK_REFERENCE.md)
 
