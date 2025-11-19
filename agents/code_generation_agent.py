@@ -72,6 +72,7 @@ class CodeGenerationAgent:
         self.yaml_validation_enabled = enable_yaml_validation and VALIDATION_AVAILABLE
         if self.yaml_validation_enabled:
             self.schema_manager = SchemaManager()
+            self.schema_manager.load_schemas()
             self.yaml_validator = YAMLValidator(self.schema_manager)
             logger.info("YAML validation enabled")
         else:

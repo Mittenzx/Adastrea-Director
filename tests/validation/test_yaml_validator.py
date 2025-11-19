@@ -7,7 +7,7 @@ import tempfile
 import shutil
 
 from validation.schema_manager import SchemaManager
-from validation.yaml_validator import YAMLValidator, ValidationResult, Fix
+from validation.yaml_validator import YAMLValidator
 
 
 class TestYAMLValidator:

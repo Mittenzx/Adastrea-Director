@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 from typing import List, Optional, Dict, Any
 
 import yaml
-from jsonschema import validate, ValidationError, Draft7Validator
+from jsonschema import Draft7Validator
 
 from validation.schema_manager import SchemaManager
 
@@ -165,6 +165,8 @@ class YAMLValidator:
             data = yaml.safe_load(yaml_content)
         except yaml.YAMLError:
             return yaml_content  # Cannot fix parsing errors
+        if not isinstance(data, dict):
+            return yaml_content  # Nothing to fix if data is not a dict
         
         # Get schema
         if validation_result.schema_type:
@@ -245,7 +247,9 @@ class YAMLValidator:
             # Check for pattern requirements (e.g., semantic version)
             if 'pattern' in field_schema:
                 pattern = field_schema['pattern']
-                if r'\d+\.\d+\.\d+' in pattern:
+                # Use regex to detect semantic version pattern
+                # Pattern from JSON will have single backslashes: \d+\.\d+\.\d+
+                if r'\d+' in pattern and r'\.' in pattern:
                     return '0.0.0'  # Default semantic version
             return ''
         elif field_type == 'number' or field_type == 'integer':
