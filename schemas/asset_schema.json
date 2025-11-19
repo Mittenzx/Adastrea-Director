@@ -1,0 +1,28 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Asset Schema",
+  "type": "object",
+  "required": [
+    "name",
+    "type"
+  ],
+  "properties": {
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "Blueprint",
+        "Material",
+        "Texture",
+        "StaticMesh",
+        "SkeletalMesh"
+      ]
+    },
+    "properties": {
+      "type": "object"
+    }
+  }
+}

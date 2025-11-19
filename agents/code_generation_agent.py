@@ -4,7 +4,8 @@ Code Generation Agent
 Responsible for generating code suggestions and examples for tasks.
 """
 
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
+import logging
 
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import PydanticOutputParser
@@ -12,6 +13,16 @@ from pydantic import BaseModel, Field
 
 from agents.models import Task, Implementation, FileModification, Duration
 from llm_config import get_llm
+
+# Import validation components (optional, will be checked at runtime)
+try:
+    from validation.schema_manager import SchemaManager
+    from validation.yaml_validator import YAMLValidator
+    VALIDATION_AVAILABLE = True
+except ImportError:
+    VALIDATION_AVAILABLE = False
+
+logger = logging.getLogger(__name__)
 
 
 class CodeSuggestionOutput(BaseModel):
@@ -37,6 +48,7 @@ class CodeGenerationAgent:
         self,
         model_name: str = None,
         temperature: float = 0.2,
+        enable_yaml_validation: bool = True,
     ):
         """
         Initialize the Code Generation Agent.
@@ -44,6 +56,7 @@ class CodeGenerationAgent:
         Args:
             model_name: Name of the LLM model to use (default: gemini-1.5-flash for Gemini, gpt-3.5-turbo for OpenAI)
             temperature: Temperature for response generation (lower = more deterministic)
+            enable_yaml_validation: Enable YAML validation for generated templates
         """
         self.model_name = model_name
         self.temperature = temperature
@@ -54,6 +67,18 @@ class CodeGenerationAgent:
         
         # Setup output parser
         self.parser = PydanticOutputParser(pydantic_object=CodeSuggestionOutput)
+        
+        # Setup YAML validation (if available)
+        self.yaml_validation_enabled = enable_yaml_validation and VALIDATION_AVAILABLE
+        if self.yaml_validation_enabled:
+            self.schema_manager = SchemaManager()
+            self.yaml_validator = YAMLValidator(self.schema_manager)
+            logger.info("YAML validation enabled")
+        else:
+            self.schema_manager = None
+            self.yaml_validator = None
+            if enable_yaml_validation and not VALIDATION_AVAILABLE:
+                logger.warning("YAML validation requested but validation module not available")
         
         # Create prompt template for implementation suggestions
         self.implementation_prompt = PromptTemplate(
@@ -326,3 +351,126 @@ Provide only the test code with appropriate imports and setup.
         })
         
         return result.content
+    
+    def generate_yaml_template(
+        self,
+        yaml_type: str,
+        description: str,
+        schema_type: Optional[str] = None,
+        auto_fix: bool = True
+    ) -> Dict[str, Any]:
+        """
+        Generate YAML template with automatic validation.
+        
+        Args:
+            yaml_type: Type of YAML to generate (e.g., 'config', 'data_table', 'asset')
+            description: Description of what the YAML should contain
+            schema_type: Schema type to validate against (auto-detected if None)
+            auto_fix: Whether to auto-fix validation errors
+            
+        Returns:
+            Dictionary with:
+                - yaml_content: Generated YAML string
+                - is_valid: Whether YAML is valid
+                - validation_result: Full validation result
+                - fixes_applied: Whether auto-fixes were applied
+        """
+        yaml_prompt = PromptTemplate(
+            template="""Generate a {yaml_type} YAML template with the following requirements:
+
+{description}
+
+Requirements:
+1. Generate valid, well-formatted YAML
+2. Include comments explaining each section
+3. Use appropriate data types
+4. Follow YAML best practices
+
+Provide only the YAML content, no additional explanation.
+""",
+            input_variables=["yaml_type", "description"],
+        )
+        
+        # Generate YAML
+        chain = yaml_prompt | self.llm
+        result = chain.invoke({
+            "yaml_type": yaml_type,
+            "description": description,
+        })
+        
+        yaml_content = result.content
+        
+        # Validate if enabled
+        if self.yaml_validation_enabled:
+            validation_result = self.yaml_validator.validate(
+                yaml_content,
+                schema_type=schema_type
+            )
+            
+            fixes_applied = False
+            
+            # Auto-fix if needed and enabled
+            if not validation_result.is_valid and auto_fix:
+                fixed_yaml = self.yaml_validator.auto_fix(yaml_content, validation_result)
+                # Re-validate
+                validation_result = self.yaml_validator.validate(
+                    fixed_yaml,
+                    schema_type=schema_type or validation_result.schema_type
+                )
+                if validation_result.is_valid:
+                    yaml_content = fixed_yaml
+                    fixes_applied = True
+                    logger.info("YAML auto-fixed successfully")
+                else:
+                    logger.warning("YAML auto-fix did not fully resolve issues")
+            
+            # Embed validation errors as comments if still invalid
+            if not validation_result.is_valid:
+                error_comments = "\n# VALIDATION ERRORS:\n"
+                for error in validation_result.errors:
+                    error_comments += f"# - {error}\n"
+                yaml_content = error_comments + yaml_content
+                logger.warning(f"Generated YAML has validation errors: {validation_result.errors}")
+            
+            return {
+                "yaml_content": yaml_content,
+                "is_valid": validation_result.is_valid,
+                "validation_result": validation_result,
+                "fixes_applied": fixes_applied,
+            }
+        else:
+            # No validation
+            return {
+                "yaml_content": yaml_content,
+                "is_valid": True,  # Assume valid without validation
+                "validation_result": None,
+                "fixes_applied": False,
+            }
+    
+    def validate_yaml(self, yaml_content: str, schema_type: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Validate YAML content against a schema.
+        
+        Args:
+            yaml_content: YAML content to validate
+            schema_type: Schema type to validate against (auto-detected if None)
+            
+        Returns:
+            Dictionary with validation results
+        """
+        if not self.yaml_validation_enabled:
+            logger.warning("YAML validation not enabled")
+            return {
+                "is_valid": True,
+                "errors": [],
+                "warnings": ["YAML validation not enabled"],
+            }
+        
+        validation_result = self.yaml_validator.validate(yaml_content, schema_type)
+        
+        return {
+            "is_valid": validation_result.is_valid,
+            "errors": validation_result.errors,
+            "warnings": validation_result.warnings,
+            "schema_type": validation_result.schema_type,
+        }
