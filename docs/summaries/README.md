@@ -75,12 +75,12 @@ This directory contains historical summaries and completion reports for various 
 - [PHASE3_STATUS.md](../phases/PHASE3_STATUS.md) - Current Phase 3 status
 - [../../PHASE3_IMPLEMENTATION_SUMMARY.md](../../PHASE3_IMPLEMENTATION_SUMMARY.md) - Phase 3 implementation
 - [../../PHASE3_ORCHESTRATION_SUMMARY.md](../../PHASE3_ORCHESTRATION_SUMMARY.md) - Orchestration summary
-- [../../WEEK1_ORCHESTRATION_COMPLETION.md](../../WEEK1_ORCHESTRATION_COMPLETION.md) - Week 1 completion
+- [../completed/WEEK1_ORCHESTRATION_COMPLETION.md](../completed/WEEK1_ORCHESTRATION_COMPLETION.md) - Week 1 completion
 
 **Plugin Development:**
 - [../../PLUGIN_DEVELOPMENT_FEASIBILITY.md](../../PLUGIN_DEVELOPMENT_FEASIBILITY.md) - Feasibility study
-- [../../PLUGIN_WEEKS_5_6_SUMMARY.md](../../PLUGIN_WEEKS_5_6_SUMMARY.md) - Weeks 5-6 summary
-- [../../WEEK_7_8_COMPLETION.md](../../WEEK_7_8_COMPLETION.md) - Weeks 7-8 completion
+- [../completed/PLUGIN_WEEKS_5_6_SUMMARY.md](../completed/PLUGIN_WEEKS_5_6_SUMMARY.md) - Weeks 5-6 summary
+- [../completed/WEEK_7_8_COMPLETION.md](../completed/WEEK_7_8_COMPLETION.md) - Weeks 7-8 completion
 
 ### Testing Documentation
 - [../testing/TESTING.md](../testing/TESTING.md) - Testing guidelines
