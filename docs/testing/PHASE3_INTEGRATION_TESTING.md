@@ -565,7 +565,7 @@ class Test[ComponentName]:
 ## Related Documentation
 
 - **[PHASE3_GUIDE.md](../../PHASE3_GUIDE.md)** - Phase 3 user guide
-- **[PHASE3_STATUS.md](PHASE3_STATUS.md)** - Current Phase 3 status
+- **[PHASE3_STATUS.md](../phases/PHASE3_STATUS.md)** - Current Phase 3 status
 - **[TESTING.md](TESTING.md)** - General testing guidelines
 - **[TEST_SUMMARY.md](TEST_SUMMARY.md)** - Overall test results
 
