@@ -99,7 +99,7 @@ Welcome to the Adastrea Director comprehensive documentation index! This is your
 - **[PHASE3_IMPLEMENTATION_SUMMARY.md](PHASE3_IMPLEMENTATION_SUMMARY.md)** - Implementation details
 - **[PHASE3_ORCHESTRATION_SUMMARY.md](PHASE3_ORCHESTRATION_SUMMARY.md)** - Orchestration overview
 - **[docs/phases/AGENT_ORCHESTRATION.md](docs/phases/AGENT_ORCHESTRATION.md)** - CLI and Dashboard guide
-- **[WEEK1_ORCHESTRATION_COMPLETION.md](WEEK1_ORCHESTRATION_COMPLETION.md)** - P3.0 completion report ✨ **NEW**
+- **[docs/completed/WEEK1_ORCHESTRATION_COMPLETION.md](docs/completed/WEEK1_ORCHESTRATION_COMPLETION.md)** - P3.0 completion report ✨ **NEW**
 
 **Completed Sub-stages:**
 - ✅ **P3.0:** Infrastructure (Event Bus, Shared State, Remote Control Foundation)

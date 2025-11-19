@@ -50,7 +50,7 @@ Documentation for each development phase:
 - [**Phase 3 Status**](phases/PHASE3_STATUS.md) - ✨ **NEW** Current P3 progress and completed work
 - [**PHASE3_IMPLEMENTATION_SUMMARY.md**](../PHASE3_IMPLEMENTATION_SUMMARY.md) - P3 implementation details
 - [**PHASE3_ORCHESTRATION_SUMMARY.md**](../PHASE3_ORCHESTRATION_SUMMARY.md) - Orchestration overview
-- [**WEEK1_ORCHESTRATION_COMPLETION.md**](../WEEK1_ORCHESTRATION_COMPLETION.md) - P3.0 completion report
+- [**WEEK1_ORCHESTRATION_COMPLETION.md**](completed/WEEK1_ORCHESTRATION_COMPLETION.md) - P3.0 completion report
 - [Agent Orchestration](phases/AGENT_ORCHESTRATION.md) - CLI and Dashboard guide
 
 **P4: Creative Partner** 🌟 Vision
@@ -152,11 +152,11 @@ Plugin for integrating Adastrea Director with Unreal Engine:
 - [**PLUGIN_DEVELOPMENT_FEASIBILITY.md**](../PLUGIN_DEVELOPMENT_FEASIBILITY.md) - Feasibility analysis and roadmap
 
 **P1.4: Plugin Shell (Weeks 1-4)** ✅ Complete
-- [**PLUGIN_PHASE1_WEEK1_SUMMARY.md**](../PLUGIN_PHASE1_WEEK1_SUMMARY.md) - P1.4.0 Week 1 summary
-- [**PLUGIN_PHASE1_WEEK2_SUMMARY.md**](../PLUGIN_PHASE1_WEEK2_SUMMARY.md) - P1.4.1 Week 2 summary
+- [**PLUGIN_PHASE1_WEEK1_SUMMARY.md**](completed/PLUGIN_PHASE1_WEEK1_SUMMARY.md) - P1.4.0 Week 1 summary
+- [**PLUGIN_PHASE1_WEEK2_SUMMARY.md**](completed/PLUGIN_PHASE1_WEEK2_SUMMARY.md) - P1.4.1 Week 2 summary
 
 **P2.4: Plugin Integration (Weeks 5-8)** ✅ Complete
-- [**PLUGIN_WEEKS_5_6_SUMMARY.md**](../PLUGIN_WEEKS_5_6_SUMMARY.md) - P2.4.0 Weeks 5-6 summary (RAG)
+- [**PLUGIN_WEEKS_5_6_SUMMARY.md**](completed/PLUGIN_WEEKS_5_6_SUMMARY.md) - P2.4.0 Weeks 5-6 summary (RAG)
 
 **Plugin Directory Documentation**
 - [Plugin README](../Plugins/AdastreaDirector/README.md) - Plugin overview and features
