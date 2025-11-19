@@ -41,6 +41,7 @@ private:
 
 	/** Content switcher widget to hold tab contents */
 	TSharedPtr<SWidgetSwitcher> TabContentSwitcher;
+
 	// Query tab widgets
 	/** Query input text box */
 	TSharedPtr<SEditableTextBox> QueryInputBox;
