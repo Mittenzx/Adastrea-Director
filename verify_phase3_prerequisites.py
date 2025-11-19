@@ -44,15 +44,28 @@ def verify_remote_control_api():
         
         # Check key classes/functions exist
         if success and mod:
-            if module == "remote_control.client":
-                assert hasattr(mod, "UnrealRemoteControlClient")
-                print(f"  └─ UnrealRemoteControlClient class found")
-            elif module == "remote_control.websocket_client":
-                assert hasattr(mod, "WebSocketEventClient")
-                print(f"  └─ WebSocketEventClient class found")
-            elif module == "remote_control.base_agent":
-                assert hasattr(mod, "RemoteControlAgent")
-                print(f"  └─ RemoteControlAgent class found")
+            try:
+                if module == "remote_control.client":
+                    if not hasattr(mod, "UnrealRemoteControlClient"):
+                        print(f"  ✗ UnrealRemoteControlClient class not found")
+                        results.append(False)
+                    else:
+                        print(f"  └─ UnrealRemoteControlClient class found")
+                elif module == "remote_control.websocket_client":
+                    if not hasattr(mod, "WebSocketEventClient"):
+                        print(f"  ✗ WebSocketEventClient class not found")
+                        results.append(False)
+                    else:
+                        print(f"  └─ WebSocketEventClient class found")
+                elif module == "remote_control.base_agent":
+                    if not hasattr(mod, "RemoteControlAgent"):
+                        print(f"  ✗ RemoteControlAgent class not found")
+                        results.append(False)
+                    else:
+                        print(f"  └─ RemoteControlAgent class found")
+            except Exception as e:
+                print(f"  ✗ Error checking module attributes: {e}")
+                results.append(False)
     
     # Check config file exists
     config_path = Path("config/remote_control_config.yaml")
@@ -84,27 +97,41 @@ def verify_event_bus():
     
     if success and mod:
         # Check key classes exist
-        assert hasattr(mod, "EventBus")
-        assert hasattr(mod, "Event")
-        assert hasattr(mod, "EventType")
-        print(f"  └─ EventBus class found")
-        print(f"  └─ Event class found")
-        print(f"  └─ EventType enum found")
-        
-        # Try to create an instance
         try:
+            if not hasattr(mod, "EventBus"):
+                print(f"  ✗ EventBus class not found")
+                return False
+            if not hasattr(mod, "Event"):
+                print(f"  ✗ Event class not found")
+                return False
+            if not hasattr(mod, "EventType"):
+                print(f"  ✗ EventType enum not found")
+                return False
+            print(f"  └─ EventBus class found")
+            print(f"  └─ Event class found")
+            print(f"  └─ EventType enum found")
+            
+            # Try to create an instance
             event_bus = mod.EventBus()
             print(f"  └─ EventBus instance created successfully")
             
             # Check key methods
-            assert hasattr(event_bus, "publish")
-            assert hasattr(event_bus, "subscribe")
-            assert hasattr(event_bus, "unsubscribe")
-            assert hasattr(event_bus, "get_history")
+            if not hasattr(event_bus, "publish"):
+                print(f"  ✗ publish method not found")
+                return False
+            if not hasattr(event_bus, "subscribe"):
+                print(f"  ✗ subscribe method not found")
+                return False
+            if not hasattr(event_bus, "unsubscribe"):
+                print(f"  ✗ unsubscribe method not found")
+                return False
+            if not hasattr(event_bus, "get_history"):
+                print(f"  ✗ get_history method not found")
+                return False
             print(f"  └─ All key methods present")
             
         except Exception as e:
-            print(f"  ✗ Failed to create EventBus instance: {e}")
+            print(f"  ✗ Failed to verify EventBus: {e}")
             return False
     
     return success
@@ -119,32 +146,54 @@ def verify_shared_state():
     
     if success and mod:
         # Check key classes exist
-        assert hasattr(mod, "SharedContext")
-        assert hasattr(mod, "AgentState")
-        assert hasattr(mod, "AgentMetrics")
-        assert hasattr(mod, "AgentStatus")
-        assert hasattr(mod, "ProjectInfo")
-        assert hasattr(mod, "CodeStructure")
-        assert hasattr(mod, "Change")
-        print(f"  └─ SharedContext class found")
-        print(f"  └─ AgentState class found")
-        print(f"  └─ AgentMetrics class found")
-        print(f"  └─ Data model classes found")
-        
-        # Try to create an instance
         try:
+            if not hasattr(mod, "SharedContext"):
+                print(f"  ✗ SharedContext class not found")
+                return False
+            if not hasattr(mod, "AgentState"):
+                print(f"  ✗ AgentState class not found")
+                return False
+            if not hasattr(mod, "AgentMetrics"):
+                print(f"  ✗ AgentMetrics class not found")
+                return False
+            if not hasattr(mod, "AgentStatus"):
+                print(f"  ✗ AgentStatus enum not found")
+                return False
+            if not hasattr(mod, "ProjectInfo"):
+                print(f"  ✗ ProjectInfo class not found")
+                return False
+            if not hasattr(mod, "CodeStructure"):
+                print(f"  ✗ CodeStructure class not found")
+                return False
+            if not hasattr(mod, "Change"):
+                print(f"  ✗ Change class not found")
+                return False
+            print(f"  └─ SharedContext class found")
+            print(f"  └─ AgentState class found")
+            print(f"  └─ AgentMetrics class found")
+            print(f"  └─ Data model classes found")
+            
+            # Try to create an instance
             shared_context = mod.SharedContext()
             print(f"  └─ SharedContext instance created successfully")
             
             # Check key methods
-            assert hasattr(shared_context, "register_agent")
-            assert hasattr(shared_context, "get_agent_state")
-            assert hasattr(shared_context, "set_project_info")
-            assert hasattr(shared_context, "get_project_info")
+            if not hasattr(shared_context, "register_agent"):
+                print(f"  ✗ register_agent method not found")
+                return False
+            if not hasattr(shared_context, "get_agent_state"):
+                print(f"  ✗ get_agent_state method not found")
+                return False
+            if not hasattr(shared_context, "set_project_info"):
+                print(f"  ✗ set_project_info method not found")
+                return False
+            if not hasattr(shared_context, "get_project_info"):
+                print(f"  ✗ get_project_info method not found")
+                return False
             print(f"  └─ All key methods present")
             
         except Exception as e:
-            print(f"  ✗ Failed to create SharedContext instance: {e}")
+            print(f"  ✗ Failed to verify SharedContext: {e}")
             return False
     
     return success
