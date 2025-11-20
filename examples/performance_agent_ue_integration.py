@@ -16,6 +16,7 @@ Usage:
 
 import time
 import sys
+import random
 from pathlib import Path
 
 # Add project root to path
@@ -329,7 +330,6 @@ def demonstrate_real_time_monitoring(agent, duration=10):
                     agent.collect_metrics_from_ue()
                 else:
                     # Simulate metrics
-                    import random
                     agent.collect_metrics(
                         frame_rate=58 + random.uniform(-5, 5),
                         memory_usage_mb=3500 + random.uniform(-200, 200),

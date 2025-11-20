@@ -10,6 +10,7 @@ from datetime import datetime
 from typing import List, Optional
 import logging
 import re
+import time
 
 from .base_agent import BaseAutonomousAgent
 from .event_bus import Event, EventBus, EventType
@@ -117,12 +118,18 @@ class PerformanceProfilingAgent(BaseAutonomousAgent):
     - Collect metrics from Unreal Engine via Remote Control API
     """
     
+    # Configuration constants for PIE profiling
+    DEFAULT_PIE_STARTUP_DELAY = 2.0  # Seconds to wait for PIE to start
+    DEFAULT_COLLECTION_INTERVAL = 1.0  # Seconds between metric collections
+    
     def __init__(self,
                  event_bus: EventBus,
                  shared_context: SharedContext,
                  target_fps: float = 60.0,
                  memory_threshold_mb: float = 4096.0,
-                 remote_control_client = None):
+                 remote_control_client = None,
+                 pie_startup_delay: float = None,
+                 collection_interval: float = None):
         """
         Initialize the Performance Profiling Agent.
         
@@ -132,6 +139,8 @@ class PerformanceProfilingAgent(BaseAutonomousAgent):
             target_fps: Target frame rate to maintain
             memory_threshold_mb: Memory usage threshold for alerts
             remote_control_client: Optional UnrealRemoteControlClient for UE integration
+            pie_startup_delay: Seconds to wait for PIE to start (default: 2.0)
+            collection_interval: Seconds between metric collections (default: 1.0)
         """
         super().__init__(
             agent_id="performance_profiling_agent",
@@ -144,6 +153,8 @@ class PerformanceProfilingAgent(BaseAutonomousAgent):
         self._metrics_history: List[PerformanceMetrics] = []
         self._max_history_size = 1000
         self.remote_control_client = remote_control_client
+        self.pie_startup_delay = pie_startup_delay if pie_startup_delay is not None else self.DEFAULT_PIE_STARTUP_DELAY
+        self.collection_interval = collection_interval if collection_interval is not None else self.DEFAULT_COLLECTION_INTERVAL
         
         logger.info(f"PerformanceProfilingAgent created (target: {target_fps} FPS, UE integration: {remote_control_client is not None})")
     
@@ -469,10 +480,7 @@ class PerformanceProfilingAgent(BaseAutonomousAgent):
         
         Returns:
             PerformanceMetrics: An object containing FPS, memory usage, and GPU statistics.
-            None if Remote Control client is not configured or connection fails.
-        
-        Raises:
-            ConnectionError: If Unreal Engine is not connected or metrics cannot be retrieved.
+            None if Remote Control client is not configured or if a connection or retrieval error occurs.
         """
         if self.remote_control_client is None:
             logger.warning("Remote Control client not configured, cannot collect UE metrics")
@@ -653,8 +661,6 @@ class PerformanceProfilingAgent(BaseAutonomousAgent):
             return None
         
         try:
-            import time
-            
             # Start PIE
             logger.info("Starting PIE for profiling")
             start_response = self.remote_control_client.execute_command("PIE.StartPlaySession")
@@ -663,7 +669,7 @@ class PerformanceProfilingAgent(BaseAutonomousAgent):
                 return None
             
             # Wait for PIE to start
-            time.sleep(2)
+            time.sleep(self.pie_startup_delay)
             
             # Collect metrics during PIE
             logger.info(f"Profiling PIE session for {duration_seconds} seconds")
@@ -674,7 +680,7 @@ class PerformanceProfilingAgent(BaseAutonomousAgent):
                 metrics = self.collect_metrics_from_ue()
                 if metrics:
                     collected_metrics.append(metrics)
-                time.sleep(1)  # Collect every second
+                time.sleep(self.collection_interval)
             
             # Stop PIE
             logger.info("Stopping PIE session")
@@ -698,8 +704,8 @@ class PerformanceProfilingAgent(BaseAutonomousAgent):
             # Try to stop PIE if it's running
             try:
                 self.remote_control_client.execute_command("PIE.StopPlaySession")
-            except:
-                pass
+            except Exception as stop_exc:
+                logger.error(f"Failed to stop PIE session during cleanup: {stop_exc}")
             return None
     
     def _calculate_average_metrics(self, metrics_list: List[PerformanceMetrics]) -> PerformanceMetrics:
