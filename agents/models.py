@@ -40,6 +40,15 @@ class TaskStatus(Enum):
     CANCELLED = "cancelled"
 
 
+class ConstraintType(Enum):
+    """Types of constraints that can affect goals/tasks."""
+    TIME = "time"
+    RESOURCE = "resource"
+    TECHNICAL = "technical"
+    DEPENDENCY = "dependency"
+    QUALITY = "quality"
+
+
 @dataclass
 class Duration:
     """Represents estimated time duration for tasks."""
@@ -122,6 +131,13 @@ class Task:
     implementation_notes: str = ""
     metadata: Dict[str, Any] = field(default_factory=dict)
     created_at: datetime = field(default_factory=datetime.now)
+    # Additional fields for backward compatibility with planning_models.py
+    title: str = ""  # Alias for description for compatibility
+    estimated_effort: Optional[str] = None  # String representation (e.g., "2 hours", "1 day")
+    assignee: Optional[str] = None
+    updated_at: datetime = field(default_factory=datetime.now)
+    completed_at: Optional[datetime] = None
+    file_modifications: List[str] = field(default_factory=list)  # Alias for files_to_modify
     
     def __str__(self) -> str:
         status_icon = {
@@ -264,3 +280,31 @@ class FileModification:
     
     def __str__(self) -> str:
         return f"{self.modification_type}: {self.file_path} - {self.description}"
+
+
+@dataclass
+class ActionPlan:
+    """Comprehensive action plan for implementing a goal."""
+    goal: Goal
+    tasks: List[Task] = field(default_factory=list)
+    dependency_graph: Optional[DependencyGraph] = None
+    total_estimated_effort: Optional[Duration] = None
+    created_at: datetime = field(default_factory=datetime.now)
+    metadata: Dict[str, Any] = field(default_factory=dict)
+    
+    def get_summary(self) -> str:
+        """Generate a human-readable summary of the action plan."""
+        lines = [
+            f"Action Plan for: {self.goal.description}",
+            f"Goal Type: {self.goal.goal_type.value}",
+            f"Priority: {self.goal.priority.value}",
+            f"Total Tasks: {len(self.tasks)}",
+        ]
+        
+        if self.total_estimated_effort:
+            lines.append(f"Estimated Effort: {self.total_estimated_effort}")
+        
+        if self.goal.constraints:
+            lines.append(f"Constraints: {len(self.goal.constraints)}")
+        
+        return "\n".join(lines)

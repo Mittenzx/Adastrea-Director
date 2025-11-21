@@ -10,7 +10,8 @@ and prioritizes tasks.
 import re
 import logging
 from typing import List
-from planning_models import (
+# Use agents.models as the canonical source
+from agents.models import (
     Goal, Task, TaskTree, DependencyGraph, Duration,
     TaskStatus, TaskPriority, ActionPlan
 )

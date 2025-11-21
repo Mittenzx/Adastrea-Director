@@ -8,7 +8,7 @@ Tests goal analysis, task decomposition, and planning functionality.
 import pytest
 from unittest.mock import Mock
 
-from planning_models import (
+from agents.models import (
     Goal, GoalType, Task, TaskTree, DependencyGraph,
     Duration, ActionPlan, TaskStatus, TaskPriority,
     ConstraintType, ProjectScope

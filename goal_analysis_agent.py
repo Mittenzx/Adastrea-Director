@@ -9,7 +9,8 @@ determines project scope.
 
 import re
 from typing import List
-from planning_models import (
+# Use agents.models as the canonical source
+from agents.models import (
     Goal, GoalType, Constraint, ConstraintType, 
     ProjectScope, TaskPriority
 )

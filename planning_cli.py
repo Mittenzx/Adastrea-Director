@@ -22,7 +22,7 @@ try:
     
     from goal_analysis_agent import GoalAnalysisAgent
     from task_decomposition_agent import TaskDecompositionAgent
-    from planning_models import ActionPlan
+    from agents.models import ActionPlan
     
 except ImportError as e:
     print(f"Error: Missing required dependencies: {e}")
