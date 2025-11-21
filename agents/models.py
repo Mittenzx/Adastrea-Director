@@ -209,7 +209,7 @@ class Task:
     
     @file_modifications.setter
     def file_modifications(self, value: List[str]) -> None:
-        self.files_to_modify = value
+        self.files_to_modify = list(value) if value else []
     
     def __str__(self) -> str:
         status_icon = {
