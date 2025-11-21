@@ -8,7 +8,8 @@ entities used by the planning agents.
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Union
+from uuid import uuid4
 
 
 class GoalType(Enum):
@@ -98,23 +99,23 @@ class Duration:
 class Constraint:
     """Represents a constraint or requirement for a goal. Supports both APIs."""
     description: str = ""
-    constraint_type: Any = None  # Can be str or ConstraintType enum for compatibility
+    constraint_type: Union[str, 'ConstraintType', None] = None  # Can be str or ConstraintType enum for compatibility
     is_hard: bool = True  # Hard constraint vs soft preference (agents.models API)
     # Additional fields from planning_models for compatibility
-    id: str = field(default_factory=lambda: str(__import__('uuid').uuid4()))
+    id: str = field(default_factory=lambda: str(uuid4()))
     severity: str = "medium"  # low, medium, high, critical (planning_models API)
     metadata: Dict[str, Any] = field(default_factory=dict)
     
     def __post_init__(self):
         """Initialize constraint_type properly for both APIs."""
         if self.constraint_type is None:
-            self.constraint_type = ConstraintType.TECHNICAL if 'ConstraintType' in dir() else "technical"
+            self.constraint_type = ConstraintType.TECHNICAL
         # Convert string to enum if needed
         if isinstance(self.constraint_type, str) and self.constraint_type in ['time', 'resource', 'technical', 'dependency', 'quality']:
             try:
                 self.constraint_type = ConstraintType(self.constraint_type)
-            except:
-                pass  # Keep as string if enum not available
+            except (ValueError, TypeError):
+                pass  # Keep as string if enum conversion fails
 
 
 @dataclass
@@ -148,7 +149,7 @@ class ProjectScope:
 @dataclass
 class Goal:
     """Represents a high-level development goal."""
-    id: str = field(default_factory=lambda: str(__import__('uuid').uuid4()))
+    id: str = field(default_factory=lambda: str(uuid4()))
     description: str = ""
     goal_type: GoalType = GoalType.FEATURE
     constraints: List[Constraint] = field(default_factory=list)
@@ -164,7 +165,7 @@ class Goal:
 @dataclass
 class Task:
     """Represents an atomic task derived from a goal."""
-    id: str = field(default_factory=lambda: str(__import__('uuid').uuid4()))
+    id: str = field(default_factory=lambda: str(uuid4()))
     description: str = ""
     goal_id: str = ""  # Reference to parent goal
     status: TaskStatus = TaskStatus.PENDING
@@ -250,7 +251,7 @@ class TaskTree:
 class DependencyGraph:
     """Represents task dependencies as a graph. Supports both APIs for compatibility."""
     # Support both APIs: List[Task] (agents.models) and Dict[str, Task] (planning_models)
-    tasks: Any = field(default_factory=lambda: [])  # Can be List[Task] or Dict[str, Task]
+    tasks: Union[List['Task'], Dict[str, 'Task']] = field(default_factory=lambda: [])
     adjacency_list: Dict[str, List[str]] = field(default_factory=dict)  # agents.models API
     edges: Dict[str, List[str]] = field(default_factory=dict)  # planning_models API (alias)
     
