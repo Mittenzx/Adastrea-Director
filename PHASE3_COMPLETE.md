@@ -32,7 +32,7 @@ Phase 3 of the Adastrea Director project is **COMPLETE**! All core objectives ha
 | **Event Types** | 12 supported |
 | **Documentation** | 7 major documents |
 | **Development Time** | 10 days (Nov 12-21) |
-| **Lines of Code** | ~5,000+ (Phase 3 only) |
+| **Lines of Code** | ~5,000 (Phase 3 only) |
 | **Critical Bugs** | 0 |
 
 ---
