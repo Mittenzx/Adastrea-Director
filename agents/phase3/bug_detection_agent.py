@@ -10,6 +10,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 import logging
 import re
+import time
 
 from .base_agent import BaseAutonomousAgent
 from .event_bus import Event, EventBus, EventType
@@ -155,13 +156,15 @@ class BugDetectionAgent(BaseAutonomousAgent):
     
     def __init__(self,
                  event_bus: EventBus,
-                 shared_context: SharedContext):
+                 shared_context: SharedContext,
+                 remote_control_client=None):
         """
         Initialize the Bug Detection Agent.
         
         Args:
             event_bus: Event bus for communication
             shared_context: Shared context for coordination
+            remote_control_client: Optional UnrealRemoteControlClient for UE integration
         """
         super().__init__(
             agent_id="bug_detection_agent",
@@ -173,6 +176,8 @@ class BugDetectionAgent(BaseAutonomousAgent):
         self._detected_crashes: List[Crash] = []
         self._test_history: List[TestResults] = []
         self._max_history_size = 100
+        self.remote_control_client = remote_control_client
+        self._monitoring_active = False
         
         # Common error patterns
         self._error_patterns = [
@@ -184,7 +189,7 @@ class BugDetectionAgent(BaseAutonomousAgent):
             (r'infinite loop', 'high'),
         ]
         
-        logger.info("BugDetectionAgent created")
+        logger.info(f"BugDetectionAgent created (UE integration: {remote_control_client is not None})")
     
     def _subscribe_to_events(self) -> None:
         """Subscribe to relevant events."""
@@ -498,3 +503,232 @@ class BugDetectionAgent(BaseAutonomousAgent):
     def get_test_history(self) -> List[TestResults]:
         """Get history of test runs."""
         return self._test_history.copy()
+    
+    # ==================== Unreal Engine Integration ====================
+    
+    def monitor_ue_logs(self, duration_seconds: int = 60) -> List[Anomaly]:
+        """
+        Monitor Unreal Engine logs in real-time for errors and warnings.
+        
+        This method continuously monitors the UE editor log output for a specified
+        duration, looking for errors, warnings, and other anomalies.
+        
+        Args:
+            duration_seconds: How long to monitor (default: 60 seconds)
+            
+        Returns:
+            List of anomalies detected during monitoring
+            
+        Raises:
+            RuntimeError: If remote_control_client is not configured
+        """
+        if self.remote_control_client is None:
+            logger.error("Cannot monitor UE logs: remote_control_client not configured")
+            raise RuntimeError("Remote Control client not configured. Pass it to constructor.")
+        
+        logger.info(f"Starting UE log monitoring for {duration_seconds} seconds")
+        anomalies = []
+        start_time = time.time()
+        
+        try:
+            # Start capturing console output
+            self.remote_control_client.execute_command("Log LogConsole Display")
+            
+            while (time.time() - start_time) < duration_seconds:
+                # Get recent console output
+                response = self.remote_control_client.execute_command("Log List")
+                
+                if response and 'output' in response:
+                    log_content = response['output']
+                    
+                    # Analyze logs for anomalies
+                    new_anomalies = self.analyze_logs(log_content)
+                    
+                    # Filter out duplicates
+                    for anomaly in new_anomalies:
+                        if not any(a.description == anomaly.description for a in anomalies):
+                            anomalies.append(anomaly)
+                            logger.info(f"Detected anomaly: {anomaly.anomaly_type} - {anomaly.description}")
+                    
+                # Wait before next check
+                time.sleep(5)
+                
+            logger.info(f"UE log monitoring complete. Found {len(anomalies)} anomalies")
+            return anomalies
+            
+        except Exception as e:
+            logger.error(f"Error monitoring UE logs: {str(e)}")
+            return anomalies
+    
+    def automated_playtest(self, 
+                          duration_seconds: int = 120,
+                          test_sequence: Optional[str] = None) -> TestResults:
+        """
+        Run automated playtest in Unreal Engine and monitor for issues.
+        
+        This method starts a PIE (Play In Editor) session, optionally runs a test
+        sequence, and monitors for errors, crashes, and performance issues.
+        
+        Args:
+            duration_seconds: How long to run the playtest (default: 120 seconds)
+            test_sequence: Optional path to a Sequencer asset to execute
+            
+        Returns:
+            TestResults object with test execution details
+            
+        Raises:
+            RuntimeError: If remote_control_client is not configured
+        """
+        if self.remote_control_client is None:
+            logger.error("Cannot run automated playtest: remote_control_client not configured")
+            raise RuntimeError("Remote Control client not configured. Pass it to constructor.")
+        
+        logger.info(f"Starting automated playtest (duration: {duration_seconds}s)")
+        test_run_id = f"playtest_{int(time.time())}"
+        start_time = time.time()
+        errors_found = []
+        
+        try:
+            # Start PIE session
+            logger.info("Starting PIE session")
+            start_response = self.remote_control_client.execute_command("PIE.StartPlaySession")
+            
+            if not start_response or not start_response.get('success', False):
+                logger.error("Failed to start PIE session")
+                return TestResults(
+                    test_run_id=test_run_id,
+                    timestamp=datetime.now(),
+                    total_tests=1,
+                    passed=0,
+                    failed=1,
+                    errors=1,
+                    duration_seconds=time.time() - start_time,
+                    failures=[{"error": "Failed to start PIE session"}]
+                )
+            
+            # Execute test sequence if provided
+            if test_sequence:
+                logger.info(f"Executing test sequence: {test_sequence}")
+                seq_response = self.remote_control_client.execute_command(
+                    f"Sequencer.Play {test_sequence}"
+                )
+                if not seq_response or not seq_response.get('success', False):
+                    errors_found.append({"error": f"Failed to execute sequence: {test_sequence}"})
+            
+            # Monitor for errors during playtest
+            anomalies = []
+            while (time.time() - start_time) < duration_seconds:
+                # Check for console errors
+                response = self.remote_control_client.execute_command("Log List")
+                
+                if response and 'output' in response:
+                    log_content = response['output']
+                    new_anomalies = self.analyze_logs(log_content)
+                    
+                    # Add new unique anomalies
+                    for anomaly in new_anomalies:
+                        if anomaly.severity in ['high', 'critical']:
+                            if not any(a.description == anomaly.description for a in anomalies):
+                                anomalies.append(anomaly)
+                                errors_found.append({
+                                    "type": anomaly.anomaly_type,
+                                    "severity": anomaly.severity,
+                                    "description": anomaly.description,
+                                    "location": anomaly.location
+                                })
+                
+                time.sleep(5)
+            
+            # Stop PIE session
+            logger.info("Stopping PIE session")
+            self.remote_control_client.execute_command("PIE.StopPlaySession")
+            
+            duration = time.time() - start_time
+            total_errors = len(errors_found)
+            
+            # Create test results
+            results = TestResults(
+                test_run_id=test_run_id,
+                timestamp=datetime.now(),
+                total_tests=1,
+                passed=1 if total_errors == 0 else 0,
+                failed=1 if total_errors > 0 else 0,
+                errors=total_errors,
+                duration_seconds=duration,
+                failures=errors_found
+            )
+            
+            # Store in history
+            self._test_history.append(results)
+            if len(self._test_history) > self._max_history_size:
+                self._test_history.pop(0)
+            
+            # Publish test completed event
+            event = Event(
+                event_type=EventType.TEST_COMPLETED if results.passed > 0 else EventType.TEST_FAILED,
+                source=self.agent_id,
+                payload={
+                    "test_run_id": test_run_id,
+                    "passed": results.passed,
+                    "failed": results.failed,
+                    "errors": results.errors,
+                    "duration": results.duration_seconds
+                }
+            )
+            self.event_bus.publish(event)
+            
+            logger.info(f"Automated playtest complete: {results.passed} passed, {results.failed} failed")
+            return results
+            
+        except Exception as e:
+            logger.error(f"Error during automated playtest: {str(e)}")
+            
+            # Stop PIE if it's running
+            try:
+                self.remote_control_client.execute_command("PIE.StopPlaySession")
+            except:
+                pass
+            
+            return TestResults(
+                test_run_id=test_run_id,
+                timestamp=datetime.now(),
+                total_tests=1,
+                passed=0,
+                failed=1,
+                errors=1,
+                duration_seconds=time.time() - start_time,
+                failures=[{"error": str(e)}]
+            )
+    
+    def start_continuous_monitoring(self) -> None:
+        """
+        Start continuous monitoring of Unreal Engine logs.
+        
+        This method starts a background monitoring task that continuously watches
+        UE logs for errors and warnings. Call stop_continuous_monitoring() to stop.
+        
+        Raises:
+            RuntimeError: If remote_control_client is not configured or monitoring already active
+        """
+        if self.remote_control_client is None:
+            raise RuntimeError("Remote Control client not configured. Pass it to constructor.")
+        
+        if self._monitoring_active:
+            logger.warning("Continuous monitoring already active")
+            return
+        
+        self._monitoring_active = True
+        logger.info("Started continuous UE log monitoring")
+        
+        # Note: In a production implementation, this would start a background thread or task
+        # For now, this just sets the flag. The actual monitoring would be done by
+        # periodically calling monitor_ue_logs() from an external scheduler.
+    
+    def stop_continuous_monitoring(self) -> None:
+        """Stop continuous monitoring of Unreal Engine logs."""
+        self._monitoring_active = False
+        logger.info("Stopped continuous UE log monitoring")
+    
+    def is_monitoring_active(self) -> bool:
+        """Check if continuous monitoring is active."""
+        return self._monitoring_active
