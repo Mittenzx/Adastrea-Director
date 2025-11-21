@@ -111,11 +111,19 @@ class Constraint:
         if self.constraint_type is None:
             self.constraint_type = ConstraintType.TECHNICAL
         # Convert string to enum if needed
-        if isinstance(self.constraint_type, str) and self.constraint_type in ['time', 'resource', 'technical', 'dependency', 'quality']:
-            try:
-                self.constraint_type = ConstraintType(self.constraint_type)
-            except (ValueError, TypeError):
-                pass  # Keep as string if enum conversion fails
+        if isinstance(self.constraint_type, str):
+            # Try to match by value (case-insensitive)
+            lowered = self.constraint_type.lower()
+            for member in ConstraintType:
+                if lowered == member.value.lower():
+                    self.constraint_type = member
+                    break
+            else:
+                # Try to match by name (case-insensitive)
+                uppered = self.constraint_type.upper()
+                if uppered in ConstraintType.__members__:
+                    self.constraint_type = ConstraintType[uppered]
+        # If conversion fails, keep as string for compatibility
 
 
 @dataclass
@@ -180,12 +188,28 @@ class Task:
     metadata: Dict[str, Any] = field(default_factory=dict)
     created_at: datetime = field(default_factory=datetime.now)
     # Additional fields for backward compatibility with planning_models.py
-    title: str = ""  # Alias for description for compatibility
     estimated_effort: Optional[str] = None  # String representation (e.g., "2 hours", "1 day")
     assignee: Optional[str] = None
     updated_at: datetime = field(default_factory=datetime.now)
     completed_at: Optional[datetime] = None
-    file_modifications: List[str] = field(default_factory=list)  # Alias for files_to_modify
+    
+    @property
+    def title(self) -> str:
+        """Alias for description for backward compatibility."""
+        return self.description
+    
+    @title.setter
+    def title(self, value: str) -> None:
+        self.description = value
+    
+    @property
+    def file_modifications(self) -> List[str]:
+        """Alias for files_to_modify for backward compatibility."""
+        return self.files_to_modify
+    
+    @file_modifications.setter
+    def file_modifications(self, value: List[str]) -> None:
+        self.files_to_modify = value
     
     def __str__(self) -> str:
         status_icon = {
@@ -215,7 +239,7 @@ class TaskTree:
         """Get all tasks in the tree (supports both APIs)."""
         all_tasks = []
         
-        # agents.models API (flat list with subtasks)
+        # Use agents.models API if available (takes precedence)
         if self.root_tasks:
             def collect_tasks(task_list: List[Task]):
                 for task in task_list:
@@ -223,9 +247,8 @@ class TaskTree:
                     if task.subtasks:
                         collect_tasks(task.subtasks)
             collect_tasks(self.root_tasks)
-        
-        # planning_models API (recursive tree structure)
-        if self.root_task:
+        # Use planning_models API only if agents.models API is not used
+        elif self.root_task:
             all_tasks.extend(self._iter_all_tasks())
         
         return all_tasks
@@ -251,7 +274,7 @@ class TaskTree:
 class DependencyGraph:
     """Represents task dependencies as a graph. Supports both APIs for compatibility."""
     # Support both APIs: List[Task] (agents.models) and Dict[str, Task] (planning_models)
-    tasks: Union[List['Task'], Dict[str, 'Task']] = field(default_factory=lambda: [])
+    tasks: Union[List['Task'], Dict[str, 'Task']] = field(default_factory=list)
     adjacency_list: Dict[str, List[str]] = field(default_factory=dict)  # agents.models API
     edges: Dict[str, List[str]] = field(default_factory=dict)  # planning_models API (alias)
     
@@ -260,30 +283,32 @@ class DependencyGraph:
         # Convert Dict to List if needed for agents.models API
         if isinstance(self.tasks, dict):
             task_list = list(self.tasks.values())
+        elif isinstance(self.tasks, list):
+            task_list = self.tasks
         else:
-            task_list = self.tasks if isinstance(self.tasks, list) else []
+            raise TypeError(f"tasks must be list or dict, got {type(self.tasks)}")
         
         # Build adjacency list if not provided
         if not self.adjacency_list and not self.edges:
             self.adjacency_list = {}
             self.edges = {}
             for task in task_list:
-                self.adjacency_list[task.id] = task.dependencies
-                self.edges[task.id] = task.dependencies
+                self.adjacency_list[task.id] = task.dependencies.copy()
+                self.edges[task.id] = task.dependencies.copy()
         elif self.adjacency_list and not self.edges:
-            self.edges = self.adjacency_list
+            self.edges = self.adjacency_list.copy()
         elif self.edges and not self.adjacency_list:
-            self.adjacency_list = self.edges
+            self.adjacency_list = self.edges.copy()
     
     # planning_models API methods
     def add_task(self, task: Task):
         """Add a task to the graph (planning_models API)."""
         if isinstance(self.tasks, dict):
             self.tasks[task.id] = task
-        else:
-            if not isinstance(self.tasks, list):
-                self.tasks = []
+        elif isinstance(self.tasks, list):
             self.tasks.append(task)
+        else:
+            raise TypeError(f"tasks must be list or dict, got {type(self.tasks)}")
         
         if task.id not in self.edges:
             self.edges[task.id] = []
