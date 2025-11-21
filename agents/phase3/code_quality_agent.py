@@ -10,6 +10,7 @@ from datetime import datetime
 from typing import Dict, List, Optional
 import logging
 import re
+import string
 
 from .base_agent import BaseAutonomousAgent
 from .event_bus import Event, EventBus, EventType
@@ -162,6 +163,9 @@ class CodeQualityAgent(BaseAutonomousAgent):
         self._quality_reports: List[QualityReport] = []
         self._max_history_size = 100
         self.remote_control_client = remote_control_client
+        
+        # Blueprint analysis defaults
+        self._DEFAULT_BLUEPRINT_COMPLEXITY = 50.0  # Medium complexity baseline
         
         # Define code smell patterns
         self._smell_patterns = {
@@ -647,15 +651,25 @@ class CodeQualityAgent(BaseAutonomousAgent):
         
         logger.info(f"Analyzing Blueprint: {blueprint_path}")
         
+        # Sanitize blueprint_path to prevent code injection
+        # Only allow alphanumeric, forward slash, underscore, and hyphen
+        allowed_chars = string.ascii_letters + string.digits + '/_-'
+        sanitized_path = ''.join(c for c in blueprint_path if c in allowed_chars)
+        
+        if sanitized_path != blueprint_path:
+            logger.warning(f"Blueprint path contained invalid characters: {blueprint_path}")
+            logger.info(f"Using sanitized path: {sanitized_path}")
+        
         try:
             # Get Blueprint information via Remote Control API
             # Note: This is a placeholder for the actual implementation
             # The actual commands depend on exposing Blueprint data via UE Python or Remote Control
             
             # For now, we'll use a Python command to get Blueprint info
+            # Using sanitized path to prevent code injection
             python_script = f"""
 import unreal
-blueprint = unreal.load_asset('{blueprint_path}')
+blueprint = unreal.load_asset('{sanitized_path}')
 if blueprint:
     # Get node count and complexity info
     # This is a simplified version - actual implementation would need
@@ -671,7 +685,7 @@ else:
             )
             
             if not response or not response.get('success', False):
-                logger.error(f"Failed to analyze Blueprint: {blueprint_path}")
+                logger.error(f"Failed to analyze Blueprint: {sanitized_path}")
                 return None
             
             # Parse response to extract Blueprint info
@@ -680,7 +694,7 @@ else:
             # Estimate complexity based on response
             # In a real implementation, this would parse actual node counts and complexity metrics
             node_count = 0
-            complexity_score = 50.0  # Default medium complexity
+            complexity_score = self._DEFAULT_BLUEPRINT_COMPLEXITY
             
             if 'loaded' in output.lower():
                 # Blueprint exists, analyze it
@@ -853,11 +867,18 @@ for file in python_files[:10]:  # Limit to first 10 files
         if self.remote_control_client is None:
             raise RuntimeError("Remote Control client not configured. Pass it to constructor.")
         
+        # Sanitize blueprint_path to prevent code injection
+        allowed_chars = string.ascii_letters + string.digits + '/_-'
+        sanitized_path = ''.join(c for c in blueprint_path if c in allowed_chars)
+        
+        if sanitized_path != blueprint_path:
+            logger.warning(f"Blueprint path contained invalid characters: {blueprint_path}")
+        
         try:
-            # Get Blueprint basic info
+            # Get Blueprint basic info using sanitized path
             python_script = f"""
 import unreal
-blueprint = unreal.load_asset('{blueprint_path}')
+blueprint = unreal.load_asset('{sanitized_path}')
 if blueprint:
     print(f"name:{{blueprint.get_name()}}")
     print(f"class:{{type(blueprint).__name__}}")
