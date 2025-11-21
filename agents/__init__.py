@@ -17,12 +17,14 @@ from agents.models import (
     TaskPriority,
     TaskStatus,
     Constraint,
+    ConstraintType,
     ProjectScope,
     TaskTree,
     DependencyGraph,
     Implementation,
     FileModification,
     Duration,
+    ActionPlan,
 )
 
 from agents.goal_analysis_agent import GoalAnalysisAgent
@@ -37,12 +39,14 @@ __all__ = [
     "TaskPriority",
     "TaskStatus",
     "Constraint",
+    "ConstraintType",
     "ProjectScope",
     "TaskTree",
     "DependencyGraph",
     "Implementation",
     "FileModification",
     "Duration",
+    "ActionPlan",
     # Agents
     "GoalAnalysisAgent",
     "TaskDecompositionAgent",
