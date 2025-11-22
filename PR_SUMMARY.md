@@ -98,7 +98,7 @@ PROGRESS_POLL_INTERVAL_MS = 500  # Polling frequency
    - `clear_ingestion_log()`: Clear all logs
 
 3. **Integration** (Various lines)
-   - Start event logging (1608, 1630)
+   - Start event logging (1603, 1624)
    - Progress polling with logging (1986-1991)
    - Completion logging (2110, 2117-2122)
    - Error handling with truncation
