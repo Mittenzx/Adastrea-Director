@@ -203,6 +203,19 @@ class TestAgent(RemoteControlAgent):
         
         start_time = time.time()
         
+        # Validate required fields
+        if not object_path or not property_name:
+            return TestResult(
+                test_name=test_name,
+                status=TestStatus.ERROR,
+                duration=0.0,
+                message="Missing required fields: object_path and property_name",
+                details={
+                    "object_path": object_path,
+                    "property_name": property_name,
+                }
+            )
+        
         try:
             # Get property value
             actual_value = self.get_property(object_path, property_name)
@@ -263,6 +276,20 @@ class TestAgent(RemoteControlAgent):
                     "error": str(e),
                 }
             )
+        except Exception as e:
+            duration = time.time() - start_time
+            return TestResult(
+                test_name=test_name,
+                status=TestStatus.ERROR,
+                duration=duration,
+                message=f"Unexpected error: {str(e)}",
+                details={
+                    "object_path": object_path,
+                    "property_name": property_name,
+                    "error": str(e),
+                    "error_type": type(e).__name__,
+                }
+            )
     
     def _test_function(self, task: Dict[str, Any]) -> TestResult:
         """
@@ -281,6 +308,19 @@ class TestAgent(RemoteControlAgent):
         expected_result = task.get("expected_result")
         
         start_time = time.time()
+        
+        # Validate required fields
+        if not object_path or not function_name:
+            return TestResult(
+                test_name=test_name,
+                status=TestStatus.ERROR,
+                duration=0.0,
+                message="Missing required fields: object_path and function_name",
+                details={
+                    "object_path": object_path,
+                    "function_name": function_name,
+                }
+            )
         
         try:
             # Call function
@@ -346,6 +386,21 @@ class TestAgent(RemoteControlAgent):
                     "error": str(e),
                 }
             )
+        except Exception as e:
+            duration = time.time() - start_time
+            return TestResult(
+                test_name=test_name,
+                status=TestStatus.ERROR,
+                duration=duration,
+                message=f"Unexpected error calling function: {str(e)}",
+                details={
+                    "object_path": object_path,
+                    "function_name": function_name,
+                    "parameters": parameters,
+                    "error": str(e),
+                    "error_type": type(e).__name__,
+                }
+            )
     
     def _test_command(self, task: Dict[str, Any]) -> TestResult:
         """
@@ -362,6 +417,18 @@ class TestAgent(RemoteControlAgent):
         expected_output = task.get("expected_output")
         
         start_time = time.time()
+        
+        # Validate required field
+        if not command:
+            return TestResult(
+                test_name=test_name,
+                status=TestStatus.ERROR,
+                duration=0.0,
+                message="Missing required field: command",
+                details={
+                    "command": command,
+                }
+            )
         
         try:
             # Execute command
@@ -418,6 +485,19 @@ class TestAgent(RemoteControlAgent):
                 details={
                     "command": command,
                     "error": str(e),
+                }
+            )
+        except Exception as e:
+            duration = time.time() - start_time
+            return TestResult(
+                test_name=test_name,
+                status=TestStatus.ERROR,
+                duration=duration,
+                message=f"Unexpected error executing command: {type(e).__name__}: {str(e)}",
+                details={
+                    "command": command,
+                    "error": str(e),
+                    "exception_type": type(e).__name__,
                 }
             )
     
@@ -506,7 +586,7 @@ class TestAgent(RemoteControlAgent):
         
         Args:
             filepath: Path to output file
-            format: Output format ("json" or "xml")
+            format: Output format ("json")
             
         Returns:
             True if export succeeded
@@ -515,7 +595,7 @@ class TestAgent(RemoteControlAgent):
             results_data = [result.to_dict() for result in self.test_results]
             
             if format == "json":
-                with open(filepath, 'w') as f:
+                with open(filepath, 'w', encoding='utf-8') as f:
                     json.dump({
                         "agent_id": self.agent_id,
                         "timestamp": datetime.now().isoformat(),

@@ -7,7 +7,7 @@ from unittest.mock import Mock, patch, mock_open
 from datetime import datetime
 
 from remote_control.test_agent import TestAgent, TestResult, TestStatus
-from remote_control.models import RemoteControlError, RemoteControlResponse
+from remote_control.models import RemoteControlError
 
 
 class TestTestResult:
@@ -242,6 +242,35 @@ class TestTestAgent:
         assert result.status == TestStatus.ERROR
         assert "Error getting property" in result.message
     
+    def test_test_property_missing_fields(self, agent):
+        """Test property test handles missing required fields."""
+        task = {
+            "name": "test_property",
+            "object_path": None,
+            "property_name": "Value"
+        }
+        
+        result = agent._test_property(task)
+        
+        assert result.status == TestStatus.ERROR
+        assert "Missing required fields" in result.message
+    
+    def test_test_property_unexpected_error(self, agent):
+        """Test property test handles unexpected exceptions."""
+        task = {
+            "name": "test_property",
+            "object_path": "/Game/Test",
+            "property_name": "Value"
+        }
+        
+        agent.get_property = Mock(side_effect=TypeError("Unexpected error"))
+        
+        result = agent._test_property(task)
+        
+        assert result.status == TestStatus.ERROR
+        assert "Unexpected error" in result.message
+        assert result.details.get("error_type") == "TypeError"
+    
     def test_test_function_success(self, agent):
         """Test function test passes."""
         task = {
@@ -302,6 +331,35 @@ class TestTestAgent:
         
         assert result.status == TestStatus.ERROR
     
+    def test_test_function_missing_fields(self, agent):
+        """Test function test handles missing required fields."""
+        task = {
+            "name": "test_function",
+            "object_path": "/Game/Test",
+            "function_name": None
+        }
+        
+        result = agent._test_function(task)
+        
+        assert result.status == TestStatus.ERROR
+        assert "Missing required fields" in result.message
+    
+    def test_test_function_unexpected_error(self, agent):
+        """Test function test handles unexpected exceptions."""
+        task = {
+            "name": "test_function",
+            "object_path": "/Game/Test",
+            "function_name": "DoSomething"
+        }
+        
+        agent.call_function = Mock(side_effect=AttributeError("Unexpected error"))
+        
+        result = agent._test_function(task)
+        
+        assert result.status == TestStatus.ERROR
+        assert "Unexpected error" in result.message
+        assert result.details.get("error_type") == "AttributeError"
+    
     def test_test_command_success(self, agent):
         """Test command test passes."""
         task = {
@@ -356,6 +414,33 @@ class TestTestAgent:
         result = agent._test_command(task)
         
         assert result.status == TestStatus.ERROR
+    
+    def test_test_command_missing_field(self, agent):
+        """Test command test handles missing required field."""
+        task = {
+            "name": "test_command",
+            "command": None
+        }
+        
+        result = agent._test_command(task)
+        
+        assert result.status == TestStatus.ERROR
+        assert "Missing required field" in result.message
+    
+    def test_test_command_unexpected_error(self, agent):
+        """Test command test handles unexpected exceptions."""
+        task = {
+            "name": "test_command",
+            "command": "stat fps"
+        }
+        
+        agent.execute_command = Mock(side_effect=ValueError("Unexpected error"))
+        
+        result = agent._test_command(task)
+        
+        assert result.status == TestStatus.ERROR
+        assert "Unexpected error" in result.message
+        assert result.details.get("exception_type") == "ValueError"
     
     def test_run_test_suite(self, agent):
         """Test running a suite of tests."""
@@ -443,7 +528,7 @@ class TestTestAgent:
         result = agent.export_test_results("/tmp/results.json", format="json")
         
         assert result is True
-        mock_file.assert_called_once_with("/tmp/results.json", 'w')
+        mock_file.assert_called_once_with("/tmp/results.json", 'w', encoding='utf-8')
         mock_json_dump.assert_called_once()
     
     def test_export_test_results_unsupported_format(self, agent):
