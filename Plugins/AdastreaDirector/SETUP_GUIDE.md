@@ -39,7 +39,7 @@ cp -r /path/to/Adastrea-Director/Plugins/AdastreaDirector /path/to/YourProject/P
 
 **Windows:** Right-click `YourProject.uproject` → "Generate Visual Studio project files"  
 **Mac:** Right-click `YourProject.uproject` → "Generate Xcode project files"  
-**Linux:** Run `./GenerateProjectFiles.sh` in your project folder
+**Linux:** Right-click `YourProject.uproject` → "Generate project files" (or use UnrealBuildTool)
 
 ### 3. Build and Launch
 
@@ -124,11 +124,14 @@ python test_ipc.py 5555
 
 ### Python Backend Won't Connect
 ```bash
-# Install dependencies
-cd Plugins/AdastreaDirector/Python
+# Navigate to the main Adastrea-Director repository root
+cd /path/to/Adastrea-Director
+
+# Install dependencies from requirements.txt
 pip install -r requirements.txt
 
 # Test server manually
+cd Plugins/AdastreaDirector/Python
 python ipc_server.py --port 5555
 # Should see: "Server listening on localhost:5555"
 ```
