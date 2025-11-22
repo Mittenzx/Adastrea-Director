@@ -2,6 +2,8 @@
 
 An intelligent assistant system designed to understand natural language commands and assist with the game development lifecycle in Unreal Engine.
 
+> 📚 **Documentation Update:** All detailed documentation has been moved to the [Adastrea Director Wiki](https://github.com/Mittenzx/Adastrea-Director/wiki) for better organization and accessibility. See [WIKI_MIGRATION.md](WIKI_MIGRATION.md) for details.
+
 ## Overview
 
 Adastrea Director is an AI-powered tool that aims to revolutionize game development by providing context-aware assistance, automated planning, and eventually autonomous development capabilities. The project is being developed in four distinct phases, with each phase building upon the previous one.
@@ -22,7 +24,7 @@ Adastrea Director is an AI-powered tool that aims to revolutionize game developm
 - AI-assisted content generation (quests, dialogue, assets)
 - **ROI: 63% return in 12 months**, then $40k+ annually
 
-*Based on comprehensive analysis: [ADASTREA_DIRECTOR_ANALYSIS.md](ADASTREA_DIRECTOR_ANALYSIS.md)*
+*For detailed analysis, see the [Wiki](https://github.com/Mittenzx/Adastrea-Director/wiki)*
 
 ## Architecture: One System, Two Deployment Options
 
@@ -42,7 +44,7 @@ Adastrea Director is **one AI system** with **two deployment modes**:
 
 **Key Point:** Both modes use the **same Python backend** (RAG, Planning, Agents). The plugin is not a separate implementation—it's a wrapper that integrates the standalone system into Unreal Engine via IPC.
 
-📖 **See:** [ARCHITECTURE_ANALYSIS.md](ARCHITECTURE_ANALYSIS.md) for complete architecture details
+📖 **See:** [Architecture Documentation](https://github.com/Mittenzx/Adastrea-Director/wiki) in the Wiki for complete details
 
 ## Current Phase: P2 Complete - Ready for P3
 
@@ -66,26 +68,11 @@ P2 introduces intelligent planning capabilities that transform high-level develo
   - **Effort Estimation**: Estimate time and complexity for tasks
   - **Priority Assignment**: Intelligent task prioritization
 
-## 📋 Current Sprint: 2-Week Task List (Nov 17-30, 2025)
+## 📋 Project Status
 
-**Active Development:** P3 Remote Control Integration + Plugin P2.4.1 (Weeks 7-8)
+**Active Development:** P3 Remote Control Integration + Plugin P2.4.1
 
-**Quick Access:**
-- 📖 **[Full Task List](TASKS_2_WEEKS.md)** - Detailed descriptions of all 14 tasks
-- 📊 **[Task Board](TASK_BOARD.md)** - Quick status overview and burndown chart
-- ✅ **[Sprint Checklist](SPRINT_CHECKLIST.md)** - Daily tracking checklist
-- 📝 **[Task List Summary](TASK_LIST_SUMMARY.md)** - High-level summary of all tasks and progress
-- 🚀 **[Start Sprint Guide](START_SPRINT.md)** - Step-by-step instructions to kick off the sprint
-
-**This Sprint Focus:**
-1. 🎯 Agent Orchestration CLI & Dashboard
-2. 🎮 Plugin Week 7-8 Feature Integration (Settings, Shortcuts)
-3. ✅ Remote Control API Foundation for UE Integration (COMPLETE)
-4. ✅ WebSocket Integration for Real-time Monitoring (COMPLETE)
-5. ⚡ Performance Agent Enhancement with Remote Control
-6. 📋 Plugin Planning Agent Integration
-
-**Team:** @Copilot (Remote Control, Agent Enhancement) + @Mittenzx (Plugin Development, UI/UX)
+For detailed project roadmap, sprint planning, and task tracking, see the [Wiki](https://github.com/Mittenzx/Adastrea-Director/wiki).
 
 ---
 
@@ -144,8 +131,7 @@ python ingest_game_repo.py
 2. Go to [Actions](https://github.com/Mittenzx/Adastrea-Director/actions) → "Populate Database with Adastrea Game Repository"
 3. Click "Run workflow"
 
-📖 **Quick Setup**: [TRIGGER_DATABASE_POPULATION.md](docs/guides/TRIGGER_DATABASE_POPULATION.md)  
-📖 **Complete Guide**: [POPULATE_DATABASE.md](docs/guides/POPULATE_DATABASE.md)
+📖 **For detailed setup guides**, see the [Wiki](https://github.com/Mittenzx/Adastrea-Director/wiki)
 
 Once populated, all agents will have full context about your Adastrea game when providing assistance!
 
@@ -165,7 +151,7 @@ The setup script will:
 - Install all dependencies with platform-specific handling
 - Verify the installation
 
-**💡 Tip**: The virtual environment can be reused - just activate it with `source venv/bin/activate` for instant access without reinstalling dependencies. See [DEPENDENCY_CACHING.md](docs/guides/DEPENDENCY_CACHING.md) for details.
+**💡 Tip**: The virtual environment can be reused - just activate it with `source venv/bin/activate` for instant access without reinstalling dependencies.
 
 #### Manual Installation
 
@@ -188,12 +174,12 @@ This script will detect your platform and guide you through any platform-specifi
 pip install -r requirements.txt
 ```
 
-**📝 Note**: If you encounter issues (especially on Apple Silicon Macs or ARM systems), use the smart installer or see [INSTALLATION.md](docs/guides/INSTALLATION.md) for platform-specific instructions and troubleshooting.
+**📝 Note**: If you encounter issues (especially on Apple Silicon Macs or ARM systems), use the smart installer or see the [Installation Guide](https://github.com/Mittenzx/Adastrea-Director/wiki) in the Wiki for platform-specific instructions and troubleshooting.
 
 3. Set up your LLM API key:
 
 **For document embeddings:** The system uses **HuggingFace embeddings by default** (no API key required, works offline).
-- See [OpenAI Embeddings Setup Guide](docs/guides/OPENAI_EMBEDDINGS_SETUP.md) if you want to use OpenAI instead
+- See the [Wiki](https://github.com/Mittenzx/Adastrea-Director/wiki) for OpenAI embeddings setup if needed
 
 **For LLM queries:** Set up your preferred LLM provider. You have three options:
 
@@ -228,11 +214,7 @@ export GITHUB_TOKEN="your-github-token-here"
 ```
 This is only needed if you want to ingest documents from the private Mittenzx/Adastrea game repository. 
 
-**📖 Setup Guides:**
-- [Quick Start](docs/guides/QUICK_START_GAME_REPO.md) - 5-minute setup
-- [GitHub Secrets Setup](docs/guides/SETUP_GITHUB_SECRETS.md) - CI/CD integration
-- [Complete Guide](docs/guides/GAME_REPO_INGESTION.md) - Full documentation
-- [OpenAI Embeddings Setup](docs/guides/OPENAI_EMBEDDINGS_SETUP.md) - Optional OpenAI configuration
+**📖 For detailed setup guides**, see the [Wiki](https://github.com/Mittenzx/Adastrea-Director/wiki)
 
 ### Usage
 
@@ -276,13 +258,12 @@ The planning system will:
 python ingest.py --docs-dir /path/to/your/docs
 ```
 
-**📚 New to ingestion?** See [DOCS_TO_INGEST.md](docs/guides/DOCS_TO_INGEST.md) for a comprehensive list of documents to ingest and detailed instructions.
+**📚 For detailed ingestion guides**, see the [Wiki](https://github.com/Mittenzx/Adastrea-Director/wiki)
 
 **🎮 Working on the Mittenzx/Adastrea game?** Use the dedicated game repository ingestion:
 ```bash
 python ingest_game_repo.py
 ```
-See [Quick Start Guide](docs/guides/QUICK_START_GAME_REPO.md) for 5-minute setup or [GAME_REPO_INGESTION.md](docs/guides/GAME_REPO_INGESTION.md) for complete documentation.
 
 2. **Start the interactive assistant:**
 ```bash
@@ -313,7 +294,7 @@ python planning_cli.py --goal "Implement user authentication system" --output ac
 python examples/phase2_example.py
 ```
 
-**📋 Want to learn more?** See [PHASE2_GUIDE.md](docs/phases/PHASE2_GUIDE.md) for comprehensive P2 documentation with examples.
+**📋 Want to learn more?** See the [Phase 2 Guide](https://github.com/Mittenzx/Adastrea-Director/wiki) in the Wiki for comprehensive documentation with examples.
 
 #### P3: Autonomous Agents (In Progress!)
 
@@ -348,11 +329,7 @@ python agent_dashboard.py --interval 2.0
 python examples/phase3_orchestrator_demo.py
 ```
 
-**📋 Documentation:** 
-- [Agent Orchestration Guide](docs/phases/AGENT_ORCHESTRATION.md) - Complete CLI and Dashboard documentation
-- [PHASE3_GUIDE.md](PHASE3_GUIDE.md) - Autonomous agents user guide
-- [P3 Status](docs/phases/PHASE3_STATUS.md) - Current progress and completed work ✨
-- [Integration Testing Guide](docs/testing/PHASE3_INTEGRATION_TESTING.md) - Integration test documentation ✨
+**📋 Documentation:** See the [Phase 3 Guide](https://github.com/Mittenzx/Adastrea-Director/wiki) in the Wiki for complete documentation
 
 #### Unreal Engine Plugin
 
@@ -426,10 +403,7 @@ The improved GUI provides:
 - `Ctrl+C` - Copy last response (from menu)
 - `Ctrl+E` - Export conversation
 
-**Documentation:**
-- [GUI Improvements](docs/gui/GUI_IMPROVEMENTS.md) - Complete feature guide
-- [GUI Settings](docs/gui/GUI_SETTINGS.md) - Settings configuration guide
-- [GUI Testing](docs/testing/GUI_TESTING_GUIDE.md) - Testing procedures
+**Documentation:** See the [GUI Guide](https://github.com/Mittenzx/Adastrea-Director/wiki) in the Wiki for complete feature documentation
 
 **Note**: The GUI application requires tkinter, which is included with most Python installations on Windows and can be installed on Linux/Mac.
 
@@ -437,112 +411,43 @@ The improved GUI provides:
 
 ```
 Adastrea-Director/
-├── README.md                      # This file
-├── PROJECT_PLAN.md                # Detailed project roadmap
-├── AGENTS.md                      # Agent system architecture
+├── README.md                      # This file - Quick start guide
+├── CONTRIBUTING.md                # Contribution guidelines
+├── WIKI_MIGRATION.md              # Documentation migration manifest
 ├── requirements.txt               # Python dependencies
 ├── ingest.py                      # Document ingestion script
-├── ingest_game_repo.py            # Game repository ingestion (NEW!)
+├── ingest_game_repo.py            # Game repository ingestion
 ├── main.py                        # P1 CLI entry point
 ├── planner.py                     # P2 planning CLI
-├── gui_director.py                # GUI application (enhanced)
-├── agents/                        # P2 agent system
-│   ├── models.py                  # Data models for planning
-│   ├── goal_analysis_agent.py     # Goal analysis agent
-│   ├── task_decomposition_agent.py # Task decomposition agent
-│   └── code_generation_agent.py   # Code generation agent
-├── tests/                         # Comprehensive test suite
-│   ├── test_planning_models.py    # P2 model tests
-│   ├── test_planning_agents.py    # P2 agent tests
-│   └── test_game_repo_ingestion.py # Game repo ingestion tests (NEW!)
-├── docs/                          # Documentation (organized)
-│   ├── INDEX.md                   # Documentation index
-│   ├── phases/                    # Phase-specific documentation
-│   ├── gui/                       # GUI documentation
-│   ├── design/                    # Design system documentation
-│   ├── guides/                    # Installation and usage guides
-│   ├── remote-control/            # Remote control API documentation
-│   ├── testing/                   # Testing documentation
-│   └── summaries/                 # Implementation summaries
-│
-├── P1: Foundation
-│   ├── ingest.py                  # Document ingestion script
-│   ├── main.py                    # CLI Q&A interface
-│   └── gui_director.py            # GUI application
-│
-├── P2: The Planner
-│   ├── planning_models.py         # Data models for goals and tasks
-│   ├── goal_analysis_agent.py     # Goal analysis and classification
-│   ├── task_decomposition_agent.py # Task decomposition and planning
-│   ├── planning_cli.py            # Planning CLI interface
-│   └── PHASE2_GUIDE.md            # P2 user guide
-│
-├── examples/
-│   └── phase2_example.py          # P2 demonstration code
-│
-├── Templates
-│   ├── GDD_TEMPLATE.md            # Game design document template
-│   └── SAMPLE_GDD.md              # Example game design document
-│
-└── tests/
-    ├── test_phase2_planning.py    # Tests for P2 features
-    └── ...                        # Additional tests
+├── gui_director.py                # GUI application
+├── agent_orchestrator_cli.py      # P3 agent CLI
+├── agent_dashboard.py             # P3 dashboard
+├── agents/                        # Agent system
+│   ├── phase3/                    # P3 autonomous agents
+│   └── ...                        # P2 planning agents
+├── tests/                         # Comprehensive test suite (230+ tests)
+├── examples/                      # Example scripts
+├── remote_control/                # Remote control API
+└── Plugins/                       # Unreal Engine plugin
+    └── AdastreaDirector/          # Plugin implementation
 
-Note: "P1" and "P2" labels above indicate logical groupings, 
-not actual directory names. All files are in the root directory.
+📚 All documentation is now in the Wiki: https://github.com/Mittenzx/Adastrea-Director/wiki
 ```
 
 ## Documentation
 
-### 📚 Documentation Indices
+📚 **Complete documentation is available in the [Adastrea Director Wiki](https://github.com/Mittenzx/Adastrea-Director/wiki)**
 
-**Three ways to navigate the documentation:**
-1. **[INDEX.md](INDEX.md)** - 🌟 **Master Index** - Complete project overview, code structure, and all documentation
-2. **[docs/INDEX.md](docs/INDEX.md)** - 📖 **Documentation Hub** - Organized guides, tutorials, and references
-3. **[CODE_REFERENCE.md](CODE_REFERENCE.md)** - 💻 **Code Reference** - Python modules, APIs, and development guide
+The wiki includes:
+- **Installation & Setup** - Platform-specific instructions and troubleshooting
+- **Usage Guides** - How to use all features (P1-P3)
+- **Architecture** - System design and agent architecture
+- **Phase Documentation** - Detailed guides for each project phase
+- **Development** - Contributing, testing, and code reference
+- **Design System** - UI/UX guidelines
+- **API Reference** - Remote control API and integrations
 
-### Quick Links
 
-**Installation & Setup:**
-- [Installation Guide](docs/guides/INSTALLATION.md) - Platform-specific installation instructions
-- [Troubleshooting](docs/guides/TROUBLESHOOTING.md) - Quick reference for common issues
-- [Error Handling Guide](docs/guides/ERROR_HANDLING.md) - Comprehensive error handling documentation
-
-**Project Documentation:**
-- [Project Plan](docs/guides/PROJECT_PLAN.md) - Detailed breakdown of all four phases
-- [Project Roadmap](ROADMAP.md) - Timeline, milestones, and phase details
-- [Agent System](AGENTS.md) - Architecture and design of the agent system
-- [P2 Guide](docs/phases/PHASE2_GUIDE.md) - Complete guide to goal decomposition and planning
-- [P2 Completion](docs/phases/PHASE2_COMPLETION.md) - P2 completion report
-- [P3 Guide](PHASE3_GUIDE.md) - Autonomous agents user guide
-
-**Integration & Analysis:**
-- [Integration Guide](INTEGRATION_GUIDE.md) - Step-by-step integration into your workflow
-- [API Cost Analysis](API_COST_ANALYSIS.md) - Comprehensive API cost analysis and optimization strategies
-- [LLM Alternatives](LLM_ALTERNATIVES.md) - Compare providers: OpenAI, Anthropic, Ollama (free), Groq, and more
-- [Improvements Roadmap](IMPROVEMENTS.md) - Planned enhancements and priorities
-- [Project Analysis](ADASTREA_DIRECTOR_ANALYSIS.md) - Comprehensive value analysis and ROI
-
-**GUI Documentation:**
-- [GUI Quick Start](docs/gui/GUI_QUICK_START.md) - User quick start and tips
-- [GUI Improvements](docs/gui/GUI_IMPROVEMENTS.md) - Comprehensive feature documentation
-- [GUI Settings Guide](docs/gui/GUI_SETTINGS.md) - Settings configuration guide
-
-**Testing Documentation:**
-- [GUI Testing Guide](docs/testing/GUI_TESTING_GUIDE.md) - Testing procedures and manual checklist
-- [Testing](docs/testing/TESTING.md) - General testing guide
-- [Test Summary](docs/testing/TEST_SUMMARY.md) - Test results and coverage
-
-**Design System:**
-- [Design Index](docs/design/DESIGN_INDEX.md) - Complete guide to all design documentation
-- [UI/UX Design System](docs/design/UI_UX_DESIGN_SYSTEM.md) - Complete design system
-- [Visual Mockups](docs/design/UE_INTERFACE_MOCKUPS.md) ✨ **NEW** - Interface mockups and design specs
-- [Mockups Summary](VISUAL_MOCKUPS_SUMMARY.md) ✨ **NEW** - Visual mockups overview
-
-**For complete documentation:**
-- 🌟 **[INDEX.md](INDEX.md)** - Start here for complete overview
-- 📖 **[docs/INDEX.md](docs/INDEX.md)** - Organized documentation hub
-- 💻 **[CODE_REFERENCE.md](CODE_REFERENCE.md)** - Developer code guide
 
 ## Testing
 
@@ -582,13 +487,13 @@ pytest -m integration   # Integration tests only
 
 ### Manual Testing
 
-For manual testing and QA procedures, see:
-- [GUI Testing Guide](docs/testing/GUI_TESTING_GUIDE.md) - Complete manual testing checklist
-- [Testing Documentation](docs/testing/TESTING.md) - General testing guidelines
+For manual testing and QA procedures, see the [Testing Guide](https://github.com/Mittenzx/Adastrea-Director/wiki) in the Wiki.
 
 ## Contributing
 
 This project is in early development. Contributions, suggestions, and feedback are welcome!
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on how to contribute to this project.
 
 ## License
 
