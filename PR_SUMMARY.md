@@ -80,7 +80,7 @@ Every ingestion stage is logged with timestamps:
 
 **File Modified:** `gui_director.py`
 
-**Constants Added (Lines 25-27):**
+**Constants Added (Lines 24-26):**
 ```python
 MAX_ERROR_LOG_LENGTH = 200  # Error message truncation
 PROGRESS_POLL_INTERVAL_MS = 500  # Polling frequency
