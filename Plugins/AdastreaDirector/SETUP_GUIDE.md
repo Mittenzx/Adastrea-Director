@@ -27,11 +27,11 @@ Copy the `Plugins/AdastreaDirector` folder to your Unreal Engine project's `Plug
 
 Your project structure should look like:
 ```
-YourProject/
+<YourProject>/
 ├── Content/
 ├── Plugins/
 │   └── AdastreaDirector/    ← Plugin goes here
-└── YourProject.uproject
+└── <YourProject>.uproject
 ```
 
 **Windows:** Use File Explorer to copy the folder  
@@ -39,9 +39,9 @@ YourProject/
 
 ### 2. Regenerate Project Files
 
-**Windows:** Right-click `YourProject.uproject` → "Generate Visual Studio project files"  
-**Mac:** Right-click `YourProject.uproject` → "Generate Xcode project files"  
-**Linux:** Right-click `YourProject.uproject` → "Generate project files" (or use UnrealBuildTool)
+**Windows:** Right-click `<YourProject>.uproject` → "Generate Visual Studio project files"  
+**Mac:** Right-click `<YourProject>.uproject` → "Generate Xcode project files"  
+**Linux:** Right-click `<YourProject>.uproject` → "Generate project files" (or use UnrealBuildTool)
 
 ### 3. Build and Launch
 
@@ -94,7 +94,8 @@ Verify the plugin is working correctly:
 
 ```bash
 # From your project root directory:
-cd YourProject/Plugins/AdastreaDirector/Python
+cd <YourProject>/Plugins/AdastreaDirector/Python
+# (Replace <YourProject> with your actual project name)
 python test_ipc.py 5555
 ```
 
@@ -129,14 +130,17 @@ python test_ipc.py 5555
 ```bash
 # Install required Python packages
 # The plugin uses the main Adastrea-Director repository's Python backend
-# If you have the main repo, install from there:
-pip install -r /path/to/Adastrea-Director/requirements.txt
 
-# Or install core dependencies directly:
+# Option 1: If you have the main Adastrea-Director repository:
+pip install -r /path/to/Adastrea-Director/requirements.txt
+# (Replace /path/to/Adastrea-Director with your actual repository path)
+
+# Option 2: Or install core dependencies directly:
 pip install chromadb langchain langchain-community openai python-dotenv
 
 # Test server manually from your project directory:
-cd YourProject/Plugins/AdastreaDirector/Python
+cd <YourProject>/Plugins/AdastreaDirector/Python
+# (Replace <YourProject> with your actual project name)
 python ipc_server.py --port 5555
 # Should see: "Server listening on localhost:5555"
 ```
