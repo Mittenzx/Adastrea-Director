@@ -21,6 +21,10 @@ PYTHON_EXECUTABLE = sys.executable
 # Get the directory where this script is located
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
+# Constants for ingestion logging
+MAX_ERROR_LOG_LENGTH = 200  # Maximum characters to show in error logs to keep them concise and readable
+PROGRESS_POLL_INTERVAL_MS = 500  # Progress file polling interval in milliseconds (balance between responsiveness and performance)
+
 class AdastreaDirectorApp:
     def __init__(self, root):
         self.root = root
@@ -573,13 +577,16 @@ class AdastreaDirectorApp:
         separator_line = tk.Frame(ingest_tab, height=1, bg=self.border_color)
         separator_line.pack(fill=tk.X)
         
-        # Main content area with two sections
+        # Main content area with split panes
         content_frame = tk.Frame(ingest_tab, bg=self.bg_tertiary)
         content_frame.pack(fill=tk.BOTH, expand=True, padx=15, pady=15)
         
-        # --- Ingested Documents Section ---
-        ingested_frame = tk.Frame(content_frame, bg=self.bg_tertiary)
-        ingested_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
+        # Use PanedWindow for resizable split
+        paned_window = ttk.PanedWindow(content_frame, orient=tk.VERTICAL)
+        paned_window.pack(fill=tk.BOTH, expand=True)
+        
+        # --- Top Section: Ingested Documents ---
+        ingested_frame = tk.Frame(paned_window, bg=self.bg_tertiary)
         
         ingested_header = tk.Label(
             ingested_frame,
@@ -599,7 +606,7 @@ class AdastreaDirectorApp:
         self.ingested_text = scrolledtext.ScrolledText(
             ingested_list_frame,
             wrap=tk.WORD,
-            height=10,
+            height=8,
             state=tk.DISABLED,
             bg=self.text_bg,
             fg=self.fg_color,
@@ -612,6 +619,81 @@ class AdastreaDirectorApp:
             borderwidth=0
         )
         self.ingested_text.pack(fill=tk.BOTH, expand=True)
+        
+        paned_window.add(ingested_frame, weight=1)
+        
+        # --- Bottom Section: Ingestion Log ---
+        log_frame = tk.Frame(paned_window, bg=self.bg_tertiary)
+        
+        log_header_frame = tk.Frame(log_frame, bg=self.bg_tertiary)
+        log_header_frame.pack(fill=tk.X, pady=(0, 5))
+        
+        log_header = tk.Label(
+            log_header_frame,
+            text="📝 Ingestion Log",
+            font=("Segoe UI", 10, "bold"),
+            bg=self.bg_tertiary,
+            fg=self.accent_color,
+            anchor=tk.W
+        )
+        log_header.pack(side=tk.LEFT)
+        
+        # Clear log button
+        clear_log_button = tk.Button(
+            log_header_frame,
+            text="🗑️ Clear",
+            command=self.clear_ingestion_log,
+            font=("Segoe UI", 8),
+            bg=self.button_bg,
+            fg=self.fg_color,
+            activebackground=self.button_hover,
+            activeforeground=self.fg_color,
+            relief=tk.FLAT,
+            padx=10,
+            pady=4,
+            cursor="hand2",
+            borderwidth=1,
+            highlightthickness=1,
+            highlightbackground=self.button_bg
+        )
+        clear_log_button.pack(side=tk.RIGHT)
+        self.create_tooltip(clear_log_button, "Clear the ingestion log")
+        self.add_button_hover_effect(clear_log_button)
+        
+        # Ingestion log with scrollbar
+        log_text_frame = tk.Frame(log_frame, bg=self.text_bg, 
+                                  highlightthickness=1, highlightbackground=self.border_color)
+        log_text_frame.pack(fill=tk.BOTH, expand=True)
+        
+        self.ingestion_log = scrolledtext.ScrolledText(
+            log_text_frame,
+            wrap=tk.WORD,
+            height=8,
+            state=tk.DISABLED,
+            bg=self.text_bg,
+            fg=self.fg_secondary,
+            font=("Consolas", 8),
+            relief=tk.FLAT,
+            padx=10,
+            pady=10,
+            selectbackground=self.highlight_bg,
+            selectforeground=self.fg_color,
+            borderwidth=0
+        )
+        self.ingestion_log.pack(fill=tk.BOTH, expand=True)
+        
+        # Configure log tags for different message types
+        self.ingestion_log.tag_config("timestamp", foreground=self.fg_muted, font=("Consolas", 8))
+        self.ingestion_log.tag_config("info", foreground=self.fg_secondary)
+        self.ingestion_log.tag_config("success", foreground=self.success_color)
+        self.ingestion_log.tag_config("warning", foreground=self.warning_color)
+        self.ingestion_log.tag_config("error", foreground=self.error_color)
+        self.ingestion_log.tag_config("progress", foreground=self.accent_color)
+        
+        paned_window.add(log_frame, weight=1)
+        
+        # Add initial message to the log
+        self.log_to_ingest_tab("📋 Ingestion log initialized. Start an ingestion to see progress here.", "info")
         
         # --- Statistics Section ---
         stats_frame = tk.Frame(content_frame, bg=self.bg_secondary, 
@@ -841,6 +923,29 @@ class AdastreaDirectorApp:
         self.ingested_text.tag_config("error", foreground=self.error_color)
         self.ingested_text.config(state=tk.DISABLED)
         self.ingest_stats_label.config(text="Error")
+    
+    def clear_ingestion_log(self):
+        """Clear the ingestion log."""
+        self.ingestion_log.config(state=tk.NORMAL)
+        self.ingestion_log.delete(1.0, tk.END)
+        self.ingestion_log.config(state=tk.DISABLED)
+        self.log_to_ingest_tab("Log cleared", "info")
+    
+    def log_to_ingest_tab(self, message, level="info"):
+        """
+        Append a log message to the ingestion log.
+        
+        Args:
+            message: The message to log
+            level: Log level - "info", "success", "warning", "error", "progress"
+        """
+        timestamp = datetime.now().strftime("%H:%M:%S")
+        
+        self.ingestion_log.config(state=tk.NORMAL)
+        self.ingestion_log.insert(tk.END, f"[{timestamp}] ", "timestamp")
+        self.ingestion_log.insert(tk.END, f"{message}\n", level)
+        self.ingestion_log.see(tk.END)
+        self.ingestion_log.config(state=tk.DISABLED)
     
     def create_menu_bar(self):
         """Create the application menu bar with dark theme styling."""
@@ -1495,6 +1600,7 @@ Type your question below to get started! 🚀
         
         if folder_path:
             self.add_to_conversation("System", f"Ingesting documents from: {folder_path}", is_system=True)
+            self.log_to_ingest_tab(f"📁 Starting folder ingestion: {folder_path}", "info")
             self.run_script_in_thread('ingest.py', f"🤔 Ingesting documents from folder...", '--docs-dir', folder_path)
         else:
             self.update_status("Folder selection cancelled", "info")
@@ -1515,6 +1621,7 @@ Type your question below to get started! 🚀
         
         if file_path:
             self.add_to_conversation("System", f"Ingesting file: {file_path}", is_system=True)
+            self.log_to_ingest_tab(f"📄 Starting file ingestion: {os.path.basename(file_path)}", "info")
             self.run_script_in_thread('ingest.py', f"🤔 Ingesting file...", '--file', file_path)
         else:
             self.update_status("File selection cancelled", "info")
@@ -1876,17 +1983,20 @@ GitHub: Mittenzx/Adastrea-Director
             label = progress_data.get('label', 'Processing...')
             details = progress_data.get('details', '')
             
+            # Log progress updates to the ingestion log
+            self.log_to_ingest_tab(f"{label}{': ' + details if details else ''}", "progress")
+            
             self.update_progress(percent, label, details)
             
             # Continue polling if not complete
             if percent < 100:
-                self.progress_poll_id = self.root.after(100, self.poll_progress_file)
+                self.progress_poll_id = self.root.after(PROGRESS_POLL_INTERVAL_MS, self.poll_progress_file)
         except FileNotFoundError:
             # File is gone, stop polling
             self.hide_progress_bar()
         except json.JSONDecodeError:
             # File might be being written, try again
-            self.progress_poll_id = self.root.after(100, self.poll_progress_file)
+            self.progress_poll_id = self.root.after(PROGRESS_POLL_INTERVAL_MS, self.poll_progress_file)
         except IOError:
             # Other IO error, stop polling
             self.hide_progress_bar()
@@ -1940,8 +2050,9 @@ GitHub: Mittenzx/Adastrea-Director
             temp_file.close()  # Close but don't delete (delete=False)
             command.extend(['--progress-file', self.progress_file])
             self.show_progress_bar("Preparing to ingest documents...")
-            # Start polling the progress file
-            self.progress_poll_id = self.root.after(500, self.poll_progress_file)
+            self.log_to_ingest_tab("⚙️ Initializing ingestion process...", "info")
+            # Start polling the progress file at configured interval
+            self.progress_poll_id = self.root.after(PROGRESS_POLL_INTERVAL_MS, self.poll_progress_file)
 
         thread = threading.Thread(target=self._execute_command, args=(command, show_progress))
         thread.start()
@@ -1987,8 +2098,9 @@ GitHub: Mittenzx/Adastrea-Director
                 # Add assistant response to conversation
                 self.add_to_conversation("Assistant", output)
             self.update_status("Ready • Waiting for your question", "success")
-            # Refresh ingest list after successful ingestion
+            # Log and refresh ingest list after successful ingestion
             if show_progress:
+                self.log_to_ingest_tab("✅ Ingestion completed successfully", "success")
                 self.refresh_ingest_list()
         else:
             # Add error to conversation
@@ -1999,6 +2111,12 @@ GitHub: Mittenzx/Adastrea-Director
             self.response_text.see(tk.END)
             self.response_text.config(state=tk.DISABLED)
             self.update_status("An error occurred • Check the conversation for details", "error")
+            # Log error for ingestion failures (truncate long errors for readability)
+            if show_progress:
+                error_msg = output[:MAX_ERROR_LOG_LENGTH]
+                if len(output) > MAX_ERROR_LOG_LENGTH:
+                    error_msg += "..."
+                self.log_to_ingest_tab(f"❌ Ingestion failed: {error_msg}", "error")
             
         self.ingest_folder_button.config(state=tk.NORMAL)
         self.ingest_file_button.config(state=tk.NORMAL)
