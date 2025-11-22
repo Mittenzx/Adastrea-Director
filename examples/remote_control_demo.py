@@ -227,7 +227,7 @@ def main():
     
     print("Next steps:")
     print("  1. Review the code in examples/remote_control_demo.py")
-    print("  2. Read docs/remote-control/REMOTE_CONTROL_API.md")
+    print("  2. Read the Wiki (https://github.com/Mittenzx/Adastrea-Director/wiki)")
     print("  3. Check config/remote_control_config.yaml for configuration")
     print("  4. Try creating your own automation scripts!")
 

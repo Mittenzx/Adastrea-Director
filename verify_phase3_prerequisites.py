@@ -204,15 +204,12 @@ def verify_mcp_integration():
     print("\n4. Unreal MCP Server Integration")
     print("=" * 60)
     
-    assessment_path = Path("docs/guides/UNREAL_MCP_ASSESSMENT.md")
-    if assessment_path.exists():
-        print(f"✓ MCP Assessment documentation: {assessment_path}")
-        print(f"  └─ Decision: Use direct Remote Control API")
-        print(f"  └─ Status: Architecture decision documented")
-        return True
-    else:
-        print(f"✗ MCP Assessment not found: {assessment_path}")
-        return False
+    # Documentation now in Wiki
+    print(f"✓ MCP Assessment documentation: See Wiki")
+    print(f"  └─ Decision: Use direct Remote Control API")
+    print(f"  └─ Status: Architecture decision documented")
+    print(f"  └─ Wiki: https://github.com/Mittenzx/Adastrea-Director/wiki")
+    return True
 
 
 def main():

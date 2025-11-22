@@ -30,7 +30,7 @@ def check_python_version() -> bool:
         print("Python 3.9-3.12 is recommended for best compatibility")
         print("\nYou may encounter installation errors. Consider:")
         print("1. Installing Python 3.12 from https://www.python.org/")
-        print("2. Using Docker with ChromaDB (see docs/guides/INSTALLATION.md)")
+        print("2. Using Docker with ChromaDB (see the Wiki (https://github.com/Mittenzx/Adastrea-Director/wiki))")
         return True  # Allow to continue but with warning
     return True
 
@@ -67,16 +67,16 @@ def print_platform_warning():
         print("1. Use Rosetta 2 with x86_64 Python (most compatible)")
         print("2. Use onnxruntime-silicon package")
         print("3. Use Docker with ChromaDB server")
-        print("\nFor detailed instructions, see: docs/guides/INSTALLATION.md")
+        print("\nFor detailed instructions, see: the Wiki (https://github.com/Mittenzx/Adastrea-Director/wiki)")
         print(f"\n{'='*70}\n")
         
         response = input("Would you like to:\n"
                         "  [1] Try standard installation (may fail)\n"
-                        "  [2] Exit and follow docs/guides/INSTALLATION.md guide\n"
+                        "  [2] Exit and follow the Wiki (https://github.com/Mittenzx/Adastrea-Director/wiki) guide\n"
                         "Choice (1 or 2): ").strip()
         
         if response == "2":
-            print("\nPlease follow the platform-specific guide in docs/guides/INSTALLATION.md")
+            print("\nPlease follow the platform-specific guide in the Wiki (https://github.com/Mittenzx/Adastrea-Director/wiki)")
             print("Summary for Apple Silicon:")
             print("  Option 1: arch -x86_64 /usr/local/bin/python3.12 -m venv venv")
             print("  Option 2: pip install onnxruntime-silicon, then chromadb")
@@ -88,14 +88,14 @@ def print_platform_warning():
         print("\nYou may need to build onnxruntime from source.")
         print("Install build tools first:")
         print("  sudo apt-get install -y python3-dev build-essential cmake")
-        print("\nFor detailed instructions, see: docs/guides/INSTALLATION.md")
+        print("\nFor detailed instructions, see: the Wiki (https://github.com/Mittenzx/Adastrea-Director/wiki)")
         print(f"\n{'='*70}\n")
         
     elif is_windows_arm():
         print("\n⚠️  Windows ARM platform detected!")
         print("\nYou may encounter issues with onnxruntime.")
         print("Consider using Docker or x86 emulation.")
-        print("\nFor detailed instructions, see: docs/guides/INSTALLATION.md")
+        print("\nFor detailed instructions, see: the Wiki (https://github.com/Mittenzx/Adastrea-Director/wiki)")
         print(f"\n{'='*70}\n")
     else:
         print("\n✅ Standard platform detected - installation should work smoothly.")
@@ -105,7 +105,7 @@ def print_platform_warning():
             print("\n⚠️  Warning: Python 3.13+ on Windows")
             print("    onnxruntime may not be available for Python 3.13+")
             print("    Recommended: Use Python 3.9-3.12 for best compatibility")
-            print("    See docs/guides/INSTALLATION.md for Windows-specific instructions")
+            print("    See the Wiki (https://github.com/Mittenzx/Adastrea-Director/wiki) for Windows-specific instructions")
         
         print(f"\n{'='*70}\n")
     
@@ -135,13 +135,13 @@ def install_requirements():
             print("1. Install onnxruntime-silicon:")
             print("   pip install onnxruntime-silicon>=1.14.0")
             print("   pip install chromadb>=0.5.23,<0.6.0")
-            print("\n2. Use Rosetta 2 (see docs/guides/INSTALLATION.md)")
-            print("\n3. Use Docker (see docs/guides/INSTALLATION.md)")
+            print("\n2. Use Rosetta 2 (see the Wiki (https://github.com/Mittenzx/Adastrea-Director/wiki))")
+            print("\n3. Use Docker (see the Wiki (https://github.com/Mittenzx/Adastrea-Director/wiki))")
         elif is_linux_arm() or is_windows_arm():
             print("\n🔧 ARM platform solutions:")
             print("1. Build from source:")
             print("   pip install --no-binary onnxruntime onnxruntime>=1.14.1")
-            print("\n2. Use Docker (see docs/guides/INSTALLATION.md)")
+            print("\n2. Use Docker (see the Wiki (https://github.com/Mittenzx/Adastrea-Director/wiki))")
         else:
             print("\n🔍 General troubleshooting:")
             print("1. Check Python version: python --version")
@@ -154,9 +154,9 @@ def install_requirements():
                 print("   → Upgrade pip: python -m pip install --upgrade pip setuptools wheel")
                 print("   → Test: pip install --verbose onnxruntime")
             print("2. Upgrade pip: pip install --upgrade pip setuptools wheel")
-            print("3. See docs/guides/INSTALLATION.md for detailed troubleshooting")
+            print("3. See the Wiki (https://github.com/Mittenzx/Adastrea-Director/wiki) for detailed troubleshooting")
         
-        print(f"\nFor complete platform-specific guide, see: docs/guides/INSTALLATION.md")
+        print(f"\nFor complete platform-specific guide, see: the Wiki (https://github.com/Mittenzx/Adastrea-Director/wiki)")
         return False
 
 
@@ -196,7 +196,7 @@ def verify_installation():
     else:
         print("❌ Some packages failed to import")
         print("\nPlease review the errors above and:")
-        print("1. Check docs/guides/INSTALLATION.md for platform-specific solutions")
+        print("1. Check the Wiki (https://github.com/Mittenzx/Adastrea-Director/wiki) for platform-specific solutions")
         print("2. Verify all dependencies installed: pip list")
         print("3. Try reinstalling: pip install -r requirements.txt")
     print("="*70 + "\n")
@@ -218,7 +218,7 @@ def main():
     response = input("Proceed with installation? (y/n): ").strip().lower()
     if response not in ['y', 'yes']:
         print("\nInstallation cancelled.")
-        print("See docs/guides/INSTALLATION.md for manual installation instructions.")
+        print("See the Wiki (https://github.com/Mittenzx/Adastrea-Director/wiki) for manual installation instructions.")
         return 0
     
     print()

@@ -5,7 +5,7 @@ This module provides a Python client for interacting with Unreal Engine projects
 via the Remote Control API, enabling autonomous agents to control, test, and
 monitor Unreal Engine in real-time.
 
-Documentation: See docs/remote-control/REMOTE_CONTROL_API.md
+Documentation: See https://github.com/Mittenzx/Adastrea-Director/wiki
 """
 
 from .client import UnrealRemoteControlClient
