@@ -22,7 +22,8 @@ PYTHON_EXECUTABLE = sys.executable
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Constants for ingestion logging
-MAX_ERROR_LOG_LENGTH = 200  # Maximum characters to show in error logs
+MAX_ERROR_LOG_LENGTH = 200  # Maximum characters to show in error logs to keep them concise and readable
+PROGRESS_POLL_INTERVAL_MS = 500  # Progress file polling interval in milliseconds (balance between responsiveness and performance)
 
 class AdastreaDirectorApp:
     def __init__(self, root):
@@ -1990,15 +1991,15 @@ GitHub: Mittenzx/Adastrea-Director
             
             self.update_progress(percent, label, details)
             
-            # Continue polling if not complete (500ms interval for optimal performance)
+            # Continue polling if not complete
             if percent < 100:
-                self.progress_poll_id = self.root.after(500, self.poll_progress_file)
+                self.progress_poll_id = self.root.after(PROGRESS_POLL_INTERVAL_MS, self.poll_progress_file)
         except FileNotFoundError:
             # File is gone, stop polling
             self.hide_progress_bar()
         except json.JSONDecodeError:
             # File might be being written, try again
-            self.progress_poll_id = self.root.after(500, self.poll_progress_file)
+            self.progress_poll_id = self.root.after(PROGRESS_POLL_INTERVAL_MS, self.poll_progress_file)
         except IOError:
             # Other IO error, stop polling
             self.hide_progress_bar()
@@ -2053,8 +2054,8 @@ GitHub: Mittenzx/Adastrea-Director
             command.extend(['--progress-file', self.progress_file])
             self.show_progress_bar("Preparing to ingest documents...")
             self.log_to_ingest_tab("⚙️ Initializing ingestion process...", "info")
-            # Start polling the progress file
-            self.progress_poll_id = self.root.after(500, self.poll_progress_file)
+            # Start polling the progress file at configured interval
+            self.progress_poll_id = self.root.after(PROGRESS_POLL_INTERVAL_MS, self.poll_progress_file)
 
         thread = threading.Thread(target=self._execute_command, args=(command, show_progress))
         thread.start()
