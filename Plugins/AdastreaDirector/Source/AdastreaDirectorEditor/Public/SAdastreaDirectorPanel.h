@@ -36,7 +36,7 @@ public:
 
 private:
 	// Tab management
-	/** Current active tab (0 = Query, 1 = Ingestion) */
+	/** Current active tab (0 = Query, 1 = Ingestion, 2 = Dashboard) */
 	int32 CurrentTabIndex;
 
 	/** Content switcher widget to hold tab contents */
@@ -152,10 +152,66 @@ private:
 	/** Helper to send ingestion request to Python backend */
 	void StartIngestion(const FString& DocsPath, const FString& DbPath);
 
+	// Dashboard tab widgets
+	/** Connection status text */
+	TSharedPtr<STextBlock> ConnectionStatusText;
+
+	/** Log display text box */
+	TSharedPtr<SMultiLineEditableTextBox> LogDisplay;
+
+	/** Current log content (stored as FString for efficient appending) */
+	FString CurrentLogContent;
+
+	/** Cached FText version of log content for display */
+	FText CachedLogContentText;
+
+	/** Time since last dashboard refresh */
+	double LastDashboardRefreshTime;
+
+	/** Cached connection status text */
+	FText CachedConnectionStatus;
+
+	/** Time since last connection status update */
+	double LastConnectionStatusUpdateTime;
+
+	/** Maximum log content size in characters */
+	static constexpr int32 MaxLogCharacters = 5000;
+
+	/** Dashboard refresh interval in seconds */
+	static constexpr double DashboardRefreshInterval = 2.0;
+
+	/** Connection status update interval in seconds */
+	static constexpr double ConnectionStatusUpdateInterval = 0.5;
+
+	/** Timer reset value to prevent immediate auto-refresh */
+	static constexpr double RefreshTimerReset = -10.0;
+
+	// Dashboard tab methods
+	/** Called when Refresh Dashboard button is clicked */
+	FReply OnRefreshDashboardClicked();
+
+	/** Called when Reconnect button is clicked */
+	FReply OnReconnectClicked();
+
+	/** Called when Clear Logs button is clicked */
+	FReply OnClearLogsClicked();
+
+	/** Update dashboard logs */
+	void UpdateDashboardLogs();
+
+	/** Helper to append log entry with truncation */
+	void AppendLogEntry(const FString& Entry);
+
+	/** Update connection status cache */
+	void UpdateConnectionStatus();
+
 	// Utility methods
 	/** Create the Query tab content */
 	TSharedRef<SWidget> CreateQueryTab();
 
 	/** Create the Ingestion tab content */
 	TSharedRef<SWidget> CreateIngestionTab();
+
+	/** Create the Dashboard tab content */
+	TSharedRef<SWidget> CreateDashboardTab();
 };
