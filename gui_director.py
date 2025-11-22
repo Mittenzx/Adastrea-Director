@@ -2049,6 +2049,7 @@ GitHub: Mittenzx/Adastrea-Director
             temp_file.close()  # Close but don't delete (delete=False)
             command.extend(['--progress-file', self.progress_file])
             self.show_progress_bar("Preparing to ingest documents...")
+            self.log_to_ingest_tab("⚙️ Initializing ingestion process...", "info")
             # Start polling the progress file
             self.progress_poll_id = self.root.after(500, self.poll_progress_file)
 
