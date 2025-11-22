@@ -996,7 +996,7 @@ FReply SAdastreaDirectorPanel::OnReconnectClicked()
 	
 	if (!RuntimeModule)
 	{
-		CurrentLogContent = TEXT("Error: Runtime module not available");
+		CurrentLogContent.InsertAt(0, TEXT("Error: Runtime module not available\n"));
 		return FReply::Handled();
 	}
 
@@ -1004,24 +1004,32 @@ FReply SAdastreaDirectorPanel::OnReconnectClicked()
 	
 	if (!PythonBridge)
 	{
-		CurrentLogContent = TEXT("Error: Python bridge not initialized");
+		CurrentLogContent.InsertAt(0, TEXT("Error: Python bridge not initialized\n"));
 		return FReply::Handled();
 	}
 
-	FString LogText = TEXT("Attempting to reconnect to Python backend...\n");
+	FString LogEntry = TEXT("Attempting to reconnect to Python backend...\n");
 	
 	bool bSuccess = PythonBridge->Reconnect();
 	
 	if (bSuccess)
 	{
-		LogText += TEXT("✅ Reconnection successful!\n");
+		LogEntry += TEXT("✅ Reconnection successful!\n");
 	}
 	else
 	{
-		LogText += TEXT("❌ Reconnection failed. Please check Python backend.\n");
+		LogEntry += TEXT("❌ Reconnection failed. Please check Python backend.\n");
 	}
 	
-	CurrentLogContent = LogText;
+	// Prepend to existing logs
+	CurrentLogContent.InsertAt(0, LogEntry);
+	
+	// Trim if too long
+	if (CurrentLogContent.Len() > MaxLogCharacters)
+	{
+		CurrentLogContent = CurrentLogContent.Left(MaxLogCharacters);
+	}
+	
 	return FReply::Handled();
 }
 
@@ -1038,7 +1046,12 @@ void SAdastreaDirectorPanel::UpdateDashboardLogs()
 	
 	if (!RuntimeModule)
 	{
-		CurrentLogContent = TEXT("Runtime module not available - cannot fetch logs\n");
+		// Append error message instead of overwriting
+		CurrentLogContent.InsertAt(0, TEXT("Error: Runtime module not available - cannot fetch logs\n"));
+		if (CurrentLogContent.Len() > MaxLogCharacters)
+		{
+			CurrentLogContent = CurrentLogContent.Left(MaxLogCharacters);
+		}
 		return;
 	}
 
@@ -1046,7 +1059,12 @@ void SAdastreaDirectorPanel::UpdateDashboardLogs()
 	
 	if (!PythonBridge)
 	{
-		CurrentLogContent = TEXT("Python bridge not initialized - cannot fetch logs\n");
+		// Append error message instead of overwriting
+		CurrentLogContent.InsertAt(0, TEXT("Error: Python bridge not initialized - cannot fetch logs\n"));
+		if (CurrentLogContent.Len() > MaxLogCharacters)
+		{
+			CurrentLogContent = CurrentLogContent.Left(MaxLogCharacters);
+		}
 		return;
 	}
 
