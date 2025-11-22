@@ -217,7 +217,7 @@ More agents coming in future phases!
 
 ### Can I create custom agents?
 
-Not yet, but this is planned for a future release. You can track progress on the [roadmap](../development/Roadmap.md).
+Not yet, but this is planned for a future release. Check the [main README](https://github.com/Mittenzx/Adastrea-Director#readme) for the current roadmap.
 
 ## Unreal Engine Plugin
 

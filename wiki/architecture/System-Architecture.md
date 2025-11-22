@@ -453,8 +453,8 @@ class SharedState:
 
 - [Agent Architecture](Agent-Architecture.md) - Deep dive into P3 agents
 - [Deployment Modes](Deployment-Modes.md) - Choosing the right mode
-- [Code Reference](../development/Code-Reference.md) - API documentation
-- [Testing Guide](../development/Testing.md) - Testing strategy
+- [Contributing Guide](../development/Contributing.md) - Development and testing
+- [Main README](https://github.com/Mittenzx/Adastrea-Director#readme) - Testing and API reference
 
 ---
 

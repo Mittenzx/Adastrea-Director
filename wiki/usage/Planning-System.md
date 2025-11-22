@@ -39,7 +39,7 @@ python planner.py "Optimize rendering" --export markdown --output plan.md
 
 For detailed documentation, see:
 - [Phase 2 Guide](../phases/Phase-2-Planner.md)
-- [Planning CLI Reference](https://github.com/Mittenzx/Adastrea-Director/blob/main/README.md#p2-goal-decomposition)
+- [Main README - Planning Section](https://github.com/Mittenzx/Adastrea-Director#planning-system-p2---complete)
 
 ---
 

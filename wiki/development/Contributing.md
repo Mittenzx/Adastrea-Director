@@ -494,7 +494,7 @@ Need help contributing?
 
 - **💬 [Discussions](https://github.com/Mittenzx/Adastrea-Director/discussions)** - Ask questions
 - **📖 [Wiki](../Home.md)** - Read documentation
-- **👨‍💻 [Code Reference](Code-Reference.md)** - API documentation
+- **👨‍💻 [Main Repository](https://github.com/Mittenzx/Adastrea-Director)** - View code and issues
 
 ## 📄 License
 
