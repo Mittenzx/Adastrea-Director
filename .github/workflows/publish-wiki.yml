@@ -1,0 +1,81 @@
+name: Publish Wiki
+
+on:
+  # Trigger on push to main branch when wiki content changes
+  push:
+    branches:
+      - main
+    paths:
+      - 'wiki/**'
+  
+  # Allow manual trigger
+  workflow_dispatch:
+    inputs:
+      commit_message:
+        description: 'Custom commit message for wiki update'
+        required: false
+        default: 'Update wiki content'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout main repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Checkout wiki repository
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository }}.wiki
+          path: wiki-repo
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Copy wiki content
+        run: |
+          echo "📚 Copying wiki content..."
+          rsync -av --delete wiki/ wiki-repo/ --exclude=".git" --exclude="README.md"
+          echo "✓ Content copied successfully"
+      
+      - name: Commit and push changes
+        run: |
+          cd wiki-repo
+          
+          # Configure git
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Add all changes
+          git add .
+          
+          # Check if there are changes
+          if git diff --staged --quiet; then
+            echo "ℹ️  No changes to commit - wiki is already up to date"
+          else
+            # Determine commit message
+            if [ -n "${{ github.event.inputs.commit_message }}" ]; then
+              COMMIT_MSG="${{ github.event.inputs.commit_message }}"
+            else
+              COMMIT_MSG="Update wiki content (automated sync from main)"
+            fi
+            
+            echo "Committing changes with message: $COMMIT_MSG"
+            git commit -m "$COMMIT_MSG"
+            
+            echo "Pushing to wiki repository..."
+            git push
+            
+            echo "✅ Wiki published successfully!"
+            echo "🎉 View at: https://github.com/${{ github.repository }}/wiki"
+          fi
+      
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Wiki Publication Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Repository:** ${{ github.repository }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Triggered by:** ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Wiki URL:** [View Wiki](https://github.com/${{ github.repository }}/wiki)" >> $GITHUB_STEP_SUMMARY

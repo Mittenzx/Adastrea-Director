@@ -38,7 +38,44 @@ wiki/
 - Write access to the Mittenzx/Adastrea-Director repository
 - GitHub Wiki enabled for the repository
 
-### Method 1: Manual Sync (One-Time Setup)
+### Method 1: Automated Script (Easiest) ⭐
+
+**NEW:** Use the provided `publish-wiki.sh` script for one-click publishing:
+
+```bash
+# Make sure you're in the repository root
+cd /home/runner/work/Adastrea-Director/Adastrea-Director
+
+# Run the publish script
+./publish-wiki.sh
+```
+
+The script will:
+- ✅ Clone the wiki repository
+- ✅ Copy all wiki content
+- ✅ Commit changes with timestamp
+- ✅ Push to GitHub Wiki
+- ✅ Provide clear success/error messages
+
+**Note:** The wiki must be initialized first. If you get an error, visit https://github.com/Mittenzx/Adastrea-Director/wiki and create the first page through the web interface, then run the script again.
+
+### Method 2: GitHub Actions (Fully Automated) 🤖
+
+**NEW:** A GitHub Actions workflow will automatically sync wiki content when you push changes to the `wiki/` directory on the main branch.
+
+**Manual Trigger:**
+1. Go to [Actions](https://github.com/Mittenzx/Adastrea-Director/actions)
+2. Select "Publish Wiki" workflow
+3. Click "Run workflow"
+4. Optionally add a custom commit message
+5. Click "Run workflow" button
+
+The workflow will automatically:
+- Copy wiki content to the wiki repository
+- Commit and push changes
+- Report success/failure in the workflow summary
+
+### Method 3: Manual Sync
 
 1. **Clone the wiki repository:**
    ```bash
@@ -66,101 +103,31 @@ wiki/
    - Check that all pages are visible
    - Test navigation links
 
-### Method 2: Sync Script
+### Method 4: Alternative Manual Script
 
-Create a sync script for regular updates:
+If you prefer, you can create a custom sync script. The repository now includes `publish-wiki.sh` which handles this automatically (see Method 1).
+
+For reference, here's a minimal sync script:
 
 ```bash
 #!/bin/bash
-# sync-wiki.sh
-
+# Custom sync script example
 set -e
 
 WIKI_DIR="wiki"
 WIKI_REPO="/tmp/Adastrea-Director.wiki"
 WIKI_URL="https://github.com/Mittenzx/Adastrea-Director.wiki.git"
 
-echo "📚 Syncing wiki content..."
+# Clone if needed
+[ ! -d "$WIKI_REPO" ] && git clone "$WIKI_URL" "$WIKI_REPO"
 
-# Clone or update wiki repo
-if [ ! -d "$WIKI_REPO" ]; then
-    echo "Cloning wiki repository..."
-    git clone "$WIKI_URL" "$WIKI_REPO"
-else
-    echo "Updating wiki repository..."
-    cd "$WIKI_REPO"
-    git pull
-    cd -
-fi
-
-# Copy wiki content
-echo "Copying wiki files..."
-rsync -av --delete "$WIKI_DIR/" "$WIKI_REPO/" --exclude=".git"
-
-# Commit and push
+# Copy and push
+rsync -av --delete "$WIKI_DIR/" "$WIKI_REPO/" --exclude=".git" --exclude="README.md"
 cd "$WIKI_REPO"
-if [ -n "$(git status --porcelain)" ]; then
-    echo "Committing changes..."
-    git add .
-    git commit -m "Update wiki content - $(date +%Y-%m-%d)"
-    git push
-    echo "✅ Wiki synced successfully!"
-else
-    echo "ℹ️  No changes to sync"
-fi
+git add . && git commit -m "Update wiki - $(date +%Y-%m-%d)" && git push || echo "No changes"
 ```
 
-Make it executable:
-```bash
-chmod +x sync-wiki.sh
-```
-
-Run it:
-```bash
-./sync-wiki.sh
-```
-
-### Method 3: GitHub Action (Automated)
-
-Create `.github/workflows/sync-wiki.yml`:
-
-```yaml
-name: Sync Wiki
-
-on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'wiki/**'
-  workflow_dispatch:
-
-jobs:
-  sync:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout main repository
-        uses: actions/checkout@v3
-
-      - name: Checkout wiki repository
-        uses: actions/checkout@v3
-        with:
-          repository: Mittenzx/Adastrea-Director.wiki
-          path: wiki-repo
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Copy wiki content
-        run: |
-          rsync -av --delete wiki/ wiki-repo/ --exclude=".git" --exclude="README.md"
-          
-      - name: Commit and push
-        run: |
-          cd wiki-repo
-          git config user.name "GitHub Actions"
-          git config user.email "actions@github.com"
-          git add .
-          git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-sync wiki content" && git push)
-```
+**Note:** A GitHub Actions workflow (`.github/workflows/publish-wiki.yml`) is now included in the repository. It will automatically run when you push changes to the `wiki/` directory on the main branch, or you can trigger it manually as described in Method 2 above.
 
 ## 📝 Maintaining the Wiki
 
