@@ -440,7 +440,7 @@ class TestTestAgent:
         
         assert result.status == TestStatus.ERROR
         assert "Unexpected error" in result.message
-        assert result.details.get("exception_type") == "ValueError"
+        assert result.details.get("error_type") == "ValueError"
     
     def test_run_test_suite(self, agent):
         """Test running a suite of tests."""

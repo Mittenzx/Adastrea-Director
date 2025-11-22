@@ -493,11 +493,11 @@ class TestAgent(RemoteControlAgent):
                 test_name=test_name,
                 status=TestStatus.ERROR,
                 duration=duration,
-                message=f"Unexpected error executing command: {type(e).__name__}: {str(e)}",
+                message=f"Unexpected error executing command: {str(e)}",
                 details={
                     "command": command,
                     "error": str(e),
-                    "exception_type": type(e).__name__,
+                    "error_type": type(e).__name__,
                 }
             )
     
