@@ -162,11 +162,17 @@ private:
 	/** Current log content (stored as FString for efficient appending) */
 	FString CurrentLogContent;
 
-	/** Auto-refresh enabled for dashboard */
-	bool bDashboardAutoRefresh;
+	/** Cached FText version of log content for display */
+	FText CachedLogContentText;
 
 	/** Time since last dashboard refresh */
 	double LastDashboardRefreshTime;
+
+	/** Cached connection status text */
+	FText CachedConnectionStatus;
+
+	/** Time since last connection status update */
+	double LastConnectionStatusUpdateTime;
 
 	/** Maximum log content size in characters */
 	static constexpr int32 MaxLogCharacters = 5000;
@@ -183,6 +189,12 @@ private:
 
 	/** Update dashboard logs */
 	void UpdateDashboardLogs();
+
+	/** Helper to append log entry with truncation */
+	void AppendLogEntry(const FString& Entry);
+
+	/** Update connection status cache */
+	void UpdateConnectionStatus();
 
 	// Utility methods
 	/** Create the Query tab content */

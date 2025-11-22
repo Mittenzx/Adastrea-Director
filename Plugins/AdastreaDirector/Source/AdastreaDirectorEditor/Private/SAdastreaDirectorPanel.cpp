@@ -52,9 +52,11 @@ void SAdastreaDirectorPanel::Construct(const FArguments& InArgs)
 	CurrentResults = LOCTEXT("WelcomeMessage", "Welcome to Adastrea Director!\n\nEnter a query above and click 'Send Query' or press Enter to get started.\n\nExample: \"What is Unreal Engine?\"");
 	LastProgressUpdateTime = 0.0;
 	CurrentTabIndex = 0; // Start with Query tab
-	bDashboardAutoRefresh = true;
 	LastDashboardRefreshTime = 0.0;
+	LastConnectionStatusUpdateTime = 0.0;
 	CurrentLogContent = TEXT("Dashboard logs will appear here...");
+	CachedLogContentText = FText::FromString(CurrentLogContent);
+	CachedConnectionStatus = FText::FromString(TEXT("⚠️ Not connected - Python backend not ready"));
 	
 	// Setup progress file path
 	ProgressFilePath = FPaths::ProjectIntermediateDir() / TEXT("AdastreaDirector") / TEXT("ingestion_progress.json");
@@ -460,29 +462,7 @@ TSharedRef<SWidget> SAdastreaDirectorPanel::CreateDashboardTab()
 				.Padding(0.0f, 0.0f, 0.0f, 10.0f)
 				[
 					SAssignNew(ConnectionStatusText, STextBlock)
-					.Text_Lambda([this]() {
-						FAdastreaDirectorModule* RuntimeModule = FModuleManager::GetModulePtr<FAdastreaDirectorModule>("AdastreaDirector");
-						if (!RuntimeModule)
-						{
-							return FText::FromString(TEXT("❌ Runtime module not available"));
-						}
-
-						FPythonBridge* PythonBridge = RuntimeModule->GetPythonBridge();
-						if (!PythonBridge)
-						{
-							return FText::FromString(TEXT("❌ Python bridge not initialized"));
-						}
-
-						if (PythonBridge->IsReady())
-						{
-							FString Status = PythonBridge->GetStatus();
-							return FText::FromString(FString::Printf(TEXT("✅ Connected - %s"), *Status));
-						}
-						else
-						{
-							return FText::FromString(TEXT("⚠️ Not connected - Python backend not ready"));
-						}
-					})
+					.Text_Lambda([this]() { return CachedConnectionStatus; })
 					.AutoWrapText(true)
 				]
 
@@ -559,7 +539,7 @@ TSharedRef<SWidget> SAdastreaDirectorPanel::CreateDashboardTab()
 				+ SScrollBox::Slot()
 				[
 					SAssignNew(LogDisplay, SMultiLineEditableTextBox)
-					.Text_Lambda([this]() { return FText::FromString(CurrentLogContent); })
+					.Text_Lambda([this]() { return CachedLogContentText; })
 					.IsReadOnly(true)
 					.AutoWrapText(true)
 				]
@@ -987,6 +967,8 @@ void SAdastreaDirectorPanel::UpdateIngestionProgress()
 FReply SAdastreaDirectorPanel::OnRefreshDashboardClicked()
 {
 	UpdateDashboardLogs();
+	UpdateConnectionStatus();
+	LastDashboardRefreshTime = -10.0; // Reset timer to prevent immediate auto-refresh
 	return FReply::Handled();
 }
 
@@ -996,12 +978,7 @@ FReply SAdastreaDirectorPanel::OnReconnectClicked()
 	
 	if (!RuntimeModule)
 	{
-		FString ErrorMsg = TEXT("Error: Runtime module not available\n");
-		CurrentLogContent = ErrorMsg + CurrentLogContent;
-		if (CurrentLogContent.Len() > MaxLogCharacters)
-		{
-			CurrentLogContent = CurrentLogContent.Left(MaxLogCharacters);
-		}
+		AppendLogEntry(TEXT("Error: Runtime module not available\n"));
 		return FReply::Handled();
 	}
 
@@ -1009,12 +986,7 @@ FReply SAdastreaDirectorPanel::OnReconnectClicked()
 	
 	if (!PythonBridge)
 	{
-		FString ErrorMsg = TEXT("Error: Python bridge not initialized\n");
-		CurrentLogContent = ErrorMsg + CurrentLogContent;
-		if (CurrentLogContent.Len() > MaxLogCharacters)
-		{
-			CurrentLogContent = CurrentLogContent.Left(MaxLogCharacters);
-		}
+		AppendLogEntry(TEXT("Error: Python bridge not initialized\n"));
 		return FReply::Handled();
 	}
 
@@ -1031,14 +1003,8 @@ FReply SAdastreaDirectorPanel::OnReconnectClicked()
 		LogEntry += TEXT("❌ Reconnection failed. Please check Python backend.\n");
 	}
 	
-	// Prepend to existing logs
-	CurrentLogContent = LogEntry + CurrentLogContent;
-	
-	// Trim if too long
-	if (CurrentLogContent.Len() > MaxLogCharacters)
-	{
-		CurrentLogContent = CurrentLogContent.Left(MaxLogCharacters);
-	}
+	AppendLogEntry(LogEntry);
+	UpdateConnectionStatus();
 	
 	return FReply::Handled();
 }
@@ -1046,7 +1012,50 @@ FReply SAdastreaDirectorPanel::OnReconnectClicked()
 FReply SAdastreaDirectorPanel::OnClearLogsClicked()
 {
 	CurrentLogContent = TEXT("Logs cleared.\n");
+	CachedLogContentText = FText::FromString(CurrentLogContent);
 	return FReply::Handled();
+}
+
+void SAdastreaDirectorPanel::AppendLogEntry(const FString& Entry)
+{
+	// Prepend new entry to existing logs (newest first)
+	CurrentLogContent = Entry + CurrentLogContent;
+	
+	// Keep only last MaxLogCharacters characters to prevent unbounded growth
+	if (CurrentLogContent.Len() > MaxLogCharacters)
+	{
+		CurrentLogContent = CurrentLogContent.Left(MaxLogCharacters);
+	}
+	
+	// Update cached FText version
+	CachedLogContentText = FText::FromString(CurrentLogContent);
+}
+
+void SAdastreaDirectorPanel::UpdateConnectionStatus()
+{
+	FAdastreaDirectorModule* RuntimeModule = FModuleManager::GetModulePtr<FAdastreaDirectorModule>("AdastreaDirector");
+	if (!RuntimeModule)
+	{
+		CachedConnectionStatus = FText::FromString(TEXT("❌ Runtime module not available"));
+		return;
+	}
+
+	FPythonBridge* PythonBridge = RuntimeModule->GetPythonBridge();
+	if (!PythonBridge)
+	{
+		CachedConnectionStatus = FText::FromString(TEXT("❌ Python bridge not initialized"));
+		return;
+	}
+
+	if (PythonBridge->IsReady())
+	{
+		FString Status = PythonBridge->GetStatus();
+		CachedConnectionStatus = FText::FromString(FString::Printf(TEXT("✅ Connected - %s"), *Status));
+	}
+	else
+	{
+		CachedConnectionStatus = FText::FromString(TEXT("⚠️ Not connected - Python backend not ready"));
+	}
 }
 
 void SAdastreaDirectorPanel::UpdateDashboardLogs()
@@ -1056,13 +1065,7 @@ void SAdastreaDirectorPanel::UpdateDashboardLogs()
 	
 	if (!RuntimeModule)
 	{
-		// Prepend error message instead of overwriting
-		FString ErrorMsg = TEXT("Error: Runtime module not available - cannot fetch logs\n");
-		CurrentLogContent = ErrorMsg + CurrentLogContent;
-		if (CurrentLogContent.Len() > MaxLogCharacters)
-		{
-			CurrentLogContent = CurrentLogContent.Left(MaxLogCharacters);
-		}
+		AppendLogEntry(TEXT("Error: Runtime module not available - cannot fetch logs\n"));
 		return;
 	}
 
@@ -1070,13 +1073,7 @@ void SAdastreaDirectorPanel::UpdateDashboardLogs()
 	
 	if (!PythonBridge)
 	{
-		// Prepend error message instead of overwriting
-		FString ErrorMsg = TEXT("Error: Python bridge not initialized - cannot fetch logs\n");
-		CurrentLogContent = ErrorMsg + CurrentLogContent;
-		if (CurrentLogContent.Len() > MaxLogCharacters)
-		{
-			CurrentLogContent = CurrentLogContent.Left(MaxLogCharacters);
-		}
+		AppendLogEntry(TEXT("Error: Python bridge not initialized - cannot fetch logs\n"));
 		return;
 	}
 
@@ -1087,19 +1084,12 @@ void SAdastreaDirectorPanel::UpdateDashboardLogs()
 		TEXT("Python Bridge Ready: %s\n")
 		TEXT("Status: %s\n")
 		TEXT("===============================\n\n"),
-		*FDateTime::Now().ToString(),
+		*FDateTime::Now().ToString(TEXT("%Y-%m-%d %H:%M:%S")),
 		PythonBridge->IsReady() ? TEXT("Yes") : TEXT("No"),
 		*PythonBridge->GetStatus()
 	);
 	
-	// Prepend new entry to existing logs (newest first)
-	CurrentLogContent = NewLogEntry + CurrentLogContent;
-	
-	// Keep only last MaxLogCharacters characters to prevent unbounded growth
-	if (CurrentLogContent.Len() > MaxLogCharacters)
-	{
-		CurrentLogContent = CurrentLogContent.Left(MaxLogCharacters);
-	}
+	AppendLogEntry(NewLogEntry);
 }
 
 void SAdastreaDirectorPanel::Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime)
@@ -1117,14 +1107,23 @@ void SAdastreaDirectorPanel::Tick(const FGeometry& AllottedGeometry, const doubl
 		}
 	}
 
-	// Update dashboard if on dashboard tab and auto-refresh is enabled (throttled to every 2 seconds)
-	if (CurrentTabIndex == 2 && bDashboardAutoRefresh)
+	// Update dashboard if on dashboard tab (throttled to every 2 seconds)
+	if (CurrentTabIndex == 2)
 	{
 		const double TimeSinceLastRefresh = InCurrentTime - LastDashboardRefreshTime;
 		if (TimeSinceLastRefresh >= 2.0) // 2 second throttle
 		{
 			UpdateDashboardLogs();
+			UpdateConnectionStatus();
 			LastDashboardRefreshTime = InCurrentTime;
+		}
+		
+		// Update connection status more frequently (every 0.5 seconds)
+		const double TimeSinceLastStatusUpdate = InCurrentTime - LastConnectionStatusUpdateTime;
+		if (TimeSinceLastStatusUpdate >= 0.5)
+		{
+			UpdateConnectionStatus();
+			LastConnectionStatusUpdateTime = InCurrentTime;
 		}
 	}
 }
@@ -1151,6 +1150,8 @@ FReply SAdastreaDirectorPanel::OnTabButtonClicked(int32 TabIndex)
 		if (TabIndex == 2)
 		{
 			UpdateDashboardLogs();
+			UpdateConnectionStatus();
+			LastDashboardRefreshTime = -10.0; // Reset timer to prevent immediate auto-refresh
 		}
 	}
 	return FReply::Handled();
