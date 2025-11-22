@@ -191,7 +191,7 @@ An epic action RPG built with Unreal Engine 5.
 3. Build and run
 
 ## Documentation
-See the `docs/` folder for detailed documentation.
+See the Wiki (https://github.com/Mittenzx/Adastrea-Director/wiki) for detailed documentation.
 """)
     
     return repo_dir
