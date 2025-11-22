@@ -81,7 +81,7 @@ settings:
 
 **Schema File:** `schemas/data_table_schema.json`  
 **Purpose:** Structured data for Unreal Engine Data Tables (CSV alternative)  
-**Validation:** Auto-detects when YAML contains `rows` or `table` fields
+**Validation:** Auto-detection is triggered if YAML contains either a `table` or `rows` field. For schema validation, only the `table` field is required; `rows` is optional.
 
 ### Schema Requirements
 
@@ -207,7 +207,7 @@ rows:
 
 **Schema File:** `schemas/asset_schema.json`  
 **Purpose:** Metadata and property definitions for Unreal Engine assets  
-**Validation:** Auto-detects when YAML contains `name`, `type`, and `properties` fields
+**Validation:** Auto-detects when YAML contains `name` and `type` fields; `properties` is optional
 
 ### Schema Requirements
 

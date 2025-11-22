@@ -68,7 +68,7 @@ These schema files are used for validating YAML templates before they are import
 **File:** `schemas/config_schema.json`  
 **Type:** JSON Schema (Draft-07)  
 **Purpose:** Validates configuration template YAML files  
-**Size:** 16 lines  
+**Size:** 17 lines  
 **Import Priority:** MEDIUM
 
 **Schema Definition:**
@@ -104,7 +104,7 @@ These schema files are used for validating YAML templates before they are import
 **File:** `schemas/data_table_schema.json`  
 **Type:** JSON Schema (Draft-07)  
 **Purpose:** Validates data table template YAML files  
-**Size:** 14 lines  
+**Size:** 18 lines  
 **Import Priority:** HIGH
 
 **Schema Definition:**
@@ -147,7 +147,7 @@ These schema files are used for validating YAML templates before they are import
 **File:** `schemas/asset_schema.json`  
 **Type:** JSON Schema (Draft-07)  
 **Purpose:** Validates asset definition template YAML files  
-**Size:** 22 lines  
+**Size:** 27 lines  
 **Import Priority:** MEDIUM
 
 **Schema Definition:**
