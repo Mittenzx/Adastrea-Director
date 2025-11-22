@@ -159,8 +159,8 @@ private:
 	/** Log display text box */
 	TSharedPtr<SMultiLineEditableTextBox> LogDisplay;
 
-	/** Current log content */
-	FText CurrentLogContent;
+	/** Current log content (stored as FString for efficient appending) */
+	FString CurrentLogContent;
 
 	/** Auto-refresh enabled for dashboard */
 	bool bDashboardAutoRefresh;

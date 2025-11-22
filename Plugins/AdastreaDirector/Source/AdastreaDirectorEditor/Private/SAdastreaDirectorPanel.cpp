@@ -54,7 +54,7 @@ void SAdastreaDirectorPanel::Construct(const FArguments& InArgs)
 	CurrentTabIndex = 0; // Start with Query tab
 	bDashboardAutoRefresh = true;
 	LastDashboardRefreshTime = 0.0;
-	CurrentLogContent = LOCTEXT("DashboardLogs", "Dashboard logs will appear here...");
+	CurrentLogContent = TEXT("Dashboard logs will appear here...");
 	
 	// Setup progress file path
 	ProgressFilePath = FPaths::ProjectIntermediateDir() / TEXT("AdastreaDirector") / TEXT("ingestion_progress.json");
@@ -148,6 +148,7 @@ void SAdastreaDirectorPanel::Construct(const FArguments& InArgs)
 			// Dashboard Tab Button
 			+ SHorizontalBox::Slot()
 			.AutoWidth()
+			.Padding(0.0f, 0.0f, 5.0f, 0.0f)
 			[
 				SNew(SCheckBox)
 				.Style(FAppStyle::Get(), "RadioButton")
@@ -558,7 +559,7 @@ TSharedRef<SWidget> SAdastreaDirectorPanel::CreateDashboardTab()
 				+ SScrollBox::Slot()
 				[
 					SAssignNew(LogDisplay, SMultiLineEditableTextBox)
-					.Text_Lambda([this]() { return CurrentLogContent; })
+					.Text_Lambda([this]() { return FText::FromString(CurrentLogContent); })
 					.IsReadOnly(true)
 					.AutoWrapText(true)
 				]
@@ -995,7 +996,7 @@ FReply SAdastreaDirectorPanel::OnReconnectClicked()
 	
 	if (!RuntimeModule)
 	{
-		CurrentLogContent = FText::FromString(TEXT("Error: Runtime module not available"));
+		CurrentLogContent = TEXT("Error: Runtime module not available");
 		return FReply::Handled();
 	}
 
@@ -1003,7 +1004,7 @@ FReply SAdastreaDirectorPanel::OnReconnectClicked()
 	
 	if (!PythonBridge)
 	{
-		CurrentLogContent = FText::FromString(TEXT("Error: Python bridge not initialized"));
+		CurrentLogContent = TEXT("Error: Python bridge not initialized");
 		return FReply::Handled();
 	}
 
@@ -1020,13 +1021,13 @@ FReply SAdastreaDirectorPanel::OnReconnectClicked()
 		LogText += TEXT("❌ Reconnection failed. Please check Python backend.\n");
 	}
 	
-	CurrentLogContent = FText::FromString(LogText);
+	CurrentLogContent = LogText;
 	return FReply::Handled();
 }
 
 FReply SAdastreaDirectorPanel::OnClearLogsClicked()
 {
-	CurrentLogContent = FText::FromString(TEXT("Logs cleared.\n"));
+	CurrentLogContent = TEXT("Logs cleared.\n");
 	return FReply::Handled();
 }
 
@@ -1037,7 +1038,7 @@ void SAdastreaDirectorPanel::UpdateDashboardLogs()
 	
 	if (!RuntimeModule)
 	{
-		CurrentLogContent = FText::FromString(TEXT("Runtime module not available - cannot fetch logs\n"));
+		CurrentLogContent = TEXT("Runtime module not available - cannot fetch logs\n");
 		return;
 	}
 
@@ -1045,21 +1046,27 @@ void SAdastreaDirectorPanel::UpdateDashboardLogs()
 	
 	if (!PythonBridge)
 	{
-		CurrentLogContent = FText::FromString(TEXT("Python bridge not initialized - cannot fetch logs\n"));
+		CurrentLogContent = TEXT("Python bridge not initialized - cannot fetch logs\n");
 		return;
 	}
 
-	// Build a simple diagnostic log entry
-	FString NewLogEntry;
-	NewLogEntry.Appendf(TEXT("=== Dashboard Status Update ===\n"));
-	NewLogEntry.Appendf(TEXT("Timestamp: %s\n"), *FDateTime::Now().ToString());
-	NewLogEntry.Appendf(TEXT("Python Bridge Ready: %s\n"), PythonBridge->IsReady() ? TEXT("Yes") : TEXT("No"));
-	NewLogEntry.Appendf(TEXT("Status: %s\n"), *PythonBridge->GetStatus());
-	NewLogEntry.Appendf(TEXT("===============================\n\n"));
+	// Build diagnostic log entry using Printf for efficiency
+	FString NewLogEntry = FString::Printf(
+		TEXT("=== Dashboard Status Update ===\n")
+		TEXT("Timestamp: %s\n")
+		TEXT("Python Bridge Ready: %s\n")
+		TEXT("Status: %s\n")
+		TEXT("===============================\n\n"),
+		*FDateTime::Now().ToString(),
+		PythonBridge->IsReady() ? TEXT("Yes") : TEXT("No"),
+		*PythonBridge->GetStatus()
+	);
 	
 	// Prepend new entry to existing logs (newest first)
-	FString ExistingLogs = CurrentLogContent.ToString();
-	FString CombinedLogs = NewLogEntry + ExistingLogs;
+	// Reserve capacity to minimize reallocations
+	FString CombinedLogs;
+	CombinedLogs.Reserve(NewLogEntry.Len() + CurrentLogContent.Len());
+	CombinedLogs = NewLogEntry + CurrentLogContent;
 	
 	// Keep only last MaxLogCharacters characters to prevent unbounded growth
 	if (CombinedLogs.Len() > MaxLogCharacters)
@@ -1067,7 +1074,7 @@ void SAdastreaDirectorPanel::UpdateDashboardLogs()
 		CombinedLogs = CombinedLogs.Left(MaxLogCharacters);
 	}
 	
-	CurrentLogContent = FText::FromString(CombinedLogs);
+	CurrentLogContent = CombinedLogs;
 }
 
 void SAdastreaDirectorPanel::Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime)
