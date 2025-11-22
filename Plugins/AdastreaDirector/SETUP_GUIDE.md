@@ -23,17 +23,19 @@ python --version   # Should show 3.9 or higher
 
 ### 1. Copy Plugin to Your Project
 
-```bash
-# Copy the plugin folder to your project's Plugins directory
-cp -r /path/to/Adastrea-Director/Plugins/AdastreaDirector /path/to/YourProject/Plugins/
+Copy the `Plugins/AdastreaDirector` folder to your Unreal Engine project's `Plugins` directory.
 
-# Your project structure should look like:
-# YourProject/
-# ├── Content/
-# ├── Plugins/
-# │   └── AdastreaDirector/    ← Plugin goes here
-# └── YourProject.uproject
+Your project structure should look like:
 ```
+YourProject/
+├── Content/
+├── Plugins/
+│   └── AdastreaDirector/    ← Plugin goes here
+└── YourProject.uproject
+```
+
+**Windows:** Use File Explorer to copy the folder  
+**Mac/Linux:** Use Finder/file manager, or command line: `cp -r /path/to/Adastrea-Director/Plugins/AdastreaDirector /path/to/YourProject/Plugins/`
 
 ### 2. Regenerate Project Files
 
@@ -91,7 +93,8 @@ Verify the plugin is working correctly:
 ### Test 1: Python Backend Connection
 
 ```bash
-cd Plugins/AdastreaDirector/Python
+# From your project root directory:
+cd YourProject/Plugins/AdastreaDirector/Python
 python test_ipc.py 5555
 ```
 
@@ -124,14 +127,16 @@ python test_ipc.py 5555
 
 ### Python Backend Won't Connect
 ```bash
-# Navigate to the main Adastrea-Director repository root
-cd /path/to/Adastrea-Director
+# Install required Python packages
+# The plugin uses the main Adastrea-Director repository's Python backend
+# If you have the main repo, install from there:
+pip install -r /path/to/Adastrea-Director/requirements.txt
 
-# Install dependencies from requirements.txt
-pip install -r requirements.txt
+# Or install core dependencies directly:
+pip install chromadb langchain langchain-community openai python-dotenv
 
-# Test server manually
-cd Plugins/AdastreaDirector/Python
+# Test server manually from your project directory:
+cd YourProject/Plugins/AdastreaDirector/Python
 python ipc_server.py --port 5555
 # Should see: "Server listening on localhost:5555"
 ```
@@ -144,7 +149,7 @@ python ipc_server.py --port 5555
 ### Still Stuck?
 - Check [TESTING_QUICK_REFERENCE.md](TESTING_QUICK_REFERENCE.md) for detailed testing
 - See [README.md](README.md) for comprehensive documentation
-- Create an issue: [GitHub Issues](https://github.com/Mittenzx/Adastrea-Director/issues)
+- Report issues on the main repository: [GitHub Issues](https://github.com/Mittenzx/Adastrea-Director/issues)
 
 ---
 
