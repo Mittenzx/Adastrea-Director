@@ -985,7 +985,6 @@ void SAdastreaDirectorPanel::UpdateIngestionProgress()
 
 FReply SAdastreaDirectorPanel::OnRefreshDashboardClicked()
 {
-	UpdateDashboardStatus();
 	UpdateDashboardLogs();
 	return FReply::Handled();
 }
@@ -1008,20 +1007,20 @@ FReply SAdastreaDirectorPanel::OnReconnectClicked()
 		return FReply::Handled();
 	}
 
-	CurrentLogContent = FText::FromString(TEXT("Attempting to reconnect to Python backend...\n"));
+	FString LogText = TEXT("Attempting to reconnect to Python backend...\n");
 	
 	bool bSuccess = PythonBridge->Reconnect();
 	
 	if (bSuccess)
 	{
-		CurrentLogContent = FText::FromString(CurrentLogContent.ToString() + TEXT("✅ Reconnection successful!\n"));
+		LogText += TEXT("✅ Reconnection successful!\n");
 	}
 	else
 	{
-		CurrentLogContent = FText::FromString(CurrentLogContent.ToString() + TEXT("❌ Reconnection failed. Please check Python backend.\n"));
+		LogText += TEXT("❌ Reconnection failed. Please check Python backend.\n");
 	}
-
-	UpdateDashboardStatus();
+	
+	CurrentLogContent = FText::FromString(LogText);
 	return FReply::Handled();
 }
 
@@ -1029,12 +1028,6 @@ FReply SAdastreaDirectorPanel::OnClearLogsClicked()
 {
 	CurrentLogContent = FText::FromString(TEXT("Logs cleared.\n"));
 	return FReply::Handled();
-}
-
-void SAdastreaDirectorPanel::UpdateDashboardStatus()
-{
-	// Status is updated via lambda in the UI, so nothing to do here
-	// This method is here for future enhancements if needed
 }
 
 void SAdastreaDirectorPanel::UpdateDashboardLogs()
@@ -1056,24 +1049,25 @@ void SAdastreaDirectorPanel::UpdateDashboardLogs()
 		return;
 	}
 
-	// Build a simple diagnostic log
-	FString LogText;
-	LogText += TEXT("=== Dashboard Status Update ===\n");
-	LogText += FString::Printf(TEXT("Timestamp: %s\n"), *FDateTime::Now().ToString());
-	LogText += FString::Printf(TEXT("Python Bridge Ready: %s\n"), PythonBridge->IsReady() ? TEXT("Yes") : TEXT("No"));
-	LogText += FString::Printf(TEXT("Status: %s\n"), *PythonBridge->GetStatus());
-	LogText += TEXT("===============================\n\n");
+	// Build a simple diagnostic log entry
+	FString NewLogEntry;
+	NewLogEntry.Appendf(TEXT("=== Dashboard Status Update ===\n"));
+	NewLogEntry.Appendf(TEXT("Timestamp: %s\n"), *FDateTime::Now().ToString());
+	NewLogEntry.Appendf(TEXT("Python Bridge Ready: %s\n"), PythonBridge->IsReady() ? TEXT("Yes") : TEXT("No"));
+	NewLogEntry.Appendf(TEXT("Status: %s\n"), *PythonBridge->GetStatus());
+	NewLogEntry.Appendf(TEXT("===============================\n\n"));
 	
-	// Append to existing logs
-	LogText += CurrentLogContent.ToString();
+	// Prepend new entry to existing logs (newest first)
+	FString ExistingLogs = CurrentLogContent.ToString();
+	FString CombinedLogs = NewLogEntry + ExistingLogs;
 	
-	// Keep only last 5000 characters to prevent unbounded growth
-	if (LogText.Len() > 5000)
+	// Keep only last MaxLogCharacters characters to prevent unbounded growth
+	if (CombinedLogs.Len() > MaxLogCharacters)
 	{
-		LogText = LogText.Right(5000);
+		CombinedLogs = CombinedLogs.Left(MaxLogCharacters);
 	}
 	
-	CurrentLogContent = FText::FromString(LogText);
+	CurrentLogContent = FText::FromString(CombinedLogs);
 }
 
 void SAdastreaDirectorPanel::Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime)

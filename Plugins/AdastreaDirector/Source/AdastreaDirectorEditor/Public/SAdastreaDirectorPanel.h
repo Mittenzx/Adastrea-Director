@@ -168,6 +168,9 @@ private:
 	/** Time since last dashboard refresh */
 	double LastDashboardRefreshTime;
 
+	/** Maximum log content size in characters */
+	static constexpr int32 MaxLogCharacters = 5000;
+
 	// Dashboard tab methods
 	/** Called when Refresh Dashboard button is clicked */
 	FReply OnRefreshDashboardClicked();
@@ -177,9 +180,6 @@ private:
 
 	/** Called when Clear Logs button is clicked */
 	FReply OnClearLogsClicked();
-
-	/** Update dashboard connection status */
-	void UpdateDashboardStatus();
 
 	/** Update dashboard logs */
 	void UpdateDashboardLogs();
