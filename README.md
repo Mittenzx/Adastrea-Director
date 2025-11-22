@@ -337,7 +337,11 @@ For game developers working in Unreal Engine, the plugin provides an integrated 
 
 **Current Status:** Weeks 1-6 Complete (Basic UI + RAG Integration) + **NEW: UE Python API Integration** ✨
 
-**Installation:**
+**🚀 Quick Start:**
+
+👉 **[Plugin Setup Guide](Plugins/AdastreaDirector/SETUP_GUIDE.md)** - Get started in 5 minutes!
+
+**Installation (Quick):**
 1. Copy `Plugins/AdastreaDirector` to your UE project's `Plugins` folder
 2. Regenerate project files (right-click .uproject → Generate Visual Studio project files)
 3. Build your project
@@ -360,6 +364,7 @@ For game developers working in Unreal Engine, the plugin provides an integrated 
 - ✅ 25 comprehensive tests (100% passing)
 
 **📖 Complete Plugin Documentation:**
+- **[Setup Guide](Plugins/AdastreaDirector/SETUP_GUIDE.md)** - 🌟 **Start here!** Quick setup and testing
 - [Plugin README](Plugins/AdastreaDirector/README.md) - Full plugin guide
 - [UE Python API Guide](Plugins/AdastreaDirector/UE_PYTHON_API.md) - **NEW!** UE Python integration
 - [Installation Guide](Plugins/AdastreaDirector/INSTALLATION.md) - Detailed setup

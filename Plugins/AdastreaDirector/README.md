@@ -2,6 +2,24 @@
 
 An AI-powered development assistant plugin for Unreal Engine that provides intelligent code assistance, automated planning, performance profiling, and bug detection capabilities.
 
+---
+
+## 🚀 Quick Start
+
+**New to the plugin?** Start here:
+
+👉 **[SETUP_GUIDE.md](SETUP_GUIDE.md)** - Get started in 5 minutes!
+
+This quick guide covers:
+- ✅ Installation (3 steps)
+- ✅ Basic usage
+- ✅ Simple testing
+- ✅ Troubleshooting
+
+For comprehensive documentation, continue reading below.
+
+---
+
 ## Overview
 
 This plugin integrates the Adastrea Director AI system directly into Unreal Engine, enabling developers to leverage advanced AI capabilities without leaving the editor. The plugin uses a hybrid architecture with a lightweight C++ shell in UE and a powerful Python backend for AI processing.
