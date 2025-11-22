@@ -21,6 +21,9 @@ PYTHON_EXECUTABLE = sys.executable
 # Get the directory where this script is located
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
+# Constants for ingestion logging
+MAX_ERROR_LOG_LENGTH = 200  # Maximum characters to show in error logs
+
 class AdastreaDirectorApp:
     def __init__(self, root):
         self.root = root
@@ -1987,15 +1990,15 @@ GitHub: Mittenzx/Adastrea-Director
             
             self.update_progress(percent, label, details)
             
-            # Continue polling if not complete
+            # Continue polling if not complete (500ms interval for optimal performance)
             if percent < 100:
-                self.progress_poll_id = self.root.after(100, self.poll_progress_file)
+                self.progress_poll_id = self.root.after(500, self.poll_progress_file)
         except FileNotFoundError:
             # File is gone, stop polling
             self.hide_progress_bar()
         except json.JSONDecodeError:
             # File might be being written, try again
-            self.progress_poll_id = self.root.after(100, self.poll_progress_file)
+            self.progress_poll_id = self.root.after(500, self.poll_progress_file)
         except IOError:
             # Other IO error, stop polling
             self.hide_progress_bar()
@@ -2112,7 +2115,7 @@ GitHub: Mittenzx/Adastrea-Director
             self.update_status("An error occurred • Check the conversation for details", "error")
             # Log error for ingestion failures
             if show_progress:
-                self.log_to_ingest_tab(f"❌ Ingestion failed: {output[:200]}", "error")
+                self.log_to_ingest_tab(f"❌ Ingestion failed: {output[:MAX_ERROR_LOG_LENGTH]}", "error")
             
         self.ingest_folder_button.config(state=tk.NORMAL)
         self.ingest_file_button.config(state=tk.NORMAL)
