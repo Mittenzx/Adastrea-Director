@@ -10,6 +10,7 @@ This module provides a comprehensive interface to Unreal Engine's Remote Control
 - Console command execution
 - Real-time event streaming via WebSocket
 - Base agent class for autonomous agents
+- **Automated testing via TestAgent** (NEW)
 
 ## Quick Start
 
@@ -81,6 +82,39 @@ with MyAgent(agent_id="my_agent", ue_host="localhost") as agent:
     print(result)
 ```
 
+### Test Agent (NEW)
+
+```python
+from remote_control import TestAgent
+
+# Create test agent for automated testing
+with TestAgent(agent_id="automated_tester") as agent:
+    # Define tests
+    tests = [
+        {
+            "name": "test_fps_command",
+            "type": "command",
+            "command": "stat fps"
+        },
+        {
+            "name": "test_player_health",
+            "type": "property",
+            "object_path": "/Game/Player.Player_C",
+            "property_name": "Health",
+            "expected_value": 100.0
+        }
+    ]
+    
+    # Run tests
+    results = agent.run_test_suite(tests)
+    agent.print_test_summary(results)
+    
+    # Export results
+    agent.export_test_results("/tmp/test_results.json")
+```
+
+**See [TEST_AGENT_GUIDE.md](TEST_AGENT_GUIDE.md) for complete documentation.**
+
 ## Components
 
 ### UnrealRemoteControlClient
@@ -117,6 +151,17 @@ Base class for agents that interact with Unreal Engine:
 - Manages connection lifecycle
 - Supports context manager pattern
 - Abstract `execute_task()` method for subclass implementation
+
+### TestAgent (NEW)
+
+Specialized agent for automated testing:
+- **Property Testing**: Validate object properties and values
+- **Function Testing**: Execute and verify function calls
+- **Command Testing**: Run console commands and check outputs
+- **Test Suites**: Run multiple tests in sequence
+- **Result Reporting**: Detailed pass/fail/error reporting
+- **Export Results**: Save test results to JSON
+- See [TEST_AGENT_GUIDE.md](TEST_AGENT_GUIDE.md) for full documentation
 
 ## Requirements
 
