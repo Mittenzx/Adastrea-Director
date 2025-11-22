@@ -996,7 +996,12 @@ FReply SAdastreaDirectorPanel::OnReconnectClicked()
 	
 	if (!RuntimeModule)
 	{
-		CurrentLogContent.InsertAt(0, TEXT("Error: Runtime module not available\n"));
+		FString ErrorMsg = TEXT("Error: Runtime module not available\n");
+		CurrentLogContent = ErrorMsg + CurrentLogContent;
+		if (CurrentLogContent.Len() > MaxLogCharacters)
+		{
+			CurrentLogContent = CurrentLogContent.Left(MaxLogCharacters);
+		}
 		return FReply::Handled();
 	}
 
@@ -1004,7 +1009,12 @@ FReply SAdastreaDirectorPanel::OnReconnectClicked()
 	
 	if (!PythonBridge)
 	{
-		CurrentLogContent.InsertAt(0, TEXT("Error: Python bridge not initialized\n"));
+		FString ErrorMsg = TEXT("Error: Python bridge not initialized\n");
+		CurrentLogContent = ErrorMsg + CurrentLogContent;
+		if (CurrentLogContent.Len() > MaxLogCharacters)
+		{
+			CurrentLogContent = CurrentLogContent.Left(MaxLogCharacters);
+		}
 		return FReply::Handled();
 	}
 
@@ -1022,7 +1032,7 @@ FReply SAdastreaDirectorPanel::OnReconnectClicked()
 	}
 	
 	// Prepend to existing logs
-	CurrentLogContent.InsertAt(0, LogEntry);
+	CurrentLogContent = LogEntry + CurrentLogContent;
 	
 	// Trim if too long
 	if (CurrentLogContent.Len() > MaxLogCharacters)
@@ -1046,8 +1056,9 @@ void SAdastreaDirectorPanel::UpdateDashboardLogs()
 	
 	if (!RuntimeModule)
 	{
-		// Append error message instead of overwriting
-		CurrentLogContent.InsertAt(0, TEXT("Error: Runtime module not available - cannot fetch logs\n"));
+		// Prepend error message instead of overwriting
+		FString ErrorMsg = TEXT("Error: Runtime module not available - cannot fetch logs\n");
+		CurrentLogContent = ErrorMsg + CurrentLogContent;
 		if (CurrentLogContent.Len() > MaxLogCharacters)
 		{
 			CurrentLogContent = CurrentLogContent.Left(MaxLogCharacters);
@@ -1059,8 +1070,9 @@ void SAdastreaDirectorPanel::UpdateDashboardLogs()
 	
 	if (!PythonBridge)
 	{
-		// Append error message instead of overwriting
-		CurrentLogContent.InsertAt(0, TEXT("Error: Python bridge not initialized - cannot fetch logs\n"));
+		// Prepend error message instead of overwriting
+		FString ErrorMsg = TEXT("Error: Python bridge not initialized - cannot fetch logs\n");
+		CurrentLogContent = ErrorMsg + CurrentLogContent;
 		if (CurrentLogContent.Len() > MaxLogCharacters)
 		{
 			CurrentLogContent = CurrentLogContent.Left(MaxLogCharacters);
@@ -1081,18 +1093,13 @@ void SAdastreaDirectorPanel::UpdateDashboardLogs()
 	);
 	
 	// Prepend new entry to existing logs (newest first)
-	// Reserve capacity to minimize reallocations
-	FString CombinedLogs;
-	CombinedLogs.Reserve(NewLogEntry.Len() + CurrentLogContent.Len());
-	CombinedLogs = NewLogEntry + CurrentLogContent;
+	CurrentLogContent = NewLogEntry + CurrentLogContent;
 	
 	// Keep only last MaxLogCharacters characters to prevent unbounded growth
-	if (CombinedLogs.Len() > MaxLogCharacters)
+	if (CurrentLogContent.Len() > MaxLogCharacters)
 	{
-		CombinedLogs = CombinedLogs.Left(MaxLogCharacters);
+		CurrentLogContent = CurrentLogContent.Left(MaxLogCharacters);
 	}
-	
-	CurrentLogContent = CombinedLogs;
 }
 
 void SAdastreaDirectorPanel::Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime)
