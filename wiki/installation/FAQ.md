@@ -10,7 +10,7 @@ Adastrea Director is an AI-powered game development assistant that provides cont
 
 ### Is it free to use?
 
-Yes, Adastrea Director is open source. However, you'll need API keys for LLM providers (Gemini or OpenAI). Google Gemini offers a generous free tier, making it possible to use Adastrea Director at no cost.
+Yes, Adastrea Director is open source (see the [LICENSE](https://github.com/Mittenzx/Adastrea-Director/blob/main/LICENSE) file for details). However, you'll need API keys for LLM providers (Gemini or OpenAI). Google Gemini offers a generous free tier, making it possible to use Adastrea Director at no cost for API usage.
 
 ### What makes it different from other AI assistants?
 
