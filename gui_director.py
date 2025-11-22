@@ -1984,10 +1984,7 @@ GitHub: Mittenzx/Adastrea-Director
             details = progress_data.get('details', '')
             
             # Log progress updates to the ingestion log
-            if details:
-                self.log_to_ingest_tab(f"{label}: {details}", "progress")
-            else:
-                self.log_to_ingest_tab(label, "progress")
+            self.log_to_ingest_tab(f"{label}{': ' + details if details else ''}", "progress")
             
             self.update_progress(percent, label, details)
             
@@ -2114,9 +2111,12 @@ GitHub: Mittenzx/Adastrea-Director
             self.response_text.see(tk.END)
             self.response_text.config(state=tk.DISABLED)
             self.update_status("An error occurred • Check the conversation for details", "error")
-            # Log error for ingestion failures
+            # Log error for ingestion failures (truncate long errors for readability)
             if show_progress:
-                self.log_to_ingest_tab(f"❌ Ingestion failed: {output[:MAX_ERROR_LOG_LENGTH]}", "error")
+                error_msg = output[:MAX_ERROR_LOG_LENGTH]
+                if len(output) > MAX_ERROR_LOG_LENGTH:
+                    error_msg += "..."
+                self.log_to_ingest_tab(f"❌ Ingestion failed: {error_msg}", "error")
             
         self.ingest_folder_button.config(state=tk.NORMAL)
         self.ingest_file_button.config(state=tk.NORMAL)
