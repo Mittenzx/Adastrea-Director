@@ -168,7 +168,7 @@ python ipc_server.py --port 5555
 
 **Common workflows:**
 - Ingest your project documentation → Ask questions about it
-- Use Query tab for development help and assistance
+- Use Query tab for development help
 - Configure Settings to switch between LLM providers
 
 ---
@@ -186,4 +186,4 @@ python ipc_server.py --port 5555
 
 **Last Updated:** November 2025  
 **Plugin Version:** 1.0.0  
-**Status:** Production Ready (Weeks 1-8 Complete)
+**Status:** Production Ready (Weeks 1-6 Complete)
