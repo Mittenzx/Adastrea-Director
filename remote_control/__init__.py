@@ -18,6 +18,7 @@ from .models import (
 )
 from .websocket_client import WebSocketEventClient, EventType
 from .base_agent import RemoteControlAgent
+from .test_agent import TestAgent, TestResult, TestStatus
 
 __all__ = [
     "UnrealRemoteControlClient",
@@ -29,6 +30,9 @@ __all__ = [
     "WebSocketEventClient",
     "EventType",
     "RemoteControlAgent",
+    "TestAgent",
+    "TestResult",
+    "TestStatus",
 ]
 
 __version__ = "0.1.0"
