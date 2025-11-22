@@ -130,7 +130,7 @@ self.log_to_ingest_tab("Your message here", "info")  # or "success", "warning", 
 
 To check log implementation:
 - Log viewer: Lines 637-689 in `gui_director.py`
-- Logging methods: Lines 906-926 in `gui_director.py`
+- Logging methods: Lines 927-949 in `gui_director.py`
 - Progress polling: Lines 1964-1987 in `gui_director.py`
 
 ## Future Enhancements
