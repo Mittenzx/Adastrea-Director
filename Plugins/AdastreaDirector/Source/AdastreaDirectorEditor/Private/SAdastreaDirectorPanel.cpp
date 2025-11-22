@@ -52,6 +52,9 @@ void SAdastreaDirectorPanel::Construct(const FArguments& InArgs)
 	CurrentResults = LOCTEXT("WelcomeMessage", "Welcome to Adastrea Director!\n\nEnter a query above and click 'Send Query' or press Enter to get started.\n\nExample: \"What is Unreal Engine?\"");
 	LastProgressUpdateTime = 0.0;
 	CurrentTabIndex = 0; // Start with Query tab
+	bDashboardAutoRefresh = true;
+	LastDashboardRefreshTime = 0.0;
+	CurrentLogContent = LOCTEXT("DashboardLogs", "Dashboard logs will appear here...");
 	
 	// Setup progress file path
 	ProgressFilePath = FPaths::ProjectIntermediateDir() / TEXT("AdastreaDirector") / TEXT("ingestion_progress.json");
@@ -124,6 +127,7 @@ void SAdastreaDirectorPanel::Construct(const FArguments& InArgs)
 			// Ingestion Tab Button
 			+ SHorizontalBox::Slot()
 			.AutoWidth()
+			.Padding(0.0f, 0.0f, 5.0f, 0.0f)
 			[
 				SNew(SCheckBox)
 				.Style(FAppStyle::Get(), "RadioButton")
@@ -137,6 +141,26 @@ void SAdastreaDirectorPanel::Construct(const FArguments& InArgs)
 				[
 					SNew(STextBlock)
 					.Text(LOCTEXT("IngestionTabButton", "Ingestion"))
+					.Font(FCoreStyle::GetDefaultFontStyle("Bold", 10))
+				]
+			]
+
+			// Dashboard Tab Button
+			+ SHorizontalBox::Slot()
+			.AutoWidth()
+			[
+				SNew(SCheckBox)
+				.Style(FAppStyle::Get(), "RadioButton")
+				.IsChecked(this, &SAdastreaDirectorPanel::GetTabButtonCheckedState, 2)
+				.OnCheckStateChanged_Lambda([this](ECheckBoxState NewState) {
+					if (NewState == ECheckBoxState::Checked)
+					{
+						OnTabButtonClicked(2);
+					}
+				})
+				[
+					SNew(STextBlock)
+					.Text(LOCTEXT("DashboardTabButton", "Dashboard"))
 					.Font(FCoreStyle::GetDefaultFontStyle("Bold", 10))
 				]
 			]
@@ -167,6 +191,12 @@ void SAdastreaDirectorPanel::Construct(const FArguments& InArgs)
 			+ SWidgetSwitcher::Slot()
 			[
 				CreateIngestionTab()
+			]
+			
+			// Dashboard Tab (index 2)
+			+ SWidgetSwitcher::Slot()
+			[
+				CreateDashboardTab()
 			]
 		]
 	];
@@ -397,6 +427,142 @@ TSharedRef<SWidget> SAdastreaDirectorPanel::CreateIngestionTab()
 			SAssignNew(IngestionDetailsText, STextBlock)
 			.Text_Lambda([this]() { return IngestionDetailsMessage; })
 			.AutoWrapText(true)
+		];
+}
+
+TSharedRef<SWidget> SAdastreaDirectorPanel::CreateDashboardTab()
+{
+	return SNew(SVerticalBox)
+		
+		// Connection Status Section
+		+ SVerticalBox::Slot()
+		.AutoHeight()
+		.Padding(10.0f, 10.0f, 10.0f, 5.0f)
+		[
+			SNew(STextBlock)
+			.Text(LOCTEXT("ConnectionStatusLabel", "Connection Status:"))
+			.Font(FCoreStyle::GetDefaultFontStyle("Bold", 12))
+		]
+
+		+ SVerticalBox::Slot()
+		.AutoHeight()
+		.Padding(10.0f, 0.0f, 10.0f, 10.0f)
+		[
+			SNew(SBorder)
+			.BorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
+			.Padding(10.0f)
+			[
+				SNew(SVerticalBox)
+				
+				+ SVerticalBox::Slot()
+				.AutoHeight()
+				.Padding(0.0f, 0.0f, 0.0f, 10.0f)
+				[
+					SAssignNew(ConnectionStatusText, STextBlock)
+					.Text_Lambda([this]() {
+						FAdastreaDirectorModule* RuntimeModule = FModuleManager::GetModulePtr<FAdastreaDirectorModule>("AdastreaDirector");
+						if (!RuntimeModule)
+						{
+							return FText::FromString(TEXT("❌ Runtime module not available"));
+						}
+
+						FPythonBridge* PythonBridge = RuntimeModule->GetPythonBridge();
+						if (!PythonBridge)
+						{
+							return FText::FromString(TEXT("❌ Python bridge not initialized"));
+						}
+
+						if (PythonBridge->IsReady())
+						{
+							FString Status = PythonBridge->GetStatus();
+							return FText::FromString(FString::Printf(TEXT("✅ Connected - %s"), *Status));
+						}
+						else
+						{
+							return FText::FromString(TEXT("⚠️ Not connected - Python backend not ready"));
+						}
+					})
+					.AutoWrapText(true)
+				]
+
+				+ SVerticalBox::Slot()
+				.AutoHeight()
+				[
+					SNew(SHorizontalBox)
+					
+					+ SHorizontalBox::Slot()
+					.AutoWidth()
+					.Padding(0.0f, 0.0f, 5.0f, 0.0f)
+					[
+						SNew(SButton)
+						.Text(LOCTEXT("RefreshStatusButton", "Refresh Status"))
+						.ToolTipText(LOCTEXT("RefreshStatusTooltip", "Update connection status"))
+						.OnClicked(this, &SAdastreaDirectorPanel::OnRefreshDashboardClicked)
+					]
+
+					+ SHorizontalBox::Slot()
+					.AutoWidth()
+					[
+						SNew(SButton)
+						.Text(LOCTEXT("ReconnectButton", "Reconnect"))
+						.ToolTipText(LOCTEXT("ReconnectTooltip", "Attempt to reconnect to Python backend"))
+						.OnClicked(this, &SAdastreaDirectorPanel::OnReconnectClicked)
+					]
+				]
+			]
+		]
+
+		+ SVerticalBox::Slot()
+		.AutoHeight()
+		.Padding(10.0f, 5.0f, 10.0f, 10.0f)
+		[
+			SNew(SSeparator)
+			.Orientation(Orient_Horizontal)
+		]
+
+		// Logs Section
+		+ SVerticalBox::Slot()
+		.AutoHeight()
+		.Padding(10.0f, 5.0f, 10.0f, 5.0f)
+		[
+			SNew(SHorizontalBox)
+			
+			+ SHorizontalBox::Slot()
+			.FillWidth(1.0f)
+			[
+				SNew(STextBlock)
+				.Text(LOCTEXT("LogsLabel", "System Logs:"))
+				.Font(FCoreStyle::GetDefaultFontStyle("Bold", 12))
+			]
+
+			+ SHorizontalBox::Slot()
+			.AutoWidth()
+			[
+				SNew(SButton)
+				.Text(LOCTEXT("ClearLogsButton", "Clear Logs"))
+				.ToolTipText(LOCTEXT("ClearLogsTooltip", "Clear the log display"))
+				.OnClicked(this, &SAdastreaDirectorPanel::OnClearLogsClicked)
+			]
+		]
+
+		+ SVerticalBox::Slot()
+		.FillHeight(1.0f)
+		.Padding(10.0f, 0.0f, 10.0f, 10.0f)
+		[
+			SNew(SBox)
+			.MinDesiredHeight(300.0f)
+			[
+				SNew(SScrollBox)
+				.Orientation(Orient_Vertical)
+				
+				+ SScrollBox::Slot()
+				[
+					SAssignNew(LogDisplay, SMultiLineEditableTextBox)
+					.Text_Lambda([this]() { return CurrentLogContent; })
+					.IsReadOnly(true)
+					.AutoWrapText(true)
+				]
+			]
 		];
 }
 
@@ -817,6 +983,99 @@ void SAdastreaDirectorPanel::UpdateIngestionProgress()
 	}
 }
 
+FReply SAdastreaDirectorPanel::OnRefreshDashboardClicked()
+{
+	UpdateDashboardStatus();
+	UpdateDashboardLogs();
+	return FReply::Handled();
+}
+
+FReply SAdastreaDirectorPanel::OnReconnectClicked()
+{
+	FAdastreaDirectorModule* RuntimeModule = FModuleManager::GetModulePtr<FAdastreaDirectorModule>("AdastreaDirector");
+	
+	if (!RuntimeModule)
+	{
+		CurrentLogContent = FText::FromString(TEXT("Error: Runtime module not available"));
+		return FReply::Handled();
+	}
+
+	FPythonBridge* PythonBridge = RuntimeModule->GetPythonBridge();
+	
+	if (!PythonBridge)
+	{
+		CurrentLogContent = FText::FromString(TEXT("Error: Python bridge not initialized"));
+		return FReply::Handled();
+	}
+
+	CurrentLogContent = FText::FromString(TEXT("Attempting to reconnect to Python backend...\n"));
+	
+	bool bSuccess = PythonBridge->Reconnect();
+	
+	if (bSuccess)
+	{
+		CurrentLogContent = FText::FromString(CurrentLogContent.ToString() + TEXT("✅ Reconnection successful!\n"));
+	}
+	else
+	{
+		CurrentLogContent = FText::FromString(CurrentLogContent.ToString() + TEXT("❌ Reconnection failed. Please check Python backend.\n"));
+	}
+
+	UpdateDashboardStatus();
+	return FReply::Handled();
+}
+
+FReply SAdastreaDirectorPanel::OnClearLogsClicked()
+{
+	CurrentLogContent = FText::FromString(TEXT("Logs cleared.\n"));
+	return FReply::Handled();
+}
+
+void SAdastreaDirectorPanel::UpdateDashboardStatus()
+{
+	// Status is updated via lambda in the UI, so nothing to do here
+	// This method is here for future enhancements if needed
+}
+
+void SAdastreaDirectorPanel::UpdateDashboardLogs()
+{
+	// Get the Python bridge
+	FAdastreaDirectorModule* RuntimeModule = FModuleManager::GetModulePtr<FAdastreaDirectorModule>("AdastreaDirector");
+	
+	if (!RuntimeModule)
+	{
+		CurrentLogContent = FText::FromString(TEXT("Runtime module not available - cannot fetch logs\n"));
+		return;
+	}
+
+	FPythonBridge* PythonBridge = RuntimeModule->GetPythonBridge();
+	
+	if (!PythonBridge)
+	{
+		CurrentLogContent = FText::FromString(TEXT("Python bridge not initialized - cannot fetch logs\n"));
+		return;
+	}
+
+	// Build a simple diagnostic log
+	FString LogText;
+	LogText += TEXT("=== Dashboard Status Update ===\n");
+	LogText += FString::Printf(TEXT("Timestamp: %s\n"), *FDateTime::Now().ToString());
+	LogText += FString::Printf(TEXT("Python Bridge Ready: %s\n"), PythonBridge->IsReady() ? TEXT("Yes") : TEXT("No"));
+	LogText += FString::Printf(TEXT("Status: %s\n"), *PythonBridge->GetStatus());
+	LogText += TEXT("===============================\n\n");
+	
+	// Append to existing logs
+	LogText += CurrentLogContent.ToString();
+	
+	// Keep only last 5000 characters to prevent unbounded growth
+	if (LogText.Len() > 5000)
+	{
+		LogText = LogText.Right(5000);
+	}
+	
+	CurrentLogContent = FText::FromString(LogText);
+}
+
 void SAdastreaDirectorPanel::Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime)
 {
 	SCompoundWidget::Tick(AllottedGeometry, InCurrentTime, InDeltaTime);
@@ -829,6 +1088,17 @@ void SAdastreaDirectorPanel::Tick(const FGeometry& AllottedGeometry, const doubl
 		{
 			UpdateIngestionProgress();
 			LastProgressUpdateTime = InCurrentTime;
+		}
+	}
+
+	// Update dashboard if on dashboard tab and auto-refresh is enabled (throttled to every 2 seconds)
+	if (CurrentTabIndex == 2 && bDashboardAutoRefresh)
+	{
+		const double TimeSinceLastRefresh = InCurrentTime - LastDashboardRefreshTime;
+		if (TimeSinceLastRefresh >= 2.0) // 2 second throttle
+		{
+			UpdateDashboardLogs();
+			LastDashboardRefreshTime = InCurrentTime;
 		}
 	}
 }
@@ -847,9 +1117,15 @@ FReply SAdastreaDirectorPanel::OnKeyDown(const FGeometry& MyGeometry, const FKey
 
 FReply SAdastreaDirectorPanel::OnTabButtonClicked(int32 TabIndex)
 {
-	if (TabIndex >= 0 && TabIndex <= 1)
+	if (TabIndex >= 0 && TabIndex <= 2)
 	{
 		CurrentTabIndex = TabIndex;
+		
+		// If switching to dashboard, refresh it immediately
+		if (TabIndex == 2)
+		{
+			UpdateDashboardLogs();
+		}
 	}
 	return FReply::Handled();
 }

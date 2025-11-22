@@ -36,7 +36,7 @@ public:
 
 private:
 	// Tab management
-	/** Current active tab (0 = Query, 1 = Ingestion) */
+	/** Current active tab (0 = Query, 1 = Ingestion, 2 = Dashboard) */
 	int32 CurrentTabIndex;
 
 	/** Content switcher widget to hold tab contents */
@@ -152,10 +152,45 @@ private:
 	/** Helper to send ingestion request to Python backend */
 	void StartIngestion(const FString& DocsPath, const FString& DbPath);
 
+	// Dashboard tab widgets
+	/** Connection status text */
+	TSharedPtr<STextBlock> ConnectionStatusText;
+
+	/** Log display text box */
+	TSharedPtr<SMultiLineEditableTextBox> LogDisplay;
+
+	/** Current log content */
+	FText CurrentLogContent;
+
+	/** Auto-refresh enabled for dashboard */
+	bool bDashboardAutoRefresh;
+
+	/** Time since last dashboard refresh */
+	double LastDashboardRefreshTime;
+
+	// Dashboard tab methods
+	/** Called when Refresh Dashboard button is clicked */
+	FReply OnRefreshDashboardClicked();
+
+	/** Called when Reconnect button is clicked */
+	FReply OnReconnectClicked();
+
+	/** Called when Clear Logs button is clicked */
+	FReply OnClearLogsClicked();
+
+	/** Update dashboard connection status */
+	void UpdateDashboardStatus();
+
+	/** Update dashboard logs */
+	void UpdateDashboardLogs();
+
 	// Utility methods
 	/** Create the Query tab content */
 	TSharedRef<SWidget> CreateQueryTab();
 
 	/** Create the Ingestion tab content */
 	TSharedRef<SWidget> CreateIngestionTab();
+
+	/** Create the Dashboard tab content */
+	TSharedRef<SWidget> CreateDashboardTab();
 };
