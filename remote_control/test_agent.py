@@ -5,6 +5,7 @@ This module provides a specialized agent that can connect to Unreal Engine
 and perform automated tests through the Remote Control API.
 """
 
+import json
 import logging
 import time
 from typing import Any, Dict, List, Optional
@@ -510,8 +511,6 @@ class TestAgent(RemoteControlAgent):
         Returns:
             True if export succeeded
         """
-        import json
-        
         try:
             results_data = [result.to_dict() for result in self.test_results]
             
