@@ -968,7 +968,7 @@ FReply SAdastreaDirectorPanel::OnRefreshDashboardClicked()
 {
 	UpdateDashboardLogs();
 	UpdateConnectionStatus();
-	LastDashboardRefreshTime = -10.0; // Reset timer to prevent immediate auto-refresh
+	LastDashboardRefreshTime = RefreshTimerReset; // Reset timer to prevent immediate auto-refresh
 	return FReply::Handled();
 }
 
@@ -1107,20 +1107,20 @@ void SAdastreaDirectorPanel::Tick(const FGeometry& AllottedGeometry, const doubl
 		}
 	}
 
-	// Update dashboard if on dashboard tab (throttled to every 2 seconds)
+	// Update dashboard if on dashboard tab (throttled intervals)
 	if (CurrentTabIndex == 2)
 	{
 		const double TimeSinceLastRefresh = InCurrentTime - LastDashboardRefreshTime;
-		if (TimeSinceLastRefresh >= 2.0) // 2 second throttle
+		if (TimeSinceLastRefresh >= DashboardRefreshInterval)
 		{
 			UpdateDashboardLogs();
 			UpdateConnectionStatus();
 			LastDashboardRefreshTime = InCurrentTime;
 		}
 		
-		// Update connection status more frequently (every 0.5 seconds)
+		// Update connection status more frequently
 		const double TimeSinceLastStatusUpdate = InCurrentTime - LastConnectionStatusUpdateTime;
-		if (TimeSinceLastStatusUpdate >= 0.5)
+		if (TimeSinceLastStatusUpdate >= ConnectionStatusUpdateInterval)
 		{
 			UpdateConnectionStatus();
 			LastConnectionStatusUpdateTime = InCurrentTime;
@@ -1151,7 +1151,7 @@ FReply SAdastreaDirectorPanel::OnTabButtonClicked(int32 TabIndex)
 		{
 			UpdateDashboardLogs();
 			UpdateConnectionStatus();
-			LastDashboardRefreshTime = -10.0; // Reset timer to prevent immediate auto-refresh
+			LastDashboardRefreshTime = RefreshTimerReset; // Reset timer to prevent immediate auto-refresh
 		}
 	}
 	return FReply::Handled();

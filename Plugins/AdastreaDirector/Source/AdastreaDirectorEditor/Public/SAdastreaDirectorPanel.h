@@ -177,6 +177,15 @@ private:
 	/** Maximum log content size in characters */
 	static constexpr int32 MaxLogCharacters = 5000;
 
+	/** Dashboard refresh interval in seconds */
+	static constexpr double DashboardRefreshInterval = 2.0;
+
+	/** Connection status update interval in seconds */
+	static constexpr double ConnectionStatusUpdateInterval = 0.5;
+
+	/** Timer reset value to prevent immediate auto-refresh */
+	static constexpr double RefreshTimerReset = -10.0;
+
 	// Dashboard tab methods
 	/** Called when Refresh Dashboard button is clicked */
 	FReply OnRefreshDashboardClicked();
