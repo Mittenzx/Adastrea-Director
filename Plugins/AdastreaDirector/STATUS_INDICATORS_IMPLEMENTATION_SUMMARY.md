@@ -214,7 +214,7 @@ Addressed all review comments:
 5. `Plugins/AdastreaDirector/STATUS_INDICATORS_QUICKREF.md`
 6. `Plugins/AdastreaDirector/STATUS_INDICATORS_IMPLEMENTATION_SUMMARY.md`
 
-### Modified Files (3)
+### Modified Files (4)
 1. `Plugins/AdastreaDirector/Source/AdastreaDirectorEditor/Public/SAdastreaDirectorPanel.h`
 2. `Plugins/AdastreaDirector/Source/AdastreaDirectorEditor/Private/SAdastreaDirectorPanel.cpp`
 3. `Plugins/AdastreaDirector/README.md`

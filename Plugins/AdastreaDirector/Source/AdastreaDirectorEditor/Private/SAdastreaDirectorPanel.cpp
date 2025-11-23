@@ -1179,6 +1179,23 @@ void SAdastreaDirectorPanel::UpdateDashboardLogs()
 	AppendLogEntry(NewLogEntry);
 }
 
+void SAdastreaDirectorPanel::SetAllStatusLightsToError(const FText& Reason)
+{
+	// Helper method to set all status lights to error state with the same reason
+	if (PythonProcessStatusLight.IsValid())
+		PythonProcessStatusLight->SetStatus(SStatusIndicator::EStatus::Error, FText::Format(LOCTEXT("PythonProcessErrorFmt", "Python Process: {0}"), Reason));
+	if (IPCConnectionStatusLight.IsValid())
+		IPCConnectionStatusLight->SetStatus(SStatusIndicator::EStatus::Error, FText::Format(LOCTEXT("IPCConnectionErrorFmt", "IPC Connection: {0}"), Reason));
+	if (BridgeReadyStatusLight.IsValid())
+		BridgeReadyStatusLight->SetStatus(SStatusIndicator::EStatus::Error, FText::Format(LOCTEXT("BridgeReadyErrorFmt", "Python Bridge: {0}"), Reason));
+	if (BackendHealthStatusLight.IsValid())
+		BackendHealthStatusLight->SetStatus(SStatusIndicator::EStatus::Error, FText::Format(LOCTEXT("BackendHealthErrorFmt", "Backend Health: {0}"), Reason));
+	if (QueryProcessingStatusLight.IsValid())
+		QueryProcessingStatusLight->SetStatus(SStatusIndicator::EStatus::Error, FText::Format(LOCTEXT("QueryProcessingErrorFmt", "Query Processing: {0}"), Reason));
+	if (IngestionStatusLight.IsValid())
+		IngestionStatusLight->SetStatus(SStatusIndicator::EStatus::Error, FText::Format(LOCTEXT("IngestionErrorFmt", "Document Ingestion: {0}"), Reason));
+}
+
 void SAdastreaDirectorPanel::UpdateStatusLights()
 {
 	// NOTE: This implementation uses string parsing of GetStatus() output.
@@ -1192,18 +1209,7 @@ void SAdastreaDirectorPanel::UpdateStatusLights()
 	if (!RuntimeModule)
 	{
 		// Runtime module not available - all systems down
-		if (PythonProcessStatusLight.IsValid())
-			PythonProcessStatusLight->SetStatus(SStatusIndicator::EStatus::Error, LOCTEXT("PythonProcessError", "Python Process: Runtime module not available"));
-		if (IPCConnectionStatusLight.IsValid())
-			IPCConnectionStatusLight->SetStatus(SStatusIndicator::EStatus::Error, LOCTEXT("IPCConnectionError", "IPC Connection: Runtime module not available"));
-		if (BridgeReadyStatusLight.IsValid())
-			BridgeReadyStatusLight->SetStatus(SStatusIndicator::EStatus::Error, LOCTEXT("BridgeReadyError", "Python Bridge: Runtime module not available"));
-		if (BackendHealthStatusLight.IsValid())
-			BackendHealthStatusLight->SetStatus(SStatusIndicator::EStatus::Error, LOCTEXT("BackendHealthError", "Backend Health: Runtime module not available"));
-		if (QueryProcessingStatusLight.IsValid())
-			QueryProcessingStatusLight->SetStatus(SStatusIndicator::EStatus::Error, LOCTEXT("QueryProcessingError", "Query Processing: Runtime module not available"));
-		if (IngestionStatusLight.IsValid())
-			IngestionStatusLight->SetStatus(SStatusIndicator::EStatus::Error, LOCTEXT("IngestionError", "Document Ingestion: Runtime module not available"));
+		SetAllStatusLightsToError(LOCTEXT("RuntimeModuleNotAvailable", "Runtime module not available"));
 		return;
 	}
 
@@ -1211,7 +1217,7 @@ void SAdastreaDirectorPanel::UpdateStatusLights()
 	
 	if (!PythonBridge)
 	{
-		// Python bridge not initialized
+		// Python bridge not initialized - set most to error, query/ingestion to unknown
 		if (PythonProcessStatusLight.IsValid())
 			PythonProcessStatusLight->SetStatus(SStatusIndicator::EStatus::Error, LOCTEXT("PythonProcessNotInit", "Python Process: Bridge not initialized"));
 		if (IPCConnectionStatusLight.IsValid())
@@ -1230,29 +1236,37 @@ void SAdastreaDirectorPanel::UpdateStatusLights()
 	// Check Python process status (we need to access internal state through GetStatus)
 	FString StatusString = PythonBridge->GetStatus();
 	
-	if (StatusString.Contains(TEXT("not running")))
+	// Use precise, mutually exclusive checks to avoid ambiguity
+	// Check for "not running" first as it's the most specific error state
+	bool bProcessNotRunning = StatusString.Contains(TEXT("not running"));
+	bool bIPCNotConnected = StatusString.Contains(TEXT("IPC not connected"));
+	bool bIsReady = StatusString.Contains(TEXT("Ready"));
+	
+	// Python Process status
+	if (bProcessNotRunning)
 	{
 		if (PythonProcessStatusLight.IsValid())
 			PythonProcessStatusLight->SetStatus(SStatusIndicator::EStatus::Error, LOCTEXT("PythonProcessStopped", "Python Process: Not running"));
 	}
-	else if (StatusString.Contains(TEXT("Ready")))
+	else if (bIsReady)
 	{
+		// Extract just the relevant part - "Running" instead of full status string
 		if (PythonProcessStatusLight.IsValid())
-			PythonProcessStatusLight->SetStatus(SStatusIndicator::EStatus::Good, FText::Format(LOCTEXT("PythonProcessRunning", "Python Process: {0}"), FText::FromString(StatusString)));
+			PythonProcessStatusLight->SetStatus(SStatusIndicator::EStatus::Good, LOCTEXT("PythonProcessRunning", "Python Process: Running"));
 	}
 	else
 	{
 		if (PythonProcessStatusLight.IsValid())
-			PythonProcessStatusLight->SetStatus(SStatusIndicator::EStatus::Warning, FText::Format(LOCTEXT("PythonProcessUnknown", "Python Process: {0}"), FText::FromString(StatusString)));
+			PythonProcessStatusLight->SetStatus(SStatusIndicator::EStatus::Warning, LOCTEXT("PythonProcessUnknown", "Python Process: Unknown state"));
 	}
 
 	// Check IPC connection status
-	if (StatusString.Contains(TEXT("IPC not connected")))
+	if (bIPCNotConnected)
 	{
 		if (IPCConnectionStatusLight.IsValid())
 			IPCConnectionStatusLight->SetStatus(SStatusIndicator::EStatus::Error, LOCTEXT("IPCDisconnected", "IPC Connection: Disconnected"));
 	}
-	else if (StatusString.Contains(TEXT("Ready")))
+	else if (bIsReady)
 	{
 		if (IPCConnectionStatusLight.IsValid())
 			IPCConnectionStatusLight->SetStatus(SStatusIndicator::EStatus::Good, LOCTEXT("IPCConnected", "IPC Connection: Connected"));

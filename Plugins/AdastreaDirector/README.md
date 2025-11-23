@@ -119,18 +119,18 @@ The plugin currently provides:
 10. View detailed status messages during processing
 
 #### Dashboard Tab (NEW)
-5. Click the **Dashboard** tab to view system status
-6. **Status Indicators**: See 6 color-coded lights showing component health:
+1. Click the **Dashboard** tab to view system status
+2. **Status Indicators**: See 6 color-coded lights showing component health:
    - 🟢 Python Process - Backend process running state
    - 🟢 IPC Connection - Socket connection status
    - 🟢 Python Bridge Ready - Overall bridge readiness
    - 🟢 Backend Health - Backend operational status
    - 🟢 Query Processing - Query system availability
    - 🟢 Document Ingestion - Ingestion system status
-7. **Quick Status Check**: All green = system healthy!
-8. **Detailed Status**: View connection details and PID/Port info
-9. **System Logs**: Real-time log output from the backend
-10. **Actions**: Refresh Status or Reconnect if needed
+3. **Quick Status Check**: All green = system healthy!
+4. **Detailed Status**: View connection details and PID/Port info
+5. **System Logs**: Real-time log output from the backend
+6. **Actions**: Refresh Status or Reconnect if needed
 
 **Status Light Colors:**
 - 🟢 Green = Working correctly

@@ -82,6 +82,16 @@ def test_status_indicators(sock: socket.socket):
     print("status indicator lights to verify backend health.")
     print()
     
+    # Track status results for dynamic summary
+    status_results = {
+        'python_process': 'GREEN',
+        'ipc_connection': 'GREEN',
+        'python_bridge': 'GREEN',
+        'backend_health': 'GREEN',
+        'query_processing': 'GREEN',
+        'document_ingestion': 'GREEN'
+    }
+    
     # Test 1: Connection test (IPC is already connected)
     print("✓ IPC Connection Status: CONNECTED")
     print("  (Socket connection to port 5555 is active)")
@@ -89,22 +99,27 @@ def test_status_indicators(sock: socket.socket):
     
     # Test 2: Ping/health check
     print("Checking backend health...")
+    backend_health_ok = False
     try:
         # Simple query to verify backend is responding
         response = send_query(sock, "test")
         if response.get('status') == 'success':
             print("✓ Backend Health Status: OPERATIONAL")
             print("  (Backend is responding to requests)")
+            backend_health_ok = True
         else:
             print("⚠ Backend Health Status: WARNING")
             print(f"  (Unexpected response: {response.get('status')})")
+            status_results['backend_health'] = 'YELLOW'
     except Exception as e:
         print("✗ Backend Health Status: ERROR")
         print(f"  (Error: {e})")
+        status_results['backend_health'] = 'RED'
     print()
     
     # Test 3: Query processing capability
     print("Testing query processing capability...")
+    query_processing_ok = False
     try:
         start_time = time.time()
         response = send_query(sock, "What is Unreal Engine?")
@@ -113,24 +128,31 @@ def test_status_indicators(sock: socket.socket):
         if response.get('status') == 'success':
             print("✓ Query Processing Status: READY")
             print(f"  (Successfully processed query in {elapsed:.2f} ms)")
+            query_processing_ok = True
         else:
             print("⚠ Query Processing Status: ERROR")
             print(f"  (Query failed: {response.get('error', 'Unknown error')})")
+            status_results['query_processing'] = 'RED'
     except Exception as e:
         print("✗ Query Processing Status: ERROR")
         print(f"  (Error: {e})")
+        status_results['query_processing'] = 'RED'
     print()
     
-    # Summary of status indicators
+    # Update derived statuses based on test results
+    if not backend_health_ok:
+        status_results['python_bridge'] = 'RED' if status_results['backend_health'] == 'RED' else 'YELLOW'
+    
+    # Summary of status indicators - dynamically built from test results
     print("-" * 70)
     print("Status Indicator Summary (as would appear in UE Dashboard):")
     print("-" * 70)
-    print("● Python Process:        GREEN  (Process running)")
-    print("● IPC Connection:        GREEN  (Connected to port 5555)")
-    print("● Python Bridge Ready:   GREEN  (All systems operational)")
-    print("● Backend Health:        GREEN  (Responding to requests)")
-    print("● Query Processing:      GREEN  (Ready to process queries)")
-    print("● Document Ingestion:    GREEN  (Ready - not currently ingesting)")
+    print(f"● Python Process:        {status_results['python_process']:<6} (Process running)")
+    print(f"● IPC Connection:        {status_results['ipc_connection']:<6} (Connected to port 5555)")
+    print(f"● Python Bridge Ready:   {status_results['python_bridge']:<6} (All systems operational)" if backend_health_ok else f"● Python Bridge Ready:   {status_results['python_bridge']:<6} (Issues detected)")
+    print(f"● Backend Health:        {status_results['backend_health']:<6} (Responding to requests)" if backend_health_ok else f"● Backend Health:        {status_results['backend_health']:<6} (Not responding properly)")
+    print(f"● Query Processing:      {status_results['query_processing']:<6} (Ready to process queries)" if query_processing_ok else f"● Query Processing:      {status_results['query_processing']:<6} (Errors detected)")
+    print(f"● Document Ingestion:    {status_results['document_ingestion']:<6} (Ready - not currently ingesting)")
     print("-" * 70)
     print()
 

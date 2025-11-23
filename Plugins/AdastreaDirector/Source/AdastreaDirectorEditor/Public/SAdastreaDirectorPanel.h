@@ -234,6 +234,9 @@ private:
 	/** Update all status indicator lights */
 	void UpdateStatusLights();
 
+	/** Helper to set all status lights to error state */
+	void SetAllStatusLightsToError(const FText& Reason);
+
 	// Utility methods
 	/** Create the Query tab content */
 	TSharedRef<SWidget> CreateQueryTab();
