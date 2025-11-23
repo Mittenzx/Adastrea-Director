@@ -1181,6 +1181,11 @@ void SAdastreaDirectorPanel::UpdateDashboardLogs()
 
 void SAdastreaDirectorPanel::UpdateStatusLights()
 {
+	// NOTE: This implementation uses string parsing of GetStatus() output.
+	// While not ideal, it works with the current PythonBridge API without requiring
+	// changes to the bridge interface. Future enhancement: add structured status
+	// methods (e.g., IsProcessRunning(), IsIPCConnected()) to PythonBridge.
+	
 	// Get the Python bridge
 	FAdastreaDirectorModule* RuntimeModule = FModuleManager::GetModulePtr<FAdastreaDirectorModule>("AdastreaDirector");
 	

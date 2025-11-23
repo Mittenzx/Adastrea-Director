@@ -77,6 +77,8 @@ FSlateColor SStatusIndicator::GetStatusColor() const
 FText SStatusIndicator::GetStatusIndicator() const
 {
 	// Use a filled circle character (●) as the indicator
+	// Unicode U+25CF is widely supported on modern systems (Windows, Mac, Linux)
+	// and provides a clear visual indicator for status lights
 	return FText::FromString(TEXT("●"));
 }
 
