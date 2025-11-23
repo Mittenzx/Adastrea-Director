@@ -147,11 +147,17 @@ def test_status_indicators(sock: socket.socket):
     print("-" * 70)
     print("Status Indicator Summary (as would appear in UE Dashboard):")
     print("-" * 70)
+    
+    # Build status messages based on test results
+    bridge_msg = "All systems operational" if backend_health_ok else "Issues detected"
+    health_msg = "Responding to requests" if backend_health_ok else "Not responding properly"
+    query_msg = "Ready to process queries" if query_processing_ok else "Errors detected"
+    
     print(f"● Python Process:        {status_results['python_process']:<6} (Process running)")
     print(f"● IPC Connection:        {status_results['ipc_connection']:<6} (Connected to port 5555)")
-    print(f"● Python Bridge Ready:   {status_results['python_bridge']:<6} (All systems operational)" if backend_health_ok else f"● Python Bridge Ready:   {status_results['python_bridge']:<6} (Issues detected)")
-    print(f"● Backend Health:        {status_results['backend_health']:<6} (Responding to requests)" if backend_health_ok else f"● Backend Health:        {status_results['backend_health']:<6} (Not responding properly)")
-    print(f"● Query Processing:      {status_results['query_processing']:<6} (Ready to process queries)" if query_processing_ok else f"● Query Processing:      {status_results['query_processing']:<6} (Errors detected)")
+    print(f"● Python Bridge Ready:   {status_results['python_bridge']:<6} ({bridge_msg})")
+    print(f"● Backend Health:        {status_results['backend_health']:<6} ({health_msg})")
+    print(f"● Query Processing:      {status_results['query_processing']:<6} ({query_msg})")
     print(f"● Document Ingestion:    {status_results['document_ingestion']:<6} (Ready - not currently ingesting)")
     print("-" * 70)
     print()
