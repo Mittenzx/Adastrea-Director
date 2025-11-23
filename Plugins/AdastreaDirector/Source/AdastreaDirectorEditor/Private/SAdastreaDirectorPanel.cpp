@@ -2,6 +2,7 @@
 
 #include "SAdastreaDirectorPanel.h"
 #include "SSettingsDialog.h"
+#include "SStatusIndicator.h"
 #include "AdastreaDirectorEditorModule.h"
 #include "AdastreaDirectorModule.h"
 #include "PythonBridge.h"
@@ -57,6 +58,7 @@ void SAdastreaDirectorPanel::Construct(const FArguments& InArgs)
 	CurrentLogContent = TEXT("Dashboard logs will appear here...");
 	CachedLogContentText = FText::FromString(CurrentLogContent);
 	CachedConnectionStatus = FText::FromString(TEXT("⚠️ Not connected - Python backend not ready"));
+	LastStatusLightsUpdateTime = 0.0;
 	
 	// Setup progress file path
 	ProgressFilePath = FPaths::ProjectIntermediateDir() / TEXT("AdastreaDirector") / TEXT("ingestion_progress.json");
@@ -437,13 +439,96 @@ TSharedRef<SWidget> SAdastreaDirectorPanel::CreateDashboardTab()
 {
 	return SNew(SVerticalBox)
 		
-		// Connection Status Section
+		// Status Indicators Section
 		+ SVerticalBox::Slot()
 		.AutoHeight()
 		.Padding(10.0f, 10.0f, 10.0f, 5.0f)
 		[
 			SNew(STextBlock)
-			.Text(LOCTEXT("ConnectionStatusLabel", "Connection Status:"))
+			.Text(LOCTEXT("StatusIndicatorsLabel", "System Status Indicators:"))
+			.Font(FCoreStyle::GetDefaultFontStyle("Bold", 12))
+		]
+
+		+ SVerticalBox::Slot()
+		.AutoHeight()
+		.Padding(10.0f, 0.0f, 10.0f, 10.0f)
+		[
+			SNew(SBorder)
+			.BorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
+			.Padding(10.0f)
+			[
+				SNew(SGridPanel)
+				.FillColumn(0, 1.0f)
+				.FillColumn(1, 1.0f)
+				
+				// Row 0: Python Process & IPC Connection
+				+ SGridPanel::Slot(0, 0)
+				.Padding(5.0f)
+				[
+					SAssignNew(PythonProcessStatusLight, SStatusIndicator)
+					.StatusText(LOCTEXT("PythonProcessStatus", "Python Process"))
+					.InitialStatus(SStatusIndicator::EStatus::Unknown)
+				]
+				
+				+ SGridPanel::Slot(1, 0)
+				.Padding(5.0f)
+				[
+					SAssignNew(IPCConnectionStatusLight, SStatusIndicator)
+					.StatusText(LOCTEXT("IPCConnectionStatus", "IPC Connection"))
+					.InitialStatus(SStatusIndicator::EStatus::Unknown)
+				]
+				
+				// Row 1: Python Bridge & Backend Health
+				+ SGridPanel::Slot(0, 1)
+				.Padding(5.0f)
+				[
+					SAssignNew(BridgeReadyStatusLight, SStatusIndicator)
+					.StatusText(LOCTEXT("BridgeReadyStatus", "Python Bridge Ready"))
+					.InitialStatus(SStatusIndicator::EStatus::Unknown)
+				]
+				
+				+ SGridPanel::Slot(1, 1)
+				.Padding(5.0f)
+				[
+					SAssignNew(BackendHealthStatusLight, SStatusIndicator)
+					.StatusText(LOCTEXT("BackendHealthStatus", "Backend Health"))
+					.InitialStatus(SStatusIndicator::EStatus::Unknown)
+				]
+				
+				// Row 2: Query Processing & Ingestion
+				+ SGridPanel::Slot(0, 2)
+				.Padding(5.0f)
+				[
+					SAssignNew(QueryProcessingStatusLight, SStatusIndicator)
+					.StatusText(LOCTEXT("QueryProcessingStatus", "Query Processing"))
+					.InitialStatus(SStatusIndicator::EStatus::Unknown)
+				]
+				
+				+ SGridPanel::Slot(1, 2)
+				.Padding(5.0f)
+				[
+					SAssignNew(IngestionStatusLight, SStatusIndicator)
+					.StatusText(LOCTEXT("IngestionStatus", "Document Ingestion"))
+					.InitialStatus(SStatusIndicator::EStatus::Unknown)
+				]
+			]
+		]
+
+		+ SVerticalBox::Slot()
+		.AutoHeight()
+		.Padding(10.0f, 5.0f, 10.0f, 10.0f)
+		[
+			SNew(SSeparator)
+			.Orientation(Orient_Horizontal)
+		]
+
+		// Connection Status Section
+		+ SVerticalBox::Slot()
+		.AutoHeight()
+		.Padding(10.0f, 5.0f, 10.0f, 5.0f)
+		[
+			SNew(STextBlock)
+			.Text(LOCTEXT("ConnectionStatusLabel", "Detailed Status:"))
 			.Font(FCoreStyle::GetDefaultFontStyle("Bold", 12))
 		]
 
@@ -477,7 +562,7 @@ TSharedRef<SWidget> SAdastreaDirectorPanel::CreateDashboardTab()
 					[
 						SNew(SButton)
 						.Text(LOCTEXT("RefreshStatusButton", "Refresh Status"))
-						.ToolTipText(LOCTEXT("RefreshStatusTooltip", "Update connection status"))
+						.ToolTipText(LOCTEXT("RefreshStatusTooltip", "Update connection status and indicators"))
 						.OnClicked(this, &SAdastreaDirectorPanel::OnRefreshDashboardClicked)
 					]
 
@@ -968,6 +1053,7 @@ FReply SAdastreaDirectorPanel::OnRefreshDashboardClicked()
 {
 	UpdateDashboardLogs();
 	UpdateConnectionStatus();
+	UpdateStatusLights();
 	LastDashboardRefreshTime = RefreshTimerReset; // Reset timer to prevent immediate auto-refresh
 	return FReply::Handled();
 }
@@ -1005,6 +1091,7 @@ FReply SAdastreaDirectorPanel::OnReconnectClicked()
 	
 	AppendLogEntry(LogEntry);
 	UpdateConnectionStatus();
+	UpdateStatusLights();
 	
 	return FReply::Handled();
 }
@@ -1092,6 +1179,143 @@ void SAdastreaDirectorPanel::UpdateDashboardLogs()
 	AppendLogEntry(NewLogEntry);
 }
 
+void SAdastreaDirectorPanel::UpdateStatusLights()
+{
+	// Get the Python bridge
+	FAdastreaDirectorModule* RuntimeModule = FModuleManager::GetModulePtr<FAdastreaDirectorModule>("AdastreaDirector");
+	
+	if (!RuntimeModule)
+	{
+		// Runtime module not available - all systems down
+		if (PythonProcessStatusLight.IsValid())
+			PythonProcessStatusLight->SetStatus(SStatusIndicator::EStatus::Error, LOCTEXT("PythonProcessError", "Python Process: Runtime module not available"));
+		if (IPCConnectionStatusLight.IsValid())
+			IPCConnectionStatusLight->SetStatus(SStatusIndicator::EStatus::Error, LOCTEXT("IPCConnectionError", "IPC Connection: Runtime module not available"));
+		if (BridgeReadyStatusLight.IsValid())
+			BridgeReadyStatusLight->SetStatus(SStatusIndicator::EStatus::Error, LOCTEXT("BridgeReadyError", "Python Bridge: Runtime module not available"));
+		if (BackendHealthStatusLight.IsValid())
+			BackendHealthStatusLight->SetStatus(SStatusIndicator::EStatus::Error, LOCTEXT("BackendHealthError", "Backend Health: Runtime module not available"));
+		if (QueryProcessingStatusLight.IsValid())
+			QueryProcessingStatusLight->SetStatus(SStatusIndicator::EStatus::Error, LOCTEXT("QueryProcessingError", "Query Processing: Runtime module not available"));
+		if (IngestionStatusLight.IsValid())
+			IngestionStatusLight->SetStatus(SStatusIndicator::EStatus::Error, LOCTEXT("IngestionError", "Document Ingestion: Runtime module not available"));
+		return;
+	}
+
+	FPythonBridge* PythonBridge = RuntimeModule->GetPythonBridge();
+	
+	if (!PythonBridge)
+	{
+		// Python bridge not initialized
+		if (PythonProcessStatusLight.IsValid())
+			PythonProcessStatusLight->SetStatus(SStatusIndicator::EStatus::Error, LOCTEXT("PythonProcessNotInit", "Python Process: Bridge not initialized"));
+		if (IPCConnectionStatusLight.IsValid())
+			IPCConnectionStatusLight->SetStatus(SStatusIndicator::EStatus::Error, LOCTEXT("IPCConnectionNotInit", "IPC Connection: Bridge not initialized"));
+		if (BridgeReadyStatusLight.IsValid())
+			BridgeReadyStatusLight->SetStatus(SStatusIndicator::EStatus::Error, LOCTEXT("BridgeReadyNotInit", "Python Bridge: Not initialized"));
+		if (BackendHealthStatusLight.IsValid())
+			BackendHealthStatusLight->SetStatus(SStatusIndicator::EStatus::Error, LOCTEXT("BackendHealthNotInit", "Backend Health: Bridge not initialized"));
+		if (QueryProcessingStatusLight.IsValid())
+			QueryProcessingStatusLight->SetStatus(SStatusIndicator::EStatus::Unknown, LOCTEXT("QueryProcessingIdle", "Query Processing: Idle"));
+		if (IngestionStatusLight.IsValid())
+			IngestionStatusLight->SetStatus(SStatusIndicator::EStatus::Unknown, LOCTEXT("IngestionIdle", "Document Ingestion: Not running"));
+		return;
+	}
+
+	// Check Python process status (we need to access internal state through GetStatus)
+	FString StatusString = PythonBridge->GetStatus();
+	
+	if (StatusString.Contains(TEXT("not running")))
+	{
+		if (PythonProcessStatusLight.IsValid())
+			PythonProcessStatusLight->SetStatus(SStatusIndicator::EStatus::Error, LOCTEXT("PythonProcessStopped", "Python Process: Not running"));
+	}
+	else if (StatusString.Contains(TEXT("Ready")))
+	{
+		if (PythonProcessStatusLight.IsValid())
+			PythonProcessStatusLight->SetStatus(SStatusIndicator::EStatus::Good, FText::Format(LOCTEXT("PythonProcessRunning", "Python Process: {0}"), FText::FromString(StatusString)));
+	}
+	else
+	{
+		if (PythonProcessStatusLight.IsValid())
+			PythonProcessStatusLight->SetStatus(SStatusIndicator::EStatus::Warning, FText::Format(LOCTEXT("PythonProcessUnknown", "Python Process: {0}"), FText::FromString(StatusString)));
+	}
+
+	// Check IPC connection status
+	if (StatusString.Contains(TEXT("IPC not connected")))
+	{
+		if (IPCConnectionStatusLight.IsValid())
+			IPCConnectionStatusLight->SetStatus(SStatusIndicator::EStatus::Error, LOCTEXT("IPCDisconnected", "IPC Connection: Disconnected"));
+	}
+	else if (StatusString.Contains(TEXT("Ready")))
+	{
+		if (IPCConnectionStatusLight.IsValid())
+			IPCConnectionStatusLight->SetStatus(SStatusIndicator::EStatus::Good, LOCTEXT("IPCConnected", "IPC Connection: Connected"));
+	}
+	else
+	{
+		if (IPCConnectionStatusLight.IsValid())
+			IPCConnectionStatusLight->SetStatus(SStatusIndicator::EStatus::Warning, LOCTEXT("IPCUnknown", "IPC Connection: Unknown state"));
+	}
+
+	// Check Python bridge ready state
+	bool bIsReady = PythonBridge->IsReady();
+	if (bIsReady)
+	{
+		if (BridgeReadyStatusLight.IsValid())
+			BridgeReadyStatusLight->SetStatus(SStatusIndicator::EStatus::Good, LOCTEXT("BridgeReady", "Python Bridge: Ready"));
+		if (BackendHealthStatusLight.IsValid())
+			BackendHealthStatusLight->SetStatus(SStatusIndicator::EStatus::Good, LOCTEXT("BackendHealthGood", "Backend Health: Operational"));
+	}
+	else
+	{
+		if (BridgeReadyStatusLight.IsValid())
+			BridgeReadyStatusLight->SetStatus(SStatusIndicator::EStatus::Error, LOCTEXT("BridgeNotReady", "Python Bridge: Not ready"));
+		if (BackendHealthStatusLight.IsValid())
+			BackendHealthStatusLight->SetStatus(SStatusIndicator::EStatus::Error, LOCTEXT("BackendHealthBad", "Backend Health: Not operational"));
+	}
+
+	// Check query processing state
+	if (bIsProcessing)
+	{
+		if (QueryProcessingStatusLight.IsValid())
+			QueryProcessingStatusLight->SetStatus(SStatusIndicator::EStatus::Good, LOCTEXT("QueryProcessingActive", "Query Processing: Active"));
+	}
+	else if (bIsReady)
+	{
+		if (QueryProcessingStatusLight.IsValid())
+			QueryProcessingStatusLight->SetStatus(SStatusIndicator::EStatus::Good, LOCTEXT("QueryProcessingReady", "Query Processing: Ready"));
+	}
+	else
+	{
+		if (QueryProcessingStatusLight.IsValid())
+			QueryProcessingStatusLight->SetStatus(SStatusIndicator::EStatus::Error, LOCTEXT("QueryProcessingUnavailable", "Query Processing: Unavailable"));
+	}
+
+	// Check ingestion state
+	if (bIsIngesting)
+	{
+		if (IngestionStatusLight.IsValid())
+		{
+			float ProgressPercent = IngestionProgress * 100.0f;
+			IngestionStatusLight->SetStatus(
+				SStatusIndicator::EStatus::Warning, 
+				FText::Format(LOCTEXT("IngestionActive", "Document Ingestion: Active ({0}%)"), FText::AsNumber(static_cast<int32>(ProgressPercent)))
+			);
+		}
+	}
+	else if (bIsReady)
+	{
+		if (IngestionStatusLight.IsValid())
+			IngestionStatusLight->SetStatus(SStatusIndicator::EStatus::Good, LOCTEXT("IngestionReady", "Document Ingestion: Ready"));
+	}
+	else
+	{
+		if (IngestionStatusLight.IsValid())
+			IngestionStatusLight->SetStatus(SStatusIndicator::EStatus::Error, LOCTEXT("IngestionUnavailable", "Document Ingestion: Unavailable"));
+	}
+}
+
 void SAdastreaDirectorPanel::Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime)
 {
 	SCompoundWidget::Tick(AllottedGeometry, InCurrentTime, InDeltaTime);
@@ -1125,6 +1349,14 @@ void SAdastreaDirectorPanel::Tick(const FGeometry& AllottedGeometry, const doubl
 			UpdateConnectionStatus();
 			LastConnectionStatusUpdateTime = InCurrentTime;
 		}
+
+		// Update status lights
+		const double TimeSinceLastLightsUpdate = InCurrentTime - LastStatusLightsUpdateTime;
+		if (TimeSinceLastLightsUpdate >= StatusLightsUpdateInterval)
+		{
+			UpdateStatusLights();
+			LastStatusLightsUpdateTime = InCurrentTime;
+		}
 	}
 }
 
@@ -1151,6 +1383,7 @@ FReply SAdastreaDirectorPanel::OnTabButtonClicked(int32 TabIndex)
 		{
 			UpdateDashboardLogs();
 			UpdateConnectionStatus();
+			UpdateStatusLights();
 			LastDashboardRefreshTime = RefreshTimerReset; // Reset timer to prevent immediate auto-refresh
 		}
 	}

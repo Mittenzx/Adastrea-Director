@@ -11,6 +11,7 @@ class SEditableTextBox;
 class STextBlock;
 class SProgressBar;
 class SWidgetSwitcher;
+class SStatusIndicator;
 
 /**
  * Main Slate panel widget for Adastrea Director.
@@ -186,6 +187,31 @@ private:
 	/** Timer reset value to prevent immediate auto-refresh */
 	static constexpr double RefreshTimerReset = -10.0;
 
+	// Status indicator widgets
+	/** Python process status indicator */
+	TSharedPtr<SStatusIndicator> PythonProcessStatusLight;
+	
+	/** IPC connection status indicator */
+	TSharedPtr<SStatusIndicator> IPCConnectionStatusLight;
+	
+	/** Python bridge ready status indicator */
+	TSharedPtr<SStatusIndicator> BridgeReadyStatusLight;
+	
+	/** Query processing status indicator */
+	TSharedPtr<SStatusIndicator> QueryProcessingStatusLight;
+	
+	/** Ingestion status indicator */
+	TSharedPtr<SStatusIndicator> IngestionStatusLight;
+	
+	/** Backend health status indicator */
+	TSharedPtr<SStatusIndicator> BackendHealthStatusLight;
+
+	/** Status lights update interval in seconds */
+	static constexpr double StatusLightsUpdateInterval = 0.5;
+	
+	/** Time since last status lights update */
+	double LastStatusLightsUpdateTime;
+
 	// Dashboard tab methods
 	/** Called when Refresh Dashboard button is clicked */
 	FReply OnRefreshDashboardClicked();
@@ -204,6 +230,9 @@ private:
 
 	/** Update connection status cache */
 	void UpdateConnectionStatus();
+
+	/** Update all status indicator lights */
+	void UpdateStatusLights();
 
 	// Utility methods
 	/** Create the Query tab content */
