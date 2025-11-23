@@ -78,11 +78,15 @@ The plugin currently provides:
 - ✅ Conversation history with clear confirmation
 
 ### UI Enhancement: Tabbed Interface ✅ (November 2025)
-- ✅ Professional tabbed interface with Query and Ingestion tabs
+- ✅ Professional tabbed interface with Query, Ingestion, and Dashboard tabs
 - ✅ Radio button style tab switching
 - ✅ Full access to document ingestion features
 - ✅ Progress bar and status updates during ingestion
 - ✅ Smooth tab switching with state preservation
+- ✅ Dashboard with comprehensive status indicator lights
+- ✅ Real-time system health monitoring (6 status indicators)
+- ✅ Color-coded status lights for easy troubleshooting
+- ✅ Automatic status updates every 0.5 seconds
 
 **Coming Soon:**
 - Planning agent integration
@@ -113,6 +117,28 @@ The plugin currently provides:
 8. Click "Start Ingestion" to process documents
 9. Monitor progress with the real-time progress bar
 10. View detailed status messages during processing
+
+#### Dashboard Tab (NEW)
+5. Click the **Dashboard** tab to view system status
+6. **Status Indicators**: See 6 color-coded lights showing component health:
+   - 🟢 Python Process - Backend process running state
+   - 🟢 IPC Connection - Socket connection status
+   - 🟢 Python Bridge Ready - Overall bridge readiness
+   - 🟢 Backend Health - Backend operational status
+   - 🟢 Query Processing - Query system availability
+   - 🟢 Document Ingestion - Ingestion system status
+7. **Quick Status Check**: All green = system healthy!
+8. **Detailed Status**: View connection details and PID/Port info
+9. **System Logs**: Real-time log output from the backend
+10. **Actions**: Refresh Status or Reconnect if needed
+
+**Status Light Colors:**
+- 🟢 Green = Working correctly
+- 🟡 Yellow = Warning or operation in progress
+- 🔴 Red = Error or not functional
+- ⚪ Gray = Unknown or checking
+
+**See [STATUS_INDICATORS.md](STATUS_INDICATORS.md) for complete troubleshooting guide.**
 
 The Python backend starts automatically when the plugin loads!
 
