@@ -25,6 +25,10 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 MAX_ERROR_LOG_LENGTH = 200  # Maximum characters to show in error logs to keep them concise and readable
 PROGRESS_POLL_INTERVAL_MS = 500  # Progress file polling interval in milliseconds (balance between responsiveness and performance)
 
+# Constants for test execution
+TEST_OUTPUT_BATCH_SIZE = 10  # Number of output lines to batch before updating UI (improves performance)
+TEST_STOP_TIMEOUT = 3  # Seconds to wait for graceful process termination before forcing kill
+
 class AdastreaDirectorApp:
     def __init__(self, root):
         self.root = root
@@ -2477,7 +2481,7 @@ GitHub: Mittenzx/Adastrea-Director
             
             # Stream output with batching to avoid flooding the event queue
             output_batch = []
-            batch_size = 10  # Process 10 lines at a time
+            batch_size = TEST_OUTPUT_BATCH_SIZE
             
             try:
                 for line in iter(process.stdout.readline, ''):
@@ -2619,7 +2623,7 @@ GitHub: Mittenzx/Adastrea-Director
                 
                 # Wait briefly for graceful termination
                 try:
-                    process.wait(timeout=3)
+                    process.wait(timeout=TEST_STOP_TIMEOUT)
                 except subprocess.TimeoutExpired:
                     # Force kill if terminate didn't work
                     process.kill()
