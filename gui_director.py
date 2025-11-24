@@ -967,10 +967,17 @@ class AdastreaDirectorApp:
         self.test_output.tag_config("info", foreground=self.fg_secondary, font=("Consolas", 9))
         self.test_output.tag_config("command", foreground=self.fg_muted, font=("Consolas", 8, "italic"))
         
+        # Store button references for later access
+        self.test_buttons = [
+            all_tests_btn, plugin_tests_btn, unit_tests_btn,
+            integration_tests_btn, phase3_tests_btn, validation_btn, remote_tests_btn
+        ]
+        
         paned_window.add(output_frame, weight=1)
         
         # Initialize test running state
         self.current_test_process = None
+        self.test_process_lock = threading.Lock()
         
         # Add initial message
         self.test_output.config(state=tk.NORMAL)
@@ -2389,6 +2396,12 @@ GitHub: Mittenzx/Adastrea-Director
     
     def run_test_suite(self, test_type):
         """Run a specific test suite."""
+        # Check if a test is already running (thread-safe)
+        with self.test_process_lock:
+            if self.current_test_process is not None:
+                messagebox.showwarning("Test Running", "A test is already running. Please wait for it to complete or stop it first.")
+                return
+        
         # Map test types to commands
         test_commands = {
             "all": [PYTHON_EXECUTABLE, "-m", "pytest", "-v", "--tb=short"],
@@ -2430,6 +2443,10 @@ GitHub: Mittenzx/Adastrea-Director
         self.test_status_label.config(text=f"Running: {test_name}", fg=self.accent_color)
         self.update_status(f"Running {test_name}...", "busy")
         
+        # Disable all test buttons to prevent concurrent tests
+        for btn in self.test_buttons:
+            btn.config(state=tk.DISABLED)
+        
         # Enable stop button
         self.stop_test_button.config(state=tk.NORMAL)
         
@@ -2453,15 +2470,30 @@ GitHub: Mittenzx/Adastrea-Director
             if sys.platform == 'win32' and hasattr(subprocess, 'CREATE_NO_WINDOW'):
                 kwargs['creationflags'] = subprocess.CREATE_NO_WINDOW
             
-            # Start the process
+            # Start the process (thread-safe)
             process = subprocess.Popen(command, **kwargs)
-            self.current_test_process = process
+            with self.test_process_lock:
+                self.current_test_process = process
             
-            # Stream output line by line with proper exception handling
+            # Stream output with batching to avoid flooding the event queue
+            output_batch = []
+            batch_size = 10  # Process 10 lines at a time
+            
             try:
                 for line in iter(process.stdout.readline, ''):
                     if line:
-                        self.root.after(0, self._append_test_output, line)
+                        output_batch.append(line)
+                        if len(output_batch) >= batch_size:
+                            # Send batch to UI
+                            batch_copy = output_batch.copy()
+                            self.root.after(0, self._append_test_output_batch, batch_copy)
+                            output_batch.clear()
+                
+                # Send any remaining lines
+                if output_batch:
+                    batch_copy = output_batch.copy()
+                    self.root.after(0, self._append_test_output_batch, batch_copy)
+                    
             except Exception as read_error:
                 # Log read error but continue to get return code
                 self.root.after(0, self._append_test_output, f"\nWarning: Error reading output: {read_error}\n")
@@ -2480,12 +2512,14 @@ GitHub: Mittenzx/Adastrea-Director
         except Exception as e:
             self.root.after(0, self._show_test_error, str(e), test_name)
         finally:
-            # Ensure process cleanup
+            # Ensure process cleanup (thread-safe)
             if process and process.poll() is None:
                 try:
                     process.terminate()
                 except Exception:
                     pass
+            with self.test_process_lock:
+                self.current_test_process = None
     
     def _append_test_output(self, line):
         """Append a line to test output with appropriate formatting."""
@@ -2503,6 +2537,27 @@ GitHub: Mittenzx/Adastrea-Director
             tag = "info"
         
         self.test_output.insert(tk.END, line, tag)
+        self.test_output.see(tk.END)
+        self.test_output.config(state=tk.DISABLED)
+    
+    def _append_test_output_batch(self, lines):
+        """Append multiple lines to test output for better performance."""
+        self.test_output.config(state=tk.NORMAL)
+        
+        for line in lines:
+            # Determine tag based on content
+            line_lower = line.lower()
+            if "passed" in line_lower or "✓" in line or "ok" in line_lower:
+                tag = "pass"
+            elif "failed" in line_lower or "error" in line_lower or "✗" in line:
+                tag = "fail"
+            elif "warning" in line_lower or "warn" in line_lower:
+                tag = "warning"
+            else:
+                tag = "info"
+            
+            self.test_output.insert(tk.END, line, tag)
+        
         self.test_output.see(tk.END)
         self.test_output.config(state=tk.DISABLED)
     
@@ -2526,9 +2581,12 @@ GitHub: Mittenzx/Adastrea-Director
         self.test_output.config(state=tk.DISABLED)
         self.test_output.see(tk.END)
         
+        # Re-enable all test buttons
+        for btn in self.test_buttons:
+            btn.config(state=tk.NORMAL)
+        
         # Disable stop button
         self.stop_test_button.config(state=tk.DISABLED)
-        self.current_test_process = None
     
     def _show_test_error(self, error_msg, test_name):
         """Show error when test execution fails."""
@@ -2541,16 +2599,22 @@ GitHub: Mittenzx/Adastrea-Director
         self.test_status_label.config(text=f"❌ Error", fg=self.error_color)
         self.update_status(f"Error running {test_name}", "error")
         
+        # Re-enable all test buttons
+        for btn in self.test_buttons:
+            btn.config(state=tk.NORMAL)
+        
         # Disable stop button
         self.stop_test_button.config(state=tk.DISABLED)
-        self.current_test_process = None
     
     def stop_running_test(self):
         """Stop the currently running test process."""
-        if self.current_test_process:
+        # Get process reference thread-safely
+        with self.test_process_lock:
+            process = self.current_test_process
+            
+        if process:
             try:
                 # Robust shutdown: try terminate first, then kill if needed
-                process = self.current_test_process
                 process.terminate()
                 
                 # Wait briefly for graceful termination
@@ -2569,8 +2633,16 @@ GitHub: Mittenzx/Adastrea-Director
                 self.test_status_label.config(text="⏹ Stopped", fg=self.warning_color)
                 self.update_status("Test execution stopped", "warning")
                 
+                # Re-enable all test buttons
+                for btn in self.test_buttons:
+                    btn.config(state=tk.NORMAL)
+                
                 self.stop_test_button.config(state=tk.DISABLED)
-                self.current_test_process = None
+                
+                # Clear process reference thread-safely
+                with self.test_process_lock:
+                    self.current_test_process = None
+                    
             except Exception as e:
                 messagebox.showerror("Error", f"Failed to stop test: {e}")
     
