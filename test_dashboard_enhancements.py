@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Test script to verify dashboard enhancements show error details.
+Test script to verify dashboard enhancements show error details and health checks.
 """
 
 import sys
@@ -42,6 +42,16 @@ def test_dashboard_with_errors():
     # Check that error count increased
     assert dashboard.event_counts[EventType.AGENT_ERROR] == 1, "Error count should be 1"
     print("✓ Error count updated")
+    
+    # Test system health checks
+    dashboard.update_system_health()
+    assert dashboard.system_health is not None, "System health should be checked"
+    print("✓ System health checks completed")
+    
+    # Test system health panel
+    health_panel = dashboard.generate_system_health_panel()
+    assert health_panel is not None, "Health panel should be generated"
+    print("✓ System health panel generated")
     
     # Generate layout to ensure no errors
     layout = dashboard.generate_layout()

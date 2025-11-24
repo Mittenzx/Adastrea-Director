@@ -28,6 +28,7 @@ from agents.phase3 import (
     EventType,
     AgentStatus
 )
+from system_health import SystemHealthChecker
 
 console = Console()
 
@@ -79,6 +80,10 @@ class AgentDashboard:
         
         # Track last errors for each agent
         self.agent_errors = {}
+        
+        # Initialize health checker
+        self.health_checker = SystemHealthChecker()
+        self.system_health = {}
         
         # Subscribe to all events
         self._subscribe_to_events()
@@ -316,8 +321,49 @@ class AgentDashboard:
             style="red"
         )
     
+    def update_system_health(self):
+        """Update system health checks."""
+        self.system_health = self.health_checker.check_all()
+    
+    def generate_system_health_panel(self) -> Panel:
+        """Generate system health status panel."""
+        text = Text()
+        
+        if not self.system_health:
+            text.append("Health checks not yet run\n", style="dim italic")
+            text.append("Run update_system_health() to check", style="dim")
+        else:
+            text.append("System Health:\n", style="bold cyan")
+            
+            for component, status in self.system_health.items():
+                icon = "✓" if status.healthy else "✗"
+                style = "green" if status.healthy else "red"
+                
+                text.append(f"\n{icon} ", style=style)
+                text.append(f"{status.component}: ", style="cyan")
+                text.append(f"{status.message}", style=style)
+                
+                # Show document count if available
+                if status.details and 'document_count' in status.details:
+                    doc_count = status.details['document_count']
+                    text.append(f"\n   Documents: {doc_count}", style="dim")
+        
+        # Overall system health indicator
+        is_healthy = all(s.healthy for s in self.system_health.values() 
+                        if s.component in ['LLM API', 'Vector Database'])
+        
+        overall_style = "green" if is_healthy else "red"
+        border_style = "green" if is_healthy else "red"
+        
+        return Panel(
+            text,
+            title=f"System Health ({'Healthy' if is_healthy else 'Issues Detected'})",
+            box=box.ROUNDED,
+            style=border_style
+        )
+    
     def generate_layout(self) -> Layout:
-        """Generate dashboard layout with error details."""
+        """Generate dashboard layout with error details and system health."""
         layout = Layout()
         
         # Split into header and body
@@ -332,8 +378,9 @@ class AgentDashboard:
             Layout(name="right")
         )
         
-        # Split left into status and events
+        # Split left into system health, status and events
         layout["left"].split_column(
+            Layout(name="system_health", size=10),
             Layout(name="status"),
             Layout(name="event_summary", size=12)
         )
@@ -347,8 +394,12 @@ class AgentDashboard:
             Layout(name="controls", size=6)
         )
         
+        # Update system health periodically (not every frame to reduce overhead)
+        # We'll update it in the run loop
+        
         # Fill layouts
         layout["header"].update(self.generate_header())
+        layout["system_health"].update(self.generate_system_health_panel())
         layout["status"].update(self.generate_agent_status_table())
         layout["event_summary"].update(self.generate_event_summary_table())
         layout["recent_events"].update(self.generate_recent_events_panel())
@@ -373,10 +424,22 @@ class AgentDashboard:
             self.start_all_agents()
             time.sleep(0.5)
         
+        # Initial health check
+        console.print("[cyan]Running system health checks...[/cyan]")
+        self.update_system_health()
+        
         try:
+            health_check_counter = 0
             with Live(self.generate_layout(), refresh_per_second=1, console=console) as live:
                 while not self._stop_event.is_set():
                     time.sleep(self.update_interval)
+                    
+                    # Update system health every 5 seconds to reduce overhead
+                    health_check_counter += 1
+                    if health_check_counter >= 5:
+                        self.update_system_health()
+                        health_check_counter = 0
+                    
                     live.update(self.generate_layout())
         except KeyboardInterrupt:
             console.print("\n[yellow]Dashboard interrupted by user[/yellow]")
