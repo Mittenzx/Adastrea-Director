@@ -15,6 +15,7 @@ Usage:
     python ipc_server.py --port 5555
 """
 
+import os
 import socket
 import json
 import sys
@@ -340,86 +341,329 @@ class IPCServer:
 
     def _handle_query(self, data: str) -> Dict[str, Any]:
         """
-        Handle documentation query request.
+        Handle documentation query request using the RAG system.
         
-        TODO: Integrate with actual RAG system
+        Attempts to use the RAG system if available. Falls back to LLM-only
+        response if RAG database is not initialized.
         """
         logger.info(f"Query received: {data}")
         
-        # Provide sample responses for testing
-        if "unreal engine" in data.lower() or "what is unreal engine" in data.lower():
-            result_text = dedent("""
-                Unreal Engine is a comprehensive suite of real-time 3D creation tools developed by Epic Games. 
-
-                Key Features:
-                • High-fidelity real-time rendering
-                • Advanced physics and collision systems
-                • Blueprint visual scripting system
-                • C++ programming support
-                • Cross-platform development (PC, Console, Mobile, VR/AR)
-                • Built-in multiplayer and networking
-                • Marketplace with thousands of assets
-                • Industry-leading graphics capabilities
-
-                Unreal Engine is widely used for:
-                - Video game development (AAA and indie games)
-                - Film and television production
-                - Architectural visualization
-                - Automotive design
-                - Virtual production and cinematography
-
-                The engine is free to use with a royalty model for commercial products.
-            """).strip()
-        else:
-            result_text = dedent(f"""
-                This is a response to your query: "{data}"
-
-                Currently, this is a placeholder response from the Python backend IPC server.
-
-                The query handler is working correctly and can communicate with the Unreal Engine plugin UI.
-
-                To integrate with the full RAG system and planning agents, the actual implementation will be connected in future phases.
-            """).strip()
+        # Try to use the RAG system
+        try:
+            from rag_query import RAGQueryAgent
+            import os
+            
+            # Check for common persist directory locations
+            persist_dirs = [
+                './chroma_db',
+                '../../../chroma_db',
+                os.path.join(os.path.dirname(__file__), '..', '..', '..', 'chroma_db'),
+            ]
+            
+            persist_directory = None
+            for pd in persist_dirs:
+                if os.path.exists(pd):
+                    persist_directory = pd
+                    break
+            
+            if persist_directory:
+                logger.info(f"Using RAG database at: {persist_directory}")
+                query_agent = RAGQueryAgent(
+                    collection_name='adastrea_docs',
+                    persist_directory=persist_directory
+                )
+                
+                response = query_agent.process_query(data)
+                
+                return {
+                    'status': 'success',
+                    'result': response.get('answer', ''),
+                    'sources': response.get('source_documents', []),
+                    'processing_time': response.get('processing_time', 0),
+                    'cached': response.get('cached', False)
+                }
+            else:
+                logger.warning("RAG database not found, using LLM-only mode")
+                
+        except ImportError as e:
+            logger.warning(f"RAG module not available: {e}")
+        except ValueError as e:
+            # Database is empty or not initialized
+            logger.warning(f"RAG database issue: {e}")
+        except Exception as e:
+            logger.error(f"RAG query error: {e}")
         
-        return {
-            'status': 'success',
-            'result': result_text,
-            'sources': []
-        }
+        # Fallback: Try direct LLM query if RAG is not available
+        try:
+            from llm_config import get_llm
+            
+            llm = get_llm()
+            
+            prompt = f"""You are the Adastrea Director, an AI assistant specialized in helping with game development in Unreal Engine.
+
+Answer the following question to the best of your ability. Be concise but thorough.
+
+Question: {data}
+
+Answer:"""
+            
+            response = llm.invoke(prompt)
+            result_text = response.content if hasattr(response, 'content') else str(response)
+            
+            return {
+                'status': 'success',
+                'result': result_text,
+                'sources': [],
+                'note': 'Response generated without RAG context. For context-aware answers, please ingest documents first.'
+            }
+            
+        except Exception as e:
+            logger.error(f"LLM query error: {e}")
+            # Final fallback with helpful message
+            result_text = dedent(f"""
+                I received your query: "{data}"
+
+                However, I'm unable to provide a meaningful response at this time because:
+                
+                1. The RAG (Retrieval-Augmented Generation) system is not initialized. 
+                   Please run the ingestion process to load your project documents.
+                
+                2. No LLM API key is configured. Please set up your API key:
+                   - For Gemini (recommended): Set GEMINI_KEY environment variable
+                   - For OpenAI: Set OPENAI_API_KEY environment variable
+                
+                To set up the system:
+                1. Create a .env file with your API key
+                2. Run: python ingest.py --docs-dir <your_docs_folder>
+                3. Restart the IPC server
+                
+                For more information, see the README.md file.
+            """).strip()
+            
+            return {
+                'status': 'success',
+                'result': result_text,
+                'sources': [],
+                'setup_required': True
+            }
 
     def _handle_plan(self, data: str) -> Dict[str, Any]:
         """
-        Handle planning request.
+        Handle planning request using the task decomposition agent.
         
-        TODO: Integrate with planning agents
+        Attempts to use the planning agents if available.
         """
         logger.info(f"Plan request received: {data}")
         
-        # Placeholder response
+        # Try to use actual planning agents
+        try:
+            from task_decomposition_agent import TaskDecompositionAgent
+            from goal_analysis_agent import GoalAnalysisAgent
+            
+            # First analyze the goal
+            goal_agent = GoalAnalysisAgent()
+            analysis = goal_agent.analyze_goal(data)
+            
+            # Then decompose into tasks
+            task_agent = TaskDecompositionAgent()
+            plan = task_agent.decompose_goal(analysis)
+            
+            return {
+                'status': 'success',
+                'plan': {
+                    'goal': data,
+                    'tasks': plan.get('tasks', []),
+                    'dependencies': plan.get('dependencies', []),
+                    'estimated_duration': plan.get('estimated_duration', 'unknown')
+                }
+            }
+            
+        except ImportError as e:
+            logger.warning(f"Planning agents not available: {e}")
+        except Exception as e:
+            logger.error(f"Planning error: {e}")
+        
+        # Fallback: Try direct LLM planning
+        try:
+            from llm_config import get_llm
+            import json as json_module
+            
+            llm = get_llm()
+            
+            prompt = f"""You are the Adastrea Director, an AI assistant specialized in game development planning.
+
+Break down the following goal into a list of actionable tasks for Unreal Engine development.
+
+Goal: {data}
+
+Respond in JSON format with this structure:
+{{
+    "tasks": [
+        {{"id": 1, "name": "Task name", "description": "Brief description", "priority": "high/medium/low"}},
+        ...
+    ],
+    "dependencies": [
+        {{"from": 1, "to": 2}}
+    ],
+    "estimated_duration": "X hours/days"
+}}
+
+JSON Response:"""
+            
+            response = llm.invoke(prompt)
+            result_text = response.content if hasattr(response, 'content') else str(response)
+            
+            # Try to parse as JSON
+            try:
+                # Extract JSON from response (handle markdown code blocks)
+                json_str = result_text
+                if '```json' in json_str:
+                    json_str = json_str.split('```json')[1].split('```')[0]
+                elif '```' in json_str:
+                    json_str = json_str.split('```')[1].split('```')[0]
+                
+                plan_data = json_module.loads(json_str.strip())
+                return {
+                    'status': 'success',
+                    'plan': {
+                        'goal': data,
+                        'tasks': plan_data.get('tasks', []),
+                        'dependencies': plan_data.get('dependencies', []),
+                        'estimated_duration': plan_data.get('estimated_duration', 'unknown')
+                    }
+                }
+            except json_module.JSONDecodeError:
+                # Return raw response if JSON parsing fails
+                return {
+                    'status': 'success',
+                    'plan': {
+                        'goal': data,
+                        'tasks': [{'id': 1, 'name': 'Generated Plan', 'description': result_text, 'priority': 'medium'}],
+                        'dependencies': [],
+                        'estimated_duration': 'unknown'
+                    }
+                }
+                
+        except Exception as e:
+            logger.error(f"LLM planning error: {e}")
+        
+        # Final fallback
         return {
             'status': 'success',
             'plan': {
                 'goal': data,
                 'tasks': [],
-                'dependencies': []
+                'dependencies': [],
+                'note': 'Planning agents not available. Please configure an LLM API key.'
             }
         }
 
     def _handle_analyze(self, data: str) -> Dict[str, Any]:
         """
-        Handle goal analysis request.
+        Handle goal analysis request using the goal analysis agent.
         
-        TODO: Integrate with goal analysis agent
+        Attempts to use the goal analysis agent if available.
         """
         logger.info(f"Analyze request received: {data}")
         
-        # Placeholder response
+        # Try to use actual goal analysis agent
+        try:
+            from goal_analysis_agent import GoalAnalysisAgent
+            
+            agent = GoalAnalysisAgent()
+            analysis = agent.analyze_goal(data)
+            
+            return {
+                'status': 'success',
+                'analysis': {
+                    'goal': data,
+                    'goal_type': analysis.get('goal_type', 'unknown'),
+                    'complexity': analysis.get('complexity', 'medium'),
+                    'scope': analysis.get('scope', []),
+                    'constraints': analysis.get('constraints', []),
+                    'estimated_tasks': analysis.get('estimated_tasks', 0)
+                }
+            }
+            
+        except ImportError as e:
+            logger.warning(f"Goal analysis agent not available: {e}")
+        except Exception as e:
+            logger.error(f"Goal analysis error: {e}")
+        
+        # Fallback: Try direct LLM analysis
+        try:
+            from llm_config import get_llm
+            import json as json_module
+            
+            llm = get_llm()
+            
+            prompt = f"""You are the Adastrea Director, an AI assistant specialized in analyzing game development goals.
+
+Analyze the following goal and provide a structured assessment for Unreal Engine development.
+
+Goal: {data}
+
+Respond in JSON format with this structure:
+{{
+    "goal_type": "feature/bugfix/optimization/refactor/documentation",
+    "complexity": "low/medium/high",
+    "scope": ["list", "of", "affected", "areas"],
+    "constraints": ["list", "of", "potential", "constraints"],
+    "estimated_tasks": <number>
+}}
+
+JSON Response:"""
+            
+            response = llm.invoke(prompt)
+            result_text = response.content if hasattr(response, 'content') else str(response)
+            
+            # Try to parse as JSON
+            try:
+                # Extract JSON from response (handle markdown code blocks)
+                json_str = result_text
+                if '```json' in json_str:
+                    json_str = json_str.split('```json')[1].split('```')[0]
+                elif '```' in json_str:
+                    json_str = json_str.split('```')[1].split('```')[0]
+                
+                analysis_data = json_module.loads(json_str.strip())
+                return {
+                    'status': 'success',
+                    'analysis': {
+                        'goal': data,
+                        'goal_type': analysis_data.get('goal_type', 'unknown'),
+                        'complexity': analysis_data.get('complexity', 'medium'),
+                        'scope': analysis_data.get('scope', []),
+                        'constraints': analysis_data.get('constraints', []),
+                        'estimated_tasks': analysis_data.get('estimated_tasks', 5)
+                    }
+                }
+            except json_module.JSONDecodeError:
+                # Return basic analysis if JSON parsing fails
+                return {
+                    'status': 'success',
+                    'analysis': {
+                        'goal': data,
+                        'goal_type': 'feature',
+                        'complexity': 'medium',
+                        'scope': [],
+                        'constraints': [],
+                        'estimated_tasks': 5,
+                        'raw_analysis': result_text
+                    }
+                }
+                
+        except Exception as e:
+            logger.error(f"LLM analysis error: {e}")
+        
+        # Final fallback
         return {
             'status': 'success',
             'analysis': {
                 'goal': data,
                 'complexity': 'medium',
-                'estimated_tasks': 5
+                'estimated_tasks': 5,
+                'note': 'Analysis agent not available. Please configure an LLM API key.'
             }
         }
 
