@@ -36,6 +36,9 @@ console = Console()
 class AgentDashboard:
     """Real-time dashboard for monitoring agents."""
     
+    # Configuration constants
+    HEALTH_CHECK_INTERVAL = 5  # Seconds between health check updates
+    
     def __init__(self, update_interval: float = 1.0):
         """
         Initialize the dashboard.
@@ -291,6 +294,8 @@ class AgentDashboard:
     
     def generate_error_details_panel(self) -> Panel:
         """Generate detailed error information panel."""
+        from datetime import datetime
+        
         text = Text()
         
         if not self.agent_errors:
@@ -298,7 +303,12 @@ class AgentDashboard:
         else:
             text.append("Agent Errors:\n", style="bold red")
             for agent_id, error_info in self.agent_errors.items():
-                timestamp = error_info['timestamp'].strftime("%H:%M:%S")
+                # Ensure timestamp is a datetime object
+                timestamp = error_info['timestamp']
+                if not isinstance(timestamp, datetime):
+                    timestamp = datetime.fromtimestamp(timestamp)
+                timestamp_str = timestamp.strftime("%H:%M:%S")
+                
                 error_msg = error_info['error']
                 error_count = error_info['count']
                 
@@ -309,7 +319,7 @@ class AgentDashboard:
                         agent_name = name
                         break
                 
-                text.append(f"\n[{timestamp}] ", style="dim")
+                text.append(f"\n[{timestamp_str}] ", style="dim")
                 text.append(f"{agent_name}", style="cyan")
                 text.append(f" (x{error_count})\n", style="yellow")
                 text.append(f"  {error_msg}", style="red")
@@ -434,9 +444,9 @@ class AgentDashboard:
                 while not self._stop_event.is_set():
                     time.sleep(self.update_interval)
                     
-                    # Update system health every 5 seconds to reduce overhead
+                    # Update system health periodically to reduce overhead
                     health_check_counter += 1
-                    if health_check_counter >= 5:
+                    if health_check_counter >= self.HEALTH_CHECK_INTERVAL:
                         self.update_system_health()
                         health_check_counter = 0
                     

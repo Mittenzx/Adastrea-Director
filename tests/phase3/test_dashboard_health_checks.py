@@ -9,6 +9,7 @@ Tests the new diagnostic features:
 """
 
 import time
+from datetime import datetime
 from agent_dashboard import AgentDashboard
 from agents.phase3 import Event, EventType
 from system_health import SystemHealthChecker, HealthStatus
@@ -260,17 +261,16 @@ class TestDashboardErrorTracking:
     
     def test_error_details_panel_with_errors(self):
         """Test error details panel with errors."""
+        from datetime import datetime
+        
         dashboard = AgentDashboard()
         
-        # Add error
+        # Add error with proper datetime
         dashboard.agent_errors['test_agent'] = {
             'error': 'Test error',
-            'timestamp': time.time(),
+            'timestamp': datetime.now(),
             'count': 1
         }
-        
-        from datetime import datetime
-        dashboard.agent_errors['test_agent']['timestamp'] = datetime.now()
         
         panel = dashboard.generate_error_details_panel()
         
@@ -302,14 +302,15 @@ class TestDashboardDiagnosticFeatures:
     
     def test_dashboard_layout_adapts_to_errors(self):
         """Test layout adjusts based on error presence."""
+        from datetime import datetime
+        
         dashboard = AgentDashboard()
         
         # Layout without errors
         layout1 = dashboard.generate_layout()
         assert layout1 is not None
         
-        # Add an error
-        from datetime import datetime
+        # Add an error with proper datetime
         dashboard.agent_errors['test'] = {
             'error': 'Test',
             'timestamp': datetime.now(),
