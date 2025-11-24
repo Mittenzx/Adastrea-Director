@@ -2433,43 +2433,59 @@ GitHub: Mittenzx/Adastrea-Director
         # Enable stop button
         self.stop_test_button.config(state=tk.NORMAL)
         
-        # Run tests in thread
-        thread = threading.Thread(target=self._run_test_command, args=(command, test_name))
+        # Run tests in thread (daemon=True ensures it won't prevent app shutdown)
+        thread = threading.Thread(target=self._run_test_command, args=(command, test_name), daemon=True)
         thread.start()
     
     def _run_test_command(self, command, test_name):
         """Execute test command and stream output."""
+        process = None
         try:
             # Change to script directory
             kwargs = {
                 'stdout': subprocess.PIPE,
                 'stderr': subprocess.STDOUT,
-                'text': True,
+                'text': True,  # Handle text mode (universal_newlines deprecated)
                 'cwd': SCRIPT_DIR,
-                'bufsize': 1,  # Line buffered
-                'universal_newlines': True
+                'bufsize': 1  # Line buffered
             }
             
             if sys.platform == 'win32' and hasattr(subprocess, 'CREATE_NO_WINDOW'):
                 kwargs['creationflags'] = subprocess.CREATE_NO_WINDOW
             
             # Start the process
-            self.current_test_process = subprocess.Popen(command, **kwargs)
+            process = subprocess.Popen(command, **kwargs)
+            self.current_test_process = process
             
-            # Stream output line by line
-            for line in iter(self.current_test_process.stdout.readline, ''):
-                if line:
-                    self.root.after(0, self._append_test_output, line)
+            # Stream output line by line with proper exception handling
+            try:
+                for line in iter(process.stdout.readline, ''):
+                    if line:
+                        self.root.after(0, self._append_test_output, line)
+            except Exception as read_error:
+                # Log read error but continue to get return code
+                self.root.after(0, self._append_test_output, f"\nWarning: Error reading output: {read_error}\n")
+            finally:
+                # Ensure stdout is closed
+                if process.stdout:
+                    process.stdout.close()
             
             # Wait for process to complete
-            self.current_test_process.wait()
-            returncode = self.current_test_process.returncode
+            process.wait()
+            returncode = process.returncode
             
             # Update UI with results
             self.root.after(0, self._finalize_test_results, returncode, test_name)
             
         except Exception as e:
             self.root.after(0, self._show_test_error, str(e), test_name)
+        finally:
+            # Ensure process cleanup
+            if process and process.poll() is None:
+                try:
+                    process.terminate()
+                except Exception:
+                    pass
     
     def _append_test_output(self, line):
         """Append a line to test output with appropriate formatting."""
@@ -2533,7 +2549,18 @@ GitHub: Mittenzx/Adastrea-Director
         """Stop the currently running test process."""
         if self.current_test_process:
             try:
-                self.current_test_process.terminate()
+                # Robust shutdown: try terminate first, then kill if needed
+                process = self.current_test_process
+                process.terminate()
+                
+                # Wait briefly for graceful termination
+                try:
+                    process.wait(timeout=3)
+                except subprocess.TimeoutExpired:
+                    # Force kill if terminate didn't work
+                    process.kill()
+                    process.wait()
+                
                 self.test_output.config(state=tk.NORMAL)
                 self.test_output.insert(tk.END, "\n⏹ Test execution stopped by user\n", "warning")
                 self.test_output.config(state=tk.DISABLED)
