@@ -2525,21 +2525,22 @@ GitHub: Mittenzx/Adastrea-Director
             with self.test_process_lock:
                 self.current_test_process = None
     
+    def _determine_output_tag(self, line):
+        """Determine the appropriate tag for test output based on content."""
+        line_lower = line.lower()
+        if "passed" in line_lower or "✓" in line or "ok" in line_lower:
+            return "pass"
+        elif "failed" in line_lower or "error" in line_lower or "✗" in line:
+            return "fail"
+        elif "warning" in line_lower or "warn" in line_lower:
+            return "warning"
+        else:
+            return "info"
+    
     def _append_test_output(self, line):
         """Append a line to test output with appropriate formatting."""
         self.test_output.config(state=tk.NORMAL)
-        
-        # Determine tag based on content
-        line_lower = line.lower()
-        if "passed" in line_lower or "✓" in line or "ok" in line_lower:
-            tag = "pass"
-        elif "failed" in line_lower or "error" in line_lower or "✗" in line:
-            tag = "fail"
-        elif "warning" in line_lower or "warn" in line_lower:
-            tag = "warning"
-        else:
-            tag = "info"
-        
+        tag = self._determine_output_tag(line)
         self.test_output.insert(tk.END, line, tag)
         self.test_output.see(tk.END)
         self.test_output.config(state=tk.DISABLED)
@@ -2549,17 +2550,7 @@ GitHub: Mittenzx/Adastrea-Director
         self.test_output.config(state=tk.NORMAL)
         
         for line in lines:
-            # Determine tag based on content
-            line_lower = line.lower()
-            if "passed" in line_lower or "✓" in line or "ok" in line_lower:
-                tag = "pass"
-            elif "failed" in line_lower or "error" in line_lower or "✗" in line:
-                tag = "fail"
-            elif "warning" in line_lower or "warn" in line_lower:
-                tag = "warning"
-            else:
-                tag = "info"
-            
+            tag = self._determine_output_tag(line)
             self.test_output.insert(tk.END, line, tag)
         
         self.test_output.see(tk.END)
