@@ -301,6 +301,37 @@ class IPCServer:
         
         return response
 
+    # Helper methods
+    
+    @staticmethod
+    def _extract_code_block_content(text: str) -> str:
+        """
+        Extract content from markdown code blocks in an LLM response.
+        
+        Handles markdown code blocks (```json ... ``` or ``` ... ```).
+        Falls back to original text if no valid code block is found.
+        
+        Args:
+            text: Raw LLM response text
+            
+        Returns:
+            Extracted content from code block, or original text if no code block found
+        """
+        try:
+            if '```json' in text:
+                parts = text.split('```json')
+                if len(parts) > 1:
+                    inner_parts = parts[1].split('```')
+                    if len(inner_parts) > 0:
+                        return inner_parts[0]
+            elif '```' in text:
+                parts = text.split('```')
+                if len(parts) > 2:  # Need at least 3 parts: before, content, after
+                    return parts[1]
+        except (IndexError, AttributeError):
+            pass
+        return text
+
     # Default handlers
 
     def _handle_ping(self, data: str) -> Dict[str, Any]:
@@ -345,26 +376,33 @@ class IPCServer:
         
         Attempts to use the RAG system if available. Falls back to LLM-only
         response if RAG database is not initialized.
+        
+        Environment Variables:
+            CHROMA_PERSIST_DIRECTORY: Override the default persist directory path
         """
         logger.info(f"Query received: {data}")
         
         # Try to use the RAG system
         try:
             from rag_query import RAGQueryAgent
-            import os
             
-            # Check for common persist directory locations
-            persist_dirs = [
-                './chroma_db',
-                '../../../chroma_db',
-                os.path.join(os.path.dirname(__file__), '..', '..', '..', 'chroma_db'),
-            ]
-            
-            persist_directory = None
-            for pd in persist_dirs:
-                if os.path.exists(pd):
-                    persist_directory = pd
-                    break
+            # Check for persist directory - environment variable takes precedence
+            env_persist_dir = os.environ.get('CHROMA_PERSIST_DIRECTORY')
+            if env_persist_dir and os.path.exists(env_persist_dir):
+                persist_directory = env_persist_dir
+            else:
+                # Check for common persist directory locations
+                persist_dirs = [
+                    './chroma_db',
+                    '../../../chroma_db',
+                    os.path.join(os.path.dirname(__file__), '..', '..', '..', 'chroma_db'),
+                ]
+                
+                persist_directory = None
+                for pd in persist_dirs:
+                    if os.path.exists(pd):
+                        persist_directory = pd
+                        break
             
             if persist_directory:
                 logger.info(f"Using RAG database at: {persist_directory}")
@@ -486,7 +524,6 @@ Answer:"""
         # Fallback: Try direct LLM planning
         try:
             from llm_config import get_llm
-            import json as json_module
             
             llm = get_llm()
             
@@ -515,14 +552,8 @@ JSON Response:"""
             
             # Try to parse as JSON
             try:
-                # Extract JSON from response (handle markdown code blocks)
-                json_str = result_text
-                if '```json' in json_str:
-                    json_str = json_str.split('```json')[1].split('```')[0]
-                elif '```' in json_str:
-                    json_str = json_str.split('```')[1].split('```')[0]
-                
-                plan_data = json_module.loads(json_str.strip())
+                json_str = self._extract_code_block_content(result_text)
+                plan_data = json.loads(json_str.strip())
                 return {
                     'status': 'success',
                     'plan': {
@@ -532,7 +563,7 @@ JSON Response:"""
                         'estimated_duration': plan_data.get('estimated_duration', 'unknown')
                     }
                 }
-            except json_module.JSONDecodeError:
+            except json.JSONDecodeError:
                 # Return raw response if JSON parsing fails
                 return {
                     'status': 'success',
@@ -593,7 +624,6 @@ JSON Response:"""
         # Fallback: Try direct LLM analysis
         try:
             from llm_config import get_llm
-            import json as json_module
             
             llm = get_llm()
             
@@ -619,14 +649,8 @@ JSON Response:"""
             
             # Try to parse as JSON
             try:
-                # Extract JSON from response (handle markdown code blocks)
-                json_str = result_text
-                if '```json' in json_str:
-                    json_str = json_str.split('```json')[1].split('```')[0]
-                elif '```' in json_str:
-                    json_str = json_str.split('```')[1].split('```')[0]
-                
-                analysis_data = json_module.loads(json_str.strip())
+                json_str = self._extract_code_block_content(result_text)
+                analysis_data = json.loads(json_str.strip())
                 return {
                     'status': 'success',
                     'analysis': {
@@ -638,7 +662,7 @@ JSON Response:"""
                         'estimated_tasks': analysis_data.get('estimated_tasks', 5)
                     }
                 }
-            except json_module.JSONDecodeError:
+            except json.JSONDecodeError:
                 # Return basic analysis if JSON parsing fails
                 return {
                     'status': 'success',
