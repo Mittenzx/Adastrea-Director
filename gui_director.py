@@ -400,6 +400,9 @@ class AdastreaDirectorApp:
         
         # --- Ingest List Tab ---
         self.create_ingest_list_tab()
+        
+        # --- Tests Tab ---
+        self.create_tests_tab()
 
         # --- Query Input Area (Card-based design) ---
         query_card = tk.Frame(main_frame, bg=self.bg_tertiary, highlightthickness=1,
@@ -715,6 +718,266 @@ class AdastreaDirectorApp:
         
         # Initial load of ingest list
         self.refresh_ingest_list()
+    
+    def create_tests_tab(self):
+        """Create the Tests tab for running Python test scripts."""
+        tests_tab = tk.Frame(self.notebook, bg=self.bg_tertiary)
+        self.notebook.add(tests_tab, text="🧪 Tests")
+        
+        # Header section
+        tests_header = tk.Frame(tests_tab, bg=self.bg_tertiary, padx=15, pady=10)
+        tests_header.pack(fill=tk.X)
+        
+        tests_label = tk.Label(
+            tests_header,
+            text="🧪 Test Suite Runner",
+            font=("Segoe UI", 11, "bold"),
+            bg=self.bg_tertiary,
+            fg=self.fg_color
+        )
+        tests_label.pack(side=tk.LEFT)
+        
+        # Stop button for running tests
+        self.stop_test_button = tk.Button(
+            tests_header,
+            text="⏹ Stop",
+            command=self.stop_running_test,
+            font=("Segoe UI", 9),
+            bg=self.error_color,
+            fg=self.bg_color,
+            activebackground="#ff6b6b",
+            activeforeground=self.bg_color,
+            relief=tk.FLAT,
+            padx=15,
+            pady=6,
+            cursor="hand2",
+            borderwidth=1,
+            highlightthickness=1,
+            highlightbackground=self.error_color,
+            state=tk.DISABLED
+        )
+        self.stop_test_button.pack(side=tk.RIGHT, padx=(0, 5))
+        self.create_tooltip(self.stop_test_button, "Stop the currently running test")
+        self.add_button_hover_effect(self.stop_test_button, hover_color="#ff6b6b")
+        
+        # Clear button
+        clear_test_button = tk.Button(
+            tests_header,
+            text="🗑️ Clear",
+            command=self.clear_test_output,
+            font=("Segoe UI", 9),
+            bg=self.button_bg,
+            fg=self.fg_color,
+            activebackground=self.button_hover,
+            activeforeground=self.fg_color,
+            relief=tk.FLAT,
+            padx=15,
+            pady=6,
+            cursor="hand2",
+            borderwidth=1,
+            highlightthickness=1,
+            highlightbackground=self.button_bg
+        )
+        clear_test_button.pack(side=tk.RIGHT)
+        self.create_tooltip(clear_test_button, "Clear test output")
+        self.add_button_hover_effect(clear_test_button)
+        
+        # Separator line
+        separator_line = tk.Frame(tests_tab, height=1, bg=self.border_color)
+        separator_line.pack(fill=tk.X)
+        
+        # Main content with split panes
+        content_frame = tk.Frame(tests_tab, bg=self.bg_tertiary)
+        content_frame.pack(fill=tk.BOTH, expand=True, padx=15, pady=15)
+        
+        # Use PanedWindow for resizable split
+        paned_window = ttk.PanedWindow(content_frame, orient=tk.VERTICAL)
+        paned_window.pack(fill=tk.BOTH, expand=True)
+        
+        # --- Top Section: Test Buttons ---
+        buttons_frame = tk.Frame(paned_window, bg=self.bg_tertiary)
+        
+        buttons_header = tk.Label(
+            buttons_frame,
+            text="📋 Test Categories",
+            font=("Segoe UI", 10, "bold"),
+            bg=self.bg_tertiary,
+            fg=self.accent_color,
+            anchor=tk.W
+        )
+        buttons_header.pack(fill=tk.X, pady=(0, 10))
+        
+        # Create a grid for test buttons
+        button_grid = tk.Frame(buttons_frame, bg=self.bg_tertiary)
+        button_grid.pack(fill=tk.BOTH, expand=True)
+        
+        # Button style for test buttons
+        test_button_style = {
+            "font": ("Segoe UI", 9),
+            "bg": self.button_bg,
+            "fg": self.fg_color,
+            "activebackground": self.button_hover,
+            "activeforeground": self.fg_color,
+            "relief": tk.FLAT,
+            "padx": 15,
+            "pady": 8,
+            "cursor": "hand2",
+            "borderwidth": 1,
+            "highlightthickness": 1,
+            "highlightbackground": self.button_bg
+        }
+        
+        # Row 0: All Tests
+        all_tests_btn = tk.Button(
+            button_grid,
+            text="🚀 Run All Tests (pytest)",
+            command=lambda: self.run_test_suite("all"),
+            **test_button_style
+        )
+        all_tests_btn.grid(row=0, column=0, columnspan=2, sticky=tk.EW, padx=5, pady=5)
+        self.create_tooltip(all_tests_btn, "Run the complete pytest test suite")
+        self.add_button_hover_effect(all_tests_btn)
+        
+        # Row 1: Plugin Tests
+        plugin_tests_btn = tk.Button(
+            button_grid,
+            text="🔌 Plugin Tests",
+            command=lambda: self.run_test_suite("plugin"),
+            **test_button_style
+        )
+        plugin_tests_btn.grid(row=1, column=0, sticky=tk.EW, padx=5, pady=5)
+        self.create_tooltip(plugin_tests_btn, "Run IPC, RAG, and UE Python API tests")
+        self.add_button_hover_effect(plugin_tests_btn)
+        
+        # Row 1: Unit Tests
+        unit_tests_btn = tk.Button(
+            button_grid,
+            text="⚙️ Unit Tests",
+            command=lambda: self.run_test_suite("unit"),
+            **test_button_style
+        )
+        unit_tests_btn.grid(row=1, column=1, sticky=tk.EW, padx=5, pady=5)
+        self.create_tooltip(unit_tests_btn, "Run unit tests only")
+        self.add_button_hover_effect(unit_tests_btn)
+        
+        # Row 2: Integration Tests
+        integration_tests_btn = tk.Button(
+            button_grid,
+            text="🔗 Integration Tests",
+            command=lambda: self.run_test_suite("integration"),
+            **test_button_style
+        )
+        integration_tests_btn.grid(row=2, column=0, sticky=tk.EW, padx=5, pady=5)
+        self.create_tooltip(integration_tests_btn, "Run integration tests")
+        self.add_button_hover_effect(integration_tests_btn)
+        
+        # Row 2: Phase 3 Tests
+        phase3_tests_btn = tk.Button(
+            button_grid,
+            text="🎯 Phase 3 Tests",
+            command=lambda: self.run_test_suite("phase3"),
+            **test_button_style
+        )
+        phase3_tests_btn.grid(row=2, column=1, sticky=tk.EW, padx=5, pady=5)
+        self.create_tooltip(phase3_tests_btn, "Run Phase 3 agent tests")
+        self.add_button_hover_effect(phase3_tests_btn)
+        
+        # Row 3: Validation Scripts
+        validation_btn = tk.Button(
+            button_grid,
+            text="✅ Validation Scripts",
+            command=lambda: self.run_test_suite("validation"),
+            **test_button_style
+        )
+        validation_btn.grid(row=3, column=0, sticky=tk.EW, padx=5, pady=5)
+        self.create_tooltip(validation_btn, "Run installation and compatibility checks")
+        self.add_button_hover_effect(validation_btn)
+        
+        # Row 3: Remote Control Tests
+        remote_tests_btn = tk.Button(
+            button_grid,
+            text="🌐 Remote Control Tests",
+            command=lambda: self.run_test_suite("remote"),
+            **test_button_style
+        )
+        remote_tests_btn.grid(row=3, column=1, sticky=tk.EW, padx=5, pady=5)
+        self.create_tooltip(remote_tests_btn, "Run remote control API tests")
+        self.add_button_hover_effect(remote_tests_btn)
+        
+        # Configure grid weights for equal column sizing
+        button_grid.columnconfigure(0, weight=1)
+        button_grid.columnconfigure(1, weight=1)
+        
+        paned_window.add(buttons_frame, weight=0)
+        
+        # --- Bottom Section: Test Output ---
+        output_frame = tk.Frame(paned_window, bg=self.bg_tertiary)
+        
+        output_header_frame = tk.Frame(output_frame, bg=self.bg_tertiary)
+        output_header_frame.pack(fill=tk.X, pady=(0, 5))
+        
+        output_header = tk.Label(
+            output_header_frame,
+            text="📊 Test Output",
+            font=("Segoe UI", 10, "bold"),
+            bg=self.bg_tertiary,
+            fg=self.accent_color,
+            anchor=tk.W
+        )
+        output_header.pack(side=tk.LEFT)
+        
+        # Test status label
+        self.test_status_label = tk.Label(
+            output_header_frame,
+            text="Ready",
+            font=("Segoe UI", 9),
+            bg=self.bg_tertiary,
+            fg=self.fg_muted,
+            anchor=tk.W
+        )
+        self.test_status_label.pack(side=tk.RIGHT)
+        
+        # Test output with scrollbar
+        output_text_frame = tk.Frame(output_frame, bg=self.text_bg, 
+                                     highlightthickness=1, highlightbackground=self.border_color)
+        output_text_frame.pack(fill=tk.BOTH, expand=True)
+        
+        self.test_output = scrolledtext.ScrolledText(
+            output_text_frame,
+            wrap=tk.WORD,
+            height=15,
+            state=tk.DISABLED,
+            bg=self.text_bg,
+            fg=self.fg_color,
+            font=("Consolas", 9),
+            relief=tk.FLAT,
+            padx=10,
+            pady=10,
+            selectbackground=self.highlight_bg,
+            selectforeground=self.fg_color,
+            borderwidth=0
+        )
+        self.test_output.pack(fill=tk.BOTH, expand=True)
+        
+        # Configure test output tags
+        self.test_output.tag_config("header", foreground=self.accent_color, font=("Consolas", 10, "bold"))
+        self.test_output.tag_config("pass", foreground=self.success_color, font=("Consolas", 9))
+        self.test_output.tag_config("fail", foreground=self.error_color, font=("Consolas", 9))
+        self.test_output.tag_config("warning", foreground=self.warning_color, font=("Consolas", 9))
+        self.test_output.tag_config("info", foreground=self.fg_secondary, font=("Consolas", 9))
+        self.test_output.tag_config("command", foreground=self.fg_muted, font=("Consolas", 8, "italic"))
+        
+        paned_window.add(output_frame, weight=1)
+        
+        # Initialize test running state
+        self.current_test_process = None
+        
+        # Add initial message
+        self.test_output.config(state=tk.NORMAL)
+        self.test_output.insert(tk.END, "🧪 Test Suite Runner\n\n", "header")
+        self.test_output.insert(tk.END, "Select a test category above to run tests.\n", "info")
+        self.test_output.insert(tk.END, "Test results will appear here.\n", "info")
+        self.test_output.config(state=tk.DISABLED)
 
     def update_status(self, message, status_type="info"):
         """
@@ -2123,6 +2386,176 @@ GitHub: Mittenzx/Adastrea-Director
         self.ingest_repo_button.config(state=tk.NORMAL)
         self.ask_button.config(state=tk.NORMAL)
         self.query_entry.focus()
+    
+    def run_test_suite(self, test_type):
+        """Run a specific test suite."""
+        # Map test types to commands
+        test_commands = {
+            "all": [PYTHON_EXECUTABLE, "-m", "pytest", "-v", "--tb=short"],
+            "plugin": [PYTHON_EXECUTABLE, "-m", "pytest", "-v", "Plugins/AdastreaDirector/Python/", "--tb=short"],
+            "unit": [PYTHON_EXECUTABLE, "-m", "pytest", "-v", "-m", "unit", "--tb=short"],
+            "integration": [PYTHON_EXECUTABLE, "-m", "pytest", "-v", "tests/integration/", "--tb=short"],
+            "phase3": [PYTHON_EXECUTABLE, "-m", "pytest", "-v", "tests/phase3/", "--tb=short"],
+            "validation": [PYTHON_EXECUTABLE, "validate_requirements.py"],
+            "remote": [PYTHON_EXECUTABLE, "-m", "pytest", "-v", "tests/remote_control/", "--tb=short"]
+        }
+        
+        if test_type not in test_commands:
+            messagebox.showerror("Error", f"Unknown test type: {test_type}")
+            return
+        
+        command = test_commands[test_type]
+        test_name = {
+            "all": "All Tests (pytest)",
+            "plugin": "Plugin Tests",
+            "unit": "Unit Tests",
+            "integration": "Integration Tests",
+            "phase3": "Phase 3 Tests",
+            "validation": "Validation Scripts",
+            "remote": "Remote Control Tests"
+        }[test_type]
+        
+        # Clear previous output
+        self.test_output.config(state=tk.NORMAL)
+        self.test_output.delete(1.0, tk.END)
+        
+        # Add header
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        self.test_output.insert(tk.END, f"🧪 Running: {test_name}\n", "header")
+        self.test_output.insert(tk.END, f"Started: {timestamp}\n", "info")
+        self.test_output.insert(tk.END, f"Command: {' '.join(command)}\n\n", "command")
+        self.test_output.config(state=tk.DISABLED)
+        
+        # Update status
+        self.test_status_label.config(text=f"Running: {test_name}", fg=self.accent_color)
+        self.update_status(f"Running {test_name}...", "busy")
+        
+        # Enable stop button
+        self.stop_test_button.config(state=tk.NORMAL)
+        
+        # Run tests in thread
+        thread = threading.Thread(target=self._run_test_command, args=(command, test_name))
+        thread.start()
+    
+    def _run_test_command(self, command, test_name):
+        """Execute test command and stream output."""
+        try:
+            # Change to script directory
+            kwargs = {
+                'stdout': subprocess.PIPE,
+                'stderr': subprocess.STDOUT,
+                'text': True,
+                'cwd': SCRIPT_DIR,
+                'bufsize': 1,  # Line buffered
+                'universal_newlines': True
+            }
+            
+            if sys.platform == 'win32' and hasattr(subprocess, 'CREATE_NO_WINDOW'):
+                kwargs['creationflags'] = subprocess.CREATE_NO_WINDOW
+            
+            # Start the process
+            self.current_test_process = subprocess.Popen(command, **kwargs)
+            
+            # Stream output line by line
+            for line in iter(self.current_test_process.stdout.readline, ''):
+                if line:
+                    self.root.after(0, self._append_test_output, line)
+            
+            # Wait for process to complete
+            self.current_test_process.wait()
+            returncode = self.current_test_process.returncode
+            
+            # Update UI with results
+            self.root.after(0, self._finalize_test_results, returncode, test_name)
+            
+        except Exception as e:
+            self.root.after(0, self._show_test_error, str(e), test_name)
+    
+    def _append_test_output(self, line):
+        """Append a line to test output with appropriate formatting."""
+        self.test_output.config(state=tk.NORMAL)
+        
+        # Determine tag based on content
+        line_lower = line.lower()
+        if "passed" in line_lower or "✓" in line or "ok" in line_lower:
+            tag = "pass"
+        elif "failed" in line_lower or "error" in line_lower or "✗" in line:
+            tag = "fail"
+        elif "warning" in line_lower or "warn" in line_lower:
+            tag = "warning"
+        else:
+            tag = "info"
+        
+        self.test_output.insert(tk.END, line, tag)
+        self.test_output.see(tk.END)
+        self.test_output.config(state=tk.DISABLED)
+    
+    def _finalize_test_results(self, returncode, test_name):
+        """Display final test results."""
+        self.test_output.config(state=tk.NORMAL)
+        
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        self.test_output.insert(tk.END, f"\n{'='*60}\n", "info")
+        self.test_output.insert(tk.END, f"Completed: {timestamp}\n", "info")
+        
+        if returncode == 0:
+            self.test_output.insert(tk.END, f"✅ {test_name} PASSED\n", "pass")
+            self.test_status_label.config(text=f"✅ {test_name} Passed", fg=self.success_color)
+            self.update_status(f"{test_name} completed successfully", "success")
+        else:
+            self.test_output.insert(tk.END, f"❌ {test_name} FAILED (exit code: {returncode})\n", "fail")
+            self.test_status_label.config(text=f"❌ {test_name} Failed", fg=self.error_color)
+            self.update_status(f"{test_name} failed", "error")
+        
+        self.test_output.config(state=tk.DISABLED)
+        self.test_output.see(tk.END)
+        
+        # Disable stop button
+        self.stop_test_button.config(state=tk.DISABLED)
+        self.current_test_process = None
+    
+    def _show_test_error(self, error_msg, test_name):
+        """Show error when test execution fails."""
+        self.test_output.config(state=tk.NORMAL)
+        self.test_output.insert(tk.END, f"\n❌ Error running {test_name}:\n", "fail")
+        self.test_output.insert(tk.END, f"{error_msg}\n", "fail")
+        self.test_output.config(state=tk.DISABLED)
+        self.test_output.see(tk.END)
+        
+        self.test_status_label.config(text=f"❌ Error", fg=self.error_color)
+        self.update_status(f"Error running {test_name}", "error")
+        
+        # Disable stop button
+        self.stop_test_button.config(state=tk.DISABLED)
+        self.current_test_process = None
+    
+    def stop_running_test(self):
+        """Stop the currently running test process."""
+        if self.current_test_process:
+            try:
+                self.current_test_process.terminate()
+                self.test_output.config(state=tk.NORMAL)
+                self.test_output.insert(tk.END, "\n⏹ Test execution stopped by user\n", "warning")
+                self.test_output.config(state=tk.DISABLED)
+                self.test_output.see(tk.END)
+                
+                self.test_status_label.config(text="⏹ Stopped", fg=self.warning_color)
+                self.update_status("Test execution stopped", "warning")
+                
+                self.stop_test_button.config(state=tk.DISABLED)
+                self.current_test_process = None
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to stop test: {e}")
+    
+    def clear_test_output(self):
+        """Clear the test output display."""
+        self.test_output.config(state=tk.NORMAL)
+        self.test_output.delete(1.0, tk.END)
+        self.test_output.insert(tk.END, "🧪 Test Suite Runner\n\n", "header")
+        self.test_output.insert(tk.END, "Select a test category above to run tests.\n", "info")
+        self.test_output.insert(tk.END, "Test results will appear here.\n", "info")
+        self.test_output.config(state=tk.DISABLED)
+        self.test_status_label.config(text="Ready", fg=self.fg_muted)
 
 def main():
     root = tk.Tk()
