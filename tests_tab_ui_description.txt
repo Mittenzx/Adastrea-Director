@@ -1,0 +1,74 @@
+TESTS TAB UI LAYOUT
+===================
+
+The new Tests tab appears as the third tab in the notebook, after "Conversation" and "Ingest List".
+
+Tab Header: 🧪 Tests
+
+Layout Structure:
+┌─────────────────────────────────────────────────────────────────┐
+│ 🧪 Test Suite Runner                     [🗑️ Clear] [⏹ Stop]   │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                   │
+│ 📋 Test Categories                                               │
+│                                                                   │
+│ ┌───────────────────────────────────────────────────────────┐   │
+│ │ [    🚀 Run All Tests (pytest)                            ] │   │
+│ └───────────────────────────────────────────────────────────┘   │
+│                                                                   │
+│ ┌─────────────────────────────┐  ┌─────────────────────────┐   │
+│ │ [  🔌 Plugin Tests         ] │  │ [  ⚙️ Unit Tests       ] │   │
+│ └─────────────────────────────┘  └─────────────────────────┘   │
+│                                                                   │
+│ ┌─────────────────────────────┐  ┌─────────────────────────┐   │
+│ │ [  🔗 Integration Tests    ] │  │ [  🎯 Phase 3 Tests    ] │   │
+│ └─────────────────────────────┘  └─────────────────────────┘   │
+│                                                                   │
+│ ┌─────────────────────────────┐  ┌─────────────────────────┐   │
+│ │ [  ✅ Validation Scripts   ] │  │ [  🌐 Remote Control   ] │   │
+│ └─────────────────────────────┘  └─────────────────────────┘   │
+│                                                                   │
+├─────────────────────────────────────────────────────────────────┤
+│ 📊 Test Output                                          Ready    │
+├─────────────────────────────────────────────────────────────────┤
+│ ┌───────────────────────────────────────────────────────────┐   │
+│ │                                                           │   │
+│ │ 🧪 Running: Plugin Tests                                 │   │
+│ │ Started: 2024-11-24 19:38:00                             │   │
+│ │ Command: python -m pytest -v Plugins/...                 │   │
+│ │                                                           │   │
+│ │ test_ipc.py::test_ping                        ✓ PASSED   │   │
+│ │ test_ipc.py::test_query                       ✓ PASSED   │   │
+│ │ test_rag_modules.py::test_syntax              ✓ PASSED   │   │
+│ │                                                           │   │
+│ │ ========================================                  │   │
+│ │ Completed: 2024-11-24 19:38:15                           │   │
+│ │ ✅ Plugin Tests PASSED                                    │   │
+│ │                                                           │   │
+│ │ [Scrollable content area with syntax highlighting]       │   │
+│ └───────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────┘
+
+COLOR SCHEME (UE5-inspired Dark Theme):
+- Background: Dark blue-grey (#20232b, #2a2d35)
+- Cards/Panels: Lighter grey (#2d2d30)
+- Text: Light grey (#e3e4e8)
+- Accent (headers): Bright blue (#40a9ff)
+- Success/Pass: Teal (#4ec9b0)
+- Error/Fail: Coral red (#f48771)
+- Warning: Beige (#ce9178)
+- Buttons: Medium grey (#343843) with hover effect
+
+INTERACTION:
+- Clicking any test button starts that test suite
+- Output streams in real-time as tests run
+- Lines are color-coded: green for pass, red for fail, yellow for warnings
+- Stop button (red) becomes enabled during test execution
+- Clear button removes all output and resets display
+- Status label shows current test state (Ready/Running/Passed/Failed)
+
+RESPONSIVE DESIGN:
+- Split pane between buttons and output is resizable
+- Buttons arranged in a 2-column grid for optimal space usage
+- All buttons have tooltips explaining what they do
+- Hover effects on all interactive elements
