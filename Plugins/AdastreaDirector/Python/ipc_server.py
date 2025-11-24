@@ -309,13 +309,13 @@ class IPCServer:
         Extract content from markdown code blocks in an LLM response.
         
         Handles markdown code blocks (```json ... ``` or ``` ... ```).
-        Falls back to original text if no valid code block is found.
+        Falls back to original text if no valid code block is found or extracted content is empty.
         
         Args:
             text: Raw LLM response text
             
         Returns:
-            Extracted content from code block, or original text if no code block found
+            Extracted content from code block, or original text if no valid code block found
         """
         try:
             if '```json' in text:
@@ -323,11 +323,15 @@ class IPCServer:
                 if len(parts) > 1:
                     inner_parts = parts[1].split('```')
                     if len(inner_parts) > 0:
-                        return inner_parts[0]
+                        content = inner_parts[0].strip()
+                        if content:  # Only return if non-empty
+                            return content
             elif '```' in text:
                 parts = text.split('```')
                 if len(parts) > 2:  # Need at least 3 parts: before, content, after
-                    return parts[1]
+                    content = parts[1].strip()
+                    if content:  # Only return if non-empty
+                        return content
         except (IndexError, AttributeError):
             pass
         return text
