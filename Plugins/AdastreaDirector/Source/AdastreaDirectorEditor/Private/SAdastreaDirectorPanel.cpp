@@ -1278,8 +1278,8 @@ void SAdastreaDirectorPanel::UpdateStatusLights()
 	}
 
 	// Check Python bridge ready state
-	bool bIsReady = PythonBridge->IsReady();
-	if (bIsReady)
+	bool bBridgeReady = PythonBridge->IsReady();
+	if (bBridgeReady)
 	{
 		if (BridgeReadyStatusLight.IsValid())
 			BridgeReadyStatusLight->SetStatus(SStatusIndicator::EStatus::Good, LOCTEXT("BridgeReady", "Python Bridge: Ready"));
