@@ -27,6 +27,9 @@ from typing import Dict, Any
 from collections import defaultdict
 from textwrap import dedent
 
+# Add parent directory to path to import main modules (for goal/task agents, llm_config, etc.)
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -333,6 +336,7 @@ class IPCServer:
                     if content:  # Only return if non-empty
                         return content
         except (IndexError, AttributeError):
+            # Malformed input or missing code block; fallback to returning original text.
             pass
         return text
 
@@ -390,6 +394,9 @@ class IPCServer:
         try:
             from rag_query import RAGQueryAgent
             
+            # Initialize persist_directory before the conditional block for clarity
+            persist_directory = None
+            
             # Check for persist directory - environment variable takes precedence
             env_persist_dir = os.environ.get('CHROMA_PERSIST_DIRECTORY')
             if env_persist_dir and os.path.exists(env_persist_dir):
@@ -402,7 +409,6 @@ class IPCServer:
                     os.path.join(os.path.dirname(__file__), '..', '..', '..', 'chroma_db'),
                 ]
                 
-                persist_directory = None
                 for pd in persist_dirs:
                     if os.path.exists(pd):
                         persist_directory = pd
@@ -502,21 +508,37 @@ Answer:"""
             from task_decomposition_agent import TaskDecompositionAgent
             from goal_analysis_agent import GoalAnalysisAgent
             
-            # First analyze the goal
+            # First parse the goal into a Goal object
             goal_agent = GoalAnalysisAgent()
-            analysis = goal_agent.analyze_goal(data)
+            goal_obj = goal_agent.parse_goal(data)
             
-            # Then decompose into tasks
+            # Then decompose into tasks (returns a TaskTree)
             task_agent = TaskDecompositionAgent()
-            plan = task_agent.decompose_goal(analysis)
+            task_tree = task_agent.decompose_goal(goal_obj)
+            
+            # Extract tasks from TaskTree - convert to serializable format
+            all_tasks = task_tree.get_all_tasks()
+            tasks_list = []
+            for task in all_tasks:
+                tasks_list.append({
+                    'id': task.id,
+                    'name': task.title,
+                    'description': task.description,
+                    'priority': task.priority.value if hasattr(task.priority, 'value') else str(task.priority),
+                    'dependencies': task.dependencies,
+                    'estimated_effort': task.estimated_effort or 'unknown'
+                })
+            
+            # Calculate estimated duration from total
+            estimated_duration = str(task_tree.total_estimated_duration) if task_tree.total_estimated_duration else 'unknown'
             
             return {
                 'status': 'success',
                 'plan': {
                     'goal': data,
-                    'tasks': plan.get('tasks', []),
-                    'dependencies': plan.get('dependencies', []),
-                    'estimated_duration': plan.get('estimated_duration', 'unknown')
+                    'tasks': tasks_list,
+                    'dependencies': [],  # Dependencies are already in tasks
+                    'estimated_duration': estimated_duration
                 }
             }
             
@@ -588,9 +610,9 @@ JSON Response:"""
             'plan': {
                 'goal': data,
                 'tasks': [],
-                'dependencies': [],
-                'note': 'Planning agents not available. Please configure an LLM API key.'
-            }
+                'dependencies': []
+            },
+            'note': 'Planning agents not available. Please configure an LLM API key.'
         }
 
     def _handle_analyze(self, data: str) -> Dict[str, Any]:
@@ -606,17 +628,39 @@ JSON Response:"""
             from goal_analysis_agent import GoalAnalysisAgent
             
             agent = GoalAnalysisAgent()
-            analysis = agent.analyze_goal(data)
+            goal_obj = agent.parse_goal(data)
+            
+            # Extract goal_type value properly (it's an enum)
+            goal_type_val = goal_obj.goal_type.value if hasattr(goal_obj.goal_type, 'value') else str(goal_obj.goal_type)
+            
+            # Extract scope information using safe attribute access
+            scope_areas = []
+            if goal_obj.scope:
+                scope_areas = getattr(goal_obj.scope, 'affected_areas', []) or getattr(goal_obj.scope, 'systems', [])
+            
+            # Extract constraints as list of descriptions
+            constraints_list = []
+            if goal_obj.constraints:
+                for c in goal_obj.constraints:
+                    constraints_list.append(c.description if hasattr(c, 'description') else str(c))
+            
+            # Get complexity from scope
+            complexity = 'medium'
+            if goal_obj.scope:
+                complexity = getattr(goal_obj.scope, 'estimated_complexity', 'medium') or 'medium'
+            
+            # Base task count for estimation
+            BASE_TASK_COUNT = 3
             
             return {
                 'status': 'success',
                 'analysis': {
                     'goal': data,
-                    'goal_type': analysis.get('goal_type', 'unknown'),
-                    'complexity': analysis.get('complexity', 'medium'),
-                    'scope': analysis.get('scope', []),
-                    'constraints': analysis.get('constraints', []),
-                    'estimated_tasks': analysis.get('estimated_tasks', 0)
+                    'goal_type': goal_type_val,
+                    'complexity': complexity,
+                    'scope': scope_areas,
+                    'constraints': constraints_list,
+                    'estimated_tasks': len(constraints_list) + BASE_TASK_COUNT
                 }
             }
             
@@ -690,9 +734,9 @@ JSON Response:"""
             'analysis': {
                 'goal': data,
                 'complexity': 'medium',
-                'estimated_tasks': 5,
-                'note': 'Analysis agent not available. Please configure an LLM API key.'
-            }
+                'estimated_tasks': 5
+            },
+            'note': 'Analysis agent not available. Please configure an LLM API key.'
         }
 
 
