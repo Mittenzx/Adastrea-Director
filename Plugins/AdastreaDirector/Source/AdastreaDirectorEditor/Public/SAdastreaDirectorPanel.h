@@ -300,6 +300,9 @@ private:
 	/** Called when Clear Test Output button is clicked */
 	FReply OnClearTestOutputClicked();
 
+	/** Called when Save Log button is clicked */
+	FReply OnSaveTestLogClicked();
+
 	/** Run a specific test type via Python backend */
 	void RunTests(const FString& TestType);
 
@@ -314,4 +317,7 @@ private:
 
 	/** Perform self-check of plugin components */
 	void PerformSelfCheck();
+
+	/** Save test output to a log file */
+	bool SaveTestLogToFile(const FString& FilePath);
 };

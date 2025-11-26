@@ -1016,6 +1016,7 @@ The plugin now includes a built-in **Tests tab** that allows you to run self-tes
 | 🔌 **Plugin Tests** | Plugin unit tests | Python plugin modules (via pytest) |
 | 🚀 **All Tests** | Complete test suite | All available tests via pytest |
 | 🗑️ **Clear** | Clear output | Clears the test output display |
+| 💾 **Save Log** | Save test output | Saves test results to a timestamped log file |
 
 ### Self-Check Results
 
@@ -1040,6 +1041,20 @@ Each check shows:
 3. Review results in the output area
 4. If tests fail, check the specific error messages
 
+### Saving Test Logs
+
+You can save test output to a log file for later review or sharing:
+
+1. Run any test(s) to generate output
+2. Click the **💾 Save Log** button
+3. Choose a location and filename (defaults to `adastrea_test_log_<timestamp>.txt`)
+4. The log includes metadata (timestamp, project path) and full test output
+
+Log files are saved in UTF-8 format and include a header with:
+- Generation timestamp
+- Project path
+- Full test output
+
 ### Tips for Using Self-Tests
 
 - Run **Self-Check** first to quickly verify all components
@@ -1047,6 +1062,7 @@ Each check shows:
 - Use **IPC Tests** when debugging connection issues
 - Use **All Tests** for comprehensive validation
 - Test results can be copied from the output area
+- Use **Save Log** to archive test results or share with support
 
 ---
 

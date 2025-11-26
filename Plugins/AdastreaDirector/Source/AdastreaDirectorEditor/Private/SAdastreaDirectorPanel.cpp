@@ -1523,11 +1523,21 @@ TSharedRef<SWidget> SAdastreaDirectorPanel::CreateTestsTab()
 
 			+ SHorizontalBox::Slot()
 			.AutoWidth()
+			.Padding(0.0f, 0.0f, 5.0f, 0.0f)
 			[
 				SNew(SButton)
 				.Text(LOCTEXT("ClearTestOutputButton", "🗑️ Clear"))
 				.ToolTipText(LOCTEXT("ClearTestOutputTooltip", "Clear test output display"))
 				.OnClicked(this, &SAdastreaDirectorPanel::OnClearTestOutputClicked)
+			]
+
+			+ SHorizontalBox::Slot()
+			.AutoWidth()
+			[
+				SNew(SButton)
+				.Text(LOCTEXT("SaveLogButton", "💾 Save Log"))
+				.ToolTipText(LOCTEXT("SaveLogTooltip", "Save test output to a log file"))
+				.OnClicked(this, &SAdastreaDirectorPanel::OnSaveTestLogClicked)
 			]
 		]
 
@@ -1924,6 +1934,62 @@ void SAdastreaDirectorPanel::AppendTestOutput(const FString& Entry)
 bool SAdastreaDirectorPanel::CanRunTests() const
 {
 	return !bIsTestRunning;
+}
+
+FReply SAdastreaDirectorPanel::OnSaveTestLogClicked()
+{
+	// Create timestamp for filename
+	FString Timestamp = FDateTime::Now().ToString(TEXT("%Y%m%d_%H%M%S"));
+	FString DefaultFilename = FString::Printf(TEXT("adastrea_test_log_%s.txt"), *Timestamp);
+	
+	// Open save file dialog
+	IDesktopPlatform* DesktopPlatform = FDesktopPlatformModule::Get();
+	if (DesktopPlatform)
+	{
+		TArray<FString> OutFiles;
+		const void* ParentWindowHandle = FSlateApplication::Get().FindBestParentWindowHandleForDialogs(nullptr);
+		
+		bool bOpened = DesktopPlatform->SaveFileDialog(
+			ParentWindowHandle,
+			TEXT("Save Test Log"),
+			FPaths::ProjectLogDir(),
+			DefaultFilename,
+			TEXT("Text Files (*.txt)|*.txt|Log Files (*.log)|*.log|All Files (*.*)|*.*"),
+			EFileDialogFlags::None,
+			OutFiles
+		);
+		
+		if (bOpened && OutFiles.Num() > 0)
+		{
+			if (SaveTestLogToFile(OutFiles[0]))
+			{
+				AppendTestOutput(FString::Printf(TEXT("\n✅ Log saved to: %s\n"), *OutFiles[0]));
+			}
+			else
+			{
+				AppendTestOutput(TEXT("\n❌ Failed to save log file.\n"));
+			}
+		}
+	}
+	
+	return FReply::Handled();
+}
+
+bool SAdastreaDirectorPanel::SaveTestLogToFile(const FString& FilePath)
+{
+	// Add header with metadata
+	FString LogContent;
+	LogContent += TEXT("═══════════════════════════════════════════════════════════════\n");
+	LogContent += TEXT("ADASTREA DIRECTOR TEST LOG\n");
+	LogContent += FString::Printf(TEXT("Generated: %s\n"), *FDateTime::Now().ToString(TEXT("%Y-%m-%d %H:%M:%S")));
+	LogContent += FString::Printf(TEXT("Project: %s\n"), *FPaths::GetProjectFilePath());
+	LogContent += TEXT("═══════════════════════════════════════════════════════════════\n\n");
+	
+	// Add the test output content
+	LogContent += CurrentTestOutput;
+	
+	// Write to file
+	return FFileHelper::SaveStringToFile(LogContent, *FilePath, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM);
 }
 
 #undef LOCTEXT_NAMESPACE
