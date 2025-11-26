@@ -37,7 +37,7 @@ public:
 
 private:
 	// Tab management
-	/** Current active tab (0 = Query, 1 = Ingestion, 2 = Dashboard) */
+	/** Current active tab (0 = Query, 1 = Ingestion, 2 = Dashboard, 3 = Tests) */
 	int32 CurrentTabIndex;
 
 	/** Content switcher widget to hold tab contents */
@@ -246,4 +246,72 @@ private:
 
 	/** Create the Dashboard tab content */
 	TSharedRef<SWidget> CreateDashboardTab();
+
+	/** Create the Tests tab content */
+	TSharedRef<SWidget> CreateTestsTab();
+
+	// Tests tab widgets
+	/** Test output display text box */
+	TSharedPtr<SMultiLineEditableTextBox> TestOutputDisplay;
+
+	/** Test progress bar */
+	TSharedPtr<SProgressBar> TestProgressBar;
+
+	/** Test status text */
+	TSharedPtr<STextBlock> TestStatusText;
+
+	/** Current test output content */
+	FString CurrentTestOutput;
+
+	/** Cached FText version of test output for display */
+	FText CachedTestOutputText;
+
+	/** Is a test currently running */
+	bool bIsTestRunning;
+
+	/** Test progress (0-1) */
+	float TestProgress;
+
+	/** Test status message */
+	FText TestStatusMessage;
+
+	/** Time since last test output update */
+	double LastTestOutputUpdateTime;
+
+	/** Test output update interval in seconds */
+	static constexpr double TestOutputUpdateInterval = 0.1;
+
+	/** Maximum test output size in characters */
+	static constexpr int32 MaxTestOutputCharacters = 10000;
+
+	// Tests tab methods
+	/** Called when Run All Tests button is clicked */
+	FReply OnRunAllTestsClicked();
+
+	/** Called when Run IPC Tests button is clicked */
+	FReply OnRunIPCTestsClicked();
+
+	/** Called when Run Plugin Tests button is clicked */
+	FReply OnRunPluginTestsClicked();
+
+	/** Called when Run Self-Check button is clicked */
+	FReply OnRunSelfCheckClicked();
+
+	/** Called when Clear Test Output button is clicked */
+	FReply OnClearTestOutputClicked();
+
+	/** Run a specific test type via Python backend */
+	void RunTests(const FString& TestType);
+
+	/** Update test output display */
+	void UpdateTestOutput();
+
+	/** Append test output entry */
+	void AppendTestOutput(const FString& Entry);
+
+	/** Check if tests can be run */
+	bool CanRunTests() const;
+
+	/** Perform self-check of plugin components */
+	void PerformSelfCheck();
 };

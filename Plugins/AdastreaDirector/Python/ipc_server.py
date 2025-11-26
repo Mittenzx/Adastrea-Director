@@ -135,6 +135,7 @@ class IPCServer:
         self.register_handler('query', self._handle_query)
         self.register_handler('plan', self._handle_plan)
         self.register_handler('analyze', self._handle_analyze)
+        self.register_handler('run_tests', self._handle_run_tests)
 
     def register_handler(self, request_type: str, handler_func):
         """
@@ -738,6 +739,97 @@ JSON Response:"""
             },
             'note': 'Analysis agent not available. Please configure an LLM API key.'
         }
+
+    def _handle_run_tests(self, data: str) -> Dict[str, Any]:
+        """
+        Handle run_tests request to execute plugin self-tests.
+        
+        Args:
+            data: Test type to run ('all', 'ipc', 'plugin', 'unit', etc.)
+            
+        Returns:
+            Dict with test results including passed/failed counts
+        """
+        logger.info(f"Run tests received: {data}")
+        
+        import subprocess
+        import os
+        
+        test_type = data.strip().lower() if data else 'all'
+        
+        # Map test types to pytest commands
+        test_commands = {
+            'all': [sys.executable, '-m', 'pytest', '-v', '--tb=short'],
+            'ipc': [sys.executable, '-m', 'pytest', '-v', 'Plugins/AdastreaDirector/Python/', '--tb=short'],
+            'plugin': [sys.executable, '-m', 'pytest', '-v', 'Plugins/AdastreaDirector/Python/', '--tb=short'],
+            'unit': [sys.executable, '-m', 'pytest', '-v', '-m', 'unit', '--tb=short'],
+            'integration': [sys.executable, '-m', 'pytest', '-v', 'tests/integration/', '--tb=short'],
+            'remote': [sys.executable, '-m', 'pytest', '-v', 'tests/remote_control/', '--tb=short'],
+        }
+        
+        if test_type not in test_commands:
+            return {
+                'status': 'error',
+                'error': f"Unknown test type: {test_type}. Available: {', '.join(test_commands.keys())}"
+            }
+        
+        command = test_commands[test_type]
+        
+        # Get the project root directory (three levels up from ipc_server.py)
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        project_root = os.path.abspath(os.path.join(script_dir, '..', '..', '..'))
+        
+        try:
+            # Run pytest and capture output
+            result = subprocess.run(
+                command,
+                cwd=project_root,
+                capture_output=True,
+                text=True,
+                timeout=300  # 5 minute timeout
+            )
+            
+            output = result.stdout + result.stderr
+            
+            # Parse test results from output
+            passed = 0
+            failed = 0
+            
+            # Look for pytest summary line like "5 passed, 1 failed"
+            for line in output.split('\n'):
+                if 'passed' in line.lower():
+                    # Try to extract numbers
+                    import re
+                    passed_match = re.search(r'(\d+) passed', line)
+                    failed_match = re.search(r'(\d+) failed', line)
+                    if passed_match:
+                        passed = int(passed_match.group(1))
+                    if failed_match:
+                        failed = int(failed_match.group(1))
+            
+            return {
+                'status': 'success',
+                'result': output,
+                'passed': passed,
+                'failed': failed,
+                'return_code': result.returncode
+            }
+            
+        except subprocess.TimeoutExpired:
+            return {
+                'status': 'error',
+                'error': 'Test execution timed out (5 minute limit)',
+                'passed': 0,
+                'failed': 0
+            }
+        except Exception as e:
+            logger.error(f"Test execution error: {e}")
+            return {
+                'status': 'error',
+                'error': str(e),
+                'passed': 0,
+                'failed': 0
+            }
 
 
 def main():

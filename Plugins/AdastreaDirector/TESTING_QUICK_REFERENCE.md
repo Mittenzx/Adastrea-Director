@@ -997,6 +997,59 @@ Located in: `Plugins/AdastreaDirector/Python/`
 
 ---
 
+## 🧪 Plugin Self-Testing (Tests Tab)
+
+The plugin now includes a built-in **Tests tab** that allows you to run self-tests directly from within Unreal Engine. This makes it easy to verify that the plugin is working correctly without needing to run command-line tests.
+
+### Accessing the Tests Tab
+
+1. Open Unreal Engine
+2. Go to **Window → Developer Tools → Adastrea Director**
+3. Click the **Tests** tab
+
+### Available Tests
+
+| Test Button | Description | What It Tests |
+|-------------|-------------|---------------|
+| 🔍 **Self-Check** | Quick plugin health check | All core components (module loading, Python bridge, IPC connection, backend health) |
+| 📡 **IPC Tests** | Communication tests | IPC server functionality and Python backend communication |
+| 🔌 **Plugin Tests** | Plugin unit tests | Python plugin modules (via pytest) |
+| 🚀 **All Tests** | Complete test suite | All available tests via pytest |
+| 🗑️ **Clear** | Clear output | Clears the test output display |
+
+### Self-Check Results
+
+The Self-Check performs 6 quick checks:
+
+1. **Runtime Module** - Is the C++ module loaded?
+2. **Python Bridge** - Is the bridge initialized?
+3. **Python Process** - Is the Python backend running?
+4. **IPC Connection** - Can we connect to the backend?
+5. **Backend Health** - Does the backend respond to ping?
+6. **Query Processing** - Can we send and receive queries?
+
+Each check shows:
+- ✅ Green checkmark - Passed
+- ❌ Red X - Failed
+- ⚠️ Warning - Cannot check (dependency failed)
+
+### Running Tests from the Tests Tab
+
+1. Click a test button (e.g., **🔍 Self-Check**)
+2. Watch the progress bar and status
+3. Review results in the output area
+4. If tests fail, check the specific error messages
+
+### Tips for Using Self-Tests
+
+- Run **Self-Check** first to quickly verify all components
+- If Self-Check fails, check the Dashboard tab for more details
+- Use **IPC Tests** when debugging connection issues
+- Use **All Tests** for comprehensive validation
+- Test results can be copied from the output area
+
+---
+
 ## 🎯 Next Steps
 
 After completing testing for weeks 1-6:
