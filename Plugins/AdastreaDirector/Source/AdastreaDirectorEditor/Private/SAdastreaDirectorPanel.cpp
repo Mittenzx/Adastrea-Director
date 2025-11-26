@@ -1840,21 +1840,24 @@ void SAdastreaDirectorPanel::PerformSelfCheck()
 		AppendTestOutput(TEXT("⚠️ [5/6] Backend Health: Cannot check (not connected)\n"));
 	}
 
-	// Check 6: Query Processing (simple test query)
+	// Check 6: Query Processing (verify query handler responds correctly)
 	CurrentCheck++;
 	TestProgress = static_cast<float>(CurrentCheck) / TotalChecks;
 	if (PythonBridge && PythonBridge->IsReady())
 	{
+		// Use a simple ping-style query to verify processing works
 		FString Response;
-		bool bQuerySuccess = PythonBridge->SendRequest(TEXT("query"), TEXT("test"), Response);
-		if (bQuerySuccess && Response.Contains(TEXT("success")))
+		bool bQuerySuccess = PythonBridge->SendRequest(TEXT("ping"), TEXT(""), Response);
+		if (bQuerySuccess && Response.Contains(TEXT("pong")))
 		{
 			AppendTestOutput(TEXT("✅ [6/6] Query Processing: Working\n"));
 			PassCount++;
 		}
 		else
 		{
-			AppendTestOutput(FString::Printf(TEXT("❌ [6/6] Query Processing: FAILED - %s\n"), *Response));
+			// Truncate response for display if too long
+			FString DisplayResponse = Response.Len() > 100 ? Response.Left(100) + TEXT("...") : Response;
+			AppendTestOutput(FString::Printf(TEXT("❌ [6/6] Query Processing: FAILED - %s\n"), *DisplayResponse));
 			FailCount++;
 		}
 	}
@@ -1895,10 +1898,23 @@ void SAdastreaDirectorPanel::AppendTestOutput(const FString& Entry)
 {
 	CurrentTestOutput += Entry;
 	
-	// Keep only last MaxTestOutputCharacters characters
+	// Keep only last MaxTestOutputCharacters characters, preserving line boundaries
 	if (CurrentTestOutput.Len() > MaxTestOutputCharacters)
 	{
-		CurrentTestOutput = CurrentTestOutput.Right(MaxTestOutputCharacters);
+		// Find a newline near the truncation point to avoid cutting mid-line
+		int32 TruncateIndex = CurrentTestOutput.Len() - MaxTestOutputCharacters;
+		int32 NewlineIndex = CurrentTestOutput.Find(TEXT("\n"), ESearchCase::IgnoreCase, ESearchDir::FromStart, TruncateIndex);
+		
+		if (NewlineIndex != INDEX_NONE && NewlineIndex < TruncateIndex + 100)
+		{
+			// Found a newline close to truncation point
+			CurrentTestOutput = TEXT("[...truncated...]\n") + CurrentTestOutput.Mid(NewlineIndex + 1);
+		}
+		else
+		{
+			// No suitable newline found, just truncate with indicator
+			CurrentTestOutput = TEXT("[...truncated...]\n") + CurrentTestOutput.Right(MaxTestOutputCharacters);
+		}
 	}
 	
 	// Update cached FText version

@@ -16,6 +16,7 @@ Usage:
 """
 
 import os
+import re
 import socket
 import json
 import sys
@@ -758,9 +759,11 @@ JSON Response:"""
         test_type = data.strip().lower() if data else 'all'
         
         # Map test types to pytest commands
+        # Note: 'ipc' focuses on IPC-related tests, 'plugin' includes all plugin Python tests
         test_commands = {
             'all': [sys.executable, '-m', 'pytest', '-v', '--tb=short'],
-            'ipc': [sys.executable, '-m', 'pytest', '-v', 'Plugins/AdastreaDirector/Python/', '--tb=short'],
+            'ipc': [sys.executable, '-m', 'pytest', '-v', 'Plugins/AdastreaDirector/Python/test_ipc.py', 
+                    'Plugins/AdastreaDirector/Python/test_ipc_performance.py', '--tb=short'],
             'plugin': [sys.executable, '-m', 'pytest', '-v', 'Plugins/AdastreaDirector/Python/', '--tb=short'],
             'unit': [sys.executable, '-m', 'pytest', '-v', '-m', 'unit', '--tb=short'],
             'integration': [sys.executable, '-m', 'pytest', '-v', 'tests/integration/', '--tb=short'],
@@ -795,11 +798,11 @@ JSON Response:"""
             passed = 0
             failed = 0
             
-            # Look for pytest summary line like "5 passed, 1 failed"
+            # Look for pytest summary line like "5 passed, 1 failed" or "5 passed" or "1 failed"
             for line in output.split('\n'):
-                if 'passed' in line.lower():
+                line_lower = line.lower()
+                if 'passed' in line_lower or 'failed' in line_lower:
                     # Try to extract numbers
-                    import re
                     passed_match = re.search(r'(\d+) passed', line)
                     failed_match = re.search(r'(\d+) failed', line)
                     if passed_match:
