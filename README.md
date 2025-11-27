@@ -99,6 +99,7 @@ For detailed project roadmap, sprint planning, and task tracking, see the [Wiki]
    - **COMPLETE:** Remote Control API integration (67 tests)
    - **COMPLETE:** Event bus implementation (16 tests)
    - **COMPLETE:** Shared state management (20 tests)
+   - **NEW:** MCP Server integration for AI agent access (84 tests)
    
 4. **P4: Creative Partner** - 🌟 *Vision*
    - AI-assisted content generation
@@ -376,6 +377,32 @@ For game developers working in Unreal Engine, the plugin provides an integrated 
 - Performance profiling UI
 - Bug detection integration
 - Code quality monitoring
+
+#### Unreal Engine MCP Integration (NEW!)
+
+Control Unreal Engine directly from the command line using the MCP server integration:
+
+```bash
+# Interactive mode - no external client needed
+python unreal_mcp_cli.py
+
+# Direct commands
+python unreal_mcp_cli.py project-info      # Get project info
+python unreal_mcp_cli.py list-assets       # List all assets
+python unreal_mcp_cli.py search-assets "player"
+python unreal_mcp_cli.py run-python "import unreal; print(unreal.SystemLibrary.get_engine_version())"
+```
+
+**Features:**
+- ✅ Execute Python directly in Unreal Editor
+- ✅ List, search, and inspect assets
+- ✅ Create, update, and delete actors
+- ✅ Run console commands
+- ✅ Get project and level information
+- ✅ Works with any MCP-compatible client (5ire, Cline, Zed, etc.)
+- ✅ 84 comprehensive tests
+
+**📖 Documentation:** [MCP Server Guide](mcp_server/MCP_SERVER_GUIDE.md)
 
 #### Graphical User Interface (GUI - Standalone)
 
