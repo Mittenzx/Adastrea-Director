@@ -16,6 +16,7 @@ Usage:
 """
 
 import os
+import re
 import socket
 import json
 import sys
@@ -135,6 +136,7 @@ class IPCServer:
         self.register_handler('query', self._handle_query)
         self.register_handler('plan', self._handle_plan)
         self.register_handler('analyze', self._handle_analyze)
+        self.register_handler('run_tests', self._handle_run_tests)
 
     def register_handler(self, request_type: str, handler_func):
         """
@@ -738,6 +740,108 @@ JSON Response:"""
             },
             'note': 'Analysis agent not available. Please configure an LLM API key.'
         }
+
+    def _handle_run_tests(self, data: str) -> Dict[str, Any]:
+        """
+        Handle run_tests request to execute plugin self-tests.
+        
+        Args:
+            data: Test type to run ('all', 'ipc', 'plugin', 'unit', etc.)
+            
+        Returns:
+            Dict with test results including passed/failed counts
+        """
+        logger.info(f"Run tests received: {data}")
+        
+        import subprocess
+        
+        # Sanitize and validate test_type input
+        test_type = data.strip().lower() if data else 'all'
+        # Remove any non-alphanumeric characters except underscore
+        test_type = re.sub(r'[^a-z0-9_]', '', test_type)
+        
+        # Map test types to pytest commands
+        # Note: 'ipc' focuses on IPC-related tests, 'plugin' includes all plugin Python tests
+        test_commands = {
+            'all': [sys.executable, '-m', 'pytest', '-v', '--tb=short'],
+            'ipc': [sys.executable, '-m', 'pytest', '-v', 'Plugins/AdastreaDirector/Python/test_ipc.py', 
+                    'Plugins/AdastreaDirector/Python/test_ipc_performance.py', '--tb=short'],
+            'plugin': [sys.executable, '-m', 'pytest', '-v', 'Plugins/AdastreaDirector/Python/', '--tb=short'],
+            'unit': [sys.executable, '-m', 'pytest', '-v', '-m', 'unit', '--tb=short'],
+            'integration': [sys.executable, '-m', 'pytest', '-v', 'tests/integration/', '--tb=short'],
+            'remote': [sys.executable, '-m', 'pytest', '-v', 'tests/remote_control/', '--tb=short'],
+        }
+        
+        if test_type not in test_commands:
+            available_types = ', '.join(test_commands.keys())
+            return {
+                'status': 'error',
+                'error': f"Unknown test type. Available: {available_types}"
+            }
+        
+        command = test_commands[test_type]
+        
+        # Get the project root directory (three levels up from ipc_server.py)
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        project_root = os.path.abspath(os.path.join(script_dir, '..', '..', '..'))
+        
+        try:
+            # Run pytest and capture output using Popen for better timeout handling
+            process = subprocess.Popen(
+                command,
+                cwd=project_root,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True
+            )
+            try:
+                stdout, stderr = process.communicate(timeout=300)  # 5 minute timeout
+                output = stdout + stderr
+                
+                passed = 0
+                failed = 0
+                
+                # Look specifically for pytest summary line like "=== 5 passed, 1 failed in 2.45s ==="
+                summary_line_pattern = re.compile(r'=+\s*(.*?passed.*?|.*?failed.*?)\s*in\s*[\d\.]+s\s*=+', re.IGNORECASE)
+                for line in output.split('\n'):
+                    if summary_line_pattern.search(line):
+                        # Extract counts for passed and failed
+                        passed_match = re.search(r'(\d+)\s+passed', line)
+                        failed_match = re.search(r'(\d+)\s+failed', line)
+                        if passed_match:
+                            passed = int(passed_match.group(1))
+                        if failed_match:
+                            failed = int(failed_match.group(1))
+                        break  # Only parse the first summary line
+                
+                return {
+                    'status': 'success',
+                    'result': output,
+                    'passed': passed,
+                    'failed': failed,
+                    'return_code': process.returncode
+                }
+            except subprocess.TimeoutExpired:
+                process.kill()
+                # Ensure process resources are cleaned up
+                try:
+                    process.communicate()
+                except Exception:
+                    pass
+                return {
+                    'status': 'error',
+                    'error': 'Test execution timed out (5 minute limit)',
+                    'passed': 0,
+                    'failed': 0
+                }
+        except Exception as e:
+            logger.error(f"Test execution error: {e}")
+            return {
+                'status': 'error',
+                'error': str(e),
+                'passed': 0,
+                'failed': 0
+            }
 
 
 def main():

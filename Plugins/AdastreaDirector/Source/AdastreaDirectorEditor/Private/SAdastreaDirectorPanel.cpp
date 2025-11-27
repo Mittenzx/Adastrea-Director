@@ -60,6 +60,14 @@ void SAdastreaDirectorPanel::Construct(const FArguments& InArgs)
 	CachedConnectionStatus = FText::FromString(TEXT("⚠️ Not connected - Python backend not ready"));
 	LastStatusLightsUpdateTime = 0.0;
 	
+	// Initialize Tests tab state
+	bIsTestRunning = false;
+	TestProgress = 0.0f;
+	TestStatusMessage = LOCTEXT("TestsIdle", "Ready to run tests");
+	CurrentTestOutput = TEXT("🧪 Plugin Self-Test Suite\n\nClick a test button above to run tests.\nResults will appear here.\n");
+	CachedTestOutputText = FText::FromString(CurrentTestOutput);
+	LastTestOutputUpdateTime = 0.0;
+	
 	// Setup progress file path
 	ProgressFilePath = FPaths::ProjectIntermediateDir() / TEXT("AdastreaDirector") / TEXT("ingestion_progress.json");
 
@@ -169,6 +177,27 @@ void SAdastreaDirectorPanel::Construct(const FArguments& InArgs)
 					.Font(FCoreStyle::GetDefaultFontStyle("Bold", 10))
 				]
 			]
+
+			// Tests Tab Button
+			+ SHorizontalBox::Slot()
+			.AutoWidth()
+			.Padding(0.0f, 0.0f, 5.0f, 0.0f)
+			[
+				SNew(SCheckBox)
+				.Style(FAppStyle::Get(), "RadioButton")
+				.IsChecked(this, &SAdastreaDirectorPanel::GetTabButtonCheckedState, 3)
+				.OnCheckStateChanged_Lambda([this](ECheckBoxState NewState) {
+					if (NewState == ECheckBoxState::Checked)
+					{
+						OnTabButtonClicked(3);
+					}
+				})
+				[
+					SNew(STextBlock)
+					.Text(LOCTEXT("TestsTabButton", "Tests"))
+					.Font(FCoreStyle::GetDefaultFontStyle("Bold", 10))
+				]
+			]
 		]
 
 		+ SVerticalBox::Slot()
@@ -202,6 +231,12 @@ void SAdastreaDirectorPanel::Construct(const FArguments& InArgs)
 			+ SWidgetSwitcher::Slot()
 			[
 				CreateDashboardTab()
+			]
+			
+			// Tests Tab (index 3)
+			+ SWidgetSwitcher::Slot()
+			[
+				CreateTestsTab()
 			]
 		]
 	];
@@ -1395,7 +1430,7 @@ FReply SAdastreaDirectorPanel::OnKeyDown(const FGeometry& MyGeometry, const FKey
 
 FReply SAdastreaDirectorPanel::OnTabButtonClicked(int32 TabIndex)
 {
-	if (TabIndex >= 0 && TabIndex <= 2)
+	if (TabIndex >= 0 && TabIndex <= 3)
 	{
 		CurrentTabIndex = TabIndex;
 		
@@ -1407,6 +1442,11 @@ FReply SAdastreaDirectorPanel::OnTabButtonClicked(int32 TabIndex)
 			UpdateStatusLights();
 			LastDashboardRefreshTime = RefreshTimerReset; // Reset timer to prevent immediate auto-refresh
 		}
+		// If switching to tests tab, update test output
+		else if (TabIndex == 3)
+		{
+			UpdateTestOutput();
+		}
 	}
 	return FReply::Handled();
 }
@@ -1414,6 +1454,569 @@ FReply SAdastreaDirectorPanel::OnTabButtonClicked(int32 TabIndex)
 ECheckBoxState SAdastreaDirectorPanel::GetTabButtonCheckedState(int32 TabIndex) const
 {
 	return (CurrentTabIndex == TabIndex) ? ECheckBoxState::Checked : ECheckBoxState::Unchecked;
+}
+
+TSharedRef<SWidget> SAdastreaDirectorPanel::CreateTestsTab()
+{
+	return SNew(SVerticalBox)
+		
+		// Tests Section Header
+		+ SVerticalBox::Slot()
+		.AutoHeight()
+		.Padding(10.0f, 10.0f, 10.0f, 5.0f)
+		[
+			SNew(STextBlock)
+			.Text(LOCTEXT("TestsLabel", "🧪 Plugin Self-Test Suite:"))
+			.Font(FCoreStyle::GetDefaultFontStyle("Bold", 12))
+		]
+
+		// Test Buttons Row 1
+		+ SVerticalBox::Slot()
+		.AutoHeight()
+		.Padding(10.0f, 5.0f, 10.0f, 5.0f)
+		[
+			SNew(SHorizontalBox)
+			
+			+ SHorizontalBox::Slot()
+			.AutoWidth()
+			.Padding(0.0f, 0.0f, 5.0f, 0.0f)
+			[
+				SNew(SButton)
+				.Text(LOCTEXT("SelfCheckButton", "🔍 Self-Check"))
+				.ToolTipText(LOCTEXT("SelfCheckTooltip", "Run quick self-check of all plugin components"))
+				.OnClicked(this, &SAdastreaDirectorPanel::OnRunSelfCheckClicked)
+				.IsEnabled_Lambda([this]() { return CanRunTests(); })
+			]
+
+			+ SHorizontalBox::Slot()
+			.AutoWidth()
+			.Padding(0.0f, 0.0f, 5.0f, 0.0f)
+			[
+				SNew(SButton)
+				.Text(LOCTEXT("IPCTestsButton", "📡 IPC Tests"))
+				.ToolTipText(LOCTEXT("IPCTestsTooltip", "Test IPC connection and communication"))
+				.OnClicked(this, &SAdastreaDirectorPanel::OnRunIPCTestsClicked)
+				.IsEnabled_Lambda([this]() { return CanRunTests(); })
+			]
+
+			+ SHorizontalBox::Slot()
+			.AutoWidth()
+			.Padding(0.0f, 0.0f, 5.0f, 0.0f)
+			[
+				SNew(SButton)
+				.Text(LOCTEXT("PluginTestsButton", "🔌 Plugin Tests"))
+				.ToolTipText(LOCTEXT("PluginTestsTooltip", "Run plugin-specific unit tests"))
+				.OnClicked(this, &SAdastreaDirectorPanel::OnRunPluginTestsClicked)
+				.IsEnabled_Lambda([this]() { return CanRunTests(); })
+			]
+
+			+ SHorizontalBox::Slot()
+			.AutoWidth()
+			.Padding(0.0f, 0.0f, 5.0f, 0.0f)
+			[
+				SNew(SButton)
+				.Text(LOCTEXT("AllTestsButton", "🚀 All Tests"))
+				.ToolTipText(LOCTEXT("AllTestsTooltip", "Run all available tests via Python backend"))
+				.OnClicked(this, &SAdastreaDirectorPanel::OnRunAllTestsClicked)
+				.IsEnabled_Lambda([this]() { return CanRunTests(); })
+			]
+
+			+ SHorizontalBox::Slot()
+			.AutoWidth()
+			.Padding(0.0f, 0.0f, 5.0f, 0.0f)
+			[
+				SNew(SButton)
+				.Text(LOCTEXT("ClearTestOutputButton", "🗑️ Clear"))
+				.ToolTipText(LOCTEXT("ClearTestOutputTooltip", "Clear test output display"))
+				.OnClicked(this, &SAdastreaDirectorPanel::OnClearTestOutputClicked)
+			]
+
+			+ SHorizontalBox::Slot()
+			.AutoWidth()
+			[
+				SNew(SButton)
+				.Text(LOCTEXT("SaveLogButton", "💾 Save Log"))
+				.ToolTipText(LOCTEXT("SaveLogTooltip", "Save test output to a log file"))
+				.OnClicked(this, &SAdastreaDirectorPanel::OnSaveTestLogClicked)
+			]
+		]
+
+		+ SVerticalBox::Slot()
+		.AutoHeight()
+		.Padding(10.0f, 5.0f, 10.0f, 5.0f)
+		[
+			SNew(SSeparator)
+			.Orientation(Orient_Horizontal)
+		]
+
+		// Test Status
+		+ SVerticalBox::Slot()
+		.AutoHeight()
+		.Padding(10.0f, 5.0f, 10.0f, 5.0f)
+		[
+			SAssignNew(TestStatusText, STextBlock)
+			.Text_Lambda([this]() { return TestStatusMessage; })
+			.Font(FCoreStyle::GetDefaultFontStyle("Bold", 10))
+		]
+
+		// Test Progress Bar
+		+ SVerticalBox::Slot()
+		.AutoHeight()
+		.Padding(10.0f, 0.0f, 10.0f, 5.0f)
+		[
+			SAssignNew(TestProgressBar, SProgressBar)
+			.Percent_Lambda([this]() { return TestProgress; })
+		]
+
+		+ SVerticalBox::Slot()
+		.AutoHeight()
+		.Padding(10.0f, 5.0f, 10.0f, 5.0f)
+		[
+			SNew(STextBlock)
+			.Text(LOCTEXT("TestOutputLabel", "Test Output:"))
+			.Font(FCoreStyle::GetDefaultFontStyle("Bold", 10))
+		]
+
+		// Test Output Display
+		+ SVerticalBox::Slot()
+		.FillHeight(1.0f)
+		.Padding(10.0f, 0.0f, 10.0f, 10.0f)
+		[
+			SNew(SBox)
+			.MinDesiredHeight(300.0f)
+			[
+				SNew(SScrollBox)
+				.Orientation(Orient_Vertical)
+				
+				+ SScrollBox::Slot()
+				[
+					SAssignNew(TestOutputDisplay, SMultiLineEditableTextBox)
+					.Text_Lambda([this]() { return CachedTestOutputText; })
+					.IsReadOnly(true)
+					.AutoWrapText(true)
+				]
+			]
+		];
+}
+
+FReply SAdastreaDirectorPanel::OnRunSelfCheckClicked()
+{
+	if (!CanRunTests())
+	{
+		return FReply::Handled();
+	}
+
+	bIsTestRunning = true;
+	TestProgress = 0.0f;
+	TestStatusMessage = LOCTEXT("SelfCheckRunning", "Running self-check...");
+	CurrentTestOutput = TEXT("");
+	CachedTestOutputText = FText::FromString(CurrentTestOutput);
+
+	// Perform self-check
+	PerformSelfCheck();
+
+	return FReply::Handled();
+}
+
+FReply SAdastreaDirectorPanel::OnRunIPCTestsClicked()
+{
+	RunTests(TEXT("ipc"));
+	return FReply::Handled();
+}
+
+FReply SAdastreaDirectorPanel::OnRunPluginTestsClicked()
+{
+	RunTests(TEXT("plugin"));
+	return FReply::Handled();
+}
+
+FReply SAdastreaDirectorPanel::OnRunAllTestsClicked()
+{
+	RunTests(TEXT("all"));
+	return FReply::Handled();
+}
+
+FReply SAdastreaDirectorPanel::OnClearTestOutputClicked()
+{
+	CurrentTestOutput = TEXT("🧪 Test output cleared.\n\nClick a test button to run tests.\n");
+	CachedTestOutputText = FText::FromString(CurrentTestOutput);
+	TestProgress = 0.0f;
+	TestStatusMessage = LOCTEXT("TestsIdle", "Ready to run tests");
+	return FReply::Handled();
+}
+
+void SAdastreaDirectorPanel::RunTests(const FString& TestType)
+{
+	if (!CanRunTests())
+	{
+		return;
+	}
+
+	bIsTestRunning = true;
+	TestProgress = 0.0f;
+	CurrentTestOutput = TEXT("");
+	CachedTestOutputText = FText::FromString(CurrentTestOutput);
+
+	// Get the Python bridge
+	FAdastreaDirectorModule* RuntimeModule = FModuleManager::GetModulePtr<FAdastreaDirectorModule>("AdastreaDirector");
+	
+	if (!RuntimeModule)
+	{
+		AppendTestOutput(TEXT("❌ Error: Runtime module not available\n"));
+		bIsTestRunning = false;
+		TestStatusMessage = LOCTEXT("TestsFailed", "Tests failed - module not available");
+		return;
+	}
+
+	FPythonBridge* PythonBridge = RuntimeModule->GetPythonBridge();
+	
+	if (!PythonBridge || !PythonBridge->IsReady())
+	{
+		AppendTestOutput(TEXT("❌ Error: Python backend not ready\n"));
+		AppendTestOutput(TEXT("Please ensure the Python backend is running.\n"));
+		bIsTestRunning = false;
+		TestStatusMessage = LOCTEXT("TestsFailed", "Tests failed - backend not ready");
+		return;
+	}
+
+	// Update status
+	TestStatusMessage = FText::Format(LOCTEXT("TestsRunning", "Running {0} tests..."), FText::FromString(TestType));
+	AppendTestOutput(FString::Printf(TEXT("🧪 Running %s tests...\n"), *TestType));
+	AppendTestOutput(FString::Printf(TEXT("Timestamp: %s\n\n"), *FDateTime::Now().ToString(TEXT("%Y-%m-%d %H:%M:%S"))));
+
+	// Send test request to Python backend
+	FString Response;
+	bool bSuccess = PythonBridge->SendRequest(TEXT("run_tests"), TestType, Response);
+
+	if (bSuccess)
+	{
+		// Parse the JSON response
+		TSharedPtr<FJsonObject> JsonObject;
+		TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(Response);
+		
+		if (FJsonSerializer::Deserialize(Reader, JsonObject) && JsonObject.IsValid())
+		{
+			FString Status;
+			if (JsonObject->TryGetStringField(TEXT("status"), Status) && Status == TEXT("success"))
+			{
+				FString Result;
+				if (JsonObject->TryGetStringField(TEXT("result"), Result))
+				{
+					AppendTestOutput(Result);
+					AppendTestOutput(TEXT("\n"));
+				}
+				
+				int32 Passed = 0;
+				int32 Failed = 0;
+				JsonObject->TryGetNumberField(TEXT("passed"), Passed);
+				JsonObject->TryGetNumberField(TEXT("failed"), Failed);
+				
+				if (Passed == 0 && Failed == 0)
+				{
+					TestStatusMessage = LOCTEXT("TestsNoResults", "⚠️ No tests found or failed to parse results");
+					TestProgress = 1.0f;
+				}
+				else if (Failed == 0)
+				{
+					TestStatusMessage = FText::Format(LOCTEXT("TestsPassedStatus", "✅ All tests passed ({0} tests)"), FText::AsNumber(Passed));
+					TestProgress = 1.0f;
+				}
+				else
+				{
+					TestStatusMessage = FText::Format(LOCTEXT("TestsFailedStatus", "❌ {0} passed, {1} failed"), FText::AsNumber(Passed), FText::AsNumber(Failed));
+					TestProgress = 1.0f;
+				}
+			}
+			else
+			{
+				FString Error;
+				if (!JsonObject->TryGetStringField(TEXT("error"), Error) || Error.IsEmpty())
+				{
+					Error = TEXT("Unknown error occurred");
+				}
+				AppendTestOutput(FString::Printf(TEXT("❌ Error: %s\n"), *Error));
+				TestStatusMessage = LOCTEXT("TestsError", "Tests encountered an error");
+			}
+		}
+		else
+		{
+			AppendTestOutput(FString::Printf(TEXT("Raw response: %s\n"), *Response));
+		}
+	}
+	else
+	{
+		AppendTestOutput(TEXT("❌ Failed to communicate with Python backend\n"));
+		TestStatusMessage = LOCTEXT("TestsCommError", "Communication error");
+	}
+
+	bIsTestRunning = false;
+}
+
+void SAdastreaDirectorPanel::PerformSelfCheck()
+{
+	FString Timestamp = FDateTime::Now().ToString(TEXT("%Y-%m-%d %H:%M:%S"));
+	AppendTestOutput(FString::Printf(TEXT("═══════════════════════════════════════════════════════════════\n")));
+	AppendTestOutput(FString::Printf(TEXT("🔍 ADASTREA DIRECTOR SELF-CHECK\n")));
+	AppendTestOutput(FString::Printf(TEXT("Timestamp: %s\n"), *Timestamp));
+	AppendTestOutput(FString::Printf(TEXT("═══════════════════════════════════════════════════════════════\n\n")));
+
+	int32 PassCount = 0;
+	int32 FailCount = 0;
+	int32 SkippedCount = 0;
+	int32 TotalChecks = 6;
+	int32 CurrentCheck = 0;
+
+	// Check 1: Runtime Module
+	CurrentCheck++;
+	TestProgress = static_cast<float>(CurrentCheck) / TotalChecks;
+	FAdastreaDirectorModule* RuntimeModule = FModuleManager::GetModulePtr<FAdastreaDirectorModule>("AdastreaDirector");
+	if (RuntimeModule)
+	{
+		AppendTestOutput(TEXT("✅ [1/6] Runtime Module: Loaded successfully\n"));
+		PassCount++;
+	}
+	else
+	{
+		AppendTestOutput(TEXT("❌ [1/6] Runtime Module: NOT LOADED\n"));
+		FailCount++;
+		// Cannot continue without runtime module
+		TestStatusMessage = LOCTEXT("SelfCheckFailed", "Self-check failed - runtime module not loaded");
+		bIsTestRunning = false;
+		return;
+	}
+
+	// Check 2: Python Bridge
+	CurrentCheck++;
+	TestProgress = static_cast<float>(CurrentCheck) / TotalChecks;
+	FPythonBridge* PythonBridge = RuntimeModule->GetPythonBridge();
+	if (PythonBridge)
+	{
+		AppendTestOutput(TEXT("✅ [2/6] Python Bridge: Initialized\n"));
+		PassCount++;
+	}
+	else
+	{
+		AppendTestOutput(TEXT("❌ [2/6] Python Bridge: NOT INITIALIZED\n"));
+		FailCount++;
+	}
+
+	// Check 3: Python Process
+	CurrentCheck++;
+	TestProgress = static_cast<float>(CurrentCheck) / TotalChecks;
+	if (PythonBridge)
+	{
+		FString Status = PythonBridge->GetStatus();
+		if (!Status.Contains(TEXT("not running")))
+		{
+			AppendTestOutput(TEXT("✅ [3/6] Python Process: Running\n"));
+			PassCount++;
+		}
+		else
+		{
+			AppendTestOutput(TEXT("❌ [3/6] Python Process: NOT RUNNING\n"));
+			FailCount++;
+		}
+	}
+	else
+	{
+		AppendTestOutput(TEXT("⚠️ [3/6] Python Process: Cannot check (bridge not initialized)\n"));
+		SkippedCount++;
+	}
+
+	// Check 4: IPC Connection
+	CurrentCheck++;
+	TestProgress = static_cast<float>(CurrentCheck) / TotalChecks;
+	if (PythonBridge && PythonBridge->IsReady())
+	{
+		AppendTestOutput(TEXT("✅ [4/6] IPC Connection: Connected\n"));
+		PassCount++;
+	}
+	else
+	{
+		AppendTestOutput(TEXT("❌ [4/6] IPC Connection: NOT CONNECTED\n"));
+		FailCount++;
+	}
+
+	// Check 5: Backend Health (Ping test)
+	CurrentCheck++;
+	TestProgress = static_cast<float>(CurrentCheck) / TotalChecks;
+	if (PythonBridge && PythonBridge->IsReady())
+	{
+		FString Response;
+		bool bPingSuccess = PythonBridge->SendRequest(TEXT("ping"), TEXT(""), Response);
+		if (bPingSuccess && Response.Contains(TEXT("pong")))
+		{
+			AppendTestOutput(TEXT("✅ [5/6] Backend Health: Responding (ping → pong)\n"));
+			PassCount++;
+		}
+		else
+		{
+			AppendTestOutput(TEXT("❌ [5/6] Backend Health: NOT RESPONDING\n"));
+			FailCount++;
+		}
+	}
+	else
+	{
+		AppendTestOutput(TEXT("⚠️ [5/6] Backend Health: Cannot check (not connected)\n"));
+		SkippedCount++;
+	}
+
+	// Check 6: Query Processing (verify query handler responds correctly)
+	CurrentCheck++;
+	TestProgress = static_cast<float>(CurrentCheck) / TotalChecks;
+	if (PythonBridge && PythonBridge->IsReady())
+	{
+		// Test actual query processing by sending a query request
+		FString Response;
+		bool bQuerySuccess = PythonBridge->SendRequest(TEXT("query"), TEXT("test"), Response);
+		if (bQuerySuccess && (Response.Contains(TEXT("success")) || Response.Contains(TEXT("result"))))
+		{
+			AppendTestOutput(TEXT("✅ [6/6] Query Processing: Working\n"));
+			PassCount++;
+		}
+		else
+		{
+			// Truncate response for display if too long
+			FString DisplayResponse = Response.Len() > 100 ? Response.Left(100) + TEXT("...") : Response;
+			AppendTestOutput(FString::Printf(TEXT("❌ [6/6] Query Processing: FAILED - %s\n"), *DisplayResponse));
+			FailCount++;
+		}
+	}
+	else
+	{
+		AppendTestOutput(TEXT("⚠️ [6/6] Query Processing: Cannot check (not connected)\n"));
+		SkippedCount++;
+	}
+
+	// Summary
+	AppendTestOutput(TEXT("\n═══════════════════════════════════════════════════════════════\n"));
+	AppendTestOutput(TEXT("SELF-CHECK SUMMARY\n"));
+	AppendTestOutput(FString::Printf(TEXT("Passed: %d/%d\n"), PassCount, TotalChecks));
+	AppendTestOutput(FString::Printf(TEXT("Failed: %d/%d\n"), FailCount, TotalChecks));
+	if (SkippedCount > 0)
+	{
+		AppendTestOutput(FString::Printf(TEXT("Skipped: %d/%d\n"), SkippedCount, TotalChecks));
+	}
+	
+	if (FailCount == 0 && SkippedCount == 0)
+	{
+		AppendTestOutput(TEXT("\n✅ All self-checks passed! Plugin is functioning correctly.\n"));
+		TestStatusMessage = LOCTEXT("SelfCheckPassed", "✅ All self-checks passed!");
+	}
+	else if (FailCount == 0 && SkippedCount > 0)
+	{
+		AppendTestOutput(TEXT("\n⚠️ Some checks were skipped due to dependencies.\n"));
+		TestStatusMessage = FText::Format(LOCTEXT("SelfCheckSkipped", "⚠️ {0} passed, {1} skipped"), FText::AsNumber(PassCount), FText::AsNumber(SkippedCount));
+	}
+	else
+	{
+		AppendTestOutput(TEXT("\n❌ Some self-checks failed. Please check the issues above.\n"));
+		TestStatusMessage = FText::Format(LOCTEXT("SelfCheckPartialFail", "❌ {0}/{1} checks failed"), FText::AsNumber(FailCount), FText::AsNumber(TotalChecks));
+	}
+	AppendTestOutput(TEXT("═══════════════════════════════════════════════════════════════\n"));
+
+	TestProgress = 1.0f;
+	bIsTestRunning = false;
+}
+
+void SAdastreaDirectorPanel::UpdateTestOutput()
+{
+	// Update cached test output text
+	CachedTestOutputText = FText::FromString(CurrentTestOutput);
+}
+
+void SAdastreaDirectorPanel::AppendTestOutput(const FString& Entry)
+{
+	CurrentTestOutput += Entry;
+	
+	// Keep only last MaxTestOutputCharacters characters, preserving line boundaries
+	if (CurrentTestOutput.Len() > MaxTestOutputCharacters)
+	{
+		// Find a newline near the truncation point to avoid cutting mid-line
+		int32 TruncateIndex = CurrentTestOutput.Len() - MaxTestOutputCharacters;
+		
+		// Search for a newline within the next 100 characters after TruncateIndex
+		int32 WindowLength = FMath::Min(100, CurrentTestOutput.Len() - TruncateIndex);
+		int32 RelativeNewlineIndex = CurrentTestOutput.Mid(TruncateIndex, WindowLength).Find(TEXT("\n"));
+		
+		if (RelativeNewlineIndex != INDEX_NONE)
+		{
+			// Found a newline close to truncation point
+			CurrentTestOutput = TEXT("[...truncated...]\n") + CurrentTestOutput.Mid(TruncateIndex + RelativeNewlineIndex + 1);
+		}
+		else
+		{
+			// No suitable newline found, just truncate with indicator
+			CurrentTestOutput = TEXT("[...truncated...]\n") + CurrentTestOutput.Right(MaxTestOutputCharacters);
+		}
+	}
+	
+	// Update cached FText version
+	CachedTestOutputText = FText::FromString(CurrentTestOutput);
+}
+
+bool SAdastreaDirectorPanel::CanRunTests() const
+{
+	return !bIsTestRunning;
+}
+
+FReply SAdastreaDirectorPanel::OnSaveTestLogClicked()
+{
+	// Create timestamp for filename
+	FString Timestamp = FDateTime::Now().ToString(TEXT("%Y%m%d_%H%M%S"));
+	FString DefaultFilename = FString::Printf(TEXT("adastrea_test_log_%s.txt"), *Timestamp);
+	
+	// Open save file dialog
+	IDesktopPlatform* DesktopPlatform = FDesktopPlatformModule::Get();
+	if (!DesktopPlatform)
+	{
+		AppendTestOutput(TEXT("\n❌ Failed to open save dialog - desktop platform not available.\n"));
+		return FReply::Handled();
+	}
+	
+	TArray<FString> OutFiles;
+	const void* ParentWindowHandle = FSlateApplication::Get().FindBestParentWindowHandleForDialogs(nullptr);
+	
+	bool bOpened = DesktopPlatform->SaveFileDialog(
+		ParentWindowHandle,
+		TEXT("Save Test Log"),
+		FPaths::ProjectLogDir(),
+		DefaultFilename,
+		TEXT("Text Files (*.txt)|*.txt|Log Files (*.log)|*.log|All Files (*.*)|*.*"),
+		EFileDialogFlags::None,
+		OutFiles
+	);
+	
+	if (bOpened && OutFiles.Num() > 0)
+	{
+		if (SaveTestLogToFile(OutFiles[0]))
+		{
+			AppendTestOutput(FString::Printf(TEXT("\n✅ Log saved to: %s\n"), *OutFiles[0]));
+		}
+		else
+		{
+			AppendTestOutput(TEXT("\n❌ Failed to save log file.\n"));
+		}
+	}
+	
+	return FReply::Handled();
+}
+
+bool SAdastreaDirectorPanel::SaveTestLogToFile(const FString& FilePath)
+{
+	// Add header with metadata
+	FString LogContent;
+	LogContent += TEXT("═══════════════════════════════════════════════════════════════\n");
+	LogContent += TEXT("ADASTREA DIRECTOR TEST LOG\n");
+	LogContent += FString::Printf(TEXT("Generated: %s\n"), *FDateTime::Now().ToString(TEXT("%Y-%m-%d %H:%M:%S")));
+	LogContent += FString::Printf(TEXT("Project: %s\n"), *FPaths::GetProjectFilePath());
+	LogContent += TEXT("═══════════════════════════════════════════════════════════════\n\n");
+	
+	// Add the test output content
+	LogContent += CurrentTestOutput;
+	
+	// Write to file
+	return FFileHelper::SaveStringToFile(LogContent, *FilePath, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM);
 }
 
 #undef LOCTEXT_NAMESPACE
