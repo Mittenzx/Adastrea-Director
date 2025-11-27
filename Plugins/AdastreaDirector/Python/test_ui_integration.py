@@ -67,7 +67,7 @@ def send_query(sock: socket.socket, query: str) -> dict:
     return send_request(sock, 'query', query)
 
 
-def test_status_indicators(sock: socket.socket):
+def check_status_indicators(sock: socket.socket):
     """
     Test status checking functionality - simulates what the UI status lights do.
     
@@ -186,7 +186,7 @@ def main():
         return
     
     # Test Status Indicators
-    test_status_indicators(sock)
+    check_status_indicators(sock)
     
     # Test 1: Main test query
     print("-" * 70)
