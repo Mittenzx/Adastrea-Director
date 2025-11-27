@@ -16,7 +16,6 @@ Usage:
 import argparse
 import json
 import sys
-from typing import Optional
 
 try:
     from mcp_server import UnrealMCPServer
@@ -249,7 +248,10 @@ Examples:
     except KeyboardInterrupt:
         print("\nInterrupted.")
     except Exception as e:
-        print(f"Error: {e}")
+        if hasattr(args, "command") and args.command:
+            print(f"Error while executing '{args.command}': {e}")
+        else:
+            print(f"Error during operation: {e}")
         if args.debug:
             import traceback
             traceback.print_exc()

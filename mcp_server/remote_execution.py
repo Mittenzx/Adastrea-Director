@@ -14,7 +14,7 @@ import struct
 import logging
 import time
 import threading
-from typing import Optional, Dict, Any, Tuple, Callable, List
+from typing import Optional, Dict, Tuple, Callable, List
 from dataclasses import dataclass, field
 from enum import IntEnum
 from datetime import datetime
@@ -166,6 +166,8 @@ class UnrealRemoteExecution:
         try:
             self._discovery_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
         except AttributeError:
+            # SO_REUSEPORT is not available on all platforms (e.g., Windows).
+            # It is safe to ignore this error and proceed without setting the option.
             pass
         
         self._discovery_socket.bind((self.config.bind_address, self.config.multicast_port))
@@ -370,7 +372,7 @@ class UnrealRemoteExecution:
         if not self._command_socket or not self._connected_node:
             return CommandResult(
                 success=False,
-                error="Not connected to a remote node"
+                error="Not connected to Unreal Engine. Use open_command_connection() to establish a connection first."
             )
         
         try:
@@ -461,12 +463,14 @@ class UnrealRemoteExecution:
     
     def add_command_listener(self, listener: Callable[[CommandResult], None]) -> None:
         """Add a listener for command results."""
-        self._command_listeners.append(listener)
+        with self._lock:
+            self._command_listeners.append(listener)
     
     def remove_command_listener(self, listener: Callable[[CommandResult], None]) -> None:
         """Remove a command result listener."""
-        if listener in self._command_listeners:
-            self._command_listeners.remove(listener)
+        with self._lock:
+            if listener in self._command_listeners:
+                self._command_listeners.remove(listener)
     
     def __enter__(self) -> "UnrealRemoteExecution":
         """Context manager entry."""

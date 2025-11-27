@@ -452,7 +452,7 @@ with UnrealMCPServer() as server:
 ```
 ┌─────────────────────────────────────┐
 │   MCP Client                        │
-│   (Copilot/Continue/Cline/etc.)     │
+│   (5ire/Cline/Zed/Continue/etc.)    │
 │   - Sends tool requests             │
 │   - Receives results                │
 └──────────────┬──────────────────────┘

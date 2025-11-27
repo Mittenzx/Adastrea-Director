@@ -2,9 +2,7 @@
 Tests for the MCP Server tools module.
 """
 
-import pytest
-import json
-from unittest.mock import Mock, MagicMock
+from unittest.mock import Mock
 
 from mcp_server.tools import (
     ToolParameter,

@@ -2,8 +2,6 @@
 Tests for the MCP Server main module.
 """
 
-import pytest
-import json
 from unittest.mock import Mock, MagicMock, patch
 
 from mcp_server.server import (

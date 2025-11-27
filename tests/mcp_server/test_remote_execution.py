@@ -2,11 +2,7 @@
 Tests for the MCP Server remote execution module.
 """
 
-import pytest
-import socket
 import struct
-import threading
-import time
 from unittest.mock import Mock, patch, MagicMock
 
 from mcp_server.remote_execution import (

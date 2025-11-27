@@ -14,6 +14,11 @@ from typing import Any, Dict, List, Optional, Type
 
 logger = logging.getLogger(__name__)
 
+# Maximum number of results to return from asset/actor queries
+MAX_RESULTS = 100
+MAX_SEARCH_RESULTS = 50
+MAX_ASSET_TYPE_SAMPLE = 1000
+
 
 @dataclass
 class ToolParameter:
@@ -104,7 +109,7 @@ class EditorRunPython(MCPTool):
     name = "editor_run_python"
     description = (
         "Execute any Python code within the Unreal Editor. "
-        "All Python must have `import unreal` at the top. "
+        "It is recommended to include `import unreal` at the top. "
         "Check the Unreal Python documentation before using this tool."
     )
     parameters = [
@@ -144,7 +149,7 @@ import json
 asset_registry = unreal.AssetRegistryHelpers.get_asset_registry()
 assets = asset_registry.get_all_assets()
 asset_paths = [str(asset.package_name) for asset in assets]
-print(json.dumps(asset_paths[:100]))  # Limit to first 100 for performance
+print(json.dumps(asset_paths[:100]))  # Limit to first MAX_RESULTS for performance
 """
     
     def execute(self, remote, **kwargs) -> ToolResult:
@@ -175,7 +180,7 @@ class EditorGetAssetInfo(MCPTool):
 import unreal
 import json
 
-asset_path = "{asset_path}"
+asset_path = {asset_path_json}
 asset_data = unreal.EditorAssetLibrary.find_asset_data(asset_path)
 
 if not asset_data.is_valid():
@@ -205,7 +210,7 @@ else:
         if not asset_path:
             return ToolResult.error("No asset_path provided")
         
-        script = self._script_template.format(asset_path=asset_path)
+        script = self._script_template.format(asset_path_json=json.dumps(asset_path))
         result = remote.run_command(script)
         if result.success:
             return ToolResult.text(result.output)
@@ -240,8 +245,8 @@ class EditorSearchAssets(MCPTool):
 import unreal
 import json
 
-search_term = "{search_term}"
-asset_class = "{asset_class}"
+search_term = {search_term_json}
+asset_class = {asset_class_json}
 
 asset_registry = unreal.AssetRegistryHelpers.get_asset_registry()
 assets = asset_registry.get_all_assets()
@@ -279,8 +284,8 @@ print(json.dumps(output))
             return ToolResult.error("No search_term provided")
         
         script = self._script_template.format(
-            search_term=search_term,
-            asset_class=asset_class
+            search_term_json=json.dumps(search_term),
+            asset_class_json=json.dumps(asset_class)
         )
         result = remote.run_command(script)
         if result.success:
@@ -304,8 +309,9 @@ class EditorConsoleCommand(MCPTool):
     
     _script_template = """
 import unreal
-unreal.SystemLibrary.execute_console_command(None, "{command}")
-print("Command executed: {command}")
+command = {command_json}
+unreal.SystemLibrary.execute_console_command(None, command)
+print("Command executed: " + command)
 """
     
     def execute(self, remote, **kwargs) -> ToolResult:
@@ -313,9 +319,7 @@ print("Command executed: {command}")
         if not command:
             return ToolResult.error("No command provided")
         
-        # Escape quotes in command
-        command_escaped = command.replace('"', '\\"')
-        script = self._script_template.format(command=command_escaped)
+        script = self._script_template.format(command_json=json.dumps(command))
         result = remote.run_command(script)
         if result.success:
             return ToolResult.text(result.output)
@@ -511,8 +515,8 @@ class EditorCreateObject(MCPTool):
 import unreal
 import json
 
-object_class = "{object_class}"
-object_name = "{object_name}"
+object_class = {object_class_json}
+object_name = {object_name_json}
 location = {location}
 rotation = {rotation}
 scale = {scale}
@@ -573,8 +577,8 @@ else:
         scale = kwargs.get("scale", None)
         
         script = self._script_template.format(
-            object_class=object_class,
-            object_name=object_name,
+            object_class_json=json.dumps(object_class),
+            object_name_json=json.dumps(object_name),
             location=json.dumps(location) if location else "None",
             rotation=json.dumps(rotation) if rotation else "None",
             scale=json.dumps(scale) if scale else "None"
@@ -628,7 +632,7 @@ class EditorUpdateObject(MCPTool):
 import unreal
 import json
 
-actor_name = "{actor_name}"
+actor_name = {actor_name_json}
 location = {location}
 rotation = {rotation}
 scale = {scale}
@@ -666,7 +670,7 @@ else:
             scale.get('z', 1)
         ))
     
-    if new_name and new_name != "null":
+    if new_name is not None:
         target_actor.set_actor_label(new_name)
     
     loc = target_actor.get_actor_location()
@@ -696,11 +700,11 @@ else:
         new_name = kwargs.get("new_name", None)
         
         script = self._script_template.format(
-            actor_name=actor_name,
+            actor_name_json=json.dumps(actor_name),
             location=json.dumps(location) if location else "None",
             rotation=json.dumps(rotation) if rotation else "None",
             scale=json.dumps(scale) if scale else "None",
-            new_name=f'"{new_name}"' if new_name else "None"
+            new_name=json.dumps(new_name) if new_name is not None else "None"
         )
         
         result = remote.run_command(script)
@@ -727,7 +731,7 @@ class EditorDeleteObject(MCPTool):
 import unreal
 import json
 
-actor_name = "{actor_name}"
+actor_name = {actor_name_json}
 
 # Find the actor
 actors = unreal.EditorLevelLibrary.get_all_level_actors()
@@ -766,7 +770,7 @@ else:
         if not actor_name:
             return ToolResult.error("actor_name is required")
         
-        script = self._script_template.format(actor_name=actor_name)
+        script = self._script_template.format(actor_name_json=json.dumps(actor_name))
         result = remote.run_command(script)
         if result.success:
             return ToolResult.text(result.output)
