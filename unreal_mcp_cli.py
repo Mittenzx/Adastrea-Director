@@ -176,7 +176,7 @@ Examples:
     
     # Console command
     console_parser = subparsers.add_parser("console", help="Run console command")
-    console_parser.add_argument("command", help="Console command to run")
+    console_parser.add_argument("console_cmd", help="Console command to run")
     
     # Global options
     parser.add_argument("--json", action="store_true", help="Output raw JSON")
@@ -243,7 +243,7 @@ Examples:
                 print_result(result, not args.json)
             
             elif args.command == "console":
-                result = server.handle_tool_call("editor_console_command", {"command": args.command})
+                result = server.handle_tool_call("editor_console_command", {"command": args.console_cmd})
                 print_result(result, not args.json)
     
     except KeyboardInterrupt:
