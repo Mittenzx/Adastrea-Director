@@ -1711,7 +1711,12 @@ void SAdastreaDirectorPanel::RunTests(const FString& TestType)
 				JsonObject->TryGetNumberField(TEXT("passed"), Passed);
 				JsonObject->TryGetNumberField(TEXT("failed"), Failed);
 				
-				if (Failed == 0)
+				if (Passed == 0 && Failed == 0)
+				{
+					TestStatusMessage = LOCTEXT("TestsNoResults", "⚠️ No tests found or failed to parse results");
+					TestProgress = 1.0f;
+				}
+				else if (Failed == 0)
 				{
 					TestStatusMessage = FText::Format(LOCTEXT("TestsPassedStatus", "✅ All tests passed ({0} tests)"), FText::AsNumber(Passed));
 					TestProgress = 1.0f;
@@ -1725,7 +1730,10 @@ void SAdastreaDirectorPanel::RunTests(const FString& TestType)
 			else
 			{
 				FString Error;
-				JsonObject->TryGetStringField(TEXT("error"), Error);
+				if (!JsonObject->TryGetStringField(TEXT("error"), Error) || Error.IsEmpty())
+				{
+					Error = TEXT("Unknown error occurred");
+				}
 				AppendTestOutput(FString::Printf(TEXT("❌ Error: %s\n"), *Error));
 				TestStatusMessage = LOCTEXT("TestsError", "Tests encountered an error");
 			}
@@ -1754,6 +1762,7 @@ void SAdastreaDirectorPanel::PerformSelfCheck()
 
 	int32 PassCount = 0;
 	int32 FailCount = 0;
+	int32 SkippedCount = 0;
 	int32 TotalChecks = 6;
 	int32 CurrentCheck = 0;
 
@@ -1811,6 +1820,7 @@ void SAdastreaDirectorPanel::PerformSelfCheck()
 	else
 	{
 		AppendTestOutput(TEXT("⚠️ [3/6] Python Process: Cannot check (bridge not initialized)\n"));
+		SkippedCount++;
 	}
 
 	// Check 4: IPC Connection
@@ -1848,6 +1858,7 @@ void SAdastreaDirectorPanel::PerformSelfCheck()
 	else
 	{
 		AppendTestOutput(TEXT("⚠️ [5/6] Backend Health: Cannot check (not connected)\n"));
+		SkippedCount++;
 	}
 
 	// Check 6: Query Processing (verify query handler responds correctly)
@@ -1855,10 +1866,10 @@ void SAdastreaDirectorPanel::PerformSelfCheck()
 	TestProgress = static_cast<float>(CurrentCheck) / TotalChecks;
 	if (PythonBridge && PythonBridge->IsReady())
 	{
-		// Use a simple ping-style query to verify processing works
+		// Test actual query processing by sending a query request
 		FString Response;
-		bool bQuerySuccess = PythonBridge->SendRequest(TEXT("ping"), TEXT(""), Response);
-		if (bQuerySuccess && Response.Contains(TEXT("pong")))
+		bool bQuerySuccess = PythonBridge->SendRequest(TEXT("query"), TEXT("test"), Response);
+		if (bQuerySuccess && (Response.Contains(TEXT("success")) || Response.Contains(TEXT("result"))))
 		{
 			AppendTestOutput(TEXT("✅ [6/6] Query Processing: Working\n"));
 			PassCount++;
@@ -1874,6 +1885,7 @@ void SAdastreaDirectorPanel::PerformSelfCheck()
 	else
 	{
 		AppendTestOutput(TEXT("⚠️ [6/6] Query Processing: Cannot check (not connected)\n"));
+		SkippedCount++;
 	}
 
 	// Summary
@@ -1881,11 +1893,20 @@ void SAdastreaDirectorPanel::PerformSelfCheck()
 	AppendTestOutput(TEXT("SELF-CHECK SUMMARY\n"));
 	AppendTestOutput(FString::Printf(TEXT("Passed: %d/%d\n"), PassCount, TotalChecks));
 	AppendTestOutput(FString::Printf(TEXT("Failed: %d/%d\n"), FailCount, TotalChecks));
+	if (SkippedCount > 0)
+	{
+		AppendTestOutput(FString::Printf(TEXT("Skipped: %d/%d\n"), SkippedCount, TotalChecks));
+	}
 	
-	if (FailCount == 0)
+	if (FailCount == 0 && SkippedCount == 0)
 	{
 		AppendTestOutput(TEXT("\n✅ All self-checks passed! Plugin is functioning correctly.\n"));
 		TestStatusMessage = LOCTEXT("SelfCheckPassed", "✅ All self-checks passed!");
+	}
+	else if (FailCount == 0 && SkippedCount > 0)
+	{
+		AppendTestOutput(TEXT("\n⚠️ Some checks were skipped due to dependencies.\n"));
+		TestStatusMessage = FText::Format(LOCTEXT("SelfCheckSkipped", "⚠️ {0} passed, {1} skipped"), FText::AsNumber(PassCount), FText::AsNumber(SkippedCount));
 	}
 	else
 	{
@@ -1913,12 +1934,15 @@ void SAdastreaDirectorPanel::AppendTestOutput(const FString& Entry)
 	{
 		// Find a newline near the truncation point to avoid cutting mid-line
 		int32 TruncateIndex = CurrentTestOutput.Len() - MaxTestOutputCharacters;
-		int32 NewlineIndex = CurrentTestOutput.Find(TEXT("\n"), ESearchCase::IgnoreCase, ESearchDir::FromStart, TruncateIndex);
 		
-		if (NewlineIndex != INDEX_NONE && NewlineIndex < TruncateIndex + 100)
+		// Search for a newline within the next 100 characters after TruncateIndex
+		int32 WindowLength = FMath::Min(100, CurrentTestOutput.Len() - TruncateIndex);
+		int32 RelativeNewlineIndex = CurrentTestOutput.Mid(TruncateIndex, WindowLength).Find(TEXT("\n"));
+		
+		if (RelativeNewlineIndex != INDEX_NONE)
 		{
 			// Found a newline close to truncation point
-			CurrentTestOutput = TEXT("[...truncated...]\n") + CurrentTestOutput.Mid(NewlineIndex + 1);
+			CurrentTestOutput = TEXT("[...truncated...]\n") + CurrentTestOutput.Mid(TruncateIndex + RelativeNewlineIndex + 1);
 		}
 		else
 		{
@@ -1944,31 +1968,34 @@ FReply SAdastreaDirectorPanel::OnSaveTestLogClicked()
 	
 	// Open save file dialog
 	IDesktopPlatform* DesktopPlatform = FDesktopPlatformModule::Get();
-	if (DesktopPlatform)
+	if (!DesktopPlatform)
 	{
-		TArray<FString> OutFiles;
-		const void* ParentWindowHandle = FSlateApplication::Get().FindBestParentWindowHandleForDialogs(nullptr);
-		
-		bool bOpened = DesktopPlatform->SaveFileDialog(
-			ParentWindowHandle,
-			TEXT("Save Test Log"),
-			FPaths::ProjectLogDir(),
-			DefaultFilename,
-			TEXT("Text Files (*.txt)|*.txt|Log Files (*.log)|*.log|All Files (*.*)|*.*"),
-			EFileDialogFlags::None,
-			OutFiles
-		);
-		
-		if (bOpened && OutFiles.Num() > 0)
+		AppendTestOutput(TEXT("\n❌ Failed to open save dialog - desktop platform not available.\n"));
+		return FReply::Handled();
+	}
+	
+	TArray<FString> OutFiles;
+	const void* ParentWindowHandle = FSlateApplication::Get().FindBestParentWindowHandleForDialogs(nullptr);
+	
+	bool bOpened = DesktopPlatform->SaveFileDialog(
+		ParentWindowHandle,
+		TEXT("Save Test Log"),
+		FPaths::ProjectLogDir(),
+		DefaultFilename,
+		TEXT("Text Files (*.txt)|*.txt|Log Files (*.log)|*.log|All Files (*.*)|*.*"),
+		EFileDialogFlags::None,
+		OutFiles
+	);
+	
+	if (bOpened && OutFiles.Num() > 0)
+	{
+		if (SaveTestLogToFile(OutFiles[0]))
 		{
-			if (SaveTestLogToFile(OutFiles[0]))
-			{
-				AppendTestOutput(FString::Printf(TEXT("\n✅ Log saved to: %s\n"), *OutFiles[0]));
-			}
-			else
-			{
-				AppendTestOutput(TEXT("\n❌ Failed to save log file.\n"));
-			}
+			AppendTestOutput(FString::Printf(TEXT("\n✅ Log saved to: %s\n"), *OutFiles[0]));
+		}
+		else
+		{
+			AppendTestOutput(TEXT("\n❌ Failed to save log file.\n"));
 		}
 	}
 	

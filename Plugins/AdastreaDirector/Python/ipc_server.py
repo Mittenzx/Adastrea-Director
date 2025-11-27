@@ -754,9 +754,11 @@ JSON Response:"""
         logger.info(f"Run tests received: {data}")
         
         import subprocess
-        import os
         
+        # Sanitize and validate test_type input
         test_type = data.strip().lower() if data else 'all'
+        # Remove any non-alphanumeric characters except underscore
+        test_type = re.sub(r'[^a-z0-9_]', '', test_type)
         
         # Map test types to pytest commands
         # Note: 'ipc' focuses on IPC-related tests, 'plugin' includes all plugin Python tests
@@ -771,9 +773,10 @@ JSON Response:"""
         }
         
         if test_type not in test_commands:
+            available_types = ', '.join(test_commands.keys())
             return {
                 'status': 'error',
-                'error': f"Unknown test type: {test_type}. Available: {', '.join(test_commands.keys())}"
+                'error': f"Unknown test type. Available: {available_types}"
             }
         
         command = test_commands[test_type]
@@ -783,48 +786,54 @@ JSON Response:"""
         project_root = os.path.abspath(os.path.join(script_dir, '..', '..', '..'))
         
         try:
-            # Run pytest and capture output
-            result = subprocess.run(
+            # Run pytest and capture output using Popen for better timeout handling
+            process = subprocess.Popen(
                 command,
                 cwd=project_root,
-                capture_output=True,
-                text=True,
-                timeout=300  # 5 minute timeout
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True
             )
-            
-            output = result.stdout + result.stderr
-            
-            # Parse test results from output
-            passed = 0
-            failed = 0
-            
-            # Look for pytest summary line like "5 passed, 1 failed" or "5 passed" or "1 failed"
-            for line in output.split('\n'):
-                line_lower = line.lower()
-                if 'passed' in line_lower or 'failed' in line_lower:
-                    # Try to extract numbers
-                    passed_match = re.search(r'(\d+) passed', line)
-                    failed_match = re.search(r'(\d+) failed', line)
-                    if passed_match:
-                        passed = int(passed_match.group(1))
-                    if failed_match:
-                        failed = int(failed_match.group(1))
-            
-            return {
-                'status': 'success',
-                'result': output,
-                'passed': passed,
-                'failed': failed,
-                'return_code': result.returncode
-            }
-            
-        except subprocess.TimeoutExpired:
-            return {
-                'status': 'error',
-                'error': 'Test execution timed out (5 minute limit)',
-                'passed': 0,
-                'failed': 0
-            }
+            try:
+                stdout, stderr = process.communicate(timeout=300)  # 5 minute timeout
+                output = stdout + stderr
+                
+                passed = 0
+                failed = 0
+                
+                # Look specifically for pytest summary line like "=== 5 passed, 1 failed in 2.45s ==="
+                summary_line_pattern = re.compile(r'=+\s*(.*?passed.*?|.*?failed.*?)\s*in\s*[\d\.]+s\s*=+', re.IGNORECASE)
+                for line in output.split('\n'):
+                    if summary_line_pattern.search(line):
+                        # Extract counts for passed and failed
+                        passed_match = re.search(r'(\d+)\s+passed', line)
+                        failed_match = re.search(r'(\d+)\s+failed', line)
+                        if passed_match:
+                            passed = int(passed_match.group(1))
+                        if failed_match:
+                            failed = int(failed_match.group(1))
+                        break  # Only parse the first summary line
+                
+                return {
+                    'status': 'success',
+                    'result': output,
+                    'passed': passed,
+                    'failed': failed,
+                    'return_code': process.returncode
+                }
+            except subprocess.TimeoutExpired:
+                process.kill()
+                # Ensure process resources are cleaned up
+                try:
+                    process.communicate()
+                except Exception:
+                    pass
+                return {
+                    'status': 'error',
+                    'error': 'Test execution timed out (5 minute limit)',
+                    'passed': 0,
+                    'failed': 0
+                }
         except Exception as e:
             logger.error(f"Test execution error: {e}")
             return {
