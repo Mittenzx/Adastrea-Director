@@ -1,0 +1,97 @@
+═══════════════════════════════════════════════════════════════
+ADASTREA DIRECTOR TEST LOG
+Generated: 2025-11-27 21:43:57
+Project: ../../../../../../Unreal Projects/Adastrea/Adastrea.uproject
+═══════════════════════════════════════════════════════════════
+
+🧪 Running all tests...
+Timestamp: 2025-11-27 21:42:57
+
+============================= test session starts =============================
+platform win32 -- Python 3.12.0, pytest-8.4.2, pluggy-1.6.0 -- C:\Users\David Henderson\AppData\Local\Programs\Python\Python312\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Unreal Projects\Adastrea
+plugins: anyio-4.11.0, langsmith-0.4.42, cov-6.3.0
+collecting ... collected 30 items
+
+Plugins/AdastreaDirector/Python/test_ipc.py::test_ipc_server PASSED      [  3%]
+Plugins/AdastreaDirector/Python/test_rag_modules.py::test_python_syntax FAILED [  6%]
+Plugins/AdastreaDirector/Python/test_rag_modules.py::test_class_structure FAILED [ 10%]
+Plugins/AdastreaDirector/Python/test_rag_modules.py::test_progress_writer_logic FAILED [ 13%]
+Plugins/AdastreaDirector/Python/test_ue_python_api.py::TestUEAssetInfo::test_asset_info_creation PASSED [ 16%]
+Plugins/AdastreaDirector/Python/test_ue_python_api.py::TestUEAssetInfo::test_asset_info_with_metadata PASSED [ 20%]
+Plugins/AdastreaDirector/Python/test_ue_python_api.py::TestUEActorInfo::test_actor_info_creation PASSED [ 23%]
+Plugins/AdastreaDirector/Python/test_ue_python_api.py::TestUEActorInfo::test_actor_info_with_transform PASSED [ 26%]
+Plugins/AdastreaDirector/Python/test_ue_python_api.py::TestLogLevel::test_log_levels PASSED [ 30%]
+Plugins/AdastreaDirector/Python/test_ue_python_api.py::TestUEPythonBridge::test_bridge_initialization PASSED [ 33%]
+Plugins/AdastreaDirector/Python/test_ue_python_api.py::TestUEPythonBridge::test_execute_console_command PASSED [ 36%]
+Plugins/AdastreaDirector/Python/test_ue_python_api.py::TestUEPythonBridge::test_log_message PASSED [ 40%]
+Plugins/AdastreaDirector/Python/test_ue_python_api.py::TestUEPythonBridge::test_get_selected_assets PASSED [ 43%]
+Plugins/AdastreaDirector/Python/test_ue_python_api.py::TestUEPythonBridge::test_get_selected_actors PASSED [ 46%]
+Plugins/AdastreaDirector/Python/test_ue_python_api.py::TestUEPythonBridge::test_get_current_level_name PASSED [ 50%]
+Plugins/AdastreaDirector/Python/test_ue_python_api.py::TestUEPythonBridge::test_get_project_directory PASSED [ 53%]
+Plugins/AdastreaDirector/Python/test_ue_python_api.py::TestUEPythonBridge::test_get_engine_version PASSED [ 56%]
+Plugins/AdastreaDirector/Python/test_ue_python_api.py::TestUEPythonBridge::test_save_current_level PASSED [ 60%]
+Plugins/AdastreaDirector/Python/test_ue_python_api.py::TestUEPythonBridge::test_load_level PASSED [ 63%]
+Plugins/AdastreaDirector/Python/test_ue_python_api.py::TestConvenienceFunctions::test_is_running_in_ue PASSED [ 66%]
+Plugins/AdastreaDirector/Python/test_ue_python_api.py::TestConvenienceFunctions::test_get_bridge PASSED [ 70%]
+Plugins/AdastreaDirector/Python/test_ue_python_api.py::TestErrorHandling::test_execute_command_with_exception PASSED [ 73%]
+Plugins/AdastreaDirector/Python/test_ue_python_api.py::TestErrorHandling::test_get_selected_assets_with_exception PASSED [ 76%]
+Plugins/AdastreaDirector/Python/test_ue_python_api.py::TestErrorHandling::test_load_asset_not_found PASSED [ 80%]
+Plugins/AdastreaDirector/Python/test_ue_python_api.py::TestAssetOperations::test_find_assets_by_class PASSED [ 83%]
+Plugins/AdastreaDirector/Python/test_ue_python_api.py::TestAssetOperations::test_load_asset_success PASSED [ 86%]
+Plugins/AdastreaDirector/Python/test_ue_python_api.py::TestActorOperations::test_get_all_actors_of_class PASSED [ 90%]
+Plugins/AdastreaDirector/Python/test_ue_python_api.py::TestActorOperations::test_spawn_actor PASSED [ 93%]
+Plugins/AdastreaDirector/Python/test_ue_python_api.py::TestActorOperations::test_delete_actor PASSED [ 96%]
+Plugins/AdastreaDirector/Python/test_ui_integration.py::test_status_indicators ERROR [100%]
+
+=================================== ERRORS ====================================
+__________________ ERROR at setup of test_status_indicators ___________________
+file C:\Users\David Henderson\Documents\Adastrea-Director\Plugins\AdastreaDirector\Python\test_ui_integration.py, line 70
+  def test_status_indicators(sock: socket.socket):
+E       fixture 'sock' not found
+>       available fixtures: anyio_backend, anyio_backend_name, anyio_backend_options, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, cov, doctest_namespace, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, monkeypatch, no_cover, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+C:\Users\David Henderson\Documents\Adastrea-Director\Plugins\AdastreaDirector\Python\test_ui_integration.py:70
+================================== FAILURES ===================================
+_____________________________ test_python_syntax ______________________________
+C:\Users\David Henderson\Documents\Adastrea-Director\Plugins\AdastreaDirector\Python\test_rag_modules.py:25: in test_python_syntax
+    with open(filename, 'r') as f:
+         ^^^^^^^^^^^^^^^^^^^
+E   FileNotFoundError: [Errno 2] No such file or directory: 'rag_ingestion.py'
+---------------------------- Captured stdout call -----------------------------
+Testing Python file syntax...
+  Checking rag_ingestion.py...
+____________________________ test_class_structure _____________________________
+C:\Users\David Henderson\Documents\Adastrea-Director\Plugins\AdastreaDirector\Python\test_rag_modules.py:41: in test_class_structure
+    with open('rag_ingestion.py', 'r') as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   FileNotFoundError: [Errno 2] No such file or directory: 'rag_ingestion.py'
+---------------------------- Captured stdout call -----------------------------
+
+Testing class structure...
+  Checking rag_ingestion.py...
+_________________________ test_progress_writer_logic __________________________
+C:\Users\David Henderson\Documents\Adastrea-Director\Plugins\AdastreaDirector\Python\test_rag_modules.py:91: in test_progress_writer_logic
+    with open('rag_ingestion.py', 'r') as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   FileNotFoundError: [Errno 2] No such file or directory: 'rag_ingestion.py'
+---------------------------- Captured stdout call -----------------------------
+
+Testing ProgressWriter structure...
+============================== warnings summary ===============================
+Plugins/AdastreaDirector/Python/test_ipc.py::test_ipc_server
+  C:\Users\David Henderson\AppData\Local\Programs\Python\Python312\Lib\site-packages\_pytest\python.py:161: PytestReturnNotNoneWarning: Test functions should return None, but Plugins/AdastreaDirector/Python/test_ipc.py::test_ipc_server returned <class 'bool'>.
+  Did you mean to use `assert` instead of `return`?
+  See https://docs.pytest.org/en/stable/how-to/assert.html#return-not-none for more information.
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED Plugins/AdastreaDirector/Python/test_rag_modules.py::test_python_syntax
+FAILED Plugins/AdastreaDirector/Python/test_rag_modules.py::test_class_structure
+FAILED Plugins/AdastreaDirector/Python/test_rag_modules.py::test_progress_writer_logic
+ERROR Plugins/AdastreaDirector/Python/test_ui_integration.py::test_status_indicators
+============== 3 failed, 26 passed, 1 warning, 1 error in 0.40s ===============
+
