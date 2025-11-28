@@ -11,6 +11,7 @@ in pure Python for better integration with Adastrea Director.
 
 import json
 import socket
+import struct
 import logging
 import time
 import threading
@@ -60,13 +61,6 @@ class CommandResult:
     output: str = ""
     error: str = ""
     timestamp: datetime = field(default_factory=datetime.now)
-
-
-@dataclass 
-class CommandOutputItem:
-    """Individual output item from command execution."""
-    type: str  # "Info", "Warning", "Error"
-    output: str
 
 
 @dataclass
@@ -202,8 +196,6 @@ class UnrealRemoteExecution:
     
     def _setup_discovery_socket(self) -> None:
         """Set up the multicast socket for node discovery."""
-        import struct as struct_module
-        
         self._discovery_socket = socket.socket(
             socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP
         )
@@ -229,7 +221,7 @@ class UnrealRemoteExecution:
         )
         
         # Join multicast group
-        mreq = struct_module.pack(
+        mreq = struct.pack(
             "4s4s",
             socket.inet_aton(self.config.multicast_group),
             socket.inet_aton(self.config.bind_address)
@@ -563,14 +555,26 @@ class UnrealRemoteExecution:
             return CommandResult(success=False, error="No connection")
         
         # Read data from socket - may come in chunks for large responses
+        # Use a max buffer size to prevent memory issues
+        max_buffer_size = 10 * 1024 * 1024  # 10 MB max
+        max_read_attempts = 1000  # Prevent infinite loops
         data_received = b""
+        read_attempts = 0
         
-        while True:
+        while read_attempts < max_read_attempts:
+            read_attempts += 1
             try:
                 chunk = self._command_socket.recv(65535)
                 if not chunk:
                     break
                 data_received += chunk
+                
+                # Check buffer size limit
+                if len(data_received) > max_buffer_size:
+                    return CommandResult(
+                        success=False, 
+                        error=f"Response too large (exceeded {max_buffer_size} bytes)"
+                    )
                 
                 # Try to parse as JSON
                 try:
@@ -582,6 +586,9 @@ class UnrealRemoteExecution:
                     continue
             except socket.timeout:
                 break
+        
+        if read_attempts >= max_read_attempts:
+            return CommandResult(success=False, error="Too many read attempts - response incomplete")
         
         if not data_received:
             return CommandResult(success=False, error="No response received")
@@ -648,17 +655,15 @@ class UnrealRemoteExecution:
     # Legacy methods for backwards compatibility with tests
     def _write_string(self, s: str) -> bytes:
         """Write a length-prefixed UTF-8 string (legacy method for tests)."""
-        import struct as struct_module
         encoded = s.encode("utf-8")
-        return struct_module.pack("<I", len(encoded)) + encoded
+        return struct.pack("<I", len(encoded)) + encoded
     
     def _read_string(self, data: bytes) -> Tuple[str, bytes]:
         """Read a length-prefixed UTF-8 string from data (legacy method for tests)."""
-        import struct as struct_module
         if len(data) < 4:
             return "", data
         
-        length = struct_module.unpack("<I", data[:4])[0]
+        length = struct.unpack("<I", data[:4])[0]
         if len(data) < 4 + length:
             return "", data
         
