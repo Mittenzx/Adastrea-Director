@@ -407,6 +407,9 @@ class AdastreaDirectorApp:
         
         # --- Tests Tab ---
         self.create_tests_tab()
+        
+        # --- Unreal MCP Tab ---
+        self.create_unreal_mcp_tab()
 
         # --- Query Input Area (Card-based design) ---
         query_card = tk.Frame(main_frame, bg=self.bg_tertiary, highlightthickness=1,
@@ -989,6 +992,597 @@ class AdastreaDirectorApp:
         self.test_output.insert(tk.END, "Select a test category above to run tests.\n", "info")
         self.test_output.insert(tk.END, "Test results will appear here.\n", "info")
         self.test_output.config(state=tk.DISABLED)
+
+    def create_unreal_mcp_tab(self):
+        """Create the Unreal MCP tab for Unreal Engine integration via MCP."""
+        unreal_tab = tk.Frame(self.notebook, bg=self.bg_tertiary)
+        self.notebook.add(unreal_tab, text="🎮 Unreal MCP")
+        
+        # Header section
+        unreal_header = tk.Frame(unreal_tab, bg=self.bg_tertiary, padx=15, pady=10)
+        unreal_header.pack(fill=tk.X)
+        
+        unreal_label = tk.Label(
+            unreal_header,
+            text="🎮 Unreal Engine MCP Integration",
+            font=("Segoe UI", 11, "bold"),
+            bg=self.bg_tertiary,
+            fg=self.fg_color
+        )
+        unreal_label.pack(side=tk.LEFT)
+        
+        # Connection status indicator
+        self.unreal_connection_frame = tk.Frame(unreal_header, bg=self.bg_tertiary)
+        self.unreal_connection_frame.pack(side=tk.RIGHT)
+        
+        self.unreal_status_indicator = tk.Label(
+            self.unreal_connection_frame,
+            text="●",
+            font=("Segoe UI", 10),
+            bg=self.bg_tertiary,
+            fg=self.fg_muted
+        )
+        self.unreal_status_indicator.pack(side=tk.LEFT, padx=(0, 5))
+        
+        self.unreal_status_label = tk.Label(
+            self.unreal_connection_frame,
+            text="Disconnected",
+            font=("Segoe UI", 9),
+            bg=self.bg_tertiary,
+            fg=self.fg_muted
+        )
+        self.unreal_status_label.pack(side=tk.LEFT)
+        
+        # Separator line
+        separator_line = tk.Frame(unreal_tab, height=1, bg=self.border_color)
+        separator_line.pack(fill=tk.X)
+        
+        # Main content area
+        content_frame = tk.Frame(unreal_tab, bg=self.bg_tertiary)
+        content_frame.pack(fill=tk.BOTH, expand=True, padx=15, pady=15)
+        
+        # Use PanedWindow for resizable split
+        paned_window = ttk.PanedWindow(content_frame, orient=tk.VERTICAL)
+        paned_window.pack(fill=tk.BOTH, expand=True)
+        
+        # --- Top Section: Connection and Tools ---
+        tools_frame = tk.Frame(paned_window, bg=self.bg_tertiary)
+        
+        # Connection controls
+        connection_frame = tk.Frame(tools_frame, bg=self.bg_tertiary)
+        connection_frame.pack(fill=tk.X, pady=(0, 10))
+        
+        connection_label = tk.Label(
+            connection_frame,
+            text="🔌 Connection",
+            font=("Segoe UI", 10, "bold"),
+            bg=self.bg_tertiary,
+            fg=self.accent_color,
+            anchor=tk.W
+        )
+        connection_label.pack(side=tk.LEFT)
+        
+        # Connection buttons frame
+        conn_buttons_frame = tk.Frame(connection_frame, bg=self.bg_tertiary)
+        conn_buttons_frame.pack(side=tk.RIGHT)
+        
+        # Button style for MCP buttons
+        mcp_button_style = {
+            "font": ("Segoe UI", 9),
+            "bg": self.button_bg,
+            "fg": self.fg_color,
+            "activebackground": self.button_hover,
+            "activeforeground": self.fg_color,
+            "relief": tk.FLAT,
+            "padx": 15,
+            "pady": 8,
+            "cursor": "hand2",
+            "borderwidth": 1,
+            "highlightthickness": 1,
+            "highlightbackground": self.button_bg
+        }
+        
+        self.unreal_connect_button = tk.Button(
+            conn_buttons_frame,
+            text="🔗 Connect",
+            command=self.connect_to_unreal,
+            **mcp_button_style
+        )
+        self.unreal_connect_button.pack(side=tk.LEFT, padx=(0, 5))
+        self.create_tooltip(self.unreal_connect_button, "Connect to Unreal Engine via MCP")
+        self.add_button_hover_effect(self.unreal_connect_button)
+        
+        self.unreal_disconnect_button = tk.Button(
+            conn_buttons_frame,
+            text="🔌 Disconnect",
+            command=self.disconnect_from_unreal,
+            state=tk.DISABLED,
+            **mcp_button_style
+        )
+        self.unreal_disconnect_button.pack(side=tk.LEFT)
+        self.create_tooltip(self.unreal_disconnect_button, "Disconnect from Unreal Engine")
+        self.add_button_hover_effect(self.unreal_disconnect_button)
+        
+        # Tools section
+        tools_label = tk.Label(
+            tools_frame,
+            text="🛠️ Quick Tools",
+            font=("Segoe UI", 10, "bold"),
+            bg=self.bg_tertiary,
+            fg=self.accent_color,
+            anchor=tk.W
+        )
+        tools_label.pack(fill=tk.X, pady=(10, 10))
+        
+        # Create a grid for tool buttons
+        tool_grid = tk.Frame(tools_frame, bg=self.bg_tertiary)
+        tool_grid.pack(fill=tk.BOTH, expand=True)
+        
+        # Row 0: Project Info and Map Info
+        project_info_btn = tk.Button(
+            tool_grid,
+            text="📊 Project Info",
+            command=lambda: self.run_mcp_tool("editor_project_info"),
+            **mcp_button_style
+        )
+        project_info_btn.grid(row=0, column=0, sticky=tk.EW, padx=5, pady=5)
+        self.create_tooltip(project_info_btn, "Get project information")
+        self.add_button_hover_effect(project_info_btn)
+        
+        map_info_btn = tk.Button(
+            tool_grid,
+            text="🗺️ Map Info",
+            command=lambda: self.run_mcp_tool("editor_get_map_info"),
+            **mcp_button_style
+        )
+        map_info_btn.grid(row=0, column=1, sticky=tk.EW, padx=5, pady=5)
+        self.create_tooltip(map_info_btn, "Get current map information")
+        self.add_button_hover_effect(map_info_btn)
+        
+        # Row 1: List Assets and World Outliner
+        list_assets_btn = tk.Button(
+            tool_grid,
+            text="📦 List Assets",
+            command=lambda: self.run_mcp_tool("editor_list_assets"),
+            **mcp_button_style
+        )
+        list_assets_btn.grid(row=1, column=0, sticky=tk.EW, padx=5, pady=5)
+        self.create_tooltip(list_assets_btn, "List all project assets")
+        self.add_button_hover_effect(list_assets_btn)
+        
+        world_outliner_btn = tk.Button(
+            tool_grid,
+            text="🌍 World Outliner",
+            command=lambda: self.run_mcp_tool("editor_get_world_outliner"),
+            **mcp_button_style
+        )
+        world_outliner_btn.grid(row=1, column=1, sticky=tk.EW, padx=5, pady=5)
+        self.create_tooltip(world_outliner_btn, "Get all actors in the current world")
+        self.add_button_hover_effect(world_outliner_btn)
+        
+        # Row 2: Screenshot and List Tools
+        screenshot_btn = tk.Button(
+            tool_grid,
+            text="📸 Screenshot",
+            command=lambda: self.run_mcp_tool("editor_take_screenshot"),
+            **mcp_button_style
+        )
+        screenshot_btn.grid(row=2, column=0, sticky=tk.EW, padx=5, pady=5)
+        self.create_tooltip(screenshot_btn, "Take a screenshot of the editor viewport")
+        self.add_button_hover_effect(screenshot_btn)
+        
+        list_tools_btn = tk.Button(
+            tool_grid,
+            text="📋 List All Tools",
+            command=self.list_mcp_tools,
+            **mcp_button_style
+        )
+        list_tools_btn.grid(row=2, column=1, sticky=tk.EW, padx=5, pady=5)
+        self.create_tooltip(list_tools_btn, "List all available MCP tools")
+        self.add_button_hover_effect(list_tools_btn)
+        
+        # Configure grid weights for equal column sizing
+        tool_grid.columnconfigure(0, weight=1)
+        tool_grid.columnconfigure(1, weight=1)
+        
+        # Store tool button references
+        self.mcp_tool_buttons = [
+            project_info_btn, map_info_btn, list_assets_btn,
+            world_outliner_btn, screenshot_btn, list_tools_btn
+        ]
+        
+        paned_window.add(tools_frame, weight=0)
+        
+        # --- Middle Section: Python Code Execution ---
+        python_frame = tk.Frame(paned_window, bg=self.bg_tertiary)
+        
+        python_header_frame = tk.Frame(python_frame, bg=self.bg_tertiary)
+        python_header_frame.pack(fill=tk.X, pady=(0, 5))
+        
+        python_label = tk.Label(
+            python_header_frame,
+            text="🐍 Python Execution",
+            font=("Segoe UI", 10, "bold"),
+            bg=self.bg_tertiary,
+            fg=self.accent_color,
+            anchor=tk.W
+        )
+        python_label.pack(side=tk.LEFT)
+        
+        # Execute button for Python
+        execute_python_btn = tk.Button(
+            python_header_frame,
+            text="▶ Execute",
+            command=self.execute_unreal_python,
+            font=("Segoe UI", 9, "bold"),
+            bg=self.accent_color,
+            fg="#20232b",
+            activebackground=self.accent_hover,
+            activeforeground="#20232b",
+            relief=tk.FLAT,
+            padx=15,
+            pady=6,
+            cursor="hand2",
+            borderwidth=0
+        )
+        execute_python_btn.pack(side=tk.RIGHT)
+        self.create_tooltip(execute_python_btn, "Execute Python code in Unreal Editor (Ctrl+Enter)")
+        self.add_button_hover_effect(execute_python_btn, hover_color=self.accent_hover)
+        
+        # Python input area
+        python_input_frame = tk.Frame(python_frame, bg=self.text_bg, 
+                                     highlightthickness=1, highlightbackground=self.border_color)
+        python_input_frame.pack(fill=tk.BOTH, expand=True)
+        
+        self.unreal_python_input = scrolledtext.ScrolledText(
+            python_input_frame,
+            wrap=tk.WORD,
+            height=5,
+            bg=self.text_bg,
+            fg=self.fg_color,
+            insertbackground=self.accent_color,
+            font=("Consolas", 10),
+            relief=tk.FLAT,
+            padx=10,
+            pady=10,
+            selectbackground=self.highlight_bg,
+            selectforeground=self.fg_color,
+            borderwidth=0
+        )
+        self.unreal_python_input.pack(fill=tk.BOTH, expand=True)
+        
+        # Add placeholder text
+        self.unreal_python_input.insert(tk.END, "import unreal\nprint(unreal.SystemLibrary.get_engine_version())")
+        
+        # Bind Ctrl+Enter for execution
+        self.unreal_python_input.bind("<Control-Return>", lambda e: self.execute_unreal_python())
+        
+        paned_window.add(python_frame, weight=1)
+        
+        # --- Console Command Section ---
+        console_frame = tk.Frame(paned_window, bg=self.bg_tertiary)
+        
+        console_header_frame = tk.Frame(console_frame, bg=self.bg_tertiary)
+        console_header_frame.pack(fill=tk.X, pady=(0, 5))
+        
+        console_label = tk.Label(
+            console_header_frame,
+            text="💻 Console Command",
+            font=("Segoe UI", 10, "bold"),
+            bg=self.bg_tertiary,
+            fg=self.accent_color,
+            anchor=tk.W
+        )
+        console_label.pack(side=tk.LEFT)
+        
+        # Console input with entry and button
+        console_input_frame = tk.Frame(console_frame, bg=self.bg_tertiary)
+        console_input_frame.pack(fill=tk.X, pady=(0, 5))
+        
+        console_entry_frame = tk.Frame(console_input_frame, bg=self.text_bg, highlightthickness=1,
+                                      highlightbackground=self.border_color)
+        console_entry_frame.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 5))
+        
+        self.unreal_console_entry = tk.Entry(
+            console_entry_frame,
+            font=("Consolas", 10),
+            bg=self.text_bg,
+            fg=self.fg_color,
+            insertbackground=self.accent_color,
+            relief=tk.FLAT,
+            highlightthickness=0,
+            borderwidth=0
+        )
+        self.unreal_console_entry.pack(fill=tk.BOTH, expand=True, padx=10, pady=8)
+        self.unreal_console_entry.insert(0, "stat fps")
+        self.unreal_console_entry.bind("<Return>", lambda e: self.execute_console_command())
+        
+        execute_console_btn = tk.Button(
+            console_input_frame,
+            text="▶ Run",
+            command=self.execute_console_command,
+            font=("Segoe UI", 9, "bold"),
+            bg=self.accent_color,
+            fg="#20232b",
+            activebackground=self.accent_hover,
+            activeforeground="#20232b",
+            relief=tk.FLAT,
+            padx=15,
+            pady=6,
+            cursor="hand2",
+            borderwidth=0
+        )
+        execute_console_btn.pack(side=tk.RIGHT)
+        self.create_tooltip(execute_console_btn, "Run console command in Unreal Engine")
+        self.add_button_hover_effect(execute_console_btn, hover_color=self.accent_hover)
+        
+        paned_window.add(console_frame, weight=0)
+        
+        # --- Bottom Section: Output Display ---
+        output_frame = tk.Frame(paned_window, bg=self.bg_tertiary)
+        
+        output_header_frame = tk.Frame(output_frame, bg=self.bg_tertiary)
+        output_header_frame.pack(fill=tk.X, pady=(0, 5))
+        
+        output_label = tk.Label(
+            output_header_frame,
+            text="📊 Output",
+            font=("Segoe UI", 10, "bold"),
+            bg=self.bg_tertiary,
+            fg=self.accent_color,
+            anchor=tk.W
+        )
+        output_label.pack(side=tk.LEFT)
+        
+        # Clear output button
+        clear_output_btn = tk.Button(
+            output_header_frame,
+            text="🗑️ Clear",
+            command=self.clear_mcp_output,
+            font=("Segoe UI", 8),
+            bg=self.button_bg,
+            fg=self.fg_color,
+            activebackground=self.button_hover,
+            activeforeground=self.fg_color,
+            relief=tk.FLAT,
+            padx=10,
+            pady=4,
+            cursor="hand2",
+            borderwidth=1,
+            highlightthickness=1,
+            highlightbackground=self.button_bg
+        )
+        clear_output_btn.pack(side=tk.RIGHT)
+        self.create_tooltip(clear_output_btn, "Clear output display")
+        self.add_button_hover_effect(clear_output_btn)
+        
+        # Output display
+        output_text_frame = tk.Frame(output_frame, bg=self.text_bg, 
+                                     highlightthickness=1, highlightbackground=self.border_color)
+        output_text_frame.pack(fill=tk.BOTH, expand=True)
+        
+        self.unreal_mcp_output = scrolledtext.ScrolledText(
+            output_text_frame,
+            wrap=tk.WORD,
+            height=10,
+            state=tk.DISABLED,
+            bg=self.text_bg,
+            fg=self.fg_color,
+            font=("Consolas", 9),
+            relief=tk.FLAT,
+            padx=10,
+            pady=10,
+            selectbackground=self.highlight_bg,
+            selectforeground=self.fg_color,
+            borderwidth=0
+        )
+        self.unreal_mcp_output.pack(fill=tk.BOTH, expand=True)
+        
+        # Configure output tags
+        self.unreal_mcp_output.tag_config("header", foreground=self.accent_color, font=("Consolas", 10, "bold"))
+        self.unreal_mcp_output.tag_config("success", foreground=self.success_color, font=("Consolas", 9))
+        self.unreal_mcp_output.tag_config("error", foreground=self.error_color, font=("Consolas", 9))
+        self.unreal_mcp_output.tag_config("info", foreground=self.fg_secondary, font=("Consolas", 9))
+        self.unreal_mcp_output.tag_config("json", foreground=self.fg_color, font=("Consolas", 9))
+        self.unreal_mcp_output.tag_config("timestamp", foreground=self.fg_muted, font=("Consolas", 8))
+        
+        paned_window.add(output_frame, weight=1)
+        
+        # Initialize MCP server reference
+        self.unreal_mcp_server = None
+        self.mcp_connected = False
+        
+        # Add initial message
+        self.log_mcp_output("🎮 Unreal Engine MCP Integration\n\n", "header")
+        self.log_mcp_output("Connect to Unreal Engine to use MCP tools.\n", "info")
+        self.log_mcp_output("Prerequisites:\n", "info")
+        self.log_mcp_output("  1. Unreal Engine is running\n", "info")
+        self.log_mcp_output("  2. Python Editor Script Plugin is enabled\n", "info")
+        self.log_mcp_output("  3. Remote Execution is enabled in Project Settings\n\n", "info")
+        self.log_mcp_output("Click 'Connect' to establish connection.\n", "info")
+
+    def connect_to_unreal(self):
+        """Connect to Unreal Engine via MCP server."""
+        self.log_mcp_output("\n" + "="*50 + "\n", "info")
+        self.log_mcp_output("Connecting to Unreal Engine...\n", "header")
+        
+        # Disable connect button while connecting
+        self.unreal_connect_button.config(state=tk.DISABLED)
+        self.update_unreal_status("Connecting...", self.accent_color)
+        
+        # Run connection in a thread
+        def connect_thread():
+            try:
+                # Import the MCP server
+                from mcp_server import UnrealMCPServer
+                
+                self.unreal_mcp_server = UnrealMCPServer()
+                success = self.unreal_mcp_server.start()
+                
+                if success:
+                    self.mcp_connected = True
+                    self.root.after(0, self._on_unreal_connected)
+                else:
+                    self.root.after(0, self._on_unreal_connection_failed, 
+                                   "Could not connect to Unreal Engine. Make sure it's running with Remote Execution enabled.")
+            except ImportError as e:
+                self.root.after(0, self._on_unreal_connection_failed, 
+                               f"MCP server module not found: {e}")
+            except Exception as e:
+                self.root.after(0, self._on_unreal_connection_failed, str(e))
+        
+        thread = threading.Thread(target=connect_thread, daemon=True)
+        thread.start()
+    
+    def _on_unreal_connected(self):
+        """Handle successful Unreal Engine connection."""
+        self.update_unreal_status("Connected", self.success_color)
+        self.unreal_connect_button.config(state=tk.DISABLED)
+        self.unreal_disconnect_button.config(state=tk.NORMAL)
+        
+        # Enable tool buttons
+        for btn in self.mcp_tool_buttons:
+            btn.config(state=tk.NORMAL)
+        
+        self.log_mcp_output("✅ Connected to Unreal Engine!\n", "success")
+        self.log_mcp_output("You can now use the MCP tools.\n", "info")
+        
+        # Get project info on connection
+        self.run_mcp_tool("editor_project_info")
+    
+    def _on_unreal_connection_failed(self, error_message):
+        """Handle failed Unreal Engine connection."""
+        self.update_unreal_status("Connection Failed", self.error_color)
+        self.unreal_connect_button.config(state=tk.NORMAL)
+        self.unreal_disconnect_button.config(state=tk.DISABLED)
+        self.mcp_connected = False
+        
+        self.log_mcp_output(f"❌ Connection failed: {error_message}\n", "error")
+        self.log_mcp_output("\nTroubleshooting:\n", "info")
+        self.log_mcp_output("  1. Ensure Unreal Engine Editor is running\n", "info")
+        self.log_mcp_output("  2. Enable Python Editor Script Plugin (Edit → Plugins)\n", "info")
+        self.log_mcp_output("  3. Enable Remote Execution (Project Settings → Python)\n", "info")
+        self.log_mcp_output("  4. Try restarting Unreal Engine\n", "info")
+    
+    def disconnect_from_unreal(self):
+        """Disconnect from Unreal Engine."""
+        if self.unreal_mcp_server:
+            try:
+                self.unreal_mcp_server.stop()
+            except Exception as e:
+                self.log_mcp_output(f"Warning: Error during disconnect: {e}\n", "error")
+            finally:
+                self.unreal_mcp_server = None
+        
+        self.mcp_connected = False
+        self.update_unreal_status("Disconnected", self.fg_muted)
+        self.unreal_connect_button.config(state=tk.NORMAL)
+        self.unreal_disconnect_button.config(state=tk.DISABLED)
+        
+        self.log_mcp_output("\n🔌 Disconnected from Unreal Engine.\n", "info")
+    
+    def update_unreal_status(self, status_text, color):
+        """Update the Unreal connection status display."""
+        self.unreal_status_indicator.config(fg=color)
+        self.unreal_status_label.config(text=status_text, fg=color)
+    
+    def run_mcp_tool(self, tool_name, arguments=None):
+        """Run an MCP tool and display results."""
+        if not self.mcp_connected or not self.unreal_mcp_server:
+            self.log_mcp_output("❌ Not connected to Unreal Engine. Please connect first.\n", "error")
+            return
+        
+        arguments = arguments or {}
+        timestamp = datetime.now().strftime("%H:%M:%S")
+        
+        self.log_mcp_output(f"\n[{timestamp}] ", "timestamp")
+        self.log_mcp_output(f"Running: {tool_name}\n", "header")
+        
+        def run_tool_thread():
+            try:
+                result = self.unreal_mcp_server.handle_tool_call(tool_name, arguments)
+                self.root.after(0, self._display_tool_result, result)
+            except Exception as ex:
+                error_msg = str(ex)
+                self.root.after(0, lambda msg=error_msg: self.log_mcp_output(f"❌ Error: {msg}\n", "error"))
+        
+        thread = threading.Thread(target=run_tool_thread, daemon=True)
+        thread.start()
+    
+    def _display_tool_result(self, result):
+        """Display the result of an MCP tool call."""
+        if result.get("isError"):
+            for content in result.get("content", []):
+                if content.get("type") == "text":
+                    self.log_mcp_output(f"❌ {content['text']}\n", "error")
+        else:
+            for content in result.get("content", []):
+                if content.get("type") == "text":
+                    # Try to pretty-print JSON
+                    try:
+                        data = json.loads(content["text"])
+                        formatted = json.dumps(data, indent=2)
+                        self.log_mcp_output(formatted + "\n", "json")
+                    except json.JSONDecodeError:
+                        self.log_mcp_output(content["text"] + "\n", "info")
+                elif content.get("type") == "image":
+                    self.log_mcp_output(f"[Image: {content.get('mimeType', 'unknown')}]\n", "info")
+    
+    def list_mcp_tools(self):
+        """List all available MCP tools."""
+        if not self.mcp_connected or not self.unreal_mcp_server:
+            self.log_mcp_output("❌ Not connected to Unreal Engine. Please connect first.\n", "error")
+            return
+        
+        timestamp = datetime.now().strftime("%H:%M:%S")
+        self.log_mcp_output(f"\n[{timestamp}] ", "timestamp")
+        self.log_mcp_output("Available MCP Tools:\n\n", "header")
+        
+        tools = self.unreal_mcp_server.list_tools()
+        for tool in tools:
+            self.log_mcp_output(f"  📦 {tool['name']}\n", "success")
+            self.log_mcp_output(f"     {tool['description']}\n\n", "info")
+    
+    def execute_unreal_python(self):
+        """Execute Python code in Unreal Engine."""
+        if not self.mcp_connected or not self.unreal_mcp_server:
+            self.log_mcp_output("❌ Not connected to Unreal Engine. Please connect first.\n", "error")
+            return
+        
+        code = self.unreal_python_input.get("1.0", tk.END).strip()
+        if not code:
+            self.log_mcp_output("❌ No Python code to execute.\n", "error")
+            return
+        
+        self.run_mcp_tool("editor_run_python", {"code": code})
+    
+    def execute_console_command(self):
+        """Execute a console command in Unreal Engine."""
+        if not self.mcp_connected or not self.unreal_mcp_server:
+            self.log_mcp_output("❌ Not connected to Unreal Engine. Please connect first.\n", "error")
+            return
+        
+        command = self.unreal_console_entry.get().strip()
+        if not command:
+            self.log_mcp_output("❌ No console command to execute.\n", "error")
+            return
+        
+        self.run_mcp_tool("editor_console_command", {"command": command})
+    
+    def log_mcp_output(self, message, tag="info"):
+        """Append a message to the MCP output display."""
+        self.unreal_mcp_output.config(state=tk.NORMAL)
+        self.unreal_mcp_output.insert(tk.END, message, tag)
+        self.unreal_mcp_output.see(tk.END)
+        self.unreal_mcp_output.config(state=tk.DISABLED)
+    
+    def clear_mcp_output(self):
+        """Clear the MCP output display."""
+        self.unreal_mcp_output.config(state=tk.NORMAL)
+        self.unreal_mcp_output.delete(1.0, tk.END)
+        self.unreal_mcp_output.insert(tk.END, "🎮 Unreal Engine MCP Integration\n\n", "header")
+        self.unreal_mcp_output.insert(tk.END, "Output cleared.\n", "info")
+        self.unreal_mcp_output.config(state=tk.DISABLED)
 
     def update_status(self, message, status_type="info"):
         """

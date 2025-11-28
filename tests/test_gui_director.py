@@ -389,6 +389,72 @@ class TestGUIIntegration:
         pass
 
 
+class TestUnrealMCPTab:
+    """Test suite for Unreal MCP tab functionality."""
+    
+    def test_unreal_mcp_tab_attributes_exist(self):
+        """Test that Unreal MCP tab methods exist in AdastreaDirectorApp."""
+        import gui_director
+        
+        required_methods = [
+            'create_unreal_mcp_tab',
+            'connect_to_unreal',
+            'disconnect_from_unreal',
+            'update_unreal_status',
+            'run_mcp_tool',
+            'list_mcp_tools',
+            'execute_unreal_python',
+            'execute_console_command',
+            'log_mcp_output',
+            'clear_mcp_output'
+        ]
+        
+        for method in required_methods:
+            assert hasattr(gui_director.AdastreaDirectorApp, method), \
+                f"Method {method} not found in AdastreaDirectorApp"
+    
+    def test_mcp_server_import(self):
+        """Test that mcp_server module can be imported."""
+        try:
+            from mcp_server import UnrealMCPServer
+            assert UnrealMCPServer is not None
+        except ImportError:
+            pytest.skip("mcp_server module not available")
+    
+    def test_mcp_tools_available(self):
+        """Test that MCP tools are available."""
+        try:
+            from mcp_server import UnrealMCPServer
+            from mcp_server.tools import get_all_tools, TOOLS
+            
+            tools = get_all_tools()
+            assert len(tools) > 0, "No MCP tools available"
+            
+            # Check for expected tools
+            expected_tools = [
+                "editor_project_info",
+                "editor_list_assets",
+                "editor_get_map_info",
+                "editor_run_python",
+                "editor_console_command"
+            ]
+            
+            for tool_name in expected_tools:
+                assert tool_name in TOOLS, f"Expected tool {tool_name} not found"
+        except ImportError:
+            pytest.skip("mcp_server module not available")
+    
+    @pytest.mark.skip(reason="Requires mock UI framework for testing")
+    def test_connection_status_updates(self):
+        """Test that connection status updates correctly."""
+        pass
+    
+    @pytest.mark.skip(reason="Requires Unreal Engine for live testing")
+    def test_tool_execution(self):
+        """Test MCP tool execution."""
+        pass
+
+
 class TestModuleImports:
     """Test that the GUI module and its dependencies can be imported."""
     
