@@ -29,6 +29,10 @@ PROGRESS_POLL_INTERVAL_MS = 500  # Progress file polling interval in millisecond
 TEST_OUTPUT_BATCH_SIZE = 10  # Number of output lines to batch before updating UI (improves performance)
 TEST_STOP_TIMEOUT = 3  # Seconds to wait for graceful process termination before forcing kill
 
+# Constants for Unreal MCP integration
+MCP_PYTHON_PLACEHOLDER = "import unreal\nprint(unreal.SystemLibrary.get_engine_version())"
+MCP_CONSOLE_PLACEHOLDER = "stat fps"
+
 class AdastreaDirectorApp:
     def __init__(self, root):
         self.root = root
@@ -1252,7 +1256,7 @@ class AdastreaDirectorApp:
         self.unreal_python_input.pack(fill=tk.BOTH, expand=True)
         
         # Add placeholder text
-        self.unreal_python_input.insert(tk.END, "import unreal\nprint(unreal.SystemLibrary.get_engine_version())")
+        self.unreal_python_input.insert(tk.END, MCP_PYTHON_PLACEHOLDER)
         
         # Bind Ctrl+Enter for execution
         self.unreal_python_input.bind("<Control-Return>", lambda e: self.execute_unreal_python())
@@ -1294,7 +1298,7 @@ class AdastreaDirectorApp:
             borderwidth=0
         )
         self.unreal_console_entry.pack(fill=tk.BOTH, expand=True, padx=10, pady=8)
-        self.unreal_console_entry.insert(0, "stat fps")
+        self.unreal_console_entry.insert(0, MCP_CONSOLE_PLACEHOLDER)
         self.unreal_console_entry.bind("<Return>", lambda e: self.execute_console_command())
         
         execute_console_btn = tk.Button(
@@ -1419,7 +1423,8 @@ class AdastreaDirectorApp:
                 self.unreal_mcp_server = UnrealMCPServer()
                 success = self.unreal_mcp_server.start()
                 
-                if success:
+                # Validate the return type and check if connected
+                if success is True or (success is not False and self.unreal_mcp_server.is_connected()):
                     self.mcp_connected = True
                     self.root.after(0, self._on_unreal_connected)
                 else:
