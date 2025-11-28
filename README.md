@@ -418,6 +418,7 @@ The improved GUI provides:
 - **API Key Management**: Secure storage for multiple providers (Gemini, OpenAI)
 - **Knowledge Base Updates**: One-click knowledge base updates
 - **Ingest List Tab**: Visual checklist of ingested documents with statistics
+- **🎮 Unreal MCP Tab**: Direct integration with Unreal Engine via MCP
 - **Conversation History**: Full conversation display with timestamps and color-coding
 - **Keyboard Shortcuts**: Fast workflow with comprehensive keyboard support
 - **Copy & Export**: One-click copy to clipboard and export conversations to file
@@ -425,6 +426,13 @@ The improved GUI provides:
 - **Menu Bar**: File, Edit, and Help menus with full functionality
 - **Tooltips**: Helpful hints on all interactive elements
 - **Status Feedback**: Real-time status updates with visual indicators
+
+**🎮 Unreal MCP Tab Features:**
+- Connect/disconnect to Unreal Engine via MCP server
+- Quick access to common tools (Project Info, Map Info, Assets, World Outliner)
+- Python code execution directly in Unreal Editor
+- Console command execution
+- Real-time output display with JSON formatting
 
 **Keyboard Shortcuts:**
 - `Enter` or `Ctrl+Enter` - Send question
