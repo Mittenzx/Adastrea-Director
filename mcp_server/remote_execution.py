@@ -205,6 +205,8 @@ class UnrealRemoteExecution:
         try:
             self._discovery_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
         except (AttributeError, OSError):
+            # SO_REUSEPORT is not available on all platforms (e.g., Windows, some Linux distros).
+            # It is safe to ignore this error and proceed without setting this option.
             pass
         
         # Bind to the multicast port
@@ -215,9 +217,15 @@ class UnrealRemoteExecution:
         self._discovery_socket.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, self.config.multicast_ttl)
         
         # Set multicast interface
+        # Use INADDR_ANY (0.0.0.0) when bind_address is the wildcard address,
+        # otherwise use the specific interface address
+        if self.config.bind_address == "0.0.0.0":
+            multicast_if = struct.pack('!I', 0)  # INADDR_ANY
+        else:
+            multicast_if = socket.inet_aton(self.config.bind_address)
         self._discovery_socket.setsockopt(
             socket.IPPROTO_IP, socket.IP_MULTICAST_IF,
-            socket.inet_aton(self.config.bind_address)
+            multicast_if
         )
         
         # Join multicast group
@@ -456,6 +464,14 @@ class UnrealRemoteExecution:
         Returns:
             True if connection was successful.
         """
+        # Close any existing command server to prevent "Address already in use" errors
+        if self._command_server:
+            try:
+                self._command_server.close()
+            except Exception:
+                pass
+            self._command_server = None
+        
         try:
             # Create TCP server to accept connection from Unreal
             self._command_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -498,7 +514,7 @@ class UnrealRemoteExecution:
         """Send a CLOSE_CONNECTION message (broadcast-based)."""
         self._broadcast_close_connection()
     
-    def run_command(self, code: str, mode: str = ExecutionMode.EXECUTE_FILE, 
+    def run_command(self, code: str, mode: str = ExecutionMode.EXECUTE_STATEMENT, 
                     unattended: bool = True) -> CommandResult:
         """
         Execute Python code in the connected Unreal Editor.
@@ -531,8 +547,8 @@ class UnrealRemoteExecution:
                 data=command_data
             )
             
-            # Send message
-            self._command_socket.sendall(message.encode("utf-8"))
+            # Send message with newline delimiter for proper TCP message framing
+            self._command_socket.sendall(message.encode("utf-8") + b"\n")
             
             # Wait for response
             response = self._receive_command_result()
@@ -560,6 +576,7 @@ class UnrealRemoteExecution:
         max_read_attempts = 1000  # Prevent infinite loops
         data_received = b""
         read_attempts = 0
+        message = None
         
         while read_attempts < max_read_attempts:
             read_attempts += 1
@@ -576,9 +593,10 @@ class UnrealRemoteExecution:
                         error=f"Response too large (exceeded {max_buffer_size} bytes)"
                     )
                 
-                # Try to parse as JSON
+                # Try to parse as JSON (messages may be delimited by newline)
                 try:
-                    json_str = data_received.decode("utf-8")
+                    # Handle newline-delimited messages
+                    json_str = data_received.decode("utf-8").strip()
                     message = json.loads(json_str)
                     break
                 except json.JSONDecodeError:
@@ -593,11 +611,13 @@ class UnrealRemoteExecution:
         if not data_received:
             return CommandResult(success=False, error="No response received")
         
-        try:
-            json_str = data_received.decode("utf-8")
-            message = json.loads(json_str)
-        except (json.JSONDecodeError, UnicodeDecodeError) as e:
-            return CommandResult(success=False, error=f"Failed to parse response: {e}")
+        # If message wasn't parsed in the loop (e.g., due to timeout), try parsing now
+        if message is None:
+            try:
+                json_str = data_received.decode("utf-8").strip()
+                message = json.loads(json_str)
+            except (json.JSONDecodeError, UnicodeDecodeError) as e:
+                return CommandResult(success=False, error=f"Failed to parse response: {e}")
         
         # Validate message
         if not self._validate_message(message):
