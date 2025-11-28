@@ -2,6 +2,7 @@
 Tests for the MCP Server remote execution module.
 """
 
+import json
 import struct
 from unittest.mock import Mock, patch, MagicMock
 
@@ -10,6 +11,7 @@ from mcp_server.remote_execution import (
     RemoteExecutionConfig,
     CommandResult,
     RemoteNode,
+    RemoteNodeData,
     MessageType,
     ExecutionMode,
 )
@@ -29,6 +31,7 @@ class TestRemoteExecutionConfig:
         assert config.discovery_timeout == 5.0
         assert config.max_retries == 3
         assert config.retry_delay == 2.0
+        assert config.command_endpoint == ("127.0.0.1", 6776)
     
     def test_custom_config(self):
         """Test custom configuration values."""
@@ -79,16 +82,27 @@ class TestRemoteNode:
     
     def test_node_creation(self):
         """Test creating a remote node."""
+        node_data = RemoteNodeData(
+            project_name="TestProject",
+            engine_version="5.3",
+            machine="test-machine"
+        )
         node = RemoteNode(
             node_id="test-node-123",
-            project_name="TestProject",
-            address=("127.0.0.1", 6767)
+            data=node_data
         )
         
         assert node.node_id == "test-node-123"
         assert node.project_name == "TestProject"
-        assert node.address == ("127.0.0.1", 6767)
+        assert node.data.engine_version == "5.3"
         assert node.last_seen is not None
+    
+    def test_node_project_name_property(self):
+        """Test that project_name property works correctly."""
+        node_data = RemoteNodeData(project_name="MyGame")
+        node = RemoteNode(node_id="test", data=node_data)
+        
+        assert node.project_name == "MyGame"
 
 
 class TestUnrealRemoteExecution:
@@ -128,7 +142,7 @@ class TestUnrealRemoteExecution:
         assert nodes == {}
     
     def test_write_string(self):
-        """Test string encoding."""
+        """Test string encoding (legacy method)."""
         remote = UnrealRemoteExecution()
         
         result = remote._write_string("hello")
@@ -140,7 +154,7 @@ class TestUnrealRemoteExecution:
         assert result[4:] == b"hello"
     
     def test_read_string(self):
-        """Test string decoding."""
+        """Test string decoding (legacy method)."""
         remote = UnrealRemoteExecution()
         
         # Encode a string
@@ -220,45 +234,94 @@ class TestUnrealRemoteExecution:
         # Should not raise
         remote.stop()
         assert remote._running is False
+    
+    def test_create_message(self):
+        """Test JSON message creation."""
+        remote = UnrealRemoteExecution()
+        
+        message = remote._create_message(MessageType.PING)
+        parsed = json.loads(message)
+        
+        assert parsed["version"] == 1
+        assert parsed["magic"] == "ue_py"
+        assert parsed["type"] == "ping"
+        assert parsed["source"] == remote._node_id
+    
+    def test_create_message_with_dest_and_data(self):
+        """Test JSON message creation with destination and data."""
+        remote = UnrealRemoteExecution()
+        
+        message = remote._create_message(
+            MessageType.COMMAND,
+            dest="target-node",
+            data={"command": "print('test')"}
+        )
+        parsed = json.loads(message)
+        
+        assert parsed["dest"] == "target-node"
+        assert parsed["data"]["command"] == "print('test')"
+    
+    def test_validate_message(self):
+        """Test message validation."""
+        remote = UnrealRemoteExecution()
+        
+        valid_message = {
+            "version": 1,
+            "magic": "ue_py",
+            "type": "ping",
+            "source": "some-node"
+        }
+        
+        assert remote._validate_message(valid_message) is True
+        
+        # Invalid version
+        invalid_version = {**valid_message, "version": 2}
+        assert remote._validate_message(invalid_version) is False
+        
+        # Invalid magic
+        invalid_magic = {**valid_message, "magic": "wrong"}
+        assert remote._validate_message(invalid_magic) is False
+    
+    def test_passes_receive_filter(self):
+        """Test receive filter logic."""
+        remote = UnrealRemoteExecution()
+        
+        # Message from another node, no dest (broadcast)
+        msg1 = {"source": "other-node"}
+        assert remote._passes_receive_filter(msg1) is True
+        
+        # Message from ourselves
+        msg2 = {"source": remote._node_id}
+        assert remote._passes_receive_filter(msg2) is False
+        
+        # Message destined for us
+        msg3 = {"source": "other-node", "dest": remote._node_id}
+        assert remote._passes_receive_filter(msg3) is True
+        
+        # Message destined for someone else
+        msg4 = {"source": "other-node", "dest": "different-node"}
+        assert remote._passes_receive_filter(msg4) is False
 
 
 class TestUnrealRemoteExecutionConnection:
     """Tests for connection handling."""
     
     @patch('socket.socket')
-    def test_open_command_connection_success(self, mock_socket_class):
-        """Test successful command connection."""
-        mock_socket = MagicMock()
-        mock_socket_class.return_value = mock_socket
+    def test_open_command_connection_timeout(self, mock_socket_class):
+        """Test command connection timeout."""
+        import socket as socket_module
+        
+        mock_server = MagicMock()
+        mock_server.accept.side_effect = socket_module.timeout("timeout")
+        mock_socket_class.return_value = mock_server
         
         remote = UnrealRemoteExecution()
-        node = RemoteNode(
-            node_id="test-node",
-            project_name="TestProject",
-            address=("127.0.0.1", 6766)
-        )
+        remote._discovery_socket = MagicMock()
         
-        result = remote.open_command_connection(node)
+        node_data = RemoteNodeData(project_name="TestProject")
+        node = RemoteNode(node_id="test-node", data=node_data)
         
-        assert result is True
-        assert remote._connected_node == node
-        mock_socket.connect.assert_called_once()
-    
-    @patch('socket.socket')
-    def test_open_command_connection_failure(self, mock_socket_class):
-        """Test failed command connection."""
-        mock_socket = MagicMock()
-        mock_socket.connect.side_effect = ConnectionRefusedError("Connection refused")
-        mock_socket_class.return_value = mock_socket
-        
-        remote = UnrealRemoteExecution()
-        node = RemoteNode(
-            node_id="test-node",
-            project_name="TestProject",
-            address=("127.0.0.1", 6766)
-        )
-        
-        result = remote.open_command_connection(node)
+        result = remote.open_command_connection(node, timeout_ms=100)
         
         assert result is False
         assert remote._connected_node is None
@@ -268,24 +331,113 @@ class TestMessageParsing:
     """Tests for message parsing and handling."""
     
     def test_magic_constant(self):
-        """Test magic constant is correct."""
-        assert UnrealRemoteExecution.MAGIC == b"CYCB"
+        """Test magic constant is correct (JSON protocol uses string)."""
+        assert UnrealRemoteExecution.MAGIC == "ue_py"
+        assert UnrealRemoteExecution.PROTOCOL_MAGIC == "ue_py"
     
     def test_protocol_version(self):
         """Test protocol version is correct."""
         assert UnrealRemoteExecution.PROTOCOL_VERSION == 1
     
     def test_message_type_values(self):
-        """Test message type enum values."""
-        assert MessageType.PING == 0
-        assert MessageType.PONG == 1
-        assert MessageType.OPEN_CONNECTION == 2
-        assert MessageType.CLOSE_CONNECTION == 3
-        assert MessageType.COMMAND == 4
-        assert MessageType.COMMAND_RESULT == 5
+        """Test message type values (now string-based)."""
+        assert MessageType.PING == "ping"
+        assert MessageType.PONG == "pong"
+        assert MessageType.OPEN_CONNECTION == "open_connection"
+        assert MessageType.CLOSE_CONNECTION == "close_connection"
+        assert MessageType.COMMAND == "command"
+        assert MessageType.COMMAND_RESULT == "command_result"
     
     def test_execution_mode_values(self):
-        """Test execution mode enum values."""
-        assert ExecutionMode.EXECUTE_FILE == 0
-        assert ExecutionMode.EXECUTE_STATEMENT == 1
-        assert ExecutionMode.EVALUATE_STATEMENT == 2
+        """Test execution mode values (now string-based)."""
+        assert ExecutionMode.EXECUTE_FILE == "ExecuteFile"
+        assert ExecutionMode.EXECUTE_STATEMENT == "ExecuteStatement"
+        assert ExecutionMode.EVALUATE_STATEMENT == "EvaluateStatement"
+
+
+class TestDiscoveryHandling:
+    """Tests for node discovery message handling."""
+    
+    def test_handle_pong_creates_node(self):
+        """Test that PONG message creates a new node."""
+        remote = UnrealRemoteExecution()
+        
+        pong_message = {
+            "version": 1,
+            "magic": "ue_py",
+            "type": "pong",
+            "source": "unreal-node-123",
+            "data": {
+                "project_name": "TestGame",
+                "engine_version": "5.3.0",
+                "machine": "test-pc"
+            }
+        }
+        
+        remote._handle_pong(pong_message)
+        
+        nodes = remote.get_remote_nodes()
+        assert "unreal-node-123" in nodes
+        assert nodes["unreal-node-123"].project_name == "TestGame"
+        assert nodes["unreal-node-123"].data.engine_version == "5.3.0"
+    
+    def test_handle_discovery_message_valid_pong(self):
+        """Test handling a valid PONG discovery message."""
+        remote = UnrealRemoteExecution()
+        
+        pong_message = json.dumps({
+            "version": 1,
+            "magic": "ue_py",
+            "type": "pong",
+            "source": "test-node",
+            "data": {"project_name": "MyProject"}
+        })
+        
+        remote._handle_discovery_message(pong_message.encode("utf-8"), ("127.0.0.1", 6766))
+        
+        nodes = remote.get_remote_nodes()
+        assert "test-node" in nodes
+    
+    def test_handle_discovery_message_ignores_own_messages(self):
+        """Test that we ignore messages from ourselves."""
+        remote = UnrealRemoteExecution()
+        
+        own_message = json.dumps({
+            "version": 1,
+            "magic": "ue_py",
+            "type": "pong",
+            "source": remote._node_id,
+            "data": {"project_name": "MyProject"}
+        })
+        
+        remote._handle_discovery_message(own_message.encode("utf-8"), ("127.0.0.1", 6766))
+        
+        nodes = remote.get_remote_nodes()
+        assert len(nodes) == 0
+    
+    def test_handle_discovery_message_invalid_json(self):
+        """Test handling invalid JSON gracefully."""
+        remote = UnrealRemoteExecution()
+        
+        # Should not raise exception
+        remote._handle_discovery_message(b"not valid json", ("127.0.0.1", 6766))
+        
+        nodes = remote.get_remote_nodes()
+        assert len(nodes) == 0
+    
+    def test_handle_discovery_message_wrong_magic(self):
+        """Test that messages with wrong magic are ignored."""
+        remote = UnrealRemoteExecution()
+        
+        wrong_magic = json.dumps({
+            "version": 1,
+            "magic": "wrong_magic",
+            "type": "pong",
+            "source": "test-node",
+            "data": {}
+        })
+        
+        remote._handle_discovery_message(wrong_magic.encode("utf-8"), ("127.0.0.1", 6766))
+        
+        nodes = remote.get_remote_nodes()
+        assert len(nodes) == 0
