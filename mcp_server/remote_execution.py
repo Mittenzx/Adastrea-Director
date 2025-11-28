@@ -9,34 +9,34 @@ Based on the protocol used by runreal/unreal-mcp but implemented
 in pure Python for better integration with Adastrea Director.
 """
 
+import json
 import socket
-import struct
 import logging
 import time
 import threading
-from typing import Optional, Dict, Tuple, Callable, List
+import uuid
+from typing import Optional, Dict, Tuple, Callable, List, Any
 from dataclasses import dataclass, field
-from enum import IntEnum
 from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
 
-class MessageType(IntEnum):
-    """Message types for the remote execution protocol."""
-    PING = 0
-    PONG = 1
-    OPEN_CONNECTION = 2
-    CLOSE_CONNECTION = 3
-    COMMAND = 4
-    COMMAND_RESULT = 5
+class MessageType:
+    """Message types for the remote execution protocol (JSON-based)."""
+    PING = "ping"
+    PONG = "pong"
+    OPEN_CONNECTION = "open_connection"
+    CLOSE_CONNECTION = "close_connection"
+    COMMAND = "command"
+    COMMAND_RESULT = "command_result"
 
 
-class ExecutionMode(IntEnum):
+class ExecutionMode:
     """Execution modes for Python commands."""
-    EXECUTE_FILE = 0
-    EXECUTE_STATEMENT = 1
-    EVALUATE_STATEMENT = 2
+    EXECUTE_FILE = "ExecuteFile"
+    EXECUTE_STATEMENT = "ExecuteStatement"
+    EVALUATE_STATEMENT = "EvaluateStatement"
 
 
 @dataclass
@@ -45,10 +45,12 @@ class RemoteExecutionConfig:
     multicast_group: str = "239.0.0.1"
     multicast_port: int = 6766
     bind_address: str = "0.0.0.0"
+    command_endpoint: Tuple[str, int] = ("127.0.0.1", 6776)
     command_timeout: float = 30.0
     discovery_timeout: float = 5.0
     max_retries: int = 3
     retry_delay: float = 2.0
+    multicast_ttl: int = 0  # 0 = local only, 1 = same subnet
 
 
 @dataclass
@@ -60,13 +62,35 @@ class CommandResult:
     timestamp: datetime = field(default_factory=datetime.now)
 
 
+@dataclass 
+class CommandOutputItem:
+    """Individual output item from command execution."""
+    type: str  # "Info", "Warning", "Error"
+    output: str
+
+
+@dataclass
+class RemoteNodeData:
+    """Data about a remote Unreal Editor node."""
+    engine_root: str = ""
+    engine_version: str = ""
+    machine: str = ""
+    project_name: str = ""
+    project_root: str = ""
+    user: str = ""
+
+
 @dataclass
 class RemoteNode:
     """Information about a discovered remote Unreal Editor node."""
     node_id: str
-    project_name: str
-    address: Tuple[str, int]
+    data: RemoteNodeData
     last_seen: datetime = field(default_factory=datetime.now)
+    
+    @property
+    def project_name(self) -> str:
+        """Get project name for backwards compatibility."""
+        return self.data.project_name
 
 
 class UnrealRemoteExecution:
@@ -75,6 +99,8 @@ class UnrealRemoteExecution:
     
     This allows executing Python code directly in the Unreal Editor,
     enabling AI agents to control and interact with Unreal Engine projects.
+    
+    Uses JSON-based messaging protocol compatible with Unreal Engine 4.x and 5.x.
     
     Example:
         ```python
@@ -92,9 +118,15 @@ class UnrealRemoteExecution:
         ```
     """
     
-    # Protocol constants
-    MAGIC = b"CYCB"
+    # Protocol constants - JSON-based protocol
+    PROTOCOL_MAGIC = "ue_py"
     PROTOCOL_VERSION = 1
+    
+    # Legacy constants for backwards compatibility with tests
+    MAGIC = PROTOCOL_MAGIC
+    
+    # Node timeout in milliseconds
+    NODE_TIMEOUT_MS = 5000
     
     def __init__(self, config: Optional[RemoteExecutionConfig] = None):
         """
@@ -106,11 +138,12 @@ class UnrealRemoteExecution:
         self.config = config or RemoteExecutionConfig()
         self._discovery_socket: Optional[socket.socket] = None
         self._command_socket: Optional[socket.socket] = None
+        self._command_server: Optional[socket.socket] = None
         self._running = False
         self._nodes: Dict[str, RemoteNode] = {}
         self._discovery_thread: Optional[threading.Thread] = None
         self._connected_node: Optional[RemoteNode] = None
-        self._node_id = f"adastrea-mcp-{int(time.time())}"
+        self._node_id = str(uuid.uuid4())
         self._lock = threading.Lock()
         self._command_listeners: List[Callable[[CommandResult], None]] = []
         
@@ -132,13 +165,25 @@ class UnrealRemoteExecution:
         """Stop the remote execution client and close all connections."""
         self._running = False
         
+        if self._connected_node:
+            try:
+                self._broadcast_close_connection()
+            except Exception as e:
+                logger.debug(f"Error sending close connection: {e}")
+        
         if self._command_socket:
             try:
-                self._send_close_connection()
                 self._command_socket.close()
             except Exception as e:
                 logger.debug(f"Error closing command socket: {e}")
             self._command_socket = None
+        
+        if self._command_server:
+            try:
+                self._command_server.close()
+            except Exception as e:
+                logger.debug(f"Error closing command server: {e}")
+            self._command_server = None
         
         if self._discovery_socket:
             try:
@@ -157,6 +202,8 @@ class UnrealRemoteExecution:
     
     def _setup_discovery_socket(self) -> None:
         """Set up the multicast socket for node discovery."""
+        import struct as struct_module
+        
         self._discovery_socket = socket.socket(
             socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP
         )
@@ -165,15 +212,24 @@ class UnrealRemoteExecution:
         # Try to set SO_REUSEPORT if available (not on all platforms)
         try:
             self._discovery_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
-        except AttributeError:
-            # SO_REUSEPORT is not available on all platforms (e.g., Windows).
-            # It is safe to ignore this error and proceed without setting the option.
+        except (AttributeError, OSError):
             pass
         
+        # Bind to the multicast port
         self._discovery_socket.bind((self.config.bind_address, self.config.multicast_port))
         
+        # Set multicast options
+        self._discovery_socket.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_LOOP, 1)
+        self._discovery_socket.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, self.config.multicast_ttl)
+        
+        # Set multicast interface
+        self._discovery_socket.setsockopt(
+            socket.IPPROTO_IP, socket.IP_MULTICAST_IF,
+            socket.inet_aton(self.config.bind_address)
+        )
+        
         # Join multicast group
-        mreq = struct.pack(
+        mreq = struct_module.pack(
             "4s4s",
             socket.inet_aton(self.config.multicast_group),
             socket.inet_aton(self.config.bind_address)
@@ -201,7 +257,7 @@ class UnrealRemoteExecution:
         """Background loop for receiving node announcements."""
         while self._running and self._discovery_socket:
             try:
-                data, addr = self._discovery_socket.recvfrom(4096)
+                data, addr = self._discovery_socket.recvfrom(65535)
                 self._handle_discovery_message(data, addr)
             except socket.timeout:
                 continue
@@ -210,73 +266,153 @@ class UnrealRemoteExecution:
                     logger.debug(f"Discovery loop error: {e}")
     
     def _handle_discovery_message(self, data: bytes, addr: Tuple[str, int]) -> None:
-        """Handle an incoming discovery message."""
+        """Handle an incoming discovery message (JSON format)."""
         try:
-            # Parse message header
-            if len(data) < 8 or data[:4] != self.MAGIC:
+            # Parse JSON message
+            json_str = data.decode("utf-8")
+            message = json.loads(json_str)
+            
+            # Validate message format
+            if not self._validate_message(message):
                 return
             
-            version, msg_type = struct.unpack("<II", data[4:12])
-            if version != self.PROTOCOL_VERSION:
+            # Check if this message passes our receive filter
+            if not self._passes_receive_filter(message):
                 return
             
+            msg_type = message.get("type", "")
             if msg_type == MessageType.PONG:
-                self._handle_pong(data[12:], addr)
+                self._handle_pong(message)
+        except (json.JSONDecodeError, UnicodeDecodeError) as e:
+            logger.debug(f"Error decoding discovery message: {e}")
         except Exception as e:
             logger.debug(f"Error handling discovery message: {e}")
     
-    def _handle_pong(self, data: bytes, addr: Tuple[str, int]) -> None:
+    def _validate_message(self, message: Dict[str, Any]) -> bool:
+        """Validate that a message has required fields and correct values."""
+        if message.get("version") != self.PROTOCOL_VERSION:
+            return False
+        if message.get("magic") != self.PROTOCOL_MAGIC:
+            return False
+        return True
+    
+    def _passes_receive_filter(self, message: Dict[str, Any]) -> bool:
+        """Check if a message passes our receive filter."""
+        source = message.get("source", "")
+        dest = message.get("dest")
+        
+        # Ignore messages from ourselves
+        if source == self._node_id:
+            return False
+        
+        # Accept if no destination (broadcast) or if destined for us
+        if dest is None or dest == self._node_id:
+            return True
+        
+        return False
+    
+    def _handle_pong(self, message: Dict[str, Any]) -> None:
         """Handle a PONG response from a remote node."""
         try:
-            # Parse node info from PONG message
-            # Format: node_id (string), project_name (string)
-            node_id, rest = self._read_string(data)
-            project_name, _ = self._read_string(rest)
+            source_id = message.get("source", "")
+            data_dict = message.get("data", {})
+            
+            # Build RemoteNodeData from message data
+            node_data = RemoteNodeData(
+                engine_root=data_dict.get("engine_root", ""),
+                engine_version=data_dict.get("engine_version", ""),
+                machine=data_dict.get("machine", ""),
+                project_name=data_dict.get("project_name", ""),
+                project_root=data_dict.get("project_root", ""),
+                user=data_dict.get("user", "")
+            )
             
             with self._lock:
-                self._nodes[node_id] = RemoteNode(
-                    node_id=node_id,
-                    project_name=project_name,
-                    address=addr,
-                    last_seen=datetime.now()
-                )
+                if source_id in self._nodes:
+                    # Update existing node
+                    self._nodes[source_id].data = node_data
+                    self._nodes[source_id].last_seen = datetime.now()
+                else:
+                    # Add new node
+                    self._nodes[source_id] = RemoteNode(
+                        node_id=source_id,
+                        data=node_data,
+                        last_seen=datetime.now()
+                    )
             
-            logger.debug(f"Discovered node: {node_id} ({project_name}) at {addr}")
+            logger.debug(f"Discovered node: {source_id} ({node_data.project_name})")
         except Exception as e:
             logger.debug(f"Error handling PONG: {e}")
     
-    def _read_string(self, data: bytes) -> Tuple[str, bytes]:
-        """Read a length-prefixed UTF-8 string from data."""
-        if len(data) < 4:
-            return "", data
+    def _create_message(self, msg_type: str, dest: Optional[str] = None, 
+                        data: Optional[Dict[str, Any]] = None) -> str:
+        """Create a JSON message string."""
+        message: Dict[str, Any] = {
+            "version": self.PROTOCOL_VERSION,
+            "magic": self.PROTOCOL_MAGIC,
+            "source": self._node_id,
+            "type": msg_type
+        }
         
-        length = struct.unpack("<I", data[:4])[0]
-        if len(data) < 4 + length:
-            return "", data
+        if dest:
+            message["dest"] = dest
+        if data:
+            message["data"] = data
         
-        return data[4:4+length].decode("utf-8"), data[4+length:]
-    
-    def _write_string(self, s: str) -> bytes:
-        """Write a length-prefixed UTF-8 string."""
-        encoded = s.encode("utf-8")
-        return struct.pack("<I", len(encoded)) + encoded
+        return json.dumps(message)
     
     def _send_ping(self) -> None:
         """Send a PING message to discover nodes."""
         if not self._discovery_socket:
             return
         
-        message = self.MAGIC + struct.pack("<II", self.PROTOCOL_VERSION, MessageType.PING)
-        message += self._write_string(self._node_id)
+        message = self._create_message(MessageType.PING)
         
         try:
             self._discovery_socket.sendto(
-                message,
+                message.encode("utf-8"),
                 (self.config.multicast_group, self.config.multicast_port)
             )
             logger.debug("Sent PING for node discovery")
         except Exception as e:
             logger.error(f"Error sending PING: {e}")
+    
+    def _broadcast_open_connection(self, node: RemoteNode) -> None:
+        """Broadcast an OPEN_CONNECTION message to initiate command channel."""
+        if not self._discovery_socket:
+            return
+        
+        data = {
+            "command_ip": self.config.command_endpoint[0],
+            "command_port": self.config.command_endpoint[1]
+        }
+        
+        message = self._create_message(MessageType.OPEN_CONNECTION, dest=node.node_id, data=data)
+        
+        try:
+            self._discovery_socket.sendto(
+                message.encode("utf-8"),
+                (self.config.multicast_group, self.config.multicast_port)
+            )
+            logger.debug(f"Sent OPEN_CONNECTION to {node.node_id}")
+        except Exception as e:
+            logger.error(f"Error sending OPEN_CONNECTION: {e}")
+    
+    def _broadcast_close_connection(self) -> None:
+        """Broadcast a CLOSE_CONNECTION message."""
+        if not self._discovery_socket or not self._connected_node:
+            return
+        
+        message = self._create_message(MessageType.CLOSE_CONNECTION, dest=self._connected_node.node_id)
+        
+        try:
+            self._discovery_socket.sendto(
+                message.encode("utf-8"),
+                (self.config.multicast_group, self.config.multicast_port)
+            )
+            logger.debug(f"Sent CLOSE_CONNECTION to {self._connected_node.node_id}")
+        except Exception as e:
+            logger.debug(f"Error sending CLOSE_CONNECTION: {e}")
     
     def get_remote_nodes(self) -> Dict[str, RemoteNode]:
         """Get all discovered remote nodes."""
@@ -312,59 +448,73 @@ class UnrealRemoteExecution:
         logger.warning(f"No remote nodes discovered within {timeout}s timeout")
         return None
     
-    def open_command_connection(self, node: RemoteNode) -> bool:
+    def open_command_connection(self, node: RemoteNode, timeout_ms: int = 10000) -> bool:
         """
         Open a command connection to a remote node.
         
+        The protocol works by:
+        1. We start a TCP server on our command endpoint
+        2. We broadcast an OPEN_CONNECTION message via UDP multicast
+        3. Unreal receives the message and connects to our TCP server
+        
         Args:
             node: The remote node to connect to.
+            timeout_ms: Timeout in milliseconds for connection.
             
         Returns:
             True if connection was successful.
         """
         try:
-            # Create TCP socket for command connection
-            self._command_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self._command_socket.settimeout(self.config.command_timeout)
+            # Create TCP server to accept connection from Unreal
+            self._command_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self._command_server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            self._command_server.settimeout(timeout_ms / 1000.0)
+            self._command_server.bind(self.config.command_endpoint)
+            self._command_server.listen(1)
             
-            # Connect to the node's command port (usually multicast_port + 1)
-            command_address = (node.address[0], self.config.multicast_port + 1)
-            self._command_socket.connect(command_address)
+            logger.debug(f"Command server listening on {self.config.command_endpoint}")
             
-            # Send OPEN_CONNECTION message
-            message = self.MAGIC + struct.pack("<II", self.PROTOCOL_VERSION, MessageType.OPEN_CONNECTION)
-            message += self._write_string(self._node_id)
-            self._command_socket.sendall(message)
+            # Broadcast the open connection request
+            self._broadcast_open_connection(node)
+            
+            # Wait for Unreal to connect
+            try:
+                self._command_socket, client_addr = self._command_server.accept()
+                self._command_socket.settimeout(self.config.command_timeout)
+                logger.debug(f"Accepted connection from {client_addr}")
+            except socket.timeout:
+                logger.error(f"Timeout waiting for Unreal to connect")
+                self._command_server.close()
+                self._command_server = None
+                return False
             
             self._connected_node = node
             
-            logger.info(f"Opened command connection to {node.node_id} at {command_address}")
+            logger.info(f"Opened command connection to {node.node_id}")
             return True
         except Exception as e:
             logger.error(f"Failed to open command connection: {e}")
+            if self._command_server:
+                self._command_server.close()
+                self._command_server = None
             if self._command_socket:
                 self._command_socket.close()
                 self._command_socket = None
             return False
     
     def _send_close_connection(self) -> None:
-        """Send a CLOSE_CONNECTION message."""
-        if not self._command_socket:
-            return
-        
-        try:
-            message = self.MAGIC + struct.pack("<II", self.PROTOCOL_VERSION, MessageType.CLOSE_CONNECTION)
-            self._command_socket.sendall(message)
-        except Exception as e:
-            logger.debug(f"Error sending close connection: {e}")
+        """Send a CLOSE_CONNECTION message (broadcast-based)."""
+        self._broadcast_close_connection()
     
-    def run_command(self, code: str, mode: ExecutionMode = ExecutionMode.EXECUTE_STATEMENT) -> CommandResult:
+    def run_command(self, code: str, mode: str = ExecutionMode.EXECUTE_FILE, 
+                    unattended: bool = True) -> CommandResult:
         """
         Execute Python code in the connected Unreal Editor.
         
         Args:
             code: Python code to execute.
-            mode: Execution mode (execute statement, evaluate, or file).
+            mode: Execution mode (ExecuteFile, ExecuteStatement, or EvaluateStatement).
+            unattended: If True, suppress UI interactions.
             
         Returns:
             CommandResult with output and any errors.
@@ -376,12 +526,21 @@ class UnrealRemoteExecution:
             )
         
         try:
-            # Build command message
-            message = self.MAGIC + struct.pack("<II", self.PROTOCOL_VERSION, MessageType.COMMAND)
-            message += struct.pack("<I", mode)
-            message += self._write_string(code)
+            # Build command message (JSON format)
+            command_data = {
+                "command": code,
+                "unattended": unattended,
+                "exec_mode": mode
+            }
             
-            self._command_socket.sendall(message)
+            message = self._create_message(
+                MessageType.COMMAND, 
+                dest=self._connected_node.node_id,
+                data=command_data
+            )
+            
+            # Send message
+            self._command_socket.sendall(message.encode("utf-8"))
             
             # Wait for response
             response = self._receive_command_result()
@@ -399,45 +558,74 @@ class UnrealRemoteExecution:
             )
     
     def _receive_command_result(self) -> CommandResult:
-        """Receive and parse a command result."""
+        """Receive and parse a command result (JSON format)."""
         if not self._command_socket:
             return CommandResult(success=False, error="No connection")
         
-        # Read header
-        header = self._recv_exact(12)
-        if not header or header[:4] != self.MAGIC:
-            return CommandResult(success=False, error="Invalid response header")
+        # Read data from socket - may come in chunks for large responses
+        data_received = b""
         
-        version, msg_type = struct.unpack("<II", header[4:12])
-        if msg_type != MessageType.COMMAND_RESULT:
-            return CommandResult(success=False, error=f"Unexpected message type: {msg_type}")
+        while True:
+            try:
+                chunk = self._command_socket.recv(65535)
+                if not chunk:
+                    break
+                data_received += chunk
+                
+                # Try to parse as JSON
+                try:
+                    json_str = data_received.decode("utf-8")
+                    message = json.loads(json_str)
+                    break
+                except json.JSONDecodeError:
+                    # Not complete yet, continue reading
+                    continue
+            except socket.timeout:
+                break
         
-        # Read result data
-        success_byte = self._recv_exact(1)
-        success = success_byte and success_byte[0] == 1
+        if not data_received:
+            return CommandResult(success=False, error="No response received")
         
-        # Read output string
-        output_len_data = self._recv_exact(4)
-        if output_len_data:
-            output_len = struct.unpack("<I", output_len_data)[0]
-            output_data = self._recv_exact(output_len) if output_len > 0 else b""
-            output = output_data.decode("utf-8") if output_data else ""
-        else:
-            output = ""
+        try:
+            json_str = data_received.decode("utf-8")
+            message = json.loads(json_str)
+        except (json.JSONDecodeError, UnicodeDecodeError) as e:
+            return CommandResult(success=False, error=f"Failed to parse response: {e}")
         
-        # Read error string if present
-        error_len_data = self._recv_exact(4)
-        if error_len_data:
-            error_len = struct.unpack("<I", error_len_data)[0]
-            error_data = self._recv_exact(error_len) if error_len > 0 else b""
-            error = error_data.decode("utf-8") if error_data else ""
-        else:
-            error = ""
+        # Validate message
+        if not self._validate_message(message):
+            return CommandResult(success=False, error="Invalid response message format")
+        
+        if message.get("type") != MessageType.COMMAND_RESULT:
+            return CommandResult(success=False, error=f"Unexpected message type: {message.get('type')}")
+        
+        # Extract result data
+        data = message.get("data", {})
+        success = data.get("success", False)
+        result_text = data.get("result", "")
+        
+        # Collect output from output array
+        output_items = data.get("output", [])
+        output_lines = []
+        error_lines = []
+        
+        for item in output_items:
+            item_type = item.get("type", "Info")
+            item_output = item.get("output", "")
+            
+            if item_type == "Error":
+                error_lines.append(item_output)
+            else:
+                output_lines.append(item_output)
+        
+        # Add result to error if command failed
+        if not success and result_text:
+            error_lines.append(result_text)
         
         return CommandResult(
             success=success,
-            output=output,
-            error=error
+            output="\n".join(output_lines),
+            error="\n".join(error_lines)
         )
     
     def _recv_exact(self, num_bytes: int) -> Optional[bytes]:
@@ -456,6 +644,25 @@ class UnrealRemoteExecution:
                 return None
         
         return data
+    
+    # Legacy methods for backwards compatibility with tests
+    def _write_string(self, s: str) -> bytes:
+        """Write a length-prefixed UTF-8 string (legacy method for tests)."""
+        import struct as struct_module
+        encoded = s.encode("utf-8")
+        return struct_module.pack("<I", len(encoded)) + encoded
+    
+    def _read_string(self, data: bytes) -> Tuple[str, bytes]:
+        """Read a length-prefixed UTF-8 string from data (legacy method for tests)."""
+        import struct as struct_module
+        if len(data) < 4:
+            return "", data
+        
+        length = struct_module.unpack("<I", data[:4])[0]
+        if len(data) < 4 + length:
+            return "", data
+        
+        return data[4:4+length].decode("utf-8"), data[4+length:]
     
     def is_connected(self) -> bool:
         """Check if currently connected to a remote node."""
