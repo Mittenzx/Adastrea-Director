@@ -156,7 +156,7 @@ print(json.dumps(asset_paths[:100]))  # Limit to first MAX_RESULTS for performan
 """
     
     def execute(self, remote, **kwargs) -> ToolResult:
-        result = remote.run_command(self._script)
+        result = remote.run_command(self._script, mode=ExecutionMode.EXECUTE_FILE)
         if result.success:
             return ToolResult.text(result.output)
         else:
@@ -214,7 +214,7 @@ else:
             return ToolResult.error("No asset_path provided")
         
         script = self._script_template.format(asset_path_json=json.dumps(asset_path))
-        result = remote.run_command(script)
+        result = remote.run_command(script, mode=ExecutionMode.EXECUTE_FILE)
         if result.success:
             return ToolResult.text(result.output)
         else:
@@ -290,7 +290,7 @@ print(json.dumps(output))
             search_term_json=json.dumps(search_term),
             asset_class_json=json.dumps(asset_class)
         )
-        result = remote.run_command(script)
+        result = remote.run_command(script, mode=ExecutionMode.EXECUTE_FILE)
         if result.success:
             return ToolResult.text(result.output)
         else:
@@ -323,7 +323,7 @@ print("Command executed: " + command)
             return ToolResult.error("No command provided")
         
         script = self._script_template.format(command_json=json.dumps(command))
-        result = remote.run_command(script)
+        result = remote.run_command(script, mode=ExecutionMode.EXECUTE_FILE)
         if result.success:
             return ToolResult.text(result.output)
         else:
@@ -372,7 +372,7 @@ print(json.dumps(info, indent=2))
 """
     
     def execute(self, remote, **kwargs) -> ToolResult:
-        result = remote.run_command(self._script)
+        result = remote.run_command(self._script, mode=ExecutionMode.EXECUTE_FILE)
         if result.success:
             return ToolResult.text(result.output)
         else:
@@ -415,7 +415,7 @@ else:
 """
     
     def execute(self, remote, **kwargs) -> ToolResult:
-        result = remote.run_command(self._script)
+        result = remote.run_command(self._script, mode=ExecutionMode.EXECUTE_FILE)
         if result.success:
             return ToolResult.text(result.output)
         else:
@@ -469,7 +469,7 @@ else:
 """
     
     def execute(self, remote, **kwargs) -> ToolResult:
-        result = remote.run_command(self._script)
+        result = remote.run_command(self._script, mode=ExecutionMode.EXECUTE_FILE)
         if result.success:
             return ToolResult.text(result.output)
         else:
@@ -587,7 +587,7 @@ else:
             scale=json.dumps(scale) if scale else "None"
         )
         
-        result = remote.run_command(script)
+        result = remote.run_command(script, mode=ExecutionMode.EXECUTE_FILE)
         if result.success:
             return ToolResult.text(result.output)
         else:
@@ -710,7 +710,7 @@ else:
             new_name=json.dumps(new_name) if new_name is not None else "None"
         )
         
-        result = remote.run_command(script)
+        result = remote.run_command(script, mode=ExecutionMode.EXECUTE_FILE)
         if result.success:
             return ToolResult.text(result.output)
         else:
@@ -774,7 +774,7 @@ else:
             return ToolResult.error("actor_name is required")
         
         script = self._script_template.format(actor_name_json=json.dumps(actor_name))
-        result = remote.run_command(script)
+        result = remote.run_command(script, mode=ExecutionMode.EXECUTE_FILE)
         if result.success:
             return ToolResult.text(result.output)
         else:
@@ -810,7 +810,7 @@ print(filename)
 """
     
     def execute(self, remote, **kwargs) -> ToolResult:
-        result = remote.run_command(self._script)
+        result = remote.run_command(self._script, mode=ExecutionMode.EXECUTE_FILE)
         if result.success:
             # The script returns the file path
             # In a full implementation, we'd read the file and return as base64
@@ -877,7 +877,7 @@ else:
             rotation=json.dumps(rotation)
         )
         
-        result = remote.run_command(script)
+        result = remote.run_command(script, mode=ExecutionMode.EXECUTE_FILE)
         if result.success:
             return ToolResult.text(result.output)
         else:
