@@ -12,6 +12,8 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Type
 
+from .remote_execution import ExecutionMode
+
 logger = logging.getLogger(__name__)
 
 # Maximum number of results to return from asset/actor queries
@@ -125,7 +127,8 @@ class EditorRunPython(MCPTool):
         if not code:
             return ToolResult.error("No code provided")
         
-        result = remote.run_command(code)
+        # Use ExecuteFile mode to support multi-line Python scripts
+        result = remote.run_command(code, mode=ExecutionMode.EXECUTE_FILE)
         if result.success:
             return ToolResult.text(result.output)
         else:
