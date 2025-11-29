@@ -25,7 +25,7 @@ from mcp_server.tools import (
     get_tool,
     get_all_tools,
 )
-from mcp_server.remote_execution import CommandResult
+from mcp_server.remote_execution import CommandResult, ExecutionMode
 
 
 class TestToolParameter:
@@ -119,6 +119,26 @@ class TestEditorRunPython:
         assert result.success is True
         assert "Hello from Python!" in result.content[0]["text"]
         mock_remote.run_command.assert_called_once()
+    
+    def test_execute_uses_execute_file_mode(self):
+        """Test that multi-line code uses ExecuteFile mode to avoid SyntaxError."""
+        tool = EditorRunPython()
+        mock_remote = Mock()
+        mock_remote.run_command.return_value = CommandResult(
+            success=True,
+            output="5.4.0"
+        )
+        
+        # Multi-line code like the default placeholder
+        multiline_code = "import unreal\nprint(unreal.SystemLibrary.get_engine_version())"
+        result = tool.execute(mock_remote, code=multiline_code)
+        
+        assert result.success is True
+        # Verify that ExecuteFile mode is used (not ExecuteStatement)
+        mock_remote.run_command.assert_called_once_with(
+            multiline_code, 
+            mode=ExecutionMode.EXECUTE_FILE
+        )
     
     def test_execute_no_code(self):
         """Test execution with no code."""
