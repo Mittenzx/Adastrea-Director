@@ -17,7 +17,20 @@ The Adastrea Director MCP Server provides a bridge between AI assistants and Unr
 
 ## Supported MCP Clients
 
-The Adastrea MCP Server works with many MCP-compatible clients. Here are options that **don't require VS Code**:
+The Adastrea MCP Server works with many MCP-compatible clients. **VS Code with GitHub Copilot** is the recommended option:
+
+### VS Code (Recommended)
+
+| Client | Platform | Description |
+|--------|----------|-------------|
+| **[VS Code + GitHub Copilot](https://code.visualstudio.com/)** | Windows, Mac, Linux | Industry-standard editor with powerful AI-assisted development via GitHub Copilot |
+
+### Other Code Editors
+
+| Client | Type | Description |
+|--------|------|-------------|
+| **[Zed](https://zed.dev)** | Native Editor | High-performance editor with built-in MCP |
+| **[JetBrains + Continue](https://continue.dev)** | Plugin | Works with IntelliJ, PyCharm, WebStorm, etc. |
 
 ### Desktop Applications
 
@@ -25,21 +38,6 @@ The Adastrea MCP Server works with many MCP-compatible clients. Here are options
 |--------|----------|-------------|
 | **[5ire](https://github.com/5ire-tech/5ire)** | Windows, Mac, Linux | Cross-platform AI assistant with full MCP support |
 | **[Cline](https://github.com/cline/cline)** | Windows, Mac, Linux | Open-source desktop client, multi-server support |
-| **[Cherry Studio](https://github.com/anthropics/anthropic-tools)** | Windows, Mac | Desktop chat application with MCP |
-
-### Code Editors (Non-VS Code)
-
-| Client | Type | Description |
-|--------|------|-------------|
-| **[Zed](https://zed.dev)** | Native Editor | High-performance editor with built-in MCP |
-| **[JetBrains + Continue](https://continue.dev)** | Plugin | Works with IntelliJ, PyCharm, WebStorm, etc. |
-
-### Web-Based
-
-| Client | Type | Description |
-|--------|------|-------------|
-| **[LibreChat](https://github.com/danny-avila/LibreChat)** | Self-hosted Web | Web-based chat with MCP tool support |
-| **[AIaW](https://github.com/anthropics/anthropic-tools)** | Web App | Lightweight web client |
 
 ### Standalone / Programmatic
 
@@ -144,6 +142,51 @@ With debug logging:
 python -m mcp_server.server --debug
 ```
 
+### Using with VS Code + GitHub Copilot (Recommended)
+
+[VS Code](https://code.visualstudio.com/) with the GitHub Copilot extension is the recommended way to use the Adastrea MCP Server.
+
+1. **Install VS Code** from [https://code.visualstudio.com/](https://code.visualstudio.com/)
+
+2. **Install GitHub Copilot extension**:
+   - Open VS Code
+   - Go to Extensions (Ctrl+Shift+X / Cmd+Shift+X)
+   - Search for "GitHub Copilot" and install it
+   - Sign in with your GitHub account
+
+3. **Configure MCP Server**:
+   
+   Create or edit the VS Code settings file. You can access it via:
+   - **Windows/Linux**: `File` → `Preferences` → `Settings` → Click the `{}` icon (top right) to open `settings.json`
+   - **macOS**: `Code` → `Preferences` → `Settings` → Click the `{}` icon (top right) to open `settings.json`
+   
+   Alternatively, create/edit the workspace settings at `.vscode/settings.json` in your project:
+
+   ```json
+   {
+     "github.copilot.chat.experimental.mcpServers": {
+       "adastrea-unreal": {
+         "command": "python",
+         "args": ["-m", "mcp_server.server"],
+         "cwd": "/path/to/Adastrea-Director"
+       }
+     }
+   }
+   ```
+
+   **Note**: Replace `/path/to/Adastrea-Director` with the actual path to your Adastrea Director installation.
+   
+   > ⚠️ **Experimental Feature**: The MCP integration in GitHub Copilot is currently experimental. The configuration key may change in future VS Code updates. Check the [GitHub Copilot documentation](https://docs.github.com/en/copilot) for the latest configuration options.
+
+4. **Using MCP Tools in Copilot Chat**:
+   - Open the Copilot Chat panel (Ctrl+Shift+I / Cmd+Shift+I)
+   - You can now ask Copilot to interact with Unreal Engine
+   - Example prompts:
+     - "Get project information from Unreal Engine"
+     - "List all assets in the project"
+     - "Take a screenshot of the editor viewport"
+     - "Create a new StaticMeshActor at position 0, 0, 100"
+
 ### Using with 5ire (Desktop App)
 
 [5ire](https://github.com/5ire-tech/5ire) is a cross-platform desktop AI assistant.
@@ -223,14 +266,6 @@ If you use IntelliJ, PyCharm, WebStorm, or other JetBrains IDEs:
   }
 }
 ```
-
-### Using with LibreChat (Self-Hosted Web)
-
-[LibreChat](https://github.com/danny-avila/LibreChat) is a self-hosted web chat interface.
-
-1. **Deploy LibreChat** following their installation guide.
-
-2. **Configure MCP** in the LibreChat settings to point to the Adastrea MCP server.
 
 ## Available Tools
 
@@ -452,7 +487,8 @@ with UnrealMCPServer() as server:
 ```
 ┌─────────────────────────────────────┐
 │   MCP Client                        │
-│   (5ire/Cline/Zed/Continue/etc.)    │
+│   (VS Code + GitHub Copilot,        │
+│    5ire, Cline, Zed, etc.)          │
 │   - Sends tool requests             │
 │   - Receives results                │
 └──────────────┬──────────────────────┘
@@ -506,7 +542,8 @@ Contributions are welcome! To add new tools:
 - 13 editor tools
 - Python Remote Execution protocol
 - stdio transport for MCP
-- Support for multiple MCP clients (GitHub Copilot, Continue, Cline, 5ire, Zed, etc.)
+- VS Code + GitHub Copilot as recommended MCP client
+- Support for multiple MCP clients (5ire, Cline, Zed, Continue, etc.)
 
 ## Finding More MCP Clients
 
