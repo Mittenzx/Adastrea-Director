@@ -11,8 +11,21 @@ If you're a GitHub Copilot agent or AI assistant, see:
 These guides explain all available connection methods, capabilities, and how to verify operations.
 
 ## 🌟 What's New in Phase 2
+## 🌟 What's New in v0.3.0
 
-**Semi-Autonomous Development** is here! The extension now includes:
+**GitHub Copilot Integration is here!** ✨
+
+- 💬 **@director Chat Participant** - Interact with Director through Copilot Chat
+- 🎯 **Slash Commands** - `/ask`, `/plan`, `/analyze`, `/context`, `/help`
+- 🔍 **Hover Context** - See Director documentation on Unreal Engine symbols
+- 🛠️ **Code Actions** - Ask Director about code, get context
+- 📚 **RAG Integration** - Context-aware responses from Director's knowledge base
+
+See [COPILOT_INTEGRATION.md](COPILOT_INTEGRATION.md) for complete Copilot documentation.
+
+## Previous Releases
+
+### Phase 2: Semi-Autonomous Development
 
 - 🤖 **Automated Code Generation** - Generate and apply code from natural language
 - ✅ **Automated Testing** - Run tests and view results directly in VS Code
@@ -25,11 +38,24 @@ See [PHASE2_GUIDE.md](PHASE2_GUIDE.md) for complete Phase 2 documentation.
 ## Features
 
 ### Phase 1: Foundation (Complete ✅)
+
+#### Weeks 1-2: Extension Setup
 - **IPC Connection**: Connect to Director IPC server (Python backend) on port 5555
-- **AI Queries**: Ask questions about your Unreal Engine project
 - **Connection Management**: Automatic reconnection with configurable retry logic
 - **Health Checks**: Regular health checks to ensure connection stability
 - **Status Indicator**: Visual status bar indicator showing connection state
+
+#### Weeks 3-4: Copilot Integration ✨ NEW!
+- **Chat Participant**: `@director` participant in GitHub Copilot Chat
+- **Slash Commands**: `/ask`, `/plan`, `/analyze`, `/context`, `/help`
+- **Context Retrieval**: RAG-powered responses from Director's knowledge base
+- **Hover Documentation**: Context-aware documentation for Unreal Engine symbols
+- **Code Actions**: Quick actions to ask Director about code or get context
+
+#### Weeks 5-6: Basic Workflows
+- **AI Queries**: Ask questions about your Unreal Engine project
+- **Plan Generation**: Generate development plans for features
+- **Configuration**: Extensive settings for customization
 
 ### Phase 2: Semi-Autonomous Development (Complete ✅)
 - **Code Generation**: Automated code generation with multiple approaches
@@ -46,6 +72,25 @@ See [PHASE2_GUIDE.md](PHASE2_GUIDE.md) for complete Phase 2 documentation.
 - VS Code 1.80.0 or higher
 - [Adastrea Director](https://github.com/Mittenzx/Adastrea-Director) IPC server running
 - Node.js 18+ (for development)
+- (Optional) [GitHub Copilot](https://marketplace.visualstudio.com/items?itemName=GitHub.copilot) for AI-assisted debugging with UE logs
+
+### 🤖 GitHub Copilot + UE Logs
+
+The repository includes a `.copilotignore` configuration that allows GitHub Copilot to access Unreal Engine output logs for better debugging assistance, even though these files are excluded from version control.
+
+**Benefits:**
+- 🐛 Get AI help analyzing UE crashes and errors
+- 💡 Receive context-aware suggestions based on actual runtime behavior
+- 🔍 Debug issues faster with Copilot's understanding of log patterns
+- 📊 Analyze performance logs and get optimization suggestions
+
+**Quick Start:**
+1. Ensure GitHub Copilot extension is installed
+2. Open any UE log file (e.g., `Saved/Logs/YourProject.log`)
+3. Use Copilot Chat to ask about errors or crashes
+4. Get instant analysis and suggested fixes
+
+📖 **See:** [COPILOT_UE_LOGS_GUIDE.md](../COPILOT_UE_LOGS_GUIDE.md) for complete setup and usage instructions
 
 ## Installation
 
@@ -108,7 +153,18 @@ python Plugins/AdastreaDirector/Python/ipc_server.py --port 5555
 - `Director: Toggle Debug Mode` - Enable/disable verbose debug logging
 - `Director: Run Connection Diagnostics` - Run comprehensive connection diagnostics
 
-#### Phase 2 Commands (New! ✨)
+#### Copilot Integration (New! ✨)
+- **Chat**: Use `@director` in GitHub Copilot Chat for natural language queries
+  - `@director /ask <question>` - Ask about Unreal Engine
+  - `@director /plan <goal>` - Generate development plan
+  - `@director /analyze <task>` - Analyze complexity and requirements
+  - `@director /context <topic>` - Get RAG-powered context
+  - `@director /help` - Show available commands
+- **Code Actions**: Right-click on code
+  - "Ask Director about this code"
+  - "Get Director context"
+
+#### Phase 2 Commands
 - `Director: Generate and Apply Code` - Generate code from natural language and apply with approval
 - `Director: Run Tests` - Execute test suite and view results
 - `Director: Review Pending Changes` - Review code changes waiting for approval
@@ -145,6 +201,9 @@ Configure the extension in VS Code settings:
 | `director.autoApprovalThreshold` | number | `0.9` | Auto-approval confidence threshold (0.0-1.0) |
 | `director.autoRunTests` | boolean | `false` | Automatically run tests after code changes |
 | `director.enableFeedbackCollection` | boolean | `true` | Enable automatic feedback collection |
+| `director.copilot.enabled` | boolean | `true` | Enable GitHub Copilot Chat integration |
+| `director.copilot.enableHoverContext` | boolean | `true` | Show Director context on hover |
+| `director.copilot.enableCodeActions` | boolean | `true` | Enable Director code actions |
 
 ## Connection Protocol
 

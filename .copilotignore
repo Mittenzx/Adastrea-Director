@@ -1,0 +1,31 @@
+# Copilot Ignore Configuration
+# This file controls what files GitHub Copilot can access for context in VSCode
+# Syntax similar to .gitignore, but with negative patterns to explicitly include files
+
+# By default, Copilot respects .gitignore, but we can override it here
+# to make Unreal Engine logs accessible for debugging and assistance
+
+# Include ALL log files for Copilot context (even though they're in .gitignore)
+# This allows Copilot to see UE output logs for better debugging assistance
+!*.log
+!**/*.log
+
+# Specifically include common UE log locations
+!Saved/Logs/*.log
+!*/Saved/Logs/*.log
+
+# Include test logs for debugging test failures
+!tests/*.log
+!tests/**/*.log
+
+# However, exclude very large or binary log files that might overwhelm Copilot
+# Copilot works best with files under 1MB. Exclude larger logs or crash dumps.
+# (You can adjust this based on your project needs)
+*.dmp
+*.crash
+
+# Exclude build logs that are too verbose
+**/Intermediate/Build/**/*.log
+
+# Keep sensitive logs private (add exclusion patterns as needed)
+# Example of excluding sensitive logs: **/Credentials/*.log

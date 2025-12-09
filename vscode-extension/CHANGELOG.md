@@ -5,6 +5,64 @@ All notable changes to the Adastrea Director VS Code extension will be documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2025-12-09
+
+### Added - Phase 1 (Weeks 3-4): Copilot Integration ✅
+
+**This release completes Phase 1 of the VS Code extension development plan!**
+
+#### Chat Participant (@director)
+- GitHub Copilot Chat participant for natural language interaction with Director
+- Integration with Director's RAG system for context-aware responses
+- Support for complex queries about Unreal Engine and project-specific topics
+
+#### Slash Commands
+- `/ask` - Ask general questions about Unreal Engine (default command)
+- `/plan` - Generate structured development plans for features
+- `/analyze` - Analyze goals and assess complexity
+- `/context` - Retrieve context from Director's RAG system
+- `/help` - Display available commands and usage examples
+
+#### Context Integration
+- Hover provider for Unreal Engine symbols (UObject, AActor, FVector, etc.)
+- Code actions for selected code ("Ask Director about this code", "Get Director context")
+- Enhanced context provider for project-specific knowledge
+- Context-aware responses based on current file and surrounding code
+
+#### Developer Experience
+- Seamless integration with existing Director commands
+- Follow-up suggestions after chat responses
+- Rich markdown formatting in chat responses
+- Webview panel for detailed context display
+- Code action menu integration in editor
+
+#### Configuration Settings
+- `director.copilot.enabled` - Enable/disable Copilot Chat integration
+- `director.copilot.enableHoverContext` - Toggle hover documentation
+- `director.copilot.enableCodeActions` - Toggle code action menu items
+
+#### Documentation
+- Comprehensive [COPILOT_INTEGRATION.md](COPILOT_INTEGRATION.md) guide
+- Updated README with Copilot features and examples
+- Example workflows and best practices
+- Troubleshooting guide for Copilot-specific issues
+
+### Technical Improvements
+- New `copilotParticipant.ts` module for chat request handling
+- New `copilotContextProvider.ts` module for context integration
+- Enhanced extension activation for Copilot APIs
+- Type-safe implementation with full TypeScript support
+- Graceful degradation if Copilot APIs unavailable
+
+### Phase 1 Completion Status
+- ✅ Weeks 1-2: Extension Setup (v0.1.0) - **COMPLETE**
+- ✅ Weeks 3-4: Copilot Integration (v0.3.0) - **COMPLETE**
+- ✅ Weeks 5-6: Basic Workflows (v0.1.0) - **COMPLETE**
+
+**🎉 Phase 1 is now 100% complete!**
+
+---
+
 ## [0.2.0] - 2025-12-09
 
 ### Added - Phase 2: Semi-Autonomous Development ✨
