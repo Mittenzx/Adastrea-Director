@@ -144,7 +144,7 @@ The MCP server provides these tools (automatically used by Copilot):
 ```
 
 ### Verify Property Changes
-```python
+```
 # Ask Copilot to run this in UE:
 "Execute Python code to check player health:
 import unreal
@@ -285,5 +285,5 @@ python ipc_server.py --port 5555
 ---
 
 **Version:** 1.0.0  
-**Last Updated:** December 2024  
+**Last Updated:** December 2025  
 **For comprehensive documentation, see:** [COPILOT_INSTRUCTIONS.md](../COPILOT_INSTRUCTIONS.md)

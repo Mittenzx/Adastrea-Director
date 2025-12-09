@@ -1442,6 +1442,8 @@ elif task_type in ["batch_operations", "complex_automation"]:
 **Always include error handling:**
 
 ```python
+import time
+
 def safe_api_call(client_method, *args, **kwargs):
     """Wrapper for safe API calls with error handling."""
     max_retries = 3
@@ -1747,5 +1749,5 @@ This document provides comprehensive instructions for Copilot agents to:
 - Main project README.md
 
 **Version:** 1.0.0  
-**Last Updated:** December 2024  
+**Last Updated:** December 2025  
 **Project:** Adastrea Director - AI Game Development Assistant

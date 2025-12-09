@@ -161,5 +161,5 @@ Please let us know through GitHub Issues!
 ---
 
 **Version:** 1.0.0  
-**Last Updated:** December 2024  
+**Last Updated:** December 2025  
 **Adastrea Director** - AI Game Development Assistant
