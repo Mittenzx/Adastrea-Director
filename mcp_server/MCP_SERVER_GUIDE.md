@@ -2,6 +2,14 @@
 
 This guide explains how to set up and use the Adastrea Director MCP (Model Context Protocol) server to enable AI agents and tools to interact with Unreal Engine.
 
+## 🤖 For GitHub Copilot Agents
+
+If you're a GitHub Copilot agent or AI assistant:
+- **[COPILOT_INSTRUCTIONS.md](../COPILOT_INSTRUCTIONS.md)** - Complete guide with all connection methods, capabilities, and verification procedures
+- **[COPILOT_QUICK_REFERENCE.md](../.github/COPILOT_QUICK_REFERENCE.md)** - Quick reference for common operations
+
+This guide focuses on MCP server setup. The Copilot instructions cover all available connection types and workflows.
+
 ## Overview
 
 The Adastrea Director MCP Server provides a bridge between AI assistants and Unreal Engine, allowing natural language commands to be translated into actions within the Unreal Editor. This is similar to the [runreal/unreal-mcp](https://github.com/runreal/unreal-mcp) project, but integrated with Adastrea Director's Python infrastructure.

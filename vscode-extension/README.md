@@ -2,6 +2,15 @@
 
 VS Code extension for [Adastrea Director](https://github.com/Mittenzx/Adastrea-Director) - an AI-powered game development assistant for Unreal Engine.
 
+## 🤖 For GitHub Copilot Agents
+
+If you're a GitHub Copilot agent or AI assistant, see:
+- **[COPILOT_INSTRUCTIONS.md](../COPILOT_INSTRUCTIONS.md)** - Complete guide for AI agents working with Adastrea Director
+- **[COPILOT_QUICK_REFERENCE.md](../.github/COPILOT_QUICK_REFERENCE.md)** - Quick reference for common operations
+
+These guides explain all available connection methods, capabilities, and how to verify operations.
+
+## 🌟 What's New in Phase 2
 ## 🌟 What's New in v0.3.0
 
 **GitHub Copilot Integration is here!** ✨

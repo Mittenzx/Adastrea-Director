@@ -488,6 +488,11 @@ The wiki includes:
 - **API Reference** - Remote control API and integrations
 - **[Remote Connection Types & Actions](wiki/Remote-Connection-Types-and-Actions.md)** - Comprehensive directory of all connection types (HTTP, WebSocket, Python IPC, UE Python API, Director Plugin)
 
+### 🤖 For GitHub Copilot and AI Agents
+
+If you're a GitHub Copilot agent or AI assistant working with Adastrea Director:
+- **[COPILOT_INSTRUCTIONS.md](COPILOT_INSTRUCTIONS.md)** - 📖 Complete guide for Copilot agents with connection methods, capabilities, and verification procedures
+- **[.github/COPILOT_QUICK_REFERENCE.md](.github/COPILOT_QUICK_REFERENCE.md)** - 🚀 Quick reference card for common operations
 ### 🤖 GitHub Copilot Integration
 
 Want GitHub Copilot to help debug UE crashes and errors? See **[COPILOT_UE_LOGS_GUIDE.md](COPILOT_UE_LOGS_GUIDE.md)** for details on how Copilot can access Unreal Engine output logs for better assistance.
