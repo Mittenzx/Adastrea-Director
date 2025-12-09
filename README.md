@@ -486,6 +486,7 @@ The wiki includes:
 - **Development** - Contributing, testing, and code reference
 - **Design System** - UI/UX guidelines
 - **API Reference** - Remote control API and integrations
+- **[Remote Connection Types & Actions](wiki/Remote-Connection-Types-and-Actions.md)** - Comprehensive directory of all connection types (HTTP, WebSocket, Python IPC, UE Python API, Director Plugin)
 
 
 

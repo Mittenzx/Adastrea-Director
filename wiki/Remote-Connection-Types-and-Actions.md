@@ -271,9 +271,10 @@ Inter-Process Communication server that bridges the Unreal Engine C++ plugin wit
 - Optional RAG and planning agent integration
 
 ### Performance Metrics
-- **Average Latency**: < 1ms
-- **P95 Latency**: < 1ms  
-- **Throughput**: > 4000 requests/second
+(Measured on localhost with test suite `test_ipc_performance.py`)
+- **Average Latency**: < 1ms (typical)
+- **P95 Latency**: < 1ms (95th percentile)
+- **Throughput**: > 4000 requests/second (local)
 - **Exceeds Target**: 50x better than 50ms requirement
 
 ### Configuration Options
@@ -459,7 +460,7 @@ The Adastrea Director Unreal Engine plugin combines all remote connection types 
 
 ### Plugin Features
 
-#### Current Features (Weeks 1-8 Complete)
+#### Current Features (Implemented)
 - ✅ **Basic Plugin Shell** - C++ module structure, build system
 - ✅ **Python Bridge** - IPC client, subprocess management
 - ✅ **Python Backend IPC** - Performance-optimized server (< 1ms latency)
@@ -486,7 +487,7 @@ The Dashboard tab provides 6 color-coded status lights:
 - `Enter` - Send query (in query input field)
 - `Ctrl+,` - Open Settings dialog
 
-#### Coming Soon (Weeks 9-16)
+#### Planned Features
 - 🚀 Planning agent integration
 - 🚀 Performance profiling UI
 - 🚀 Bug detection integration
@@ -552,9 +553,11 @@ The Dashboard tab provides 6 color-coded status lights:
 
 | Metric | HTTP Remote Control | WebSocket Events | Python IPC | UE Python API | Director Plugin |
 |--------|---------------------|------------------|------------|---------------|-----------------|
-| **Latency (avg)** | 10-50ms | 1-5ms | < 1ms | < 0.1ms | 1-10ms |
-| **Throughput** | ~100 req/s | ~1000 msg/s | > 4000 req/s | Unlimited | > 1000 req/s |
+| **Latency (avg)** | 10-50ms | 1-5ms | < 1ms | Variable* | 1-10ms |
+| **Throughput** | ~100 req/s | ~1000 msg/s | > 4000 req/s | CPU-bound | > 1000 req/s |
 | **Overhead** | Low | Very Low | Very Low | Minimal | Low |
+
+*UE Python API latency is variable - minimal for simple property access, higher for complex operations like asset loading or world queries. No network overhead, but subject to Python interpreter and UE processing time.
 | **Connection Cost** | Per request | Persistent | Persistent | None | Persistent |
 | **Memory Usage** | ~10MB | ~5MB | ~20MB | Minimal | ~50MB |
 | **CPU Usage** | Low | Low | Low | Minimal | Medium |
