@@ -274,8 +274,8 @@ Inter-Process Communication server that bridges the Unreal Engine C++ plugin wit
 (Measured on localhost with test suite `test_ipc_performance.py`)
 - **Average Latency**: < 1ms (typical)
 - **P95 Latency**: < 1ms (95th percentile)
-- **Throughput**: > 4000 requests/second (local)
-- **Exceeds Target**: 50x better than 50ms requirement
+- **Throughput**: Typically > 4000 requests/second (measured locally; varies with hardware and workload)
+- **Exceeds Target**: Up to 50x better than 50ms requirement (in local tests)
 
 ### Configuration Options
 ```python
@@ -322,7 +322,7 @@ Direct integration with Unreal Engine's built-in Python API (`import unreal`). P
 ### Connection Details
 - **Protocol**: Direct Python API (in-process)
 - **Integration Type**: Hybrid (External Python + UE Python)
-- **API Wrapper**: `ue_python_api.py`
+- **API Wrapper**: `UEPythonBridge`
 - **Location**: `Plugins/AdastreaDirector/Python/ue_python_api.py`
 
 ### Available Actions
@@ -330,21 +330,18 @@ Direct integration with Unreal Engine's built-in Python API (`import unreal`). P
 #### Asset Operations
 | Action | Method | Description | Parameters | Returns |
 |--------|--------|-------------|------------|---------|
-| List All Assets | `list_all_assets()` | Get all assets in project | None | List of asset paths |
-| Get Asset | `get_asset(asset_path)` | Load asset by path | `asset_path` (str) | Asset object |
-| Query Assets | `query_assets(filter_type)` | Find assets by type | `filter_type` (str, optional) | List of filtered assets |
+| Get Selected Assets | `get_selected_assets()` | Get currently selected assets in Content Browser | None | List of `UEAssetInfo` objects |
+| Find Assets by Class | `find_assets_by_class(asset_class, path="/Game")` | Find assets of a specific class | `asset_class` (str), `path` (str, optional) | List of `UEAssetInfo` objects |
+| Load Asset | `load_asset(asset_path)` | Load asset by path | `asset_path` (str) | Asset object or `None` |
 | Save Asset | `save_asset(asset_path)` | Save asset to disk | `asset_path` (str) | `bool` - Success status |
-| Delete Asset | `delete_asset(asset_path)` | Remove asset from project | `asset_path` (str) | `bool` - Success status |
-| Rename Asset | `rename_asset(old_path, new_path)` | Rename/move asset | `old_path` (str), `new_path` (str) | `bool` - Success status |
 
 #### Actor Operations
 | Action | Method | Description | Parameters | Returns |
 |--------|--------|-------------|------------|---------|
-| Spawn Actor | `spawn_actor(actor_class, location, rotation)` | Create actor in level | `actor_class` (str/class), `location` (Vector), `rotation` (Rotator) | Actor object |
-| Get All Actors | `get_all_actors()` | Get all actors in level | None | List of actors |
-| Get Actors by Class | `get_actors_of_class(actor_class)` | Find actors by class | `actor_class` (str/class) | List of actors |
-| Get Actor | `get_actor_by_name(name)` | Find actor by name | `name` (str) | Actor object or None |
-| Delete Actor | `delete_actor(actor)` | Remove actor from level | `actor` (Actor) | `bool` - Success status |
+| Spawn Actor | `spawn_actor(actor_class, location=(0,0,0), rotation=(0,0,0), actor_name=None)` | Create actor in level | `actor_class` (str), `location` (tuple, optional), `rotation` (tuple, optional), `actor_name` (str, optional) | Actor object or `None` |
+| Get Actors by Class | `get_all_actors_of_class(actor_class)` | Find actors by class in current level | `actor_class` (str) | List of `UEActorInfo` objects |
+| Get Selected Actors | `get_selected_actors()` | Get currently selected actors in level | None | List of `UEActorInfo` objects |
+| Delete Actor | `delete_actor(actor_name)` | Remove actor from level by name | `actor_name` (str) | `bool` - Success status |
 
 #### Editor Operations
 | Action | Method | Description | Parameters | Returns |
@@ -357,7 +354,6 @@ Direct integration with Unreal Engine's built-in Python API (`import unreal`). P
 #### Project Information
 | Action | Method | Description | Parameters | Returns |
 |--------|--------|-------------|------------|---------|
-| Get Project Info | `get_project_info()` | Get project metadata | None | Dict with name, directory, version |
 | Get Engine Version | `get_engine_version()` | Get UE version string | None | Version string |
 | Get Project Directory | `get_project_directory()` | Get project root path | None | Directory path |
 
@@ -379,27 +375,30 @@ The UE Python API uses a **hybrid architecture**:
 ### Example Usage
 ```python
 import unreal
-from ue_python_api import UEPythonAPI
+from ue_python_api import UEPythonBridge
 
-api = UEPythonAPI()
+bridge = UEPythonBridge()
 
-# List all assets
-assets = api.list_all_assets()
-print(f"Found {len(assets)} assets")
+# Get selected assets
+assets = bridge.get_selected_assets()
+print(f"Found {len(assets)} selected assets")
 
-# Query specific asset type
-blueprints = api.query_assets(filter_type="Blueprint")
+# Find assets by class
+blueprints = bridge.find_assets_by_class("Blueprint", path="/Game")
 
 # Spawn an actor
-location = unreal.Vector(0, 0, 0)
-rotation = unreal.Rotator(0, 0, 0)
-actor = api.spawn_actor("StaticMeshActor", location, rotation)
+actor = bridge.spawn_actor(
+    "StaticMeshActor",
+    location=(0.0, 0.0, 0.0),
+    rotation=(0.0, 0.0, 0.0),
+    actor_name="MyActor"
+)
 
 # Execute console command
-result = api.execute_console_command("stat fps")
+result = bridge.execute_console_command("stat fps")
 
 # Show notification
-api.show_notification("Task completed!", duration=3.0)
+bridge.show_notification("Task completed!", duration=3.0)
 ```
 
 ---
@@ -554,13 +553,15 @@ The Dashboard tab provides 6 color-coded status lights:
 | Metric | HTTP Remote Control | WebSocket Events | Python IPC | UE Python API | Director Plugin |
 |--------|---------------------|------------------|------------|---------------|-----------------|
 | **Latency (avg)** | 10-50ms | 1-5ms | < 1ms | Variable* | 1-10ms |
-| **Throughput** | ~100 req/s | ~1000 msg/s | > 4000 req/s | CPU-bound | > 1000 req/s |
+| **Throughput** | ~100 req/s | ~1000 msg/s | > 4000 req/s¹ | CPU-bound | > 1000 req/s |
 | **Overhead** | Low | Very Low | Very Low | Minimal | Low |
 | **Connection Cost** | Per request | Persistent | Persistent | None | Persistent |
 | **Memory Usage** | ~10MB | ~5MB | ~20MB | Minimal | ~50MB |
 | **CPU Usage** | Low | Low | Low | Minimal | Medium |
 
 *UE Python API latency is variable - minimal for simple property access, higher for complex operations like asset loading or world queries. No network overhead, but subject to Python interpreter and UE processing time.
+
+¹Measured on localhost in optimal conditions; actual throughput may vary depending on hardware, OS, and workload.
 
 ---
 
@@ -774,17 +775,17 @@ http_client.close()
 ```python
 # This runs within the Director Plugin context
 
-from ue_python_api import UEPythonAPI
+from ue_python_api import UEPythonBridge
 import json
 
-# Get all Blueprint assets
-api = UEPythonAPI()
-blueprints = api.query_assets(filter_type="Blueprint")
+# Get Blueprint assets
+bridge = UEPythonBridge()
+blueprints = bridge.find_assets_by_class("Blueprint", path="/Game")
 
 # Prepare data for AI analysis
 asset_data = {
     "total_blueprints": len(blueprints),
-    "asset_paths": [bp.get_path_name() for bp in blueprints[:10]]  # First 10
+    "asset_paths": [bp.asset_path for bp in blueprints[:10]]  # First 10
 }
 
 # Send to IPC server for AI analysis
@@ -804,7 +805,7 @@ print(f"AI Analysis: {response.get('analysis')}")
 sock.close()
 
 # Show result in UE
-api.show_notification(f"Analyzed {len(blueprints)} blueprints", duration=5.0)
+bridge.show_notification(f"Analyzed {len(blueprints)} blueprints", duration=5.0)
 ```
 
 ### Example 3: Automated Testing with Test Agent
