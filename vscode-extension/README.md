@@ -38,6 +38,25 @@ See [PHASE2_GUIDE.md](PHASE2_GUIDE.md) for complete Phase 2 documentation.
 - VS Code 1.80.0 or higher
 - [Adastrea Director](https://github.com/Mittenzx/Adastrea-Director) IPC server running
 - Node.js 18+ (for development)
+- (Optional) [GitHub Copilot](https://marketplace.visualstudio.com/items?itemName=GitHub.copilot) for AI-assisted debugging with UE logs
+
+### 🤖 GitHub Copilot + UE Logs
+
+The repository includes a `.copilotignore` configuration that allows GitHub Copilot to access Unreal Engine output logs for better debugging assistance, even though these files are excluded from version control.
+
+**Benefits:**
+- 🐛 Get AI help analyzing UE crashes and errors
+- 💡 Receive context-aware suggestions based on actual runtime behavior
+- 🔍 Debug issues faster with Copilot's understanding of log patterns
+- 📊 Analyze performance logs and get optimization suggestions
+
+**Quick Start:**
+1. Ensure GitHub Copilot extension is installed
+2. Open any UE log file (e.g., `Saved/Logs/YourProject.log`)
+3. Use Copilot Chat to ask about errors or crashes
+4. Get instant analysis and suggested fixes
+
+📖 **See:** [COPILOT_UE_LOGS_GUIDE.md](../COPILOT_UE_LOGS_GUIDE.md) for complete setup and usage instructions
 
 ## Installation
 
