@@ -123,18 +123,24 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Initialize Copilot Chat participant
     const getClientFunc = () => client;
-    copilotParticipant = initializeCopilotParticipant(context, getClientFunc, outputChannel);
+    const config = vscode.workspace.getConfiguration('director');
     
-    // Register context providers
-    registerContextProvider(context, getClientFunc, outputChannel);
-    registerHoverProvider(context, getClientFunc, outputChannel);
-    registerCodeActionProvider(context, getClientFunc, outputChannel);
-    
-    // Initialize enhanced context
-    enhancedContext = new DirectorEnhancedContext(getClientFunc, outputChannel);
+    // Only initialize Copilot features if enabled
+    if (config.get('copilot.enabled', true)) {
+        copilotParticipant = initializeCopilotParticipant(context, getClientFunc, outputChannel);
+        
+        // Register context providers
+        registerContextProvider(context, getClientFunc, outputChannel);
+        registerHoverProvider(context, getClientFunc, outputChannel);
+        registerCodeActionProvider(context, getClientFunc, outputChannel);
+        
+        // Initialize enhanced context
+        enhancedContext = new DirectorEnhancedContext(getClientFunc, outputChannel);
+    } else {
+        outputChannel.appendLine('ℹ️ Copilot integration disabled in settings');
+    }
 
     // Auto-connect if configured
-    const config = vscode.workspace.getConfiguration('director');
     if (config.get('autoConnect')) {
         connectToDirector(context);
     }
@@ -1012,6 +1018,7 @@ function getContextWebviewContent(context: string, code: string): string {
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline';">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Director Context</title>
     <style>

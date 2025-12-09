@@ -159,6 +159,12 @@ export function registerHoverProvider(
     getClient: () => DirectorIPCClient | null,
     outputChannel: vscode.OutputChannel
 ): void {
+    const config = vscode.workspace.getConfiguration('director');
+    if (!config.get('copilot.enableHoverContext', true)) {
+        outputChannel.appendLine('ℹ️ Hover context disabled in settings');
+        return;
+    }
+    
     const enhancedContext = new DirectorEnhancedContext(getClient, outputChannel);
 
     // Register for C++ files (Unreal Engine)
@@ -216,6 +222,12 @@ export function registerCodeActionProvider(
     getClient: () => DirectorIPCClient | null,
     outputChannel: vscode.OutputChannel
 ): void {
+    const config = vscode.workspace.getConfiguration('director');
+    if (!config.get('copilot.enableCodeActions', true)) {
+        outputChannel.appendLine('ℹ️ Code actions disabled in settings');
+        return;
+    }
+    
     const codeActionProvider = vscode.languages.registerCodeActionsProvider(
         ['cpp', 'c', 'typescript', 'javascript'],
         {
