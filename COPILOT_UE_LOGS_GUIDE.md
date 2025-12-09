@@ -88,17 +88,18 @@ With a log file open or referenced, you can:
 1. Run your UE project and encounter a crash
 2. Open `Saved/Logs/YourProject.log` in VSCode
 3. Find the crash/error section
-4. Ask Copilot in chat (Copilot will automatically include the open file as context):
-   ```
-   What's causing the crash in this log file?
-   ```
-   Or reference it explicitly:
-   ```
-   I have a crash in YourProject.log with this error:
-   [Error] Assertion failed: (Index >= 0) && (Index < ArrayNum)
-   
-   How can I fix this?
-   ```
+4. Ask Copilot in chat:
+   - **If the log file is currently open**, Copilot will automatically include it as context:
+     ```
+     What's causing the crash in this log file?
+     ```
+   - **If the log file is not open or you want to ensure focus**, reference it explicitly:
+     ```
+     I have a crash in YourProject.log with this error:
+     [Error] Assertion failed: (Index >= 0) && (Index < ArrayNum)
+     
+     How can I fix this?
+     ```
 5. Copilot analyzes the log and suggests fixes
 
 ## Configuration
@@ -251,13 +252,13 @@ Log files may contain:
 
 **Best Practices**:
 1. **Review logs before sharing**: Check for sensitive info
-2. **Avoid including sensitive logs**: Don't add inclusion patterns for sensitive directories in `.copilotignore`. Remove or comment out any patterns that would include sensitive logs:
+2. **Avoid including sensitive logs**: Do **not** add inclusion patterns for sensitive directories in `.copilotignore`. For example, **do not add** patterns like:
    ```gitignore
-   # DON'T include sensitive log directories
-   # !**/Credentials/*.log  # Keep this commented out
-   # !**/Auth/*.log         # Keep this commented out
+   # DO NOT add inclusion patterns for sensitive log directories
+   !**/Credentials/*.log  # This would include sensitive logs - don't add this
+   !**/Auth/*.log         # This would include sensitive logs - don't add this
    ```
-   Alternatively, explicitly exclude them after inclusion patterns:
+   If you need to include all logs but exclude sensitive ones, explicitly exclude them after your inclusion patterns:
    ```gitignore
    # Include all logs
    !*.log

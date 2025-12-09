@@ -27,5 +27,5 @@
 # Exclude build logs that are too verbose
 **/Intermediate/Build/**/*.log
 
-# Keep sensitive logs private (add patterns as needed)
-# Example: !**/Credentials/*.log
+# Keep sensitive logs private (add exclusion patterns as needed)
+# Example of excluding sensitive logs: **/Credentials/*.log
