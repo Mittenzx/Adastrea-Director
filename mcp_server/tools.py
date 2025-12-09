@@ -930,10 +930,17 @@ import json
 import sys
 
 # Add the Python directory to path to import ue_python_api
+# Assumes the plugin is installed at <ProjectRoot>/Plugins/AdastreaDirector/Python relative to this script.
+# If this structure changes, update the path below accordingly.
 import os
 plugin_python_dir = os.path.join(os.path.dirname(__file__), '..', 'Plugins', 'AdastreaDirector', 'Python')
-if os.path.exists(plugin_python_dir) and plugin_python_dir not in sys.path:
-    sys.path.insert(0, plugin_python_dir)
+if os.path.exists(plugin_python_dir):
+    if plugin_python_dir not in sys.path:
+        sys.path.insert(0, plugin_python_dir)
+else:
+    print(f"Error: Expected plugin Python directory not found at {{plugin_python_dir}}. Please check your installation and directory structure.", file=sys.stderr)
+    import sys
+    sys.exit(1)
 
 try:
     from ue_python_api import UEPythonBridge

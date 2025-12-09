@@ -554,7 +554,7 @@ class TestBlueprintOperations:
         with patch('ue_python_api.unreal.BlueprintFactory', return_value=mock_factory):
             with patch.object(bridge.asset_tools, 'create_asset', return_value=mock_blueprint):
                 with patch.object(bridge.editor_asset_subsystem, 'save_asset', return_value=True):
-                    blueprint = bridge.create_blueprint(
+                    bridge.create_blueprint(
                         blueprint_name="BP_TestActor",
                         package_path="/Game/Blueprints/"  # Has trailing slash
                     )
@@ -577,15 +577,15 @@ class TestBlueprintGraphOperations:
         mock_blueprint.get_name.return_value = "BP_TestActor"
         
         with patch('ue_python_api.unreal.load_asset', return_value=mock_blueprint):
-            result = bridge.add_blueprint_node(
-                "/Game/Blueprints/BP_TestActor",
-                "BeginPlay",
-                position_x=100.0,
-                position_y=100.0
-            )
-            # Currently returns placeholder
-            assert result is not None
-            assert isinstance(result, dict) or result is not None
+            # Should raise NotImplementedError as this feature is not yet implemented
+            with pytest.raises(NotImplementedError) as exc_info:
+                bridge.add_blueprint_node(
+                    "/Game/Blueprints/BP_TestActor",
+                    "BeginPlay",
+                    position_x=100.0,
+                    position_y=100.0
+                )
+            assert "not yet implemented" in str(exc_info.value)
     
     def test_add_blueprint_node_not_found(self, bridge):
         """Test adding node to non-existent blueprint."""
@@ -657,14 +657,15 @@ class TestBlueprintGraphOperations:
         mock_blueprint = Mock()
         
         with patch('ue_python_api.unreal.load_asset', return_value=mock_blueprint):
-            result = bridge.add_blueprint_node(
-                "/Game/Blueprints/BP_TestActor",
-                "Print",
-                position_x=200.0,
-                position_y=150.0,
-                node_name="PrintDebugInfo"
-            )
-            assert result is not None
+            # Should raise NotImplementedError as this feature is not yet implemented
+            with pytest.raises(NotImplementedError):
+                bridge.add_blueprint_node(
+                    "/Game/Blueprints/BP_TestActor",
+                    "Print",
+                    position_x=200.0,
+                    position_y=150.0,
+                    node_name="PrintDebugInfo"
+                )
 
 
 class TestBlueprintCommentNodes:
@@ -754,6 +755,7 @@ class TestBlueprintCommentNodes:
     
     def test_generate_comment_script(self, bridge):
         """Test that comment script is generated correctly."""
+        import ast
         mock_blueprint = Mock()
         
         with patch('ue_python_api.unreal.load_asset', return_value=mock_blueprint):
@@ -773,6 +775,12 @@ class TestBlueprintCommentNodes:
             assert "Test Comment" in script
             assert "100" in script or "100.0" in script
             assert "200" in script or "200.0" in script
+            
+            # Verify the script is syntactically valid Python
+            try:
+                ast.parse(script)
+            except SyntaxError as e:
+                pytest.fail(f"Generated script has syntax errors: {e}")
 
 
 if __name__ == "__main__":

@@ -708,8 +708,8 @@ class UEPythonBridge:
             # Create a Pawn blueprint (using string)
             pawn_bp = bridge.create_blueprint("BP_MyPawn", "Pawn", "/Game/Blueprints")
             
-            # Create a Character blueprint (using default Actor parent)
-            char_bp = bridge.create_blueprint("BP_MyCharacter")
+            # Create a Character blueprint
+            char_bp = bridge.create_blueprint("BP_MyCharacter", "Character")
         
         Note:
             - The blueprint will be saved automatically after creation
@@ -748,7 +748,7 @@ class UEPythonBridge:
                     
                     # Validate that we got a valid class object
                     if class_obj is None:
-                        logger.error(f"Failed to load parent class '{parent_class}': class not found")
+                        logger.error(f"Failed to load parent class '{parent_class}': class not found. Ensure the class exists in the Engine or is properly loaded.")
                         return None
                     
                     factory.set_editor_property("ParentClass", class_obj)
@@ -845,21 +845,19 @@ class UEPythonBridge:
             if not blueprint:
                 logger.error(f"Blueprint not found: {blueprint_path}")
                 return None
-            
-            # Get the event graph
-            # Note: This is a simplified implementation
-            # Real implementation would need to access blueprint's UbergraphPages
-            logger.warning("Blueprint node manipulation requires direct graph API access")
-            logger.info(f"Blueprint loaded: {blueprint_path}")
-            logger.info(f"Requested node type: {node_type} at ({position_x}, {position_y})")
-            
-            # For now, return a placeholder indicating the operation would be performed
-            # Full implementation requires accessing the blueprint's graph structure
-            return {"status": "placeholder", "blueprint": blueprint, "node_type": node_type}
-            
         except Exception as e:
-            logger.error(f"Failed to add node to blueprint '{blueprint_path}': {e}")
+            logger.error(f"Failed to load blueprint '{blueprint_path}': {e}")
             return None
+        
+        # Node addition to blueprints is not yet implemented.
+        # See BLUEPRINT_GRAPHS_IMPLEMENTATION.md for implementation approaches.
+        logger.warning("Blueprint node manipulation requires direct graph API access")
+        logger.info(f"Blueprint loaded: {blueprint_path}")
+        logger.info(f"Requested node type: {node_type} at ({position_x}, {position_y})")
+        raise NotImplementedError(
+            "add_blueprint_node is not yet implemented. "
+            "See BLUEPRINT_GRAPHS_IMPLEMENTATION.md for implementation approaches and progress."
+        )
     
     def connect_blueprint_nodes(
         self,
@@ -1074,7 +1072,7 @@ class UEPythonBridge:
                 return False
             
             # Generate the Python script that will run in UE
-            script = self._generate_comment_script(
+            _ = self._generate_comment_script(
                 blueprint_path,
                 comment_text,
                 position_x,
@@ -1116,8 +1114,9 @@ class UEPythonBridge:
         This script can be executed in Unreal Engine's Python environment
         to actually create the comment node.
         """
-        # Escape quotes in comment text
-        escaped_text = comment_text.replace('"', '\\"').replace('\n', '\\n')
+        # Properly escape the comment text for use in generated Python script
+        import json
+        escaped_text = json.dumps(comment_text)[1:-1]  # Remove surrounding quotes from json.dumps
         
         # Default color if none specified (white)
         if color is None:
@@ -1143,30 +1142,40 @@ for graph in blueprint.ubergraph_pages:
         break
 
 if not event_graph:
-    print("ERROR: Event graph not found in blueprint")
+    print(f"ERROR: The blueprint at '{blueprint_path}' does not have an 'EventGraph'. Cannot add comment.")
     import sys
     sys.exit(1)
 
-# Create comment node
-comment_node = unreal.EdGraphNode_Comment()
-comment_node.set_editor_property("node_comment", "{escaped_text}")
-comment_node.set_editor_property("node_pos_x", {position_x})
-comment_node.set_editor_property("node_pos_y", {position_y})
-comment_node.set_editor_property("node_width", {width})
-comment_node.set_editor_property("node_height", {height})
-comment_node.set_editor_property("comment_color", {color_str})
-comment_node.set_editor_property("font_size", {font_size})
+try:
+    # Create comment node
+    comment_node = unreal.EdGraphNode_Comment()
+    comment_node.set_editor_property("node_comment", "{escaped_text}")
+    comment_node.set_editor_property("node_pos_x", {position_x})
+    comment_node.set_editor_property("node_pos_y", {position_y})
+    comment_node.set_editor_property("node_width", {width})
+    comment_node.set_editor_property("node_height", {height})
+    comment_node.set_editor_property("comment_color", {color_str})
+    comment_node.set_editor_property("font_size", {font_size})
 
-# Add to graph
-event_graph.add_node(comment_node, False, False)
+    # Add to graph
+    if hasattr(event_graph, "add_node"):
+        event_graph.add_node(comment_node, False, False)
+    else:
+        print(f"ERROR: EventGraph does not support 'add_node'. Cannot add comment.")
+        import sys
+        sys.exit(1)
 
-# Save the blueprint
-unreal.EditorAssetLibrary.save_asset("{blueprint_path}", False)
+    # Save the blueprint
+    unreal.EditorAssetLibrary.save_asset("{blueprint_path}", False)
 
-print(f"SUCCESS: Added comment to {blueprint_path}")
-print(f"Comment: '{escaped_text}'")
-print(f"Position: ({position_x}, {position_y})")
-print(f"Size: {width}x{height}")
+    print(f"SUCCESS: Added comment to {blueprint_path}")
+    print(f"Comment: {repr(comment_text)}")
+    print(f"Position: ({position_x}, {position_y})")
+    print(f"Size: {width}x{height}")
+except Exception as e:
+    print(f"ERROR: Failed to add comment to blueprint: {{e}}")
+    import sys
+    sys.exit(1)
 '''
         return script
 

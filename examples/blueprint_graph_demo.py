@@ -16,8 +16,7 @@ import os
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from mcp_server import UnrealMCPServer
-import json
+# MCP server import not used in this demo file but kept for potential future examples
 
 
 def print_section(title: str):

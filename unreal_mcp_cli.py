@@ -137,13 +137,17 @@ def interactive_mode(server: UnrealMCPServer) -> None:
                 print("Example: blueprint BP_PlayerCharacter Character")
             else:
                 parts = arg.split()
-                params = {"blueprint_name": parts[0]}
-                if len(parts) > 1:
-                    params["parent_class"] = parts[1]
-                if len(parts) > 2:
-                    params["package_path"] = parts[2]
-                result = server.handle_tool_call("editor_create_blueprint", params)
-                print_result(result)
+                blueprint_name = parts[0]
+                if " " in blueprint_name:
+                    print("Error: Blueprint names cannot contain spaces.")
+                else:
+                    params = {"blueprint_name": blueprint_name}
+                    if len(parts) > 1:
+                        params["parent_class"] = parts[1]
+                    if len(parts) > 2:
+                        params["package_path"] = parts[2]
+                    result = server.handle_tool_call("editor_create_blueprint", params)
+                    print_result(result)
         else:
             print(f"Unknown command: {cmd}. Type 'help' for available commands.")
 
