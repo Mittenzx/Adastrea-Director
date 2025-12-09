@@ -3,21 +3,33 @@
  * 
  * This extension provides integration with the Adastrea Director
  * AI-powered game development assistant for Unreal Engine.
+ * 
+ * Phase 2: Semi-Autonomous Development features included.
  */
 
 import * as vscode from 'vscode';
 import { DirectorIPCClient, ConnectionState } from './ipcClient';
+import { CodeApplicator, CodeModification } from './codeApplicator';
+import { TestExecutor } from './testExecutor';
+import { FeedbackService } from './feedbackService';
 
 let client: DirectorIPCClient | null = null;
+let codeApplicator: CodeApplicator | null = null;
+let testExecutor: TestExecutor | null = null;
+let feedbackService: FeedbackService | null = null;
 let statusBarItem: vscode.StatusBarItem;
 let outputChannel: vscode.OutputChannel;
 let debugOutputChannel: vscode.OutputChannel;
+let extensionContext: vscode.ExtensionContext;
 
 /**
  * Extension activation
  */
 export function activate(context: vscode.ExtensionContext) {
     console.log('Adastrea Director extension is now active');
+
+    // Store context globally
+    extensionContext = context;
 
     // Create output channels
     outputChannel = vscode.window.createOutputChannel('Adastrea Director');
@@ -34,9 +46,13 @@ export function activate(context: vscode.ExtensionContext) {
     updateStatusBar('disconnected');
     statusBarItem.show();
 
-    // Register commands
+    // Initialize Phase 2 services
+    codeApplicator = new CodeApplicator(outputChannel);
+    feedbackService = new FeedbackService(client!, outputChannel, context);
+    
+    // Register Phase 1 commands
     context.subscriptions.push(
-        vscode.commands.registerCommand('director.connect', connectToDirector)
+        vscode.commands.registerCommand('director.connect', () => connectToDirector(context))
     );
     
     context.subscriptions.push(
@@ -59,10 +75,39 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand('director.runDiagnostics', runDiagnostics)
     );
 
+    // Register Phase 2 commands
+    context.subscriptions.push(
+        vscode.commands.registerCommand('director.generateAndApplyCode', generateAndApplyCode)
+    );
+
+    context.subscriptions.push(
+        vscode.commands.registerCommand('director.runTests', runTests)
+    );
+
+    context.subscriptions.push(
+        vscode.commands.registerCommand('director.reviewPendingChanges', reviewPendingChanges)
+    );
+
+    context.subscriptions.push(
+        vscode.commands.registerCommand('director.viewApprovalHistory', viewApprovalHistory)
+    );
+
+    context.subscriptions.push(
+        vscode.commands.registerCommand('director.showFeedbackStats', showFeedbackStats)
+    );
+
+    context.subscriptions.push(
+        vscode.commands.registerCommand('director.setApprovalThreshold', setApprovalThreshold)
+    );
+
+    context.subscriptions.push(
+        vscode.commands.registerCommand('director.provideFeedback', provideFeedback)
+    );
+
     // Auto-connect if configured
     const config = vscode.workspace.getConfiguration('director');
     if (config.get('autoConnect')) {
-        connectToDirector();
+        connectToDirector(context);
     }
 
     outputChannel.appendLine('Adastrea Director extension activated');
@@ -75,6 +120,11 @@ export function deactivate() {
     if (client) {
         client.disconnect();
         client = null;
+    }
+    
+    if (testExecutor) {
+        testExecutor.dispose();
+        testExecutor = null;
     }
     
     if (statusBarItem) {
@@ -93,7 +143,9 @@ export function deactivate() {
 /**
  * Connect to Director IPC server
  */
-async function connectToDirector() {
+async function connectToDirector(context?: vscode.ExtensionContext) {
+    // Use provided context or global context
+    const ctx = context || extensionContext;
     if (client && client.isConnected()) {
         vscode.window.showInformationMessage('Already connected to Director');
         return;
@@ -160,6 +212,10 @@ async function connectToDirector() {
         };
 
         await client.connect();
+        
+        // Initialize Phase 2 services with connected client
+        testExecutor = new TestExecutor(client);
+        feedbackService = new FeedbackService(client, outputChannel, ctx);
         
         vscode.window.showInformationMessage('Connected to Adastrea Director');
         outputChannel.appendLine('Successfully connected to Director IPC server');
@@ -459,4 +515,324 @@ function updateStatusBar(state: ConnectionState) {
         statusBarItem.tooltip = stateConfig.tooltip;
         statusBarItem.backgroundColor = stateConfig.color;
     }
+}
+
+/**
+ * ============================================================
+ * Phase 2: Semi-Autonomous Development Commands
+ * ============================================================
+ */
+
+/**
+ * Generate and apply code automatically
+ */
+async function generateAndApplyCode() {
+    if (!client || !client.isConnected()) {
+        vscode.window.showWarningMessage('Not connected to Director');
+        return;
+    }
+
+    if (!codeApplicator) {
+        vscode.window.showErrorMessage('Code applicator not initialized');
+        return;
+    }
+
+    // Get the goal/task from user
+    const goal = await vscode.window.showInputBox({
+        prompt: 'What would you like to implement?',
+        placeHolder: 'e.g., Add a new player health system'
+    });
+
+    if (!goal) {
+        return;
+    }
+
+    outputChannel.appendLine(`\nGenerating code for: ${goal}`);
+    outputChannel.show(true);
+
+    try {
+        vscode.window.setStatusBarMessage('$(sync~spin) Generating code...', 60000);
+
+        // Request code generation from server
+        const response = await client.request('generate_code', goal);
+
+        if (response.status === 'error') {
+            throw new Error(response.error || 'Code generation failed');
+        }
+
+        // Parse modifications from response
+        const modifications: CodeModification[] = response.file_modifications || [];
+        
+        if (modifications.length === 0) {
+            vscode.window.showInformationMessage('No code modifications generated');
+            return;
+        }
+
+        outputChannel.appendLine(`Generated ${modifications.length} modification(s)`);
+
+        // Queue modifications for review and application
+        await codeApplicator.queueModifications(modifications);
+
+        vscode.window.showInformationMessage(
+            `Generated ${modifications.length} code modification(s)`
+        );
+
+    } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        outputChannel.appendLine(`\n✗ Error: ${errorMsg}`);
+        vscode.window.showErrorMessage(`Code generation failed: ${errorMsg}`);
+    } finally {
+        vscode.window.setStatusBarMessage('', 0);
+    }
+}
+
+/**
+ * Run tests via UE Python API
+ */
+async function runTests() {
+    if (!client || !client.isConnected()) {
+        vscode.window.showWarningMessage('Not connected to Director');
+        return;
+    }
+
+    if (!testExecutor) {
+        vscode.window.showErrorMessage('Test executor not initialized');
+        return;
+    }
+
+    // Ask which tests to run
+    const testType = await vscode.window.showQuickPick(
+        [
+            { label: 'All Tests', value: 'all' },
+            { label: 'IPC Tests', value: 'ipc' },
+            { label: 'Plugin Tests', value: 'plugin' },
+            { label: 'Unit Tests', value: 'unit' },
+            { label: 'Integration Tests', value: 'integration' },
+            { label: 'Remote Control Tests', value: 'remote' }
+        ],
+        {
+            placeHolder: 'Select test suite to run',
+            title: 'Run Tests'
+        }
+    );
+
+    if (!testType) {
+        return;
+    }
+
+    try {
+        const result = await testExecutor.executeTests(testType.value);
+        
+        // Ask for feedback if there are failures
+        if (result.failed > 0 && feedbackService) {
+            const provideFeedback = await vscode.window.showQuickPick(
+                ['Yes', 'No'],
+                {
+                    placeHolder: 'Would you like to provide feedback on the test failures?',
+                    title: 'Provide Feedback'
+                }
+            );
+
+            if (provideFeedback === 'Yes') {
+                await feedbackService.requestUserFeedback('Test Execution', testType.value);
+            }
+        }
+
+    } catch (error) {
+        // Error already handled by testExecutor
+    }
+}
+
+/**
+ * Review pending code changes
+ */
+async function reviewPendingChanges() {
+    if (!codeApplicator) {
+        vscode.window.showErrorMessage('Code applicator not initialized');
+        return;
+    }
+
+    const pending = codeApplicator.getPendingModifications();
+
+    if (pending.length === 0) {
+        vscode.window.showInformationMessage('No pending changes to review');
+        return;
+    }
+
+    // Show list of pending modifications
+    const items = pending.map((mod, index) => ({
+        label: `${mod.modificationType.toUpperCase()}: ${mod.filePath}`,
+        description: mod.description,
+        detail: `Confidence: ${mod.confidence ? (mod.confidence * 100).toFixed(1) : 'N/A'}%`,
+        modification: mod,
+        index
+    }));
+
+    const selected = await vscode.window.showQuickPick(items, {
+        placeHolder: `${pending.length} pending modification(s)`,
+        title: 'Review Pending Changes',
+        canPickMany: false
+    });
+
+    if (selected) {
+        // Show options for this modification
+        const action = await vscode.window.showQuickPick(
+            [
+                { label: '✓ Approve', value: 'approve' },
+                { label: '✗ Reject', value: 'reject' },
+                { label: '👁 Preview', value: 'preview' },
+                { label: '🗑 Clear All', value: 'clear' }
+            ],
+            {
+                placeHolder: selected.label,
+                title: 'Choose Action'
+            }
+        );
+
+        if (action) {
+            switch (action.value) {
+                case 'approve':
+                    await codeApplicator.applyModifications([selected.modification]);
+                    break;
+                case 'reject':
+                    // Remove from queue
+                    codeApplicator.clearPendingModifications();
+                    vscode.window.showInformationMessage('Change rejected');
+                    break;
+                case 'preview':
+                    // Preview will be handled by the applicator
+                    break;
+                case 'clear':
+                    codeApplicator.clearPendingModifications();
+                    vscode.window.showInformationMessage('Cleared all pending changes');
+                    break;
+            }
+        }
+    }
+}
+
+/**
+ * View approval history
+ */
+async function viewApprovalHistory() {
+    if (!codeApplicator) {
+        vscode.window.showErrorMessage('Code applicator not initialized');
+        return;
+    }
+
+    const stats = codeApplicator.getApprovalStats();
+    const history = codeApplicator.getApprovalHistory();
+
+    if (history.length === 0) {
+        vscode.window.showInformationMessage('No approval history available');
+        return;
+    }
+
+    const message = `
+Approval Statistics:
+- Total Decisions: ${stats.total}
+- Approved: ${stats.approved}
+- Rejected: ${stats.rejected}
+- Auto-Approved: ${stats.autoApproved}
+- Approval Rate: ${(stats.approvalRate * 100).toFixed(1)}%
+    `.trim();
+
+    const action = await vscode.window.showInformationMessage(
+        message,
+        'View Details',
+        'Clear History'
+    );
+
+    if (action === 'View Details') {
+        outputChannel.clear();
+        outputChannel.appendLine('='.repeat(60));
+        outputChannel.appendLine('Approval History');
+        outputChannel.appendLine('='.repeat(60));
+        outputChannel.appendLine('');
+
+        for (const decision of history.slice(-20)) {  // Show last 20
+            const status = decision.approved ? '✓ Approved' : '✗ Rejected';
+            outputChannel.appendLine(`${status} - ${decision.modification.filePath}`);
+            outputChannel.appendLine(`  Time: ${decision.timestamp.toISOString()}`);
+            if (decision.reason) {
+                outputChannel.appendLine(`  Reason: ${decision.reason}`);
+            }
+            outputChannel.appendLine('');
+        }
+
+        outputChannel.show(true);
+    } else if (action === 'Clear History') {
+        codeApplicator.clearApprovalHistory();
+    }
+}
+
+/**
+ * Show feedback statistics
+ */
+async function showFeedbackStats() {
+    if (!feedbackService) {
+        vscode.window.showErrorMessage('Feedback service not initialized');
+        return;
+    }
+
+    await feedbackService.showFeedbackStats();
+}
+
+/**
+ * Set auto-approval threshold
+ */
+async function setApprovalThreshold() {
+    if (!codeApplicator) {
+        vscode.window.showErrorMessage('Code applicator not initialized');
+        return;
+    }
+
+    const currentThreshold = codeApplicator.getAutoApprovalThreshold();
+    
+    const input = await vscode.window.showInputBox({
+        prompt: 'Set auto-approval confidence threshold (0.0 - 1.0)',
+        value: currentThreshold.toString(),
+        placeHolder: '0.9',
+        validateInput: (value) => {
+            const num = parseFloat(value);
+            if (isNaN(num) || num < 0 || num > 1) {
+                return 'Please enter a number between 0.0 and 1.0';
+            }
+            return null;
+        }
+    });
+
+    if (input) {
+        const threshold = parseFloat(input);
+        codeApplicator.setAutoApprovalThreshold(threshold);
+        
+        // Save to settings
+        const config = vscode.workspace.getConfiguration('director');
+        await config.update('autoApprovalThreshold', threshold, vscode.ConfigurationTarget.Global);
+        
+        vscode.window.showInformationMessage(
+            `Auto-approval threshold set to ${(threshold * 100).toFixed(0)}%`
+        );
+    }
+}
+
+/**
+ * Provide feedback on a suggestion
+ */
+async function provideFeedback() {
+    if (!feedbackService) {
+        vscode.window.showErrorMessage('Feedback service not initialized');
+        return;
+    }
+
+    const goal = await vscode.window.showInputBox({
+        prompt: 'What was the goal/task?',
+        placeHolder: 'e.g., Implement player health system'
+    });
+
+    if (!goal) {
+        return;
+    }
+
+    await feedbackService.requestUserFeedback(goal, 'Manual Feedback');
 }

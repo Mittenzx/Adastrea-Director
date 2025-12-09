@@ -2,7 +2,7 @@
   "name": "adastrea-director",
   "displayName": "Adastrea Director",
   "description": "VS Code extension for Adastrea Director - AI-powered game development assistant for Unreal Engine",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "publisher": "mittenzx",
   "engines": {
     "vscode": "^1.80.0"
@@ -23,7 +23,14 @@
     "onCommand:director.askQuestion",
     "onCommand:director.checkStatus",
     "onCommand:director.toggleDebugMode",
-    "onCommand:director.runDiagnostics"
+    "onCommand:director.runDiagnostics",
+    "onCommand:director.generateAndApplyCode",
+    "onCommand:director.runTests",
+    "onCommand:director.reviewPendingChanges",
+    "onCommand:director.viewApprovalHistory",
+    "onCommand:director.showFeedbackStats",
+    "onCommand:director.setApprovalThreshold",
+    "onCommand:director.provideFeedback"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -51,6 +58,34 @@
       {
         "command": "director.runDiagnostics",
         "title": "Director: Run Connection Diagnostics"
+      },
+      {
+        "command": "director.generateAndApplyCode",
+        "title": "Director: Generate and Apply Code"
+      },
+      {
+        "command": "director.runTests",
+        "title": "Director: Run Tests"
+      },
+      {
+        "command": "director.reviewPendingChanges",
+        "title": "Director: Review Pending Changes"
+      },
+      {
+        "command": "director.viewApprovalHistory",
+        "title": "Director: View Approval History"
+      },
+      {
+        "command": "director.showFeedbackStats",
+        "title": "Director: Show Feedback Statistics"
+      },
+      {
+        "command": "director.setApprovalThreshold",
+        "title": "Director: Set Auto-Approval Threshold"
+      },
+      {
+        "command": "director.provideFeedback",
+        "title": "Director: Provide Feedback"
       }
     ],
     "configuration": {
@@ -90,6 +125,23 @@
           "type": "boolean",
           "default": false,
           "description": "Enable debug mode with verbose logging and diagnostics"
+        },
+        "director.autoApprovalThreshold": {
+          "type": "number",
+          "default": 0.9,
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Auto-approval confidence threshold (0.0 - 1.0). Changes with confidence above this threshold will be applied automatically."
+        },
+        "director.autoRunTests": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically run tests after applying code changes"
+        },
+        "director.enableFeedbackCollection": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable automatic feedback collection for continuous learning"
         }
       }
     }
