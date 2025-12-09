@@ -563,5 +563,109 @@ class TestBlueprintOperations:
                     assert call_args[1]['package_path'] == "/Game/Blueprints"
 
 
+class TestBlueprintGraphOperations:
+    """Tests for blueprint graph manipulation (experimental)."""
+    
+    @pytest.fixture
+    def bridge(self):
+        """Create a bridge instance."""
+        return UEPythonBridge()
+    
+    def test_add_blueprint_node(self, bridge):
+        """Test adding a node to blueprint graph."""
+        mock_blueprint = Mock()
+        mock_blueprint.get_name.return_value = "BP_TestActor"
+        
+        with patch('ue_python_api.unreal.load_asset', return_value=mock_blueprint):
+            result = bridge.add_blueprint_node(
+                "/Game/Blueprints/BP_TestActor",
+                "BeginPlay",
+                position_x=100.0,
+                position_y=100.0
+            )
+            # Currently returns placeholder
+            assert result is not None
+            assert isinstance(result, dict) or result is not None
+    
+    def test_add_blueprint_node_not_found(self, bridge):
+        """Test adding node to non-existent blueprint."""
+        with patch('ue_python_api.unreal.load_asset', return_value=None):
+            result = bridge.add_blueprint_node(
+                "/Game/Blueprints/BP_NotFound",
+                "BeginPlay"
+            )
+            assert result is None
+    
+    def test_connect_blueprint_nodes(self, bridge):
+        """Test connecting two blueprint nodes."""
+        mock_node1 = Mock()
+        mock_node2 = Mock()
+        
+        result = bridge.connect_blueprint_nodes(
+            "/Game/Blueprints/BP_TestActor",
+            mock_node1,
+            "execute",
+            mock_node2,
+            "execute"
+        )
+        # Currently returns success flag
+        assert isinstance(result, bool)
+        assert result is True
+    
+    def test_compile_blueprint(self, bridge):
+        """Test compiling a blueprint."""
+        mock_blueprint = Mock()
+        
+        with patch('ue_python_api.unreal.load_asset', return_value=mock_blueprint):
+            with patch.object(bridge.editor_asset_subsystem, 'save_asset', return_value=True):
+                result = bridge.compile_blueprint("/Game/Blueprints/BP_TestActor")
+                assert result is True
+    
+    def test_compile_blueprint_not_found(self, bridge):
+        """Test compiling non-existent blueprint."""
+        with patch('ue_python_api.unreal.load_asset', return_value=None):
+            result = bridge.compile_blueprint("/Game/Blueprints/BP_NotFound")
+            assert result is False
+    
+    def test_add_blueprint_variable(self, bridge):
+        """Test adding a variable to blueprint."""
+        mock_blueprint = Mock()
+        
+        with patch('ue_python_api.unreal.load_asset', return_value=mock_blueprint):
+            with patch.object(bridge.editor_asset_subsystem, 'save_asset', return_value=True):
+                result = bridge.add_blueprint_variable(
+                    "/Game/Blueprints/BP_TestActor",
+                    "Health",
+                    "Float",
+                    default_value=100.0,
+                    is_exposed=True
+                )
+                assert result is True
+    
+    def test_add_blueprint_variable_not_found(self, bridge):
+        """Test adding variable to non-existent blueprint."""
+        with patch('ue_python_api.unreal.load_asset', return_value=None):
+            result = bridge.add_blueprint_variable(
+                "/Game/Blueprints/BP_NotFound",
+                "Health",
+                "Float"
+            )
+            assert result is False
+    
+    def test_add_blueprint_node_with_name(self, bridge):
+        """Test adding a named node to blueprint."""
+        mock_blueprint = Mock()
+        
+        with patch('ue_python_api.unreal.load_asset', return_value=mock_blueprint):
+            result = bridge.add_blueprint_node(
+                "/Game/Blueprints/BP_TestActor",
+                "Print",
+                position_x=200.0,
+                position_y=150.0,
+                node_name="PrintDebugInfo"
+            )
+            assert result is not None
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

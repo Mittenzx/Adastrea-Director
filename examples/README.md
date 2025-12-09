@@ -11,6 +11,14 @@ This directory contains example scripts demonstrating various features of Adastr
   - Multiple blueprints at once
   - Usage: `python examples/blueprint_creation_demo.py`
 
+### Blueprint Graphs (Experimental)
+- **`blueprint_graph_demo.py`** - Explores blueprint graph manipulation (visual scripting)
+  - Shows experimental API for adding nodes and connections
+  - Demonstrates alternative approaches (templates, scripts)
+  - Explains C++ plugin extension requirements
+  - Usage: `python examples/blueprint_graph_demo.py`
+  - Note: Full graph manipulation requires C++ plugin - see `BLUEPRINT_GRAPHS_IMPLEMENTATION.md`
+
 ### Phase 2 Examples
 - **`phase2_example.py`** - Planning and goal decomposition features
 - **`cost_tracking_example.py`** - Cost tracking and monitoring
