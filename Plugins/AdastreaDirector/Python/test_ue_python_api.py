@@ -136,6 +136,28 @@ class MockUnreal:
         def set_actor_label(self, name):
             pass
     
+    class Pawn:
+        """Mock Pawn class."""
+        pass
+    
+    class Character:
+        """Mock Character class."""
+        pass
+    
+    class Blueprint:
+        """Mock Blueprint class."""
+        def get_name(self):
+            return "MockBlueprint"
+    
+    class BlueprintFactory:
+        """Mock BlueprintFactory class."""
+        def __init__(self):
+            self.parent_class = None
+        
+        def set_editor_property(self, name, value):
+            if name == "ParentClass":
+                self.parent_class = value
+    
     @staticmethod
     def get_editor_subsystem(subsystem_class):
         mock_subsystem = Mock()
@@ -432,6 +454,113 @@ class TestActorOperations:
                    return_value=[mock_actor]):
             result = bridge.delete_actor("MockActor")
             assert result is True
+
+
+class TestBlueprintOperations:
+    """Tests for blueprint operations."""
+    
+    @pytest.fixture
+    def bridge(self):
+        """Create a bridge instance."""
+        return UEPythonBridge()
+    
+    def test_create_blueprint_with_default_parent(self, bridge):
+        """Test creating a blueprint with default Actor parent."""
+        mock_blueprint = Mock()
+        mock_blueprint.get_name.return_value = "BP_MyActor"
+        
+        # Mock the factory and asset_tools
+        mock_factory = Mock()
+        with patch('ue_python_api.unreal.BlueprintFactory', return_value=mock_factory):
+            with patch.object(bridge.asset_tools, 'create_asset', return_value=mock_blueprint):
+                with patch.object(bridge.editor_asset_subsystem, 'save_asset', return_value=True):
+                    blueprint = bridge.create_blueprint(
+                        blueprint_name="BP_MyActor",
+                        parent_class=None,
+                        package_path="/Game/Blueprints"
+                    )
+                    assert blueprint is not None
+                    assert blueprint == mock_blueprint
+    
+    def test_create_blueprint_with_string_parent(self, bridge):
+        """Test creating a blueprint with string parent class."""
+        mock_blueprint = Mock()
+        mock_blueprint.get_name.return_value = "BP_MyPawn"
+        
+        mock_factory = Mock()
+        with patch('ue_python_api.unreal.BlueprintFactory', return_value=mock_factory):
+            with patch('ue_python_api.unreal.Pawn', Mock()):
+                with patch.object(bridge.asset_tools, 'create_asset', return_value=mock_blueprint):
+                    with patch.object(bridge.editor_asset_subsystem, 'save_asset', return_value=True):
+                        blueprint = bridge.create_blueprint(
+                            blueprint_name="BP_MyPawn",
+                            parent_class="Pawn",
+                            package_path="/Game/Blueprints"
+                        )
+                        assert blueprint is not None
+    
+    def test_create_blueprint_with_class_object(self, bridge):
+        """Test creating a blueprint with class object as parent."""
+        mock_blueprint = Mock()
+        mock_blueprint.get_name.return_value = "BP_MyCharacter"
+        mock_parent_class = Mock()
+        
+        mock_factory = Mock()
+        with patch('ue_python_api.unreal.BlueprintFactory', return_value=mock_factory):
+            with patch.object(bridge.asset_tools, 'create_asset', return_value=mock_blueprint):
+                with patch.object(bridge.editor_asset_subsystem, 'save_asset', return_value=True):
+                    blueprint = bridge.create_blueprint(
+                        blueprint_name="BP_MyCharacter",
+                        parent_class=mock_parent_class,
+                        package_path="/Game/Characters"
+                    )
+                    assert blueprint is not None
+    
+    def test_create_blueprint_with_full_class_path(self, bridge):
+        """Test creating a blueprint with full class path."""
+        mock_blueprint = Mock()
+        mock_blueprint.get_name.return_value = "BP_CustomActor"
+        mock_class = Mock()
+        
+        mock_factory = Mock()
+        with patch('ue_python_api.unreal.BlueprintFactory', return_value=mock_factory):
+            with patch('ue_python_api.unreal.load_class', return_value=mock_class):
+                with patch.object(bridge.asset_tools, 'create_asset', return_value=mock_blueprint):
+                    with patch.object(bridge.editor_asset_subsystem, 'save_asset', return_value=True):
+                        blueprint = bridge.create_blueprint(
+                            blueprint_name="BP_CustomActor",
+                            parent_class="/Script/Engine.Actor",
+                            package_path="/Game/Blueprints"
+                        )
+                        assert blueprint is not None
+    
+    def test_create_blueprint_failure(self, bridge):
+        """Test blueprint creation failure."""
+        mock_factory = Mock()
+        with patch('ue_python_api.unreal.BlueprintFactory', return_value=mock_factory):
+            with patch.object(bridge.asset_tools, 'create_asset', return_value=None):
+                blueprint = bridge.create_blueprint(
+                    blueprint_name="BP_FailedActor",
+                    parent_class=None,
+                    package_path="/Game/Blueprints"
+                )
+                assert blueprint is None
+    
+    def test_create_blueprint_package_path_normalization(self, bridge):
+        """Test that package path trailing slashes are removed."""
+        mock_blueprint = Mock()
+        mock_factory = Mock()
+        
+        with patch('ue_python_api.unreal.BlueprintFactory', return_value=mock_factory):
+            with patch.object(bridge.asset_tools, 'create_asset', return_value=mock_blueprint):
+                with patch.object(bridge.editor_asset_subsystem, 'save_asset', return_value=True):
+                    blueprint = bridge.create_blueprint(
+                        blueprint_name="BP_TestActor",
+                        package_path="/Game/Blueprints/"  # Has trailing slash
+                    )
+                    # Verify create_asset was called with normalized path
+                    call_args = bridge.asset_tools.create_asset.call_args
+                    assert call_args[1]['package_path'] == "/Game/Blueprints"
 
 
 if __name__ == "__main__":

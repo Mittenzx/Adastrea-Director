@@ -61,6 +61,7 @@ def interactive_mode(server: UnrealMCPServer) -> None:
     print("  outliner          - Get world outliner (actors)")
     print("  python <code>     - Execute Python in Unreal")
     print("  console <cmd>     - Run console command")
+    print("  blueprint <name> [parent] [path] - Create a new blueprint")
     print("  quit              - Exit")
     print()
     
@@ -92,6 +93,7 @@ def interactive_mode(server: UnrealMCPServer) -> None:
             print("  outliner          - Get world outliner (actors)")
             print("  python <code>     - Execute Python in Unreal")
             print("  console <cmd>     - Run console command")
+            print("  blueprint <name> [parent] [path] - Create a new blueprint")
             print("  quit              - Exit")
         elif cmd == "tools":
             tools = server.list_tools()
@@ -128,6 +130,20 @@ def interactive_mode(server: UnrealMCPServer) -> None:
             else:
                 result = server.handle_tool_call("editor_console_command", {"command": arg})
                 print_result(result)
+        elif cmd == "blueprint":
+            if not arg:
+                print("Usage: blueprint <name> [parent_class] [package_path]")
+                print("Example: blueprint BP_MyActor Actor /Game/Blueprints")
+                print("Example: blueprint BP_PlayerCharacter Character")
+            else:
+                parts = arg.split()
+                params = {"blueprint_name": parts[0]}
+                if len(parts) > 1:
+                    params["parent_class"] = parts[1]
+                if len(parts) > 2:
+                    params["package_path"] = parts[2]
+                result = server.handle_tool_call("editor_create_blueprint", params)
+                print_result(result)
         else:
             print(f"Unknown command: {cmd}. Type 'help' for available commands.")
 
@@ -142,7 +158,8 @@ Examples:
     python unreal_mcp_cli.py list-tools              # List available tools
     python unreal_mcp_cli.py project-info            # Get project info
     python unreal_mcp_cli.py list-assets             # List all assets
-    python unreal_mcp_cli.py search-assets "player" # Search for assets
+    python unreal_mcp_cli.py search-assets "player"  # Search for assets
+    python unreal_mcp_cli.py create-blueprint BP_MyActor --parent Actor --path /Game/Blueprints
     python unreal_mcp_cli.py run-python "import unreal; print(unreal.SystemLibrary.get_engine_version())"
 """
     )
@@ -176,6 +193,12 @@ Examples:
     # Console command
     console_parser = subparsers.add_parser("console", help="Run console command")
     console_parser.add_argument("console_cmd", help="Console command to run")
+    
+    # Create blueprint
+    blueprint_parser = subparsers.add_parser("create-blueprint", help="Create a new Blueprint asset")
+    blueprint_parser.add_argument("name", help="Blueprint name (e.g., 'BP_MyActor')")
+    blueprint_parser.add_argument("--parent", default="Actor", help="Parent class (default: Actor)")
+    blueprint_parser.add_argument("--path", default="/Game/Blueprints", help="Package path (default: /Game/Blueprints)")
     
     # Global options
     parser.add_argument("--json", action="store_true", help="Output raw JSON")
@@ -243,6 +266,15 @@ Examples:
             
             elif args.command == "console":
                 result = server.handle_tool_call("editor_console_command", {"command": args.console_cmd})
+                print_result(result, not args.json)
+            
+            elif args.command == "create-blueprint":
+                params = {
+                    "blueprint_name": args.name,
+                    "parent_class": args.parent,
+                    "package_path": args.path
+                }
+                result = server.handle_tool_call("editor_create_blueprint", params)
                 print_result(result, not args.json)
     
     except KeyboardInterrupt:

@@ -675,6 +675,113 @@ class UEPythonBridge:
             
         except Exception as e:
             logger.error(f"Failed to show notification: {e}")
+    
+    # ============================================================================
+    # Blueprint Operations
+    # ============================================================================
+    
+    def create_blueprint(
+        self,
+        blueprint_name: str,
+        parent_class: Optional[Any] = None,
+        package_path: str = "/Game/Blueprints"
+    ) -> Optional[Any]:
+        """
+        Create a new Blueprint asset in Unreal Engine.
+        
+        Args:
+            blueprint_name: Name for the new blueprint (e.g., "BP_MyActor")
+            parent_class: Parent class for the blueprint. Can be:
+                         - None (defaults to Actor)
+                         - unreal.Actor, unreal.Pawn, unreal.Character, etc.
+                         - String class name: "Actor", "Pawn", "Character"
+                         - Full class path: "/Script/Engine.Actor"
+            package_path: Directory path where to save the blueprint (default: "/Game/Blueprints")
+            
+        Returns:
+            Created blueprint asset or None if failed
+            
+        Example:
+            # Create a simple Actor blueprint
+            actor_bp = bridge.create_blueprint("BP_MyActor", unreal.Actor, "/Game/Blueprints")
+            
+            # Create a Pawn blueprint (using string)
+            pawn_bp = bridge.create_blueprint("BP_MyPawn", "Pawn", "/Game/Blueprints")
+            
+            # Create a Character blueprint (using default Actor parent)
+            char_bp = bridge.create_blueprint("BP_MyCharacter")
+        
+        Note:
+            - The blueprint will be saved automatically after creation
+            - If a blueprint with the same name exists, this will fail
+            - Package path should start with /Game/ or /Engine/
+        """
+        try:
+            # Ensure package path doesn't end with /
+            package_path = package_path.rstrip('/')
+            
+            # Get asset tools
+            asset_tools = self.asset_tools
+            
+            # Create blueprint factory
+            factory = unreal.BlueprintFactory()
+            
+            # Set parent class
+            if parent_class is None:
+                # Default to Actor
+                factory.set_editor_property("ParentClass", unreal.Actor)
+                logger.info("Using default parent class: Actor")
+            elif isinstance(parent_class, str):
+                # Handle string class names
+                try:
+                    # Try to get the class from unreal module
+                    if parent_class.startswith("/Script/"):
+                        # Full class path
+                        class_obj = unreal.load_class(None, parent_class)
+                    else:
+                        # Simple class name like "Actor", "Pawn", "Character"
+                        class_obj = getattr(unreal, parent_class, None)
+                        if class_obj is None:
+                            # Try with /Script/Engine prefix
+                            class_path = f"/Script/Engine.{parent_class}"
+                            class_obj = unreal.load_class(None, class_path)
+                    
+                    factory.set_editor_property("ParentClass", class_obj)
+                    logger.info(f"Using parent class: {parent_class}")
+                except Exception as e:
+                    logger.error(f"Failed to load parent class '{parent_class}': {e}")
+                    return None
+            else:
+                # Assume it's already a class object
+                factory.set_editor_property("ParentClass", parent_class)
+                logger.info(f"Using parent class: {parent_class}")
+            
+            # Create the asset
+            blueprint = asset_tools.create_asset(
+                asset_name=blueprint_name,
+                package_path=package_path,
+                asset_class=unreal.Blueprint,
+                factory=factory
+            )
+            
+            if blueprint:
+                # Save the asset
+                full_path = f"{package_path}/{blueprint_name}"
+                saved = self.editor_asset_subsystem.save_asset(full_path)
+                
+                if saved:
+                    logger.info(f"Created and saved blueprint: {full_path}")
+                    return blueprint
+                else:
+                    logger.warning(f"Blueprint created but save failed: {full_path}")
+                    return blueprint
+            else:
+                logger.error(f"Failed to create blueprint: {blueprint_name}")
+                return None
+                
+        except Exception as e:
+            logger.error(f"Failed to create blueprint '{blueprint_name}': {e}")
+            return None
 
 
 # ============================================================================
