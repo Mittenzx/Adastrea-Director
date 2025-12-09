@@ -488,6 +488,10 @@ The wiki includes:
 - **API Reference** - Remote control API and integrations
 - **[Remote Connection Types & Actions](wiki/Remote-Connection-Types-and-Actions.md)** - Comprehensive directory of all connection types (HTTP, WebSocket, Python IPC, UE Python API, Director Plugin)
 
+### 🤖 GitHub Copilot Integration
+
+Want GitHub Copilot to help debug UE crashes and errors? See **[COPILOT_UE_LOGS_GUIDE.md](COPILOT_UE_LOGS_GUIDE.md)** for details on how Copilot can access Unreal Engine output logs for better assistance.
+
 
 
 ## Testing
