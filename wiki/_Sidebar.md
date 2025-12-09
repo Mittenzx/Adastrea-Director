@@ -38,6 +38,7 @@
 ### 🔌 API
 - [Remote Control API](api/Remote-Control-API)
 - [Python API](api/Python-API)
+- [Remote Connection Types & Actions](Remote-Connection-Types-and-Actions)
 
 ---
 

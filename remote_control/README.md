@@ -228,6 +228,7 @@ See `examples/remote_control_demo.py` for comprehensive examples including:
 
 ## Documentation
 
+- **📖 Comprehensive Connection Types Guide**: `../wiki/Remote-Connection-Types-and-Actions.md` - Complete directory of all remote connection types with comparisons
 - **Full API Documentation**: `docs/remote-control/REMOTE_CONTROL_API.md`
 - **Configuration Guide**: `config/remote_control_config.yaml`
 - **Integration Guide**: `PHASE3_GUIDE.md`
