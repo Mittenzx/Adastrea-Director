@@ -42,6 +42,36 @@ export interface DebugInfo {
     details?: any;
 }
 
+export interface DiagnosticsInfo {
+    timestamp: string;
+    config: {
+        host: string;
+        port: number;
+        reconnectInterval: number;
+        maxReconnectAttempts: number;
+        requestTimeout: number;
+        debugMode: boolean;
+    };
+    state: {
+        currentState: ConnectionState;
+        isConnected: boolean;
+        reconnectAttempts: number;
+        pendingRequestsCount: number;
+        hasSocket: boolean;
+    };
+    socket?: {
+        localAddress?: string;
+        localPort?: number;
+        remoteAddress?: string;
+        remotePort?: number;
+        readyState: string;
+        bytesRead: number;
+        bytesWritten: number;
+        pending: boolean;
+        destroyed: boolean;
+    };
+}
+
 export type ConnectionState = 'disconnected' | 'connecting' | 'connected' | 'error';
 
 export class DirectorIPCClient {
@@ -326,8 +356,8 @@ export class DirectorIPCClient {
     /**
      * Get diagnostic information about the connection
      */
-    public getDiagnostics(): any {
-        const diagnostics: any = {
+    public getDiagnostics(): DiagnosticsInfo {
+        const diagnostics: DiagnosticsInfo = {
             timestamp: new Date().toISOString(),
             config: {
                 host: this.config.host,

@@ -229,7 +229,7 @@ Enable debug mode when:
 - Troubleshooting connection issues
 - The extension can't reach the IPC server
 - Experiencing intermittent disconnections
-- Working with GitHub Copilot in VS Code and need detailed connection information
+- Need detailed connection information for diagnostics
 - Reporting bugs or issues
 
 ## Troubleshooting
