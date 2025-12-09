@@ -985,9 +985,9 @@ except Exception as e:
         if not blueprint_name:
             return ToolResult.error("blueprint_name is required")
         
-        # Validate blueprint name (should start with BP_ by convention)
+        # Note: Blueprint names conventionally start with BP_ prefix (recommended but not required)
         if not blueprint_name.startswith("BP_"):
-            logger.warning(f"Blueprint name '{blueprint_name}' doesn't follow BP_ convention")
+            logger.info(f"Note: Blueprint name '{blueprint_name}' doesn't follow BP_ naming convention (recommended but not enforced)")
         
         script = self._script_template.format(
             blueprint_name_json=json.dumps(blueprint_name),

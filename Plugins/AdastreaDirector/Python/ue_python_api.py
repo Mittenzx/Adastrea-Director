@@ -746,6 +746,11 @@ class UEPythonBridge:
                             class_path = f"/Script/Engine.{parent_class}"
                             class_obj = unreal.load_class(None, class_path)
                     
+                    # Validate that we got a valid class object
+                    if class_obj is None:
+                        logger.error(f"Failed to load parent class '{parent_class}': class not found")
+                        return None
+                    
                     factory.set_editor_property("ParentClass", class_obj)
                     logger.info(f"Using parent class: {parent_class}")
                 except Exception as e:
