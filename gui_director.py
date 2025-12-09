@@ -921,6 +921,50 @@ class AdastreaDirectorApp:
         self.create_tooltip(remote_tests_btn, "Run remote control API tests")
         self.add_button_hover_effect(remote_tests_btn)
         
+        # Row 4: MCP Tests
+        mcp_tests_btn = tk.Button(
+            button_grid,
+            text="🎮 MCP Tests",
+            command=lambda: self.run_test_suite("mcp"),
+            **test_button_style
+        )
+        mcp_tests_btn.grid(row=4, column=0, sticky=tk.EW, padx=5, pady=5)
+        self.create_tooltip(mcp_tests_btn, "Run MCP server tests")
+        self.add_button_hover_effect(mcp_tests_btn)
+        
+        # Row 4: GUI Tests
+        gui_tests_btn = tk.Button(
+            button_grid,
+            text="🖥️ GUI Tests",
+            command=lambda: self.run_test_suite("gui"),
+            **test_button_style
+        )
+        gui_tests_btn.grid(row=4, column=1, sticky=tk.EW, padx=5, pady=5)
+        self.create_tooltip(gui_tests_btn, "Run GUI component tests")
+        self.add_button_hover_effect(gui_tests_btn)
+        
+        # Row 5: Check Compatibility
+        compat_btn = tk.Button(
+            button_grid,
+            text="🔍 Check Compatibility",
+            command=lambda: self.run_test_suite("compatibility"),
+            **test_button_style
+        )
+        compat_btn.grid(row=5, column=0, sticky=tk.EW, padx=5, pady=5)
+        self.create_tooltip(compat_btn, "Check system compatibility")
+        self.add_button_hover_effect(compat_btn)
+        
+        # Row 5: Install Dependencies
+        install_btn = tk.Button(
+            button_grid,
+            text="📦 Install Dependencies",
+            command=lambda: self.run_test_suite("install"),
+            **test_button_style
+        )
+        install_btn.grid(row=5, column=1, sticky=tk.EW, padx=5, pady=5)
+        self.create_tooltip(install_btn, "Run dependency installation script")
+        self.add_button_hover_effect(install_btn)
+        
         # Configure grid weights for equal column sizing
         button_grid.columnconfigure(0, weight=1)
         button_grid.columnconfigure(1, weight=1)
@@ -987,7 +1031,8 @@ class AdastreaDirectorApp:
         # Store button references for later access
         self.test_buttons = [
             all_tests_btn, plugin_tests_btn, unit_tests_btn,
-            integration_tests_btn, phase3_tests_btn, validation_btn, remote_tests_btn
+            integration_tests_btn, phase3_tests_btn, validation_btn, remote_tests_btn,
+            mcp_tests_btn, gui_tests_btn, compat_btn, install_btn
         ]
         
         paned_window.add(output_frame, weight=1)
@@ -3925,7 +3970,11 @@ GitHub: Mittenzx/Adastrea-Director
             "integration": [PYTHON_EXECUTABLE, "-m", "pytest", "-v", "tests/integration/", "--tb=short"],
             "phase3": [PYTHON_EXECUTABLE, "-m", "pytest", "-v", "tests/phase3/", "--tb=short"],
             "validation": [PYTHON_EXECUTABLE, "validate_requirements.py"],
-            "remote": [PYTHON_EXECUTABLE, "-m", "pytest", "-v", "tests/remote_control/", "--tb=short"]
+            "remote": [PYTHON_EXECUTABLE, "-m", "pytest", "-v", "tests/remote_control/", "--tb=short"],
+            "mcp": [PYTHON_EXECUTABLE, "-m", "pytest", "-v", "tests/mcp_server/", "--tb=short"],
+            "gui": [PYTHON_EXECUTABLE, "-m", "pytest", "-v", "tests/test_gui_director.py", "--tb=short"],
+            "compatibility": [PYTHON_EXECUTABLE, "check_compatibility.py"],
+            "install": [PYTHON_EXECUTABLE, "install_dependencies.py"]
         }
         
         if test_type not in test_commands:
@@ -3940,7 +3989,11 @@ GitHub: Mittenzx/Adastrea-Director
             "integration": "Integration Tests",
             "phase3": "Phase 3 Tests",
             "validation": "Validation Scripts",
-            "remote": "Remote Control Tests"
+            "remote": "Remote Control Tests",
+            "mcp": "MCP Tests",
+            "gui": "GUI Tests",
+            "compatibility": "Compatibility Check",
+            "install": "Install Dependencies"
         }[test_type]
         
         # Clear previous output
