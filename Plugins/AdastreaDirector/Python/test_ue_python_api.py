@@ -667,5 +667,113 @@ class TestBlueprintGraphOperations:
             assert result is not None
 
 
+class TestBlueprintCommentNodes:
+    """Tests for blueprint comment node operations."""
+    
+    @pytest.fixture
+    def bridge(self):
+        """Create a bridge instance."""
+        return UEPythonBridge()
+    
+    def test_add_blueprint_comment_basic(self, bridge):
+        """Test adding a basic comment to blueprint."""
+        mock_blueprint = Mock()
+        
+        with patch('ue_python_api.unreal.load_asset', return_value=mock_blueprint):
+            result = bridge.add_blueprint_comment(
+                "/Game/Blueprints/BP_TestActor",
+                "Test Comment",
+                position_x=100,
+                position_y=100
+            )
+            assert result is True
+    
+    def test_add_blueprint_comment_with_color(self, bridge):
+        """Test adding a colored comment."""
+        mock_blueprint = Mock()
+        
+        with patch('ue_python_api.unreal.load_asset', return_value=mock_blueprint):
+            result = bridge.add_blueprint_comment(
+                "/Game/Blueprints/BP_TestActor",
+                "Important Note",
+                color=(255, 0, 0)  # Red
+            )
+            assert result is True
+    
+    def test_add_blueprint_comment_adastrea_style(self, bridge):
+        """Test adding an Adastrea-branded comment."""
+        mock_blueprint = Mock()
+        
+        with patch('ue_python_api.unreal.load_asset', return_value=mock_blueprint):
+            result = bridge.add_blueprint_comment(
+                "/Game/Characters/BP_Player",
+                "═══ ADASTREA CHARACTER SYSTEM ═══",
+                position_y=-200,
+                width=800,
+                height=60,
+                color=(138, 43, 226),  # Adastrea brand color
+                font_size=20
+            )
+            assert result is True
+    
+    def test_add_blueprint_comment_multiline(self, bridge):
+        """Test adding a multi-line comment."""
+        mock_blueprint = Mock()
+        
+        with patch('ue_python_api.unreal.load_asset', return_value=mock_blueprint):
+            result = bridge.add_blueprint_comment(
+                "/Game/Combat/BP_WeaponSystem",
+                "Function: CalculateDamage\nInputs: BaseDamage, DamageType\nOutput: FinalDamage",
+                width=500,
+                height=120
+            )
+            assert result is True
+    
+    def test_add_blueprint_comment_not_found(self, bridge):
+        """Test adding comment to non-existent blueprint."""
+        with patch('ue_python_api.unreal.load_asset', return_value=None):
+            result = bridge.add_blueprint_comment(
+                "/Game/Blueprints/BP_NotFound",
+                "Test Comment"
+            )
+            assert result is False
+    
+    def test_add_blueprint_comment_custom_size(self, bridge):
+        """Test adding a comment with custom size."""
+        mock_blueprint = Mock()
+        
+        with patch('ue_python_api.unreal.load_asset', return_value=mock_blueprint):
+            result = bridge.add_blueprint_comment(
+                "/Game/UI/BP_MainMenu",
+                "TODO: Integrate Adastrea save system",
+                width=600,
+                height=150,
+                color=(255, 215, 0)  # Gold
+            )
+            assert result is True
+    
+    def test_generate_comment_script(self, bridge):
+        """Test that comment script is generated correctly."""
+        mock_blueprint = Mock()
+        
+        with patch('ue_python_api.unreal.load_asset', return_value=mock_blueprint):
+            script = bridge._generate_comment_script(
+                "/Game/BP_Test",
+                "Test Comment",
+                100.0,
+                200.0,
+                400.0,
+                100.0,
+                (255, 0, 0),
+                18
+            )
+            # Verify script contains key elements
+            assert "import unreal" in script
+            assert "EdGraphNode_Comment" in script
+            assert "Test Comment" in script
+            assert "100" in script or "100.0" in script
+            assert "200" in script or "200.0" in script
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
