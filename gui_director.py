@@ -5,9 +5,17 @@ import threading
 import sys
 import os
 import json
+import socket
 import tempfile
 from datetime import datetime
 from pathlib import Path
+
+# Try to import psutil for system health monitoring (optional dependency)
+try:
+    import psutil
+    PSUTIL_AVAILABLE = True
+except ImportError:
+    PSUTIL_AVAILABLE = False
 
 # Disable ChromaDB telemetry BEFORE any imports that might import chromadb
 # This prevents "capture() takes 1 positional argument but 3 were given" errors
@@ -2087,7 +2095,6 @@ class AdastreaDirectorApp:
     def _check_vscode_extension(self):
         """Check VS Code Extension status."""
         # Check if IPC port is listening
-        import socket
         host = "localhost"
         port = 5555
         
@@ -2114,7 +2121,6 @@ class AdastreaDirectorApp:
             if os.path.exists(package_json):
                 try:
                     with open(package_json, 'r') as f:
-                        import json
                         data = json.load(f)
                         version = data.get('version', 'Unknown')
                         self._update_status_label("vscode_version", version, self.fg_color)
@@ -2149,7 +2155,17 @@ class AdastreaDirectorApp:
     def _check_backend_services(self):
         """Check Python backend services status."""
         # Check if various processes are running by looking for their PIDs
-        import psutil
+        if not PSUTIL_AVAILABLE:
+            self._update_status_label("agent_orchestrator", "psutil not available", self.fg_muted)
+            self._update_status_label("agent_dashboard", "psutil not available", self.fg_muted)
+            self._update_status_label("mcp_server", "psutil not available", self.fg_muted)
+            # Still check RAG
+            chroma_path = os.path.join(SCRIPT_DIR, "chroma_db")
+            if os.path.exists(chroma_path):
+                self._update_status_label("rag_system", "● Database present", self.success_color)
+            else:
+                self._update_status_label("rag_system", "● No database", self.warning_color)
+            return
         
         services = {
             "agent_orchestrator": "agent_orchestrator_cli.py",
@@ -2208,9 +2224,16 @@ class AdastreaDirectorApp:
     
     def _check_system_health(self):
         """Check system health metrics."""
+        if not PSUTIL_AVAILABLE:
+            self._update_status_label("cpu_usage", "psutil not installed", self.fg_muted)
+            self._update_status_label("memory_usage", "psutil not installed", self.fg_muted)
+            self._update_status_label("disk_space", "psutil not installed", self.fg_muted)
+            # Python version still works
+            python_version = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+            self._update_status_label("python_version", python_version, self.fg_color)
+            return
+        
         try:
-            import psutil
-            
             # CPU usage
             cpu_percent = psutil.cpu_percent(interval=0.1)
             cpu_color = self.success_color if cpu_percent < 70 else self.warning_color if cpu_percent < 90 else self.error_color
@@ -2228,10 +2251,6 @@ class AdastreaDirectorApp:
             disk_color = self.success_color if disk_percent < 70 else self.warning_color if disk_percent < 90 else self.error_color
             self._update_status_label("disk_space", f"{disk_percent}% used ({disk.free // (1024**3)}GB free)", disk_color)
             
-        except ImportError:
-            self._update_status_label("cpu_usage", "psutil not installed", self.fg_muted)
-            self._update_status_label("memory_usage", "psutil not installed", self.fg_muted)
-            self._update_status_label("disk_space", "psutil not installed", self.fg_muted)
         except Exception as e:
             self._update_status_label("cpu_usage", f"Error: {e}", self.error_color)
             self._update_status_label("memory_usage", f"Error: {e}", self.error_color)
