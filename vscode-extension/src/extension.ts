@@ -694,8 +694,13 @@ async function reviewPendingChanges() {
                     await codeApplicator.applyModifications([selected.modification]);
                     break;
                 case 'reject':
-                    // Remove from queue
+                    // Remove only this modification from queue
+                    const pending = codeApplicator.getPendingModifications();
+                    const filtered = pending.filter(m => m !== selected.modification);
                     codeApplicator.clearPendingModifications();
+                    if (filtered.length > 0) {
+                        await codeApplicator.queueModifications(filtered);
+                    }
                     vscode.window.showInformationMessage('Change rejected');
                     break;
                 case 'preview':

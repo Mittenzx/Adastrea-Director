@@ -5,7 +5,7 @@ All notable changes to the Adastrea Director VS Code extension will be documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.2.0] - 2024-12-09
+## [0.2.0] - 2025-12-09
 
 ### Added - Phase 2: Semi-Autonomous Development ✨
 
@@ -109,7 +109,7 @@ Extension (extension.ts)
 - Health check integration
 - Troubleshooting recommendations
 
-## [0.1.0] - 2024-12-09
+## [0.1.0] - 2025-12-09
 
 ### Added
 
@@ -239,8 +239,8 @@ See [Remote-Connection-Types-and-Actions.md](../Remote-Connection-Types-and-Acti
 
 ## Version History
 
-- **0.2.0** (2024-12-09) - Phase 2: Semi-Autonomous Development
-- **0.1.0** (2024-12-09) - Initial release with basic IPC communication
+- **0.2.0** (2025-12-09) - Phase 2: Semi-Autonomous Development
+- **0.1.0** (2025-12-09) - Initial release with basic IPC communication
 
 ---
 

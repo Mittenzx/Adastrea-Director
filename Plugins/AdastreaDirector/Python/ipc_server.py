@@ -895,7 +895,8 @@ JSON Response:"""
                             'codeSnippet': file_mod.code_snippet,
                             'lineStart': getattr(file_mod, 'line_start', None),
                             'lineEnd': getattr(file_mod, 'line_end', None),
-                            'confidence': 0.75  # Default confidence score
+                            # TODO: Replace with actual confidence calculation based on code quality metrics
+                            'confidence': float(os.environ.get('DEFAULT_CODE_MOD_CONFIDENCE', '0.75'))
                         })
                     
                 except Exception as e:
@@ -914,13 +915,13 @@ JSON Response:"""
         except Exception as e:
             logger.error(f"Code generation error: {e}")
         
-        # Fallback: Return empty modifications
+        # Fallback: Return error status when agents not available
         return {
-            'status': 'success',
+            'status': 'error',
+            'error': 'Code generation agents not available. Please configure agents.',
             'goal': data,
             'file_modifications': [],
-            'total_modifications': 0,
-            'note': 'Code generation agents not available. Please configure agents.'
+            'total_modifications': 0
         }
 
     def _handle_apply_feedback(self, data: str) -> Dict[str, Any]:

@@ -126,8 +126,6 @@ export class CodeApplicator {
      */
     private async requestApproval(modifications: CodeModification[]): Promise<void> {
         for (const mod of modifications) {
-            const preview = await this.generatePreview(mod);
-            
             const choice = await vscode.window.showQuickPick(
                 [
                     { label: '✓ Approve', value: 'approve' },
@@ -161,13 +159,12 @@ export class CodeApplicator {
                     break;
                 case 'preview':
                     await this.showDiffPreview(mod);
-                    // Re-prompt after preview
-                    await this.requestApproval([mod]);
-                    break;
+                    // After preview, just return to exit the workflow
+                    return;
                 case 'edit':
                     await this.openForEditing(mod);
                     await this.recordApproval(mod, false, 'User chose to edit manually', false);
-                    break;
+                    return;
             }
         }
     }
@@ -222,9 +219,8 @@ export class CodeApplicator {
             throw new Error('No workspace folder open');
         }
 
-        const fullPath = path.isAbsolute(mod.filePath)
-            ? mod.filePath
-            : path.join(workspaceFolder.uri.fsPath, mod.filePath);
+        // Validate and normalize the file path to prevent directory traversal attacks
+        const fullPath = this.validateAndNormalizePath(mod.filePath, workspaceFolder.uri.fsPath);
         
         const fileUri = vscode.Uri.file(fullPath);
 
@@ -239,6 +235,32 @@ export class CodeApplicator {
                 await this.deleteFile(fileUri);
                 break;
         }
+    }
+
+    /**
+     * Validate and normalize file path to ensure it's within workspace
+     * Prevents directory traversal attacks
+     */
+    private validateAndNormalizePath(filePath: string, workspaceRoot: string): string {
+        // Resolve the full path
+        const fullPath = path.isAbsolute(filePath)
+            ? path.resolve(filePath)
+            : path.resolve(workspaceRoot, filePath);
+        
+        // Normalize to remove .. and . segments
+        const normalizedPath = path.normalize(fullPath);
+        const normalizedWorkspace = path.normalize(workspaceRoot);
+        
+        // Ensure the path is within the workspace
+        if (!normalizedPath.startsWith(normalizedWorkspace + path.sep) && 
+            normalizedPath !== normalizedWorkspace) {
+            throw new Error(
+                `Security: File path "${filePath}" is outside workspace. ` +
+                `All modifications must be within the workspace directory.`
+            );
+        }
+        
+        return normalizedPath;
     }
 
     /**
@@ -263,9 +285,9 @@ export class CodeApplicator {
         const edit = new vscode.WorkspaceEdit();
 
         if (mod.lineStart !== undefined && mod.lineEnd !== undefined) {
-            // Replace specific lines
-            const start = new vscode.Position(mod.lineStart, 0);
-            const end = new vscode.Position(mod.lineEnd, document.lineAt(mod.lineEnd).text.length);
+            // Replace specific lines (line numbers are 0-indexed in VS Code)
+            const start = new vscode.Position(mod.lineStart - 1, 0);
+            const end = new vscode.Position(mod.lineEnd - 1, document.lineAt(mod.lineEnd - 1).text.length);
             const range = new vscode.Range(start, end);
             // Ensure code snippet is properly formatted for replacement
             const codeToInsert = mod.codeSnippet || '';
@@ -341,7 +363,9 @@ ${mod.codeSnippet || '(No code snippet)'}
             let modifiedContent = document.getText();
             if (mod.lineStart !== undefined && mod.lineEnd !== undefined && mod.codeSnippet) {
                 const lines = modifiedContent.split('\n');
-                lines.splice(mod.lineStart, mod.lineEnd - mod.lineStart + 1, mod.codeSnippet);
+                const newLines = mod.codeSnippet.split('\n');
+                // Lines are 1-indexed from server, but splice uses 0-indexed
+                lines.splice(mod.lineStart - 1, mod.lineEnd - mod.lineStart + 1, ...newLines);
                 modifiedContent = lines.join('\n');
             }
 

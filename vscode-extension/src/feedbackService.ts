@@ -71,7 +71,7 @@ export class FeedbackService {
             },
             metadata: {
                 confidence: decision.modification.confidence,
-                autoApproved: decision.reason?.includes('Auto-approved')
+                autoApproved: decision.autoApproved
             }
         };
 
@@ -488,10 +488,15 @@ export class FeedbackService {
     }
 
     /**
-     * Generate unique feedback ID
+     * Generate unique feedback ID using timestamp and counter
+     * Counter is persisted to avoid duplicates across restarts
      */
     private generateFeedbackId(): string {
-        return `fb_${Date.now()}_${this.feedbackId++}`;
+        // Use a more robust ID generation with random component to avoid collisions
+        const timestamp = Date.now();
+        const counter = this.feedbackId++;
+        const random = Math.floor(Math.random() * 10000);
+        return `fb_${timestamp}_${counter}_${random}`;
     }
 
     /**
