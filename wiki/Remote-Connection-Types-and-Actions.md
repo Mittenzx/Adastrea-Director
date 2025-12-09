@@ -556,11 +556,11 @@ The Dashboard tab provides 6 color-coded status lights:
 | **Latency (avg)** | 10-50ms | 1-5ms | < 1ms | Variable* | 1-10ms |
 | **Throughput** | ~100 req/s | ~1000 msg/s | > 4000 req/s | CPU-bound | > 1000 req/s |
 | **Overhead** | Low | Very Low | Very Low | Minimal | Low |
-
-*UE Python API latency is variable - minimal for simple property access, higher for complex operations like asset loading or world queries. No network overhead, but subject to Python interpreter and UE processing time.
 | **Connection Cost** | Per request | Persistent | Persistent | None | Persistent |
 | **Memory Usage** | ~10MB | ~5MB | ~20MB | Minimal | ~50MB |
 | **CPU Usage** | Low | Low | Low | Minimal | Medium |
+
+*UE Python API latency is variable - minimal for simple property access, higher for complex operations like asset loading or world queries. No network overhead, but subject to Python interpreter and UE processing time.
 
 ---
 
