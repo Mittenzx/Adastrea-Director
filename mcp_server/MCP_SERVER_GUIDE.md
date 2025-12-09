@@ -393,6 +393,46 @@ Move the viewport camera to a specific position.
 - `location` (object, required): Camera position {x, y, z}
 - `rotation` (object, required): Camera rotation {pitch, yaw, roll}
 
+### `editor_create_blueprint`
+
+Create a new Blueprint asset in Unreal Engine. Blueprints are visual scripting assets that allow you to create game logic without writing C++ code.
+
+**Parameters:**
+- `blueprint_name` (string, required): Name for the blueprint (e.g., 'BP_MyActor', 'BP_PlayerCharacter')
+- `parent_class` (string, optional): Parent class for the blueprint. Common classes include:
+  - `'Actor'` - Basic placeable object (default)
+  - `'Pawn'` - Object that can be possessed by a controller
+  - `'Character'` - Humanoid pawn with built-in movement
+  - `'ActorComponent'` - Reusable component
+  - `'StaticMeshActor'` - Actor with a static mesh
+- `package_path` (string, optional): Directory path where to save the blueprint (default: '/Game/Blueprints')
+
+**Example usage via CLI:**
+```bash
+python unreal_mcp_cli.py create-blueprint BP_MyActor Actor /Game/Blueprints
+python unreal_mcp_cli.py create-blueprint BP_PlayerCharacter Character /Game/Characters
+python unreal_mcp_cli.py create-blueprint BP_CustomPawn Pawn
+```
+
+**Example via Python:**
+```python
+# Create a simple Actor blueprint
+result = tool.execute(remote,
+    blueprint_name="BP_MyActor",
+    parent_class="Actor",
+    package_path="/Game/Blueprints"
+)
+
+# Create a Character blueprint
+result = tool.execute(remote,
+    blueprint_name="BP_PlayerCharacter",
+    parent_class="Character",
+    package_path="/Game/Characters"
+)
+```
+
+**Returns:** Success message with blueprint details or error message
+
 ## Configuration
 
 The MCP server can be configured with custom settings:

@@ -884,6 +884,145 @@ else:
             return ToolResult.error(result.error)
 
 
+class EditorCreateBlueprint(MCPTool):
+    """Create a new Blueprint asset in Unreal Engine."""
+    
+    name = "editor_create_blueprint"
+    description = (
+        "Create a new Blueprint asset with a specified parent class. "
+        "Blueprints are visual scripting assets in Unreal Engine that allow you to create "
+        "game logic without writing C++ code. This tool creates a new Blueprint asset "
+        "that can be edited in the Blueprint Editor."
+    )
+    parameters = [
+        ToolParameter(
+            name="blueprint_name",
+            type="string",
+            description="Name for the blueprint (e.g., 'BP_MyActor', 'BP_PlayerCharacter')"
+        ),
+        ToolParameter(
+            name="parent_class",
+            type="string",
+            description=(
+                "Parent class for the blueprint. Common classes include: "
+                "'Actor' (basic placeable object), "
+                "'Pawn' (can be possessed by a controller), "
+                "'Character' (humanoid pawn with movement), "
+                "'ActorComponent' (reusable component), "
+                "'StaticMeshActor' (actor with static mesh). "
+                "Defaults to 'Actor' if not specified."
+            ),
+            required=False,
+            default="Actor"
+        ),
+        ToolParameter(
+            name="package_path",
+            type="string",
+            description="Directory path where to save the blueprint (e.g., '/Game/Blueprints', '/Game/Characters')",
+            required=False,
+            default="/Game/Blueprints"
+        )
+    ]
+    
+    _script_template = """
+import unreal
+import json
+import sys
+
+# Add the Python directory to path to import ue_python_api
+# Assumes the plugin is installed at <ProjectRoot>/Plugins/AdastreaDirector/Python relative to this script.
+# If this structure changes, update the path below accordingly.
+import os
+plugin_python_dir = os.path.join(os.path.dirname(__file__), '..', 'Plugins', 'AdastreaDirector', 'Python')
+if os.path.exists(plugin_python_dir):
+    if plugin_python_dir not in sys.path:
+        sys.path.insert(0, plugin_python_dir)
+else:
+    print(f"Error: Expected plugin Python directory not found at {{plugin_python_dir}}. Please check your installation and directory structure.", file=sys.stderr)
+    import sys
+    sys.exit(1)
+
+try:
+    from ue_python_api import UEPythonBridge
+    
+    blueprint_name = {blueprint_name_json}
+    parent_class = {parent_class_json}
+    package_path = {package_path_json}
+    
+    # Create the bridge
+    bridge = UEPythonBridge()
+    
+    # Create the blueprint
+    blueprint = bridge.create_blueprint(
+        blueprint_name=blueprint_name,
+        parent_class=parent_class if parent_class else None,
+        package_path=package_path
+    )
+    
+    if blueprint:
+        result = {{
+            "success": True,
+            "blueprint_name": blueprint_name,
+            "parent_class": parent_class if parent_class else "Actor",
+            "package_path": package_path,
+            "full_path": f"{{package_path}}/{{blueprint_name}}",
+            "message": f"Successfully created blueprint '{{blueprint_name}}' at {{package_path}}"
+        }}
+        print(json.dumps(result))
+    else:
+        result = {{
+            "success": False,
+            "error": f"Failed to create blueprint '{{blueprint_name}}'"
+        }}
+        print(json.dumps(result))
+        
+except Exception as e:
+    result = {{
+        "success": False,
+        "error": f"Error creating blueprint: {{str(e)}}"
+    }}
+    print(json.dumps(result))
+"""
+    
+    def execute(self, remote, **kwargs) -> ToolResult:
+        blueprint_name = kwargs.get("blueprint_name", "")
+        parent_class = kwargs.get("parent_class", "Actor")
+        package_path = kwargs.get("package_path", "/Game/Blueprints")
+        
+        if not blueprint_name:
+            return ToolResult.error("blueprint_name is required")
+        
+        # Note: Blueprint names conventionally start with BP_ prefix (recommended but not required)
+        if not blueprint_name.startswith("BP_"):
+            logger.info(f"Note: Blueprint name '{blueprint_name}' doesn't follow BP_ naming convention (recommended but not enforced)")
+        
+        script = self._script_template.format(
+            blueprint_name_json=json.dumps(blueprint_name),
+            parent_class_json=json.dumps(parent_class),
+            package_path_json=json.dumps(package_path)
+        )
+        
+        result = remote.run_command(script, mode=ExecutionMode.EXECUTE_FILE)
+        if result.success:
+            try:
+                # Try to parse the JSON result
+                result_data = json.loads(result.output.strip())
+                if result_data.get("success"):
+                    return ToolResult.text(
+                        f"✅ {result_data.get('message', 'Blueprint created successfully')}\n\n"
+                        f"Blueprint: {result_data.get('blueprint_name')}\n"
+                        f"Parent Class: {result_data.get('parent_class')}\n"
+                        f"Location: {result_data.get('full_path')}"
+                    )
+                else:
+                    return ToolResult.error(result_data.get("error", "Unknown error"))
+            except json.JSONDecodeError:
+                # If JSON parsing fails, return raw output
+                return ToolResult.text(result.output)
+        else:
+            return ToolResult.error(result.error)
+
+
 # Registry of all available tools
 TOOLS: Dict[str, Type[MCPTool]] = {
     "editor_run_python": EditorRunPython,
@@ -899,6 +1038,7 @@ TOOLS: Dict[str, Type[MCPTool]] = {
     "editor_delete_object": EditorDeleteObject,
     "editor_take_screenshot": EditorTakeScreenshot,
     "editor_move_camera": EditorMoveCamera,
+    "editor_create_blueprint": EditorCreateBlueprint,
 }
 
 
