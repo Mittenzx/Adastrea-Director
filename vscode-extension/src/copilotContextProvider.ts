@@ -174,8 +174,16 @@ export function registerHoverProvider(
 
                 const word = document.getText(wordRange);
                 
-                // Only provide hover for Unreal Engine symbols (starting with U, A, F, etc.)
-                if (!word.match(/^[UAFET][A-Z]/)) {
+                // Unreal Engine naming convention regex
+                // U* = UObject-derived classes (UMyClass)
+                // A* = AActor-derived classes (AMyActor)
+                // F* = Structs (FVector, FString)
+                // E* = Enums (ECollisionChannel)
+                // T* = Templates (TArray, TMap)
+                const UNREAL_SYMBOL_PATTERN = /^[UAFET][A-Z]/;
+                
+                // Only provide hover for Unreal Engine symbols
+                if (!UNREAL_SYMBOL_PATTERN.test(word)) {
                     return null;
                 }
 

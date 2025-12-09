@@ -346,8 +346,10 @@ function addFollowUpPrompts(stream: vscode.ChatResponseStream, command: string):
         { prompt: '/help', label: '❓ Help' }
     );
 
-    // Add to stream (if method exists - it may not be in all VS Code versions)
-    if (typeof (stream as any).followup === 'function') {
-        followUps.forEach(followUp => (stream as any).followup(followUp));
+    // Add to stream (feature detection for API compatibility)
+    // The followup method may not exist in all VS Code versions
+    const streamWithFollowup = stream as unknown as { followup?: (followup: vscode.ChatFollowup) => void };
+    if (streamWithFollowup.followup && typeof streamWithFollowup.followup === 'function') {
+        followUps.forEach(followUp => streamWithFollowup.followup!(followUp));
     }
 }

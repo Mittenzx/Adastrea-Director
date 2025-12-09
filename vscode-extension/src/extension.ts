@@ -1065,24 +1065,48 @@ function getContextWebviewContent(context: string, code: string): string {
 </html>`;
 }
 
+/**
+ * Escape HTML to prevent XSS attacks
+ * Handles all common HTML special characters
+ */
 function escapeHtml(text: string): string {
-    return text
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
+    const escapeMap: { [key: string]: string } = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#x27;',
+        '/': '&#x2F;',
+        '`': '&#x60;',
+        '=': '&#x3D;'
+    };
+    return text.replace(/[&<>"'`=/]/g, char => escapeMap[char]);
 }
 
+/**
+ * Simple markdown to HTML conversion
+ * Note: This is a basic implementation for simple formatting.
+ * For production use, consider using a dedicated markdown library like 'marked' or 'markdown-it'.
+ */
 function markdownToHtml(markdown: string): string {
-    // Simple markdown to HTML conversion
-    return markdown
-        .replace(/### (.*)/g, '<h3>$1</h3>')
-        .replace(/## (.*)/g, '<h2>$1</h2>')
-        .replace(/# (.*)/g, '<h1>$1</h1>')
+    // Escape HTML first to prevent XSS
+    let html = escapeHtml(markdown);
+    
+    // Apply markdown formatting (in order of specificity)
+    html = html
+        // Headers (must be done before other patterns)
+        .replace(/^### (.*)$/gm, '<h3>$1</h3>')
+        .replace(/^## (.*)$/gm, '<h2>$1</h2>')
+        .replace(/^# (.*)$/gm, '<h1>$1</h1>')
+        // Bold (must be before italic)
         .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        // Italic
         .replace(/\*(.*?)\*/g, '<em>$1</em>')
+        // Inline code
         .replace(/`(.*?)`/g, '<code>$1</code>')
+        // Line breaks
         .replace(/\n\n/g, '<br><br>')
         .replace(/\n/g, '<br>');
+    
+    return html;
 }
