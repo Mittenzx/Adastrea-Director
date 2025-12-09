@@ -88,7 +88,11 @@ With a log file open or referenced, you can:
 1. Run your UE project and encounter a crash
 2. Open `Saved/Logs/YourProject.log` in VSCode
 3. Find the crash/error section
-4. Ask Copilot in chat:
+4. Ask Copilot in chat (Copilot will automatically include the open file as context):
+   ```
+   What's causing the crash in this log file?
+   ```
+   Or reference it explicitly:
    ```
    I have a crash in YourProject.log with this error:
    [Error] Assertion failed: (Index >= 0) && (Index < ArrayNum)
@@ -200,7 +204,7 @@ Ensure Copilot workspace indexing is enabled in VSCode settings:
 - ❌ Run UE commands or fix issues automatically
 - ❌ Access logs outside the workspace
 - ❌ See logs in real-time (refresh by reopening files)
-- ❌ Handle extremely large logs (>1MB may be truncated)
+- ❌ Handle extremely large logs efficiently (files >1MB may impact performance; for best results, keep logs under 1MB or use specific sections)
 
 ## Troubleshooting
 
@@ -247,9 +251,17 @@ Log files may contain:
 
 **Best Practices**:
 1. **Review logs before sharing**: Check for sensitive info
-2. **Exclude sensitive logs**: Add patterns to `.copilotignore`:
+2. **Avoid including sensitive logs**: Don't add inclusion patterns for sensitive directories in `.copilotignore`. Remove or comment out any patterns that would include sensitive logs:
    ```gitignore
-   # Exclude logs with sensitive data
+   # DON'T include sensitive log directories
+   # !**/Credentials/*.log  # Keep this commented out
+   # !**/Auth/*.log         # Keep this commented out
+   ```
+   Alternatively, explicitly exclude them after inclusion patterns:
+   ```gitignore
+   # Include all logs
+   !*.log
+   # But exclude sensitive ones
    **/Credentials/*.log
    **/Auth/*.log
    ```

@@ -19,6 +19,7 @@
 !tests/**/*.log
 
 # However, exclude very large or binary log files that might overwhelm Copilot
+# Copilot works best with files under 1MB. Exclude larger logs or crash dumps.
 # (You can adjust this based on your project needs)
 *.dmp
 *.crash
