@@ -70,6 +70,11 @@
           "type": "number",
           "default": 3,
           "description": "Maximum number of reconnection attempts"
+        },
+        "director.requestTimeout": {
+          "type": "number",
+          "default": 30000,
+          "description": "Request timeout in milliseconds"
         }
       }
     }

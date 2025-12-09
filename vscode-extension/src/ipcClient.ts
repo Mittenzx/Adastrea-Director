@@ -31,6 +31,7 @@ export interface ConnectionConfig {
     port: number;
     reconnectInterval?: number;
     maxReconnectAttempts?: number;
+    requestTimeout?: number;  // Request timeout in milliseconds (default: 30000)
 }
 
 export type ConnectionState = 'disconnected' | 'connecting' | 'connected' | 'error';
@@ -57,7 +58,8 @@ export class DirectorIPCClient {
             host: config.host,
             port: config.port,
             reconnectInterval: config.reconnectInterval ?? 5000,
-            maxReconnectAttempts: config.maxReconnectAttempts ?? 3
+            maxReconnectAttempts: config.maxReconnectAttempts ?? 3,
+            requestTimeout: config.requestTimeout ?? 30000
         };
     }
 
@@ -153,7 +155,7 @@ export class DirectorIPCClient {
             const timeout = setTimeout(() => {
                 this.pendingRequests.delete(id);
                 reject(new Error('Request timeout'));
-            }, 30000); // 30 second timeout
+            }, this.config.requestTimeout);
 
             try {
                 this.socket!.write(requestStr, (error) => {
@@ -236,10 +238,17 @@ export class DirectorIPCClient {
 
     /**
      * Handle a parsed response
+     * 
+     * IMPORTANT LIMITATION: This implementation assumes FIFO (First-In-First-Out) order
+     * for request-response correlation. The IPC protocol does not include request IDs,
+     * so responses are matched to the oldest pending request. This means:
+     * - Requests are processed sequentially
+     * - Out-of-order responses could cause incorrect correlation
+     * - Multiple concurrent requests should be avoided
+     * 
+     * Future improvement: Add request ID field to the IPC protocol
      */
     private handleResponse(response: IPCResponse): void {
-        // For now, resolve the oldest pending request
-        // In a production version, you might want request IDs in the protocol
         const firstRequest = this.pendingRequests.entries().next();
         if (!firstRequest.done) {
             const [id, request] = firstRequest.value;
@@ -252,8 +261,7 @@ export class DirectorIPCClient {
      * Handle socket errors
      */
     private handleError(error: Error): void {
-        console.error('IPC Client error:', error);
-        
+        // Notify error handler (typically logs to output channel)
         if (this.onError) {
             this.onError(error);
         }
@@ -278,16 +286,25 @@ export class DirectorIPCClient {
      */
     private attemptReconnect(): void {
         if (this.reconnectAttempts >= this.config.maxReconnectAttempts) {
-            console.log('Max reconnection attempts reached');
+            // Max attempts reached - notify via error handler
+            if (this.onError) {
+                this.onError(new Error('Max reconnection attempts reached'));
+            }
             return;
         }
 
         this.reconnectAttempts++;
-        console.log(`Attempting to reconnect (${this.reconnectAttempts}/${this.config.maxReconnectAttempts})...`);
+        
+        // Notify via error handler for logging
+        if (this.onError) {
+            this.onError(new Error(`Attempting to reconnect (${this.reconnectAttempts}/${this.config.maxReconnectAttempts})...`));
+        }
 
         this.reconnectTimer = setTimeout(() => {
             this.connect().catch((error) => {
-                console.error('Reconnection failed:', error);
+                if (this.onError) {
+                    this.onError(new Error(`Reconnection failed: ${error.message}`));
+                }
             });
         }, this.config.reconnectInterval);
     }

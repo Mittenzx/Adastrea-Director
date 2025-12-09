@@ -97,6 +97,7 @@ Configure the extension in VS Code settings:
 | `director.autoConnect` | boolean | `false` | Automatically connect on extension activation |
 | `director.reconnectInterval` | number | `5000` | Reconnection interval in milliseconds |
 | `director.maxReconnectAttempts` | number | `3` | Maximum number of reconnection attempts |
+| `director.requestTimeout` | number | `30000` | Request timeout in milliseconds |
 
 ## Connection Protocol
 
@@ -126,6 +127,18 @@ The extension communicates with the Director IPC server using a simple TCP socke
 - `plan` - Generate a development plan
 - `analyze` - Analyze a development goal
 - `metrics` - Get performance metrics
+
+### Protocol Limitations
+
+**Important:** The current IPC protocol has the following limitations:
+
+1. **No Request IDs**: The protocol does not include request IDs for correlation. Responses are matched to requests using FIFO (First-In-First-Out) order.
+
+2. **Sequential Processing**: Because of the FIFO limitation, requests should be processed sequentially. Concurrent requests may result in incorrect response correlation.
+
+3. **Single Connection**: The extension maintains a single connection to the IPC server. Multiple concurrent operations share this connection.
+
+**Future Improvement**: A future version of the protocol should add request IDs to support concurrent requests and more robust error handling.
 
 ## Status Bar Indicator
 

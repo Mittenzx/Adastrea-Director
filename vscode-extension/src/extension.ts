@@ -90,6 +90,7 @@ async function connectToDirector() {
     const port = config.get<number>('ipc.port', 5555);
     const reconnectInterval = config.get<number>('reconnectInterval', 5000);
     const maxReconnectAttempts = config.get<number>('maxReconnectAttempts', 3);
+    const requestTimeout = config.get<number>('requestTimeout', 30000);
 
     outputChannel.appendLine(`Connecting to Director IPC server at ${host}:${port}...`);
     updateStatusBar('connecting');
@@ -99,7 +100,8 @@ async function connectToDirector() {
             host,
             port,
             reconnectInterval,
-            maxReconnectAttempts
+            maxReconnectAttempts,
+            requestTimeout
         });
 
         // Set up event handlers
@@ -187,7 +189,9 @@ async function askQuestion() {
     outputChannel.show(true);
 
     try {
-        vscode.window.setStatusBarMessage('$(sync~spin) Querying Director...', 30000);
+        const config = vscode.workspace.getConfiguration('director');
+        const requestTimeout = config.get<number>('requestTimeout', 30000);
+        vscode.window.setStatusBarMessage('$(sync~spin) Querying Director...', requestTimeout);
         
         const response = await client!.query(question);
         
