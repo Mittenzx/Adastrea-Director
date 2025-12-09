@@ -320,14 +320,58 @@ The Director system provides multiple connection types that VS Code can leverage
 
 ```typescript
 // Command palette commands
-- "Director: Connect to Unreal Engine"
-- "Director: Ask Question"
-- "Director: Generate Plan for Goal"
-- "Director: Generate Code"
-- "Director: Run Tests"
-- "Director: Check Performance"
-- "Director: View Dashboard"
-- "Director: Settings"
+
+/**
+ * Establishes connection to Unreal Engine via Director IPC.
+ * @command director.connect
+ */
+"Director: Connect to Unreal Engine"
+
+/**
+ * Query the Director AI about Unreal Engine or project-specific information.
+ * @command director.askQuestion
+ * @param question - The question to ask Director.
+ */
+"Director: Ask Question"
+
+/**
+ * Generate a step-by-step plan for a specified development goal.
+ * @command director.generatePlan
+ * @param goal - The goal for which to generate a plan.
+ */
+"Director: Generate Plan for Goal"
+
+/**
+ * Generate code based on the current plan or user input.
+ * @command director.generateCode
+ * @param plan - The plan or instructions for code generation.
+ */
+"Director: Generate Code"
+
+/**
+ * Run tests in Unreal Engine for the current project or code changes.
+ * @command director.runTests
+ * @param testSuite - The test suite or specific tests to run.
+ */
+"Director: Run Tests"
+
+/**
+ * Check performance metrics for the current project or code changes.
+ * @command director.checkPerformance
+ */
+"Director: Check Performance"
+
+/**
+ * View the Director dashboard with status, metrics, and logs.
+ * @command director.viewDashboard
+ */
+"Director: View Dashboard"
+
+/**
+ * Open Director extension settings.
+ * @command director.settings
+ */
+"Director: Settings"
 ```
 
 ### User Interface Elements
@@ -362,13 +406,91 @@ The Director system provides multiple connection types that VS Code can leverage
 }
 ```
 
+### Type-Safe API Design
+
+For production implementations, consider using type-safe API designs instead of generic request/response patterns:
+
+```typescript
+// Define specific request/response types
+interface QueryRequest {
+  question: string;
+}
+
+interface QueryResponse {
+  result: string;
+  confidence: number;
+  sources: string[];
+}
+
+interface MetricsRequest {
+  reset?: boolean;
+}
+
+interface MetricsResponse {
+  requestCounts: Record<string, number>;
+  averageLatency: number;
+  errorRate: number;
+}
+
+interface TestResults {
+  success: boolean;
+  failureCount: number;
+  failures?: Array<{
+    name: string;
+    message: string;
+  }>;
+  passed: number;
+  total: number;
+}
+
+interface Improvement {
+  description: string;
+  requiresRebuild: boolean;
+  requiresRestart: boolean;
+  critical: boolean;
+}
+
+// Type-safe client methods
+class DirectorIPCClient {
+  async query(request: QueryRequest): Promise<QueryResponse> {
+    // Implementation
+  }
+  
+  async getMetrics(request?: MetricsRequest): Promise<MetricsResponse> {
+    // Implementation
+  }
+  
+  async runTests(testSuite: string): Promise<TestResults> {
+    // Implementation
+  }
+}
+
+// Usage with full type safety
+const context = await director.query({
+  question: 'What is the current plugin architecture?'
+});
+console.log(context.result, context.confidence, context.sources);
+```
+
+This approach provides:
+- Compile-time type checking
+- IntelliSense/autocomplete support
+- Clear API contracts
+- Better documentation
+- Reduced runtime errors
+
 ---
 
 ## Example Workflows
 
+**Note on Shared Utilities:** The following workflow examples reference utility functions that would need to be implemented in a production VS Code extension. Common utilities like `createSnapshot`, `restoreSnapshot`, `applyImprovement`, and others should be consolidated into shared modules (e.g., `./utils/snapshot.ts`, `./utils/fileOperations.ts`, `./utils/recovery.ts`) to avoid duplication and maintain consistency across workflows.
+
 ### Workflow 1: Code Generation & Testing
 
 ```typescript
+// Import required utilities (these would need to be implemented)
+import { isAllowedPath, showDiffPreview, createBackup } from './utils/fileOperations';
+
 async function improveDirectorPlugin() {
   // 1. Connect to Director
   const director = new DirectorIPCClient('localhost', 5555);
@@ -386,8 +508,27 @@ async function improveDirectorPlugin() {
     context: context.result
   });
   
-  // 4. Apply code to files
-  await fs.writeFile('director_plugin.py', newFeature);
+  // 4. Apply code to files with security validation
+  const targetFile = 'director_plugin.py';
+  
+  // Validate path is in allowed directory
+  if (!isAllowedPath(targetFile)) {
+    throw new Error('Path not allowed for modification');
+  }
+  
+  // Show diff preview and get approval
+  const currentContent = await fs.readFile(targetFile, 'utf-8');
+  const approved = await showDiffPreview(currentContent, newFeature);
+  if (!approved) {
+    vscode.window.showInformationMessage('Code generation cancelled by user');
+    return;
+  }
+  
+  // Create backup before overwriting
+  await createBackup(targetFile);
+  
+  // Write the new code
+  await fs.writeFile(targetFile, newFeature);
   
   // 5. Reload Director module
   await director.request({
@@ -406,7 +547,18 @@ async function improveDirectorPlugin() {
     await git.commit('Add performance monitoring feature');
     vscode.window.showInformationMessage('Feature added successfully!');
   } else {
-    vscode.window.showErrorMessage('Tests failed. Rolling back...');
+    vscode.window.showErrorMessage(
+      `Tests failed: ${results.failureCount || 0} failures. Rolling back...`,
+      'View Details'
+    ).then(selection => {
+      if (selection === 'View Details') {
+        // Show detailed test results
+        const details = (results.failures && results.failures.length)
+          ? results.failures.map(f => `• ${f.name}: ${f.message}`).join('\n')
+          : 'No detailed failure information available.';
+        vscode.window.showInformationMessage(details, { modal: true });
+      }
+    });
     await git.revert();
   }
 }
@@ -415,60 +567,102 @@ async function improveDirectorPlugin() {
 ### Workflow 2: Continuous Improvement Loop
 
 ```typescript
-async function continuousImprovement() {
-  const director = new DirectorIPCClient('localhost', 5555);
+// Import required utilities (these would need to be implemented)
+import { createSnapshot, restoreSnapshot, applyImprovement } from './utils/snapshot';
+import { metricsImproved, logSuccess, logRollback, logError } from './utils/metrics';
+
+// Configuration constants
+const IMPROVEMENT_CHECK_INTERVAL_MS = 3600 * 1000; // 1 hour
+const MAX_CONSECUTIVE_FAILURES = 3;
+
+// Prevent multiple concurrent improvement loops
+let improvementLoopRunning = false;
+
+async function continuousImprovement(cancellationToken: vscode.CancellationToken) {
+  if (improvementLoopRunning) {
+    vscode.window.showWarningMessage('Improvement loop already running');
+    return;
+  }
   
-  while (true) {
-    // 1. Get current metrics
-    const metrics = await director.request({
-      type: 'metrics',
-      data: ''
-    });
+  improvementLoopRunning = true;
+  let consecutiveFailures = 0;
+  
+  try {
+    const director = new DirectorIPCClient('localhost', 5555);
     
-    // 2. Ask Copilot for improvements
-    const improvements = await copilot.suggest({
-      prompt: `Improve Director based on metrics: ${JSON.stringify(metrics)}`,
-      context: await director.getFullContext()
-    });
-    
-    // 3. Apply each improvement
-    for (const improvement of improvements) {
-      // Create snapshot
-      const snapshot = await createSnapshot();
+    while (!cancellationToken.isCancellationRequested) {
+      // 1. Get current metrics
+      const metrics = await director.request({
+        type: 'metrics',
+        data: ''
+      });
       
-      try {
-        // Apply improvement
-        await applyImprovement(improvement);
+      // 2. Ask Copilot for improvements
+      const improvements = await copilot.suggest({
+        prompt: `Improve Director based on metrics: ${JSON.stringify(metrics)}`,
+        context: await director.getFullContext()
+      });
+      
+      // 3. Apply each improvement
+      for (const improvement of improvements) {
+        // Create snapshot
+        const snapshot = await createSnapshot();
         
-        // Rebuild if needed
-        if (improvement.requiresRebuild) {
-          await director.rebuild();
-        }
-        
-        // Restart UE if needed
-        if (improvement.requiresRestart) {
-          await ue.restart();
-          await waitForUEReady();
-        }
-        
-        // Validate improvement
-        const newMetrics = await director.getMetrics();
-        
-        if (metricsImproved(metrics, newMetrics)) {
-          await git.commit(improvement.description);
-          logSuccess(improvement);
-        } else {
+        try {
+          // Apply improvement
+          await applyImprovement(improvement);
+          
+          // Rebuild if needed
+          if (improvement.requiresRebuild) {
+            await director.rebuild();
+          }
+          
+          // Restart UE if needed
+          if (improvement.requiresRestart) {
+            await ue.restart();
+            await waitForUEReady();
+          }
+          
+          // Validate improvement
+          const newMetrics = await director.getMetrics();
+          
+          if (metricsImproved(metrics, newMetrics)) {
+            await git.commit(improvement.description);
+            logSuccess(improvement);
+            consecutiveFailures = 0; // Reset failure counter on success
+          } else {
+            await restoreSnapshot(snapshot);
+            logRollback(improvement);
+          }
+        } catch (error) {
           await restoreSnapshot(snapshot);
-          logRollback(improvement);
+          const errorInfo = logError(improvement, error);
+          
+          // Track consecutive failures
+          consecutiveFailures++;
+          if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
+            vscode.window.showErrorMessage(
+              'Multiple improvements failed. Pausing automation.',
+              'Review Errors'
+            );
+            break; // Exit improvement loop
+          }
+          
+          // Notify user of individual failures
+          if (improvement.critical) {
+            await requestHumanIntervention(improvement, error);
+          }
         }
-      } catch (error) {
-        await restoreSnapshot(snapshot);
-        logError(improvement, error);
       }
+      
+      // Check for cancellation before sleeping
+      if (cancellationToken.isCancellationRequested) break;
+      
+      // Run at configured interval
+      await sleep(IMPROVEMENT_CHECK_INTERVAL_MS);
     }
-    
-    // Run hourly
-    await sleep(3600);
+  } finally {
+    improvementLoopRunning = false;
   }
 }
 ```
@@ -476,6 +670,9 @@ async function continuousImprovement() {
 ### Workflow 3: Self-Debugging & Recovery
 
 ```typescript
+// Import required utilities (these would need to be implemented)
+import { createSnapshot, restoreSnapshot, applyFix, requestHumanIntervention } from './utils/recovery';
+
 // Monitor Director for errors and auto-fix
 director.on('error', async (error) => {
   // 1. Analyze error with AI
