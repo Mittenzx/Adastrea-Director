@@ -5,9 +5,17 @@ import threading
 import sys
 import os
 import json
+import socket
 import tempfile
 from datetime import datetime
 from pathlib import Path
+
+# Try to import psutil for system health monitoring (optional dependency)
+try:
+    import psutil
+    PSUTIL_AVAILABLE = True
+except ImportError:
+    PSUTIL_AVAILABLE = False
 
 # Disable ChromaDB telemetry BEFORE any imports that might import chromadb
 # This prevents "capture() takes 1 positional argument but 3 were given" errors
@@ -414,6 +422,12 @@ class AdastreaDirectorApp:
         
         # --- Unreal MCP Tab ---
         self.create_unreal_mcp_tab()
+        
+        # --- Status Dashboard Tab ---
+        self.create_status_dashboard_tab()
+        
+        # --- Servers Tab ---
+        self.create_servers_tab()
 
         # --- Query Input Area (Card-based design) ---
         query_card = tk.Frame(main_frame, bg=self.bg_tertiary, highlightthickness=1,
@@ -915,6 +929,50 @@ class AdastreaDirectorApp:
         self.create_tooltip(remote_tests_btn, "Run remote control API tests")
         self.add_button_hover_effect(remote_tests_btn)
         
+        # Row 4: MCP Tests
+        mcp_tests_btn = tk.Button(
+            button_grid,
+            text="🎮 MCP Tests",
+            command=lambda: self.run_test_suite("mcp"),
+            **test_button_style
+        )
+        mcp_tests_btn.grid(row=4, column=0, sticky=tk.EW, padx=5, pady=5)
+        self.create_tooltip(mcp_tests_btn, "Run MCP server tests")
+        self.add_button_hover_effect(mcp_tests_btn)
+        
+        # Row 4: GUI Tests
+        gui_tests_btn = tk.Button(
+            button_grid,
+            text="🖥️ GUI Tests",
+            command=lambda: self.run_test_suite("gui"),
+            **test_button_style
+        )
+        gui_tests_btn.grid(row=4, column=1, sticky=tk.EW, padx=5, pady=5)
+        self.create_tooltip(gui_tests_btn, "Run GUI component tests")
+        self.add_button_hover_effect(gui_tests_btn)
+        
+        # Row 5: Check Compatibility
+        compat_btn = tk.Button(
+            button_grid,
+            text="🔍 Check Compatibility",
+            command=lambda: self.run_test_suite("compatibility"),
+            **test_button_style
+        )
+        compat_btn.grid(row=5, column=0, sticky=tk.EW, padx=5, pady=5)
+        self.create_tooltip(compat_btn, "Check system compatibility")
+        self.add_button_hover_effect(compat_btn)
+        
+        # Row 5: Install Dependencies
+        install_btn = tk.Button(
+            button_grid,
+            text="📦 Install Dependencies",
+            command=lambda: self.run_test_suite("install"),
+            **test_button_style
+        )
+        install_btn.grid(row=5, column=1, sticky=tk.EW, padx=5, pady=5)
+        self.create_tooltip(install_btn, "Run dependency installation script")
+        self.add_button_hover_effect(install_btn)
+        
         # Configure grid weights for equal column sizing
         button_grid.columnconfigure(0, weight=1)
         button_grid.columnconfigure(1, weight=1)
@@ -981,7 +1039,8 @@ class AdastreaDirectorApp:
         # Store button references for later access
         self.test_buttons = [
             all_tests_btn, plugin_tests_btn, unit_tests_btn,
-            integration_tests_btn, phase3_tests_btn, validation_btn, remote_tests_btn
+            integration_tests_btn, phase3_tests_btn, validation_btn, remote_tests_btn,
+            mcp_tests_btn, gui_tests_btn, compat_btn, install_btn
         ]
         
         paned_window.add(output_frame, weight=1)
@@ -1819,6 +1878,923 @@ class AdastreaDirectorApp:
         self.ingestion_log.insert(tk.END, f"{message}\n", level)
         self.ingestion_log.see(tk.END)
         self.ingestion_log.config(state=tk.DISABLED)
+    
+    def create_status_dashboard_tab(self):
+        """Create the Status Dashboard tab showing connection and service status."""
+        status_tab = tk.Frame(self.notebook, bg=self.bg_tertiary)
+        self.notebook.add(status_tab, text="📊 Status")
+        
+        # Header section
+        status_header = tk.Frame(status_tab, bg=self.bg_tertiary, padx=15, pady=10)
+        status_header.pack(fill=tk.X)
+        
+        status_label = tk.Label(
+            status_header,
+            text="📊 System Status Dashboard",
+            font=("Segoe UI", 11, "bold"),
+            bg=self.bg_tertiary,
+            fg=self.fg_color
+        )
+        status_label.pack(side=tk.LEFT)
+        
+        # Refresh button
+        refresh_status_button = tk.Button(
+            status_header,
+            text="🔄 Refresh All",
+            command=self.refresh_all_status,
+            font=("Segoe UI", 9),
+            bg=self.button_bg,
+            fg=self.fg_color,
+            activebackground=self.button_hover,
+            activeforeground=self.fg_color,
+            relief=tk.FLAT,
+            padx=15,
+            pady=6,
+            cursor="hand2",
+            borderwidth=1,
+            highlightthickness=1,
+            highlightbackground=self.button_bg
+        )
+        refresh_status_button.pack(side=tk.RIGHT)
+        self.create_tooltip(refresh_status_button, "Refresh all status indicators")
+        self.add_button_hover_effect(refresh_status_button)
+        
+        # Separator line
+        separator_line = tk.Frame(status_tab, height=1, bg=self.border_color)
+        separator_line.pack(fill=tk.X)
+        
+        # Main content area with scrollable frame
+        content_frame = tk.Frame(status_tab, bg=self.bg_tertiary)
+        content_frame.pack(fill=tk.BOTH, expand=True, padx=15, pady=15)
+        
+        # Create a canvas with scrollbar for status cards
+        canvas = tk.Canvas(content_frame, bg=self.bg_tertiary, highlightthickness=0)
+        scrollbar = ttk.Scrollbar(content_frame, orient="vertical", command=canvas.yview)
+        scrollable_frame = tk.Frame(canvas, bg=self.bg_tertiary)
+        
+        scrollable_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
+        
+        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
+        
+        canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        
+        # --- VS Code Extension Status Card ---
+        self._create_status_card(
+            scrollable_frame,
+            "VS Code Extension",
+            "🔌",
+            [
+                ("Connection", "vscode_connection"),
+                ("Version", "vscode_version"),
+                ("IPC Port", "vscode_port"),
+                ("Auto-Connect", "vscode_autoconnect")
+            ]
+        )
+        
+        # --- Unreal Engine Plugin Status Card ---
+        self._create_status_card(
+            scrollable_frame,
+            "Unreal Engine Plugin",
+            "🎮",
+            [
+                ("Connection", "ue_connection"),
+                ("Remote Execution", "ue_remote_exec"),
+                ("Python Plugin", "ue_python_plugin"),
+                ("MCP Server", "ue_mcp_server")
+            ]
+        )
+        
+        # --- Python Backend Services Card ---
+        self._create_status_card(
+            scrollable_frame,
+            "Backend Services",
+            "⚙️",
+            [
+                ("Agent Orchestrator", "agent_orchestrator"),
+                ("Agent Dashboard", "agent_dashboard"),
+                ("MCP Server", "mcp_server"),
+                ("RAG System", "rag_system")
+            ]
+        )
+        
+        # --- API Configuration Card ---
+        self._create_status_card(
+            scrollable_frame,
+            "API Configuration",
+            "🔑",
+            [
+                ("LLM Provider", "llm_provider"),
+                ("Gemini API Key", "gemini_key"),
+                ("OpenAI API Key", "openai_key"),
+                ("Embedding Provider", "embedding_provider")
+            ]
+        )
+        
+        # --- System Health Card ---
+        self._create_status_card(
+            scrollable_frame,
+            "System Health",
+            "💚",
+            [
+                ("CPU Usage", "cpu_usage"),
+                ("Memory Usage", "memory_usage"),
+                ("Disk Space", "disk_space"),
+                ("Python Version", "python_version")
+            ]
+        )
+        
+        # Initialize status dictionary
+        self.status_labels = {}
+        
+        # Initial status check
+        self.root.after(500, self.refresh_all_status)
+    
+    def _create_status_card(self, parent, title, icon, fields):
+        """Create a status card with specified fields."""
+        card = tk.Frame(parent, bg=self.bg_secondary, highlightthickness=1,
+                       highlightbackground=self.border_color)
+        card.pack(fill=tk.X, pady=(0, 10))
+        
+        card_inner = tk.Frame(card, bg=self.bg_secondary, padx=15, pady=12)
+        card_inner.pack(fill=tk.X)
+        
+        # Card header
+        header = tk.Label(
+            card_inner,
+            text=f"{icon} {title}",
+            font=("Segoe UI", 10, "bold"),
+            bg=self.bg_secondary,
+            fg=self.accent_color,
+            anchor=tk.W
+        )
+        header.pack(fill=tk.X, pady=(0, 10))
+        
+        # Create field rows
+        for field_name, field_key in fields:
+            row = tk.Frame(card_inner, bg=self.bg_secondary)
+            row.pack(fill=tk.X, pady=2)
+            
+            label = tk.Label(
+                row,
+                text=f"{field_name}:",
+                font=("Segoe UI", 9),
+                bg=self.bg_secondary,
+                fg=self.fg_secondary,
+                anchor=tk.W,
+                width=18
+            )
+            label.pack(side=tk.LEFT)
+            
+            value_label = tk.Label(
+                row,
+                text="Checking...",
+                font=("Segoe UI", 9),
+                bg=self.bg_secondary,
+                fg=self.fg_muted,
+                anchor=tk.W
+            )
+            value_label.pack(side=tk.LEFT, fill=tk.X, expand=True)
+            
+            # Store reference for updates
+            self.status_labels[field_key] = value_label
+    
+    def refresh_all_status(self):
+        """Refresh all status indicators."""
+        self.update_status("Refreshing status...", "busy")
+        
+        # Run status checks in a thread to avoid blocking
+        def check_status():
+            try:
+                # Check VS Code Extension
+                self._check_vscode_extension()
+                
+                # Check Unreal Engine Plugin  
+                self._check_ue_plugin()
+                
+                # Check Backend Services
+                self._check_backend_services()
+                
+                # Check API Configuration
+                self._check_api_config()
+                
+                # Check System Health
+                self._check_system_health()
+                
+                self.root.after(0, lambda: self.update_status("Status refresh complete", "success"))
+            except Exception as e:
+                self.root.after(0, lambda: self.update_status(f"Status refresh error: {e}", "error"))
+        
+        thread = threading.Thread(target=check_status, daemon=True)
+        thread.start()
+    
+    def _check_vscode_extension(self):
+        """Check VS Code Extension status."""
+        # Check if IPC port is listening
+        host = "localhost"
+        port = 5555
+        
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(1)
+            result = sock.connect_ex((host, port))
+            sock.close()
+            
+            if result == 0:
+                self._update_status_label("vscode_connection", "● Connected", self.success_color)
+                self._update_status_label("vscode_port", f"{port}", self.fg_color)
+            else:
+                self._update_status_label("vscode_connection", "● Disconnected", self.error_color)
+                self._update_status_label("vscode_port", f"{port} (not listening)", self.fg_muted)
+        except Exception as e:
+            self._update_status_label("vscode_connection", f"● Error: {e}", self.error_color)
+            self._update_status_label("vscode_port", "N/A", self.fg_muted)
+        
+        # Check for extension files
+        vscode_ext_path = os.path.join(SCRIPT_DIR, "vscode-extension")
+        if os.path.exists(vscode_ext_path):
+            package_json = os.path.join(vscode_ext_path, "package.json")
+            if os.path.exists(package_json):
+                try:
+                    with open(package_json, 'r') as f:
+                        data = json.load(f)
+                        version = data.get('version', 'Unknown')
+                        self._update_status_label("vscode_version", version, self.fg_color)
+                except:
+                    self._update_status_label("vscode_version", "Unknown", self.fg_muted)
+            else:
+                self._update_status_label("vscode_version", "Not found", self.fg_muted)
+        else:
+            self._update_status_label("vscode_version", "Not installed", self.fg_muted)
+        
+        self._update_status_label("vscode_autoconnect", "Configurable in extension settings", self.fg_secondary)
+    
+    def _check_ue_plugin(self):
+        """Check Unreal Engine Plugin status."""
+        # Use MCP connection status
+        if hasattr(self, 'mcp_connected') and self.mcp_connected:
+            self._update_status_label("ue_connection", "● Connected", self.success_color)
+            self._update_status_label("ue_mcp_server", "● Running", self.success_color)
+        else:
+            self._update_status_label("ue_connection", "● Disconnected", self.fg_muted)
+            self._update_status_label("ue_mcp_server", "● Not running", self.fg_muted)
+        
+        # Check for plugin files
+        plugin_path = os.path.join(SCRIPT_DIR, "Plugins", "AdastreaDirector")
+        if os.path.exists(plugin_path):
+            self._update_status_label("ue_remote_exec", "Plugin files present", self.fg_color)
+            self._update_status_label("ue_python_plugin", "Check UE Editor", self.fg_secondary)
+        else:
+            self._update_status_label("ue_remote_exec", "Plugin not found", self.fg_muted)
+            self._update_status_label("ue_python_plugin", "N/A", self.fg_muted)
+    
+    def _check_backend_services(self):
+        """Check Python backend services status."""
+        # Check if various processes are running by looking for their PIDs
+        if not PSUTIL_AVAILABLE:
+            self._update_status_label("agent_orchestrator", "psutil not available", self.fg_muted)
+            self._update_status_label("agent_dashboard", "psutil not available", self.fg_muted)
+            self._update_status_label("mcp_server", "psutil not available", self.fg_muted)
+            # Still check RAG
+            chroma_path = os.path.join(SCRIPT_DIR, "chroma_db")
+            if os.path.exists(chroma_path):
+                self._update_status_label("rag_system", "● Database present", self.success_color)
+            else:
+                self._update_status_label("rag_system", "● No database", self.warning_color)
+            return
+        
+        services = {
+            "agent_orchestrator": "agent_orchestrator_cli.py",
+            "agent_dashboard": "agent_dashboard.py",
+            "mcp_server": "mcp_server",
+        }
+        
+        for service_key, service_name in services.items():
+            found = False
+            try:
+                for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
+                    try:
+                        cmdline = proc.info.get('cmdline', [])
+                        if cmdline and service_name in ' '.join(cmdline):
+                            self._update_status_label(service_key, "● Running", self.success_color)
+                            found = True
+                            break
+                    except (psutil.NoSuchProcess, psutil.AccessDenied):
+                        continue
+            except Exception:
+                pass
+            
+            if not found:
+                self._update_status_label(service_key, "● Stopped", self.fg_muted)
+        
+        # Check RAG system (ChromaDB)
+        chroma_path = os.path.join(SCRIPT_DIR, "chroma_db")
+        if os.path.exists(chroma_path):
+            self._update_status_label("rag_system", "● Database present", self.success_color)
+        else:
+            self._update_status_label("rag_system", "● No database", self.warning_color)
+    
+    def _check_api_config(self):
+        """Check API configuration status."""
+        # Check LLM provider
+        llm_provider = os.getenv("LLM_PROVIDER", "gemini")
+        self._update_status_label("llm_provider", llm_provider.title(), self.fg_color)
+        
+        # Check Gemini API key
+        gemini_key = os.getenv("GEMINI_KEY") or os.getenv("GOOGLE_API_KEY")
+        if gemini_key:
+            self._update_status_label("gemini_key", "● Configured", self.success_color)
+        else:
+            self._update_status_label("gemini_key", "● Not set", self.warning_color)
+        
+        # Check OpenAI API key
+        openai_key = os.getenv("OPENAI_API_KEY")
+        if openai_key:
+            self._update_status_label("openai_key", "● Configured", self.success_color)
+        else:
+            self._update_status_label("openai_key", "● Not set", self.fg_muted)
+        
+        # Check embedding provider
+        embedding_provider = os.getenv("EMBEDDING_PROVIDER", "huggingface")
+        self._update_status_label("embedding_provider", embedding_provider.title(), self.fg_color)
+    
+    def _check_system_health(self):
+        """Check system health metrics."""
+        if not PSUTIL_AVAILABLE:
+            self._update_status_label("cpu_usage", "psutil not installed", self.fg_muted)
+            self._update_status_label("memory_usage", "psutil not installed", self.fg_muted)
+            self._update_status_label("disk_space", "psutil not installed", self.fg_muted)
+            # Python version still works
+            python_version = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+            self._update_status_label("python_version", python_version, self.fg_color)
+            return
+        
+        try:
+            # CPU usage
+            cpu_percent = psutil.cpu_percent(interval=0.1)
+            cpu_color = self.success_color if cpu_percent < 70 else self.warning_color if cpu_percent < 90 else self.error_color
+            self._update_status_label("cpu_usage", f"{cpu_percent}%", cpu_color)
+            
+            # Memory usage
+            memory = psutil.virtual_memory()
+            mem_percent = memory.percent
+            mem_color = self.success_color if mem_percent < 70 else self.warning_color if mem_percent < 90 else self.error_color
+            self._update_status_label("memory_usage", f"{mem_percent}% ({memory.used // (1024**3)}GB / {memory.total // (1024**3)}GB)", mem_color)
+            
+            # Disk space
+            disk = psutil.disk_usage(SCRIPT_DIR)
+            disk_percent = disk.percent
+            disk_color = self.success_color if disk_percent < 70 else self.warning_color if disk_percent < 90 else self.error_color
+            self._update_status_label("disk_space", f"{disk_percent}% used ({disk.free // (1024**3)}GB free)", disk_color)
+            
+        except Exception as e:
+            self._update_status_label("cpu_usage", f"Error: {e}", self.error_color)
+            self._update_status_label("memory_usage", f"Error: {e}", self.error_color)
+            self._update_status_label("disk_space", f"Error: {e}", self.error_color)
+        
+        # Python version
+        python_version = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+        self._update_status_label("python_version", python_version, self.fg_color)
+    
+    def _update_status_label(self, key, text, color):
+        """Update a status label with thread-safe UI update."""
+        def update():
+            if key in self.status_labels:
+                self.status_labels[key].config(text=text, fg=color)
+        
+        self.root.after(0, update)
+    
+    def create_servers_tab(self):
+        """Create the Servers tab for managing backend servers."""
+        servers_tab = tk.Frame(self.notebook, bg=self.bg_tertiary)
+        self.notebook.add(servers_tab, text="🖥️ Servers")
+        
+        # Header section
+        servers_header = tk.Frame(servers_tab, bg=self.bg_tertiary, padx=15, pady=10)
+        servers_header.pack(fill=tk.X)
+        
+        servers_label = tk.Label(
+            servers_header,
+            text="🖥️ Backend Server Management",
+            font=("Segoe UI", 11, "bold"),
+            bg=self.bg_tertiary,
+            fg=self.fg_color
+        )
+        servers_label.pack(side=tk.LEFT)
+        
+        # Stop All button
+        stop_all_button = tk.Button(
+            servers_header,
+            text="⏹ Stop All",
+            command=self.stop_all_servers,
+            font=("Segoe UI", 9),
+            bg=self.error_color,
+            fg=self.bg_color,
+            activebackground="#ff6b6b",
+            activeforeground=self.bg_color,
+            relief=tk.FLAT,
+            padx=15,
+            pady=6,
+            cursor="hand2",
+            borderwidth=1,
+            highlightthickness=1,
+            highlightbackground=self.error_color
+        )
+        stop_all_button.pack(side=tk.RIGHT, padx=(0, 5))
+        self.create_tooltip(stop_all_button, "Stop all running servers")
+        self.add_button_hover_effect(stop_all_button, hover_color="#ff6b6b")
+        
+        # Clear button
+        clear_server_button = tk.Button(
+            servers_header,
+            text="🗑️ Clear",
+            command=self.clear_server_output,
+            font=("Segoe UI", 9),
+            bg=self.button_bg,
+            fg=self.fg_color,
+            activebackground=self.button_hover,
+            activeforeground=self.fg_color,
+            relief=tk.FLAT,
+            padx=15,
+            pady=6,
+            cursor="hand2",
+            borderwidth=1,
+            highlightthickness=1,
+            highlightbackground=self.button_bg
+        )
+        clear_server_button.pack(side=tk.RIGHT)
+        self.create_tooltip(clear_server_button, "Clear server output")
+        self.add_button_hover_effect(clear_server_button)
+        
+        # Separator line
+        separator_line = tk.Frame(servers_tab, height=1, bg=self.border_color)
+        separator_line.pack(fill=tk.X)
+        
+        # Main content with split panes
+        content_frame = tk.Frame(servers_tab, bg=self.bg_tertiary)
+        content_frame.pack(fill=tk.BOTH, expand=True, padx=15, pady=15)
+        
+        # Use PanedWindow for resizable split
+        paned_window = ttk.PanedWindow(content_frame, orient=tk.VERTICAL)
+        paned_window.pack(fill=tk.BOTH, expand=True)
+        
+        # --- Top Section: Server Controls ---
+        controls_frame = tk.Frame(paned_window, bg=self.bg_tertiary)
+        
+        controls_header = tk.Label(
+            controls_frame,
+            text="🎛️ Server Controls",
+            font=("Segoe UI", 10, "bold"),
+            bg=self.bg_tertiary,
+            fg=self.accent_color,
+            anchor=tk.W
+        )
+        controls_header.pack(fill=tk.X, pady=(0, 10))
+        
+        # Create a grid for server control buttons
+        control_grid = tk.Frame(controls_frame, bg=self.bg_tertiary)
+        control_grid.pack(fill=tk.BOTH, expand=True)
+        
+        # Button style for server buttons
+        server_button_style = {
+            "font": ("Segoe UI", 9),
+            "bg": self.button_bg,
+            "fg": self.fg_color,
+            "activebackground": self.button_hover,
+            "activeforeground": self.fg_color,
+            "relief": tk.FLAT,
+            "padx": 15,
+            "pady": 8,
+            "cursor": "hand2",
+            "borderwidth": 1,
+            "highlightthickness": 1,
+            "highlightbackground": self.button_bg
+        }
+        
+        # Row 0: Agent Orchestrator
+        agent_orch_btn = tk.Button(
+            control_grid,
+            text="▶ Agent Orchestrator",
+            command=lambda: self.start_server("agent_orchestrator"),
+            **server_button_style
+        )
+        agent_orch_btn.grid(row=0, column=0, sticky=tk.EW, padx=5, pady=5)
+        self.create_tooltip(agent_orch_btn, "Start Agent Orchestrator CLI")
+        self.add_button_hover_effect(agent_orch_btn)
+        
+        agent_orch_stop_btn = tk.Button(
+            control_grid,
+            text="⏹",
+            command=lambda: self.stop_server("agent_orchestrator"),
+            font=("Segoe UI", 9),
+            bg=self.error_color,
+            fg=self.bg_color,
+            activebackground="#ff6b6b",
+            activeforeground=self.bg_color,
+            relief=tk.FLAT,
+            padx=10,
+            pady=8,
+            cursor="hand2",
+            width=3
+        )
+        agent_orch_stop_btn.grid(row=0, column=1, padx=(0, 5), pady=5)
+        self.create_tooltip(agent_orch_stop_btn, "Stop Agent Orchestrator")
+        self.add_button_hover_effect(agent_orch_stop_btn, hover_color="#ff6b6b")
+        
+        # Row 1: Agent Dashboard
+        agent_dash_btn = tk.Button(
+            control_grid,
+            text="▶ Agent Dashboard",
+            command=lambda: self.start_server("agent_dashboard"),
+            **server_button_style
+        )
+        agent_dash_btn.grid(row=1, column=0, sticky=tk.EW, padx=5, pady=5)
+        self.create_tooltip(agent_dash_btn, "Start Agent Dashboard UI")
+        self.add_button_hover_effect(agent_dash_btn)
+        
+        agent_dash_stop_btn = tk.Button(
+            control_grid,
+            text="⏹",
+            command=lambda: self.stop_server("agent_dashboard"),
+            font=("Segoe UI", 9),
+            bg=self.error_color,
+            fg=self.bg_color,
+            activebackground="#ff6b6b",
+            activeforeground=self.bg_color,
+            relief=tk.FLAT,
+            padx=10,
+            pady=8,
+            cursor="hand2",
+            width=3
+        )
+        agent_dash_stop_btn.grid(row=1, column=1, padx=(0, 5), pady=5)
+        self.create_tooltip(agent_dash_stop_btn, "Stop Agent Dashboard")
+        self.add_button_hover_effect(agent_dash_stop_btn, hover_color="#ff6b6b")
+        
+        # Row 2: MCP Server
+        mcp_server_btn = tk.Button(
+            control_grid,
+            text="▶ MCP Server",
+            command=lambda: self.start_server("mcp_server"),
+            **server_button_style
+        )
+        mcp_server_btn.grid(row=2, column=0, sticky=tk.EW, padx=5, pady=5)
+        self.create_tooltip(mcp_server_btn, "Start Unreal MCP Server")
+        self.add_button_hover_effect(mcp_server_btn)
+        
+        mcp_server_stop_btn = tk.Button(
+            control_grid,
+            text="⏹",
+            command=lambda: self.stop_server("mcp_server"),
+            font=("Segoe UI", 9),
+            bg=self.error_color,
+            fg=self.bg_color,
+            activebackground="#ff6b6b",
+            activeforeground=self.bg_color,
+            relief=tk.FLAT,
+            padx=10,
+            pady=8,
+            cursor="hand2",
+            width=3
+        )
+        mcp_server_stop_btn.grid(row=2, column=1, padx=(0, 5), pady=5)
+        self.create_tooltip(mcp_server_stop_btn, "Stop MCP Server")
+        self.add_button_hover_effect(mcp_server_stop_btn, hover_color="#ff6b6b")
+        
+        # Row 3: Demo Scripts Section Header
+        demo_header = tk.Label(
+            control_grid,
+            text="Demo Scripts",
+            font=("Segoe UI", 9, "bold"),
+            bg=self.bg_tertiary,
+            fg=self.fg_secondary,
+            anchor=tk.W
+        )
+        demo_header.grid(row=3, column=0, columnspan=2, sticky=tk.EW, padx=5, pady=(10, 5))
+        
+        # Row 4: Phase 3 Demo
+        phase3_demo_btn = tk.Button(
+            control_grid,
+            text="▶ Phase 3 Demo",
+            command=lambda: self.start_server("phase3_demo"),
+            **server_button_style
+        )
+        phase3_demo_btn.grid(row=4, column=0, sticky=tk.EW, padx=5, pady=5)
+        self.create_tooltip(phase3_demo_btn, "Run Phase 3 Orchestrator Demo")
+        self.add_button_hover_effect(phase3_demo_btn)
+        
+        phase3_demo_stop_btn = tk.Button(
+            control_grid,
+            text="⏹",
+            command=lambda: self.stop_server("phase3_demo"),
+            font=("Segoe UI", 9),
+            bg=self.error_color,
+            fg=self.bg_color,
+            activebackground="#ff6b6b",
+            activeforeground=self.bg_color,
+            relief=tk.FLAT,
+            padx=10,
+            pady=8,
+            cursor="hand2",
+            width=3
+        )
+        phase3_demo_stop_btn.grid(row=4, column=1, padx=(0, 5), pady=5)
+        self.create_tooltip(phase3_demo_stop_btn, "Stop Phase 3 Demo")
+        self.add_button_hover_effect(phase3_demo_stop_btn, hover_color="#ff6b6b")
+        
+        # Configure grid weights for proper column sizing
+        control_grid.columnconfigure(0, weight=1)
+        control_grid.columnconfigure(1, weight=0)
+        
+        paned_window.add(controls_frame, weight=0)
+        
+        # --- Bottom Section: Server Output ---
+        output_frame = tk.Frame(paned_window, bg=self.bg_tertiary)
+        
+        output_header_frame = tk.Frame(output_frame, bg=self.bg_tertiary)
+        output_header_frame.pack(fill=tk.X, pady=(0, 5))
+        
+        output_header = tk.Label(
+            output_header_frame,
+            text="📊 Server Output",
+            font=("Segoe UI", 10, "bold"),
+            bg=self.bg_tertiary,
+            fg=self.accent_color,
+            anchor=tk.W
+        )
+        output_header.pack(side=tk.LEFT)
+        
+        # Server status label
+        self.server_status_label = tk.Label(
+            output_header_frame,
+            text="Ready",
+            font=("Segoe UI", 9),
+            bg=self.bg_tertiary,
+            fg=self.fg_muted,
+            anchor=tk.W
+        )
+        self.server_status_label.pack(side=tk.RIGHT)
+        
+        # Server output with scrollbar
+        output_text_frame = tk.Frame(output_frame, bg=self.text_bg, 
+                                     highlightthickness=1, highlightbackground=self.border_color)
+        output_text_frame.pack(fill=tk.BOTH, expand=True)
+        
+        self.server_output = scrolledtext.ScrolledText(
+            output_text_frame,
+            wrap=tk.WORD,
+            height=15,
+            state=tk.DISABLED,
+            bg=self.text_bg,
+            fg=self.fg_color,
+            font=("Consolas", 9),
+            relief=tk.FLAT,
+            padx=10,
+            pady=10,
+            selectbackground=self.highlight_bg,
+            selectforeground=self.fg_color,
+            borderwidth=0
+        )
+        self.server_output.pack(fill=tk.BOTH, expand=True)
+        
+        # Configure server output tags
+        self.server_output.tag_config("header", foreground=self.accent_color, font=("Consolas", 10, "bold"))
+        self.server_output.tag_config("success", foreground=self.success_color, font=("Consolas", 9))
+        self.server_output.tag_config("error", foreground=self.error_color, font=("Consolas", 9))
+        self.server_output.tag_config("warning", foreground=self.warning_color, font=("Consolas", 9))
+        self.server_output.tag_config("info", foreground=self.fg_secondary, font=("Consolas", 9))
+        self.server_output.tag_config("command", foreground=self.fg_muted, font=("Consolas", 8, "italic"))
+        
+        paned_window.add(output_frame, weight=1)
+        
+        # Initialize server process tracking
+        self.server_processes = {}
+        self.server_process_lock = threading.Lock()
+        
+        # Add initial message
+        self.server_output.config(state=tk.NORMAL)
+        self.server_output.insert(tk.END, "🖥️ Server Management\n\n", "header")
+        self.server_output.insert(tk.END, "Click a server button above to start services.\n", "info")
+        self.server_output.insert(tk.END, "Output from running servers will appear here.\n", "info")
+        self.server_output.config(state=tk.DISABLED)
+    
+    def start_server(self, server_type):
+        """Start a backend server."""
+        # Check if already running (thread-safe)
+        with self.server_process_lock:
+            if server_type in self.server_processes and self.server_processes[server_type] is not None:
+                if self.server_processes[server_type].poll() is None:
+                    messagebox.showwarning("Server Running", f"{server_type} is already running.")
+                    return
+        
+        # Map server types to commands
+        server_commands = {
+            "agent_orchestrator": [PYTHON_EXECUTABLE, "agent_orchestrator_cli.py", "start", "--all"],
+            "agent_dashboard": [PYTHON_EXECUTABLE, "agent_dashboard.py", "--auto-start"],
+            "mcp_server": [PYTHON_EXECUTABLE, "-m", "mcp_server.server"],
+            "phase3_demo": [PYTHON_EXECUTABLE, "phase3_demo.py"],
+        }
+        
+        if server_type not in server_commands:
+            messagebox.showerror("Error", f"Unknown server type: {server_type}")
+            return
+        
+        command = server_commands[server_type]
+        server_name = {
+            "agent_orchestrator": "Agent Orchestrator",
+            "agent_dashboard": "Agent Dashboard",
+            "mcp_server": "MCP Server",
+            "phase3_demo": "Phase 3 Demo",
+        }[server_type]
+        
+        # Add header to output
+        self.server_output.config(state=tk.NORMAL)
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        self.server_output.insert(tk.END, f"\n{'='*60}\n", "info")
+        self.server_output.insert(tk.END, f"🖥️ Starting: {server_name}\n", "header")
+        self.server_output.insert(tk.END, f"Started: {timestamp}\n", "info")
+        self.server_output.insert(tk.END, f"Command: {' '.join(command)}\n\n", "command")
+        self.server_output.config(state=tk.DISABLED)
+        
+        # Update status
+        self.server_status_label.config(text=f"Starting: {server_name}", fg=self.accent_color)
+        
+        # Run server in thread
+        thread = threading.Thread(target=self._run_server_command, args=(command, server_name, server_type), daemon=True)
+        thread.start()
+    
+    def _run_server_command(self, command, server_name, server_type):
+        """Execute server command and stream output."""
+        process = None
+        try:
+            kwargs = {
+                'stdout': subprocess.PIPE,
+                'stderr': subprocess.STDOUT,
+                'text': True,
+                'cwd': SCRIPT_DIR,
+                'bufsize': 1
+            }
+            
+            if sys.platform == 'win32' and hasattr(subprocess, 'CREATE_NO_WINDOW'):
+                kwargs['creationflags'] = subprocess.CREATE_NO_WINDOW
+            
+            # Start the process (thread-safe)
+            process = subprocess.Popen(command, **kwargs)
+            with self.server_process_lock:
+                self.server_processes[server_type] = process
+            
+            # Update status
+            self.root.after(0, lambda: self.server_status_label.config(
+                text=f"Running: {server_name}", fg=self.success_color))
+            
+            # Stream output
+            try:
+                for line in iter(process.stdout.readline, ''):
+                    if line:
+                        self.root.after(0, self._append_server_output, line)
+            except Exception as read_error:
+                self.root.after(0, self._append_server_output, f"\nWarning: Error reading output: {read_error}\n")
+            finally:
+                if process.stdout:
+                    process.stdout.close()
+            
+            # Wait for process to complete
+            process.wait()
+            returncode = process.returncode
+            
+            # Update UI with results
+            self.root.after(0, self._finalize_server_results, returncode, server_name, server_type)
+            
+        except Exception as e:
+            self.root.after(0, self._show_server_error, str(e), server_name, server_type)
+        finally:
+            # Ensure process cleanup (thread-safe)
+            if process and process.poll() is None:
+                try:
+                    process.terminate()
+                except Exception:
+                    pass
+            with self.server_process_lock:
+                if server_type in self.server_processes:
+                    self.server_processes[server_type] = None
+    
+    def _append_server_output(self, line):
+        """Append a line to server output."""
+        self.server_output.config(state=tk.NORMAL)
+        # Determine tag based on content
+        line_lower = line.lower()
+        if "error" in line_lower or "failed" in line_lower:
+            tag = "error"
+        elif "warning" in line_lower or "warn" in line_lower:
+            tag = "warning"
+        elif "success" in line_lower or "started" in line_lower:
+            tag = "success"
+        else:
+            tag = "info"
+        
+        self.server_output.insert(tk.END, line, tag)
+        self.server_output.see(tk.END)
+        self.server_output.config(state=tk.DISABLED)
+    
+    def _finalize_server_results(self, returncode, server_name, server_type):
+        """Display final server results."""
+        self.server_output.config(state=tk.NORMAL)
+        
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        self.server_output.insert(tk.END, f"\n{'='*60}\n", "info")
+        self.server_output.insert(tk.END, f"Stopped: {timestamp}\n", "info")
+        
+        if returncode == 0:
+            self.server_output.insert(tk.END, f"✅ {server_name} exited normally\n", "success")
+        else:
+            self.server_output.insert(tk.END, f"❌ {server_name} exited with code: {returncode}\n", "error")
+        
+        self.server_output.config(state=tk.DISABLED)
+        self.server_output.see(tk.END)
+        
+        self.server_status_label.config(text="Ready", fg=self.fg_muted)
+    
+    def _show_server_error(self, error_msg, server_name, server_type):
+        """Show error when server execution fails."""
+        self.server_output.config(state=tk.NORMAL)
+        self.server_output.insert(tk.END, f"\n❌ Error running {server_name}:\n", "error")
+        self.server_output.insert(tk.END, f"{error_msg}\n", "error")
+        self.server_output.config(state=tk.DISABLED)
+        self.server_output.see(tk.END)
+        
+        self.server_status_label.config(text="Error", fg=self.error_color)
+    
+    def stop_server(self, server_type):
+        """Stop a specific server."""
+        with self.server_process_lock:
+            process = self.server_processes.get(server_type)
+            
+        if process and process.poll() is None:
+            try:
+                process.terminate()
+                try:
+                    process.wait(timeout=3)
+                except subprocess.TimeoutExpired:
+                    process.kill()
+                    process.wait()
+                
+                self.server_output.config(state=tk.NORMAL)
+                self.server_output.insert(tk.END, f"\n⏹ {server_type} stopped by user\n", "warning")
+                self.server_output.config(state=tk.DISABLED)
+                self.server_output.see(tk.END)
+                
+                with self.server_process_lock:
+                    self.server_processes[server_type] = None
+                    
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to stop {server_type}: {e}")
+        else:
+            messagebox.showinfo("Not Running", f"{server_type} is not currently running.")
+    
+    def stop_all_servers(self):
+        """Stop all running servers."""
+        with self.server_process_lock:
+            running_servers = [(name, proc) for name, proc in self.server_processes.items() 
+                             if proc is not None and proc.poll() is None]
+        
+        if not running_servers:
+            messagebox.showinfo("No Servers", "No servers are currently running.")
+            return
+        
+        for server_name, process in running_servers:
+            try:
+                process.terminate()
+                try:
+                    process.wait(timeout=3)
+                except subprocess.TimeoutExpired:
+                    process.kill()
+                    process.wait()
+            except Exception:
+                pass
+        
+        with self.server_process_lock:
+            self.server_processes.clear()
+        
+        self.server_output.config(state=tk.NORMAL)
+        self.server_output.insert(tk.END, f"\n⏹ All servers stopped\n", "warning")
+        self.server_output.config(state=tk.DISABLED)
+        self.server_output.see(tk.END)
+        
+        self.server_status_label.config(text="Ready", fg=self.fg_muted)
+    
+    def clear_server_output(self):
+        """Clear the server output display."""
+        self.server_output.config(state=tk.NORMAL)
+        self.server_output.delete(1.0, tk.END)
+        self.server_output.insert(tk.END, "🖥️ Server Management\n\n", "header")
+        self.server_output.insert(tk.END, "Click a server button above to start services.\n", "info")
+        self.server_output.insert(tk.END, "Output from running servers will appear here.\n", "info")
+        self.server_output.config(state=tk.DISABLED)
+        self.server_status_label.config(text="Ready", fg=self.fg_muted)
     
     def create_menu_bar(self):
         """Create the application menu bar with dark theme styling."""
@@ -3013,7 +3989,11 @@ GitHub: Mittenzx/Adastrea-Director
             "integration": [PYTHON_EXECUTABLE, "-m", "pytest", "-v", "tests/integration/", "--tb=short"],
             "phase3": [PYTHON_EXECUTABLE, "-m", "pytest", "-v", "tests/phase3/", "--tb=short"],
             "validation": [PYTHON_EXECUTABLE, "validate_requirements.py"],
-            "remote": [PYTHON_EXECUTABLE, "-m", "pytest", "-v", "tests/remote_control/", "--tb=short"]
+            "remote": [PYTHON_EXECUTABLE, "-m", "pytest", "-v", "tests/remote_control/", "--tb=short"],
+            "mcp": [PYTHON_EXECUTABLE, "-m", "pytest", "-v", "tests/mcp_server/", "--tb=short"],
+            "gui": [PYTHON_EXECUTABLE, "-m", "pytest", "-v", "tests/test_gui_director.py", "--tb=short"],
+            "compatibility": [PYTHON_EXECUTABLE, "check_compatibility.py"],
+            "install": [PYTHON_EXECUTABLE, "install_dependencies.py"]
         }
         
         if test_type not in test_commands:
@@ -3028,7 +4008,11 @@ GitHub: Mittenzx/Adastrea-Director
             "integration": "Integration Tests",
             "phase3": "Phase 3 Tests",
             "validation": "Validation Scripts",
-            "remote": "Remote Control Tests"
+            "remote": "Remote Control Tests",
+            "mcp": "MCP Tests",
+            "gui": "GUI Tests",
+            "compatibility": "Compatibility Check",
+            "install": "Install Dependencies"
         }[test_type]
         
         # Clear previous output
