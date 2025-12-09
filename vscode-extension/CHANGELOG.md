@@ -5,6 +5,44 @@ All notable changes to the Adastrea Director VS Code extension will be documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2024-12-09
+
+### Added
+
+#### Debug Mode
+- Comprehensive debug mode with verbose logging
+- `Director: Toggle Debug Mode` command
+- `Director: Run Connection Diagnostics` command
+- Separate "Adastrea Director - Debug" output channel
+- Detailed logging of connection attempts, socket operations, and state changes
+- Error logging with stack traces
+- Request/response tracking with IDs and timing
+
+#### Diagnostics
+- `getDiagnostics()` method providing complete system information
+- System information (platform, Node version, VS Code version)
+- Extension configuration snapshot
+- Client state details (connection status, pending requests)
+- Socket information (addresses, ports, bytes transferred, ready state)
+- Network connectivity testing
+- Health check integration
+- Troubleshooting recommendations
+
+#### Enhanced Logging
+- Timestamped log entries
+- Log levels (info, warning, error, debug)
+- Structured log details with JSON formatting
+- Socket event tracking (connect, data, error, close, timeout)
+- Request lifecycle tracking
+
+#### Configuration
+- `director.debugMode` - Enable/disable debug mode (default: false)
+
+### Changed
+- IPC client now supports debug mode configuration
+- Enhanced error messages with more context
+- Connection attempts now log detailed socket information
+
 ## [0.1.0] - 2024-12-09
 
 ### Added

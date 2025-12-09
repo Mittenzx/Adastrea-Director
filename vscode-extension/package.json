@@ -21,7 +21,9 @@
     "onCommand:director.connect",
     "onCommand:director.disconnect",
     "onCommand:director.askQuestion",
-    "onCommand:director.checkStatus"
+    "onCommand:director.checkStatus",
+    "onCommand:director.toggleDebugMode",
+    "onCommand:director.runDiagnostics"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -41,6 +43,14 @@
       {
         "command": "director.checkStatus",
         "title": "Director: Check Connection Status"
+      },
+      {
+        "command": "director.toggleDebugMode",
+        "title": "Director: Toggle Debug Mode"
+      },
+      {
+        "command": "director.runDiagnostics",
+        "title": "Director: Run Connection Diagnostics"
       }
     ],
     "configuration": {
@@ -75,6 +85,11 @@
           "type": "number",
           "default": 30000,
           "description": "Request timeout in milliseconds"
+        },
+        "director.debugMode": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable debug mode with verbose logging and diagnostics"
         }
       }
     }

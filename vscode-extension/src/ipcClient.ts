@@ -32,6 +32,14 @@ export interface ConnectionConfig {
     reconnectInterval?: number;
     maxReconnectAttempts?: number;
     requestTimeout?: number;  // Request timeout in milliseconds (default: 30000)
+    debugMode?: boolean;  // Enable debug logging (default: false)
+}
+
+export interface DebugInfo {
+    timestamp: string;
+    level: 'info' | 'warning' | 'error' | 'debug';
+    message: string;
+    details?: any;
 }
 
 export type ConnectionState = 'disconnected' | 'connecting' | 'connected' | 'error';
@@ -52,6 +60,7 @@ export class DirectorIPCClient {
     // Event handlers
     public onStateChange: ((state: ConnectionState) => void) | null = null;
     public onError: ((error: Error) => void) | null = null;
+    public onDebugLog: ((info: DebugInfo) => void) | null = null;
 
     constructor(config: ConnectionConfig) {
         this.config = {
@@ -59,8 +68,38 @@ export class DirectorIPCClient {
             port: config.port,
             reconnectInterval: config.reconnectInterval ?? 5000,
             maxReconnectAttempts: config.maxReconnectAttempts ?? 3,
-            requestTimeout: config.requestTimeout ?? 30000
+            requestTimeout: config.requestTimeout ?? 30000,
+            debugMode: config.debugMode ?? false
         };
+    }
+
+    /**
+     * Enable or disable debug mode
+     */
+    public setDebugMode(enabled: boolean): void {
+        this.config.debugMode = enabled;
+        this.debugLog('info', `Debug mode ${enabled ? 'enabled' : 'disabled'}`);
+    }
+
+    /**
+     * Get debug mode status
+     */
+    public isDebugMode(): boolean {
+        return this.config.debugMode;
+    }
+
+    /**
+     * Log debug information
+     */
+    private debugLog(level: 'info' | 'warning' | 'error' | 'debug', message: string, details?: any): void {
+        if (this.config.debugMode && this.onDebugLog) {
+            this.onDebugLog({
+                timestamp: new Date().toISOString(),
+                level,
+                message,
+                details
+            });
+        }
     }
 
     /**
@@ -82,15 +121,36 @@ export class DirectorIPCClient {
      */
     public async connect(): Promise<void> {
         if (this.state === 'connected' || this.state === 'connecting') {
+            this.debugLog('warning', 'Connect called but already connected or connecting', {
+                currentState: this.state
+            });
             return;
         }
+
+        this.debugLog('info', 'Starting connection attempt', {
+            host: this.config.host,
+            port: this.config.port,
+            reconnectInterval: this.config.reconnectInterval,
+            maxReconnectAttempts: this.config.maxReconnectAttempts,
+            requestTimeout: this.config.requestTimeout
+        });
 
         this.setState('connecting');
 
         return new Promise((resolve, reject) => {
             this.socket = new net.Socket();
 
+            // Set socket options for better debugging
+            this.socket.setKeepAlive(true, 5000);
+            this.socket.setTimeout(this.config.requestTimeout);
+
             this.socket.on('connect', () => {
+                this.debugLog('info', 'Socket connected successfully', {
+                    localAddress: this.socket?.localAddress,
+                    localPort: this.socket?.localPort,
+                    remoteAddress: this.socket?.remoteAddress,
+                    remotePort: this.socket?.remotePort
+                });
                 this.setState('connected');
                 this.reconnectAttempts = 0;
                 this.clearReconnectTimer();
@@ -98,10 +158,19 @@ export class DirectorIPCClient {
             });
 
             this.socket.on('data', (data) => {
+                this.debugLog('debug', 'Received data from server', {
+                    length: data.length,
+                    preview: data.toString('utf-8').substring(0, 100)
+                });
                 this.handleData(data);
             });
 
             this.socket.on('error', (error) => {
+                this.debugLog('error', 'Socket error occurred', {
+                    errorCode: (error as any).code,
+                    errorMessage: error.message,
+                    errorStack: error.stack
+                });
                 this.handleError(error);
                 if (this.state === 'connecting') {
                     reject(error);
@@ -109,7 +178,17 @@ export class DirectorIPCClient {
             });
 
             this.socket.on('close', () => {
+                this.debugLog('info', 'Socket closed');
                 this.handleClose();
+            });
+
+            this.socket.on('timeout', () => {
+                this.debugLog('warning', 'Socket timeout occurred');
+            });
+
+            this.debugLog('debug', 'Attempting to connect socket', {
+                host: this.config.host,
+                port: this.config.port
             });
 
             this.socket.connect(this.config.port, this.config.host);
@@ -141,11 +220,22 @@ export class DirectorIPCClient {
      */
     public async request(type: string, data: string = ''): Promise<IPCResponse> {
         if (!this.isConnected()) {
+            this.debugLog('error', 'Request attempted while not connected', {
+                type,
+                currentState: this.state
+            });
             throw new Error('Not connected to Director IPC server');
         }
 
         const requestObj: IPCRequest = { type, data };
         const requestStr = JSON.stringify(requestObj) + '\n';
+
+        this.debugLog('debug', 'Sending request', {
+            type,
+            dataLength: data.length,
+            requestId: this.requestId,
+            pendingRequestsCount: this.pendingRequests.size
+        });
 
         return new Promise((resolve, reject) => {
             const id = this.requestId++;
@@ -153,6 +243,11 @@ export class DirectorIPCClient {
 
             // Set timeout for request
             const timeout = setTimeout(() => {
+                this.debugLog('warning', 'Request timeout', {
+                    type,
+                    requestId: id,
+                    timeout: this.config.requestTimeout
+                });
                 this.pendingRequests.delete(id);
                 reject(new Error('Request timeout'));
             }, this.config.requestTimeout);
@@ -160,12 +255,27 @@ export class DirectorIPCClient {
             try {
                 this.socket!.write(requestStr, (error) => {
                     if (error) {
+                        this.debugLog('error', 'Failed to write request', {
+                            type,
+                            requestId: id,
+                            error: error.message
+                        });
                         clearTimeout(timeout);
                         this.pendingRequests.delete(id);
                         reject(error);
+                    } else {
+                        this.debugLog('debug', 'Request sent successfully', {
+                            type,
+                            requestId: id
+                        });
                     }
                 });
             } catch (error) {
+                this.debugLog('error', 'Exception while sending request', {
+                    type,
+                    requestId: id,
+                    error: error instanceof Error ? error.message : String(error)
+                });
                 clearTimeout(timeout);
                 this.pendingRequests.delete(id);
                 reject(error);
@@ -211,6 +321,46 @@ export class DirectorIPCClient {
      */
     public async getMetrics(): Promise<IPCResponse> {
         return this.request('metrics', '');
+    }
+
+    /**
+     * Get diagnostic information about the connection
+     */
+    public getDiagnostics(): any {
+        const diagnostics: any = {
+            timestamp: new Date().toISOString(),
+            config: {
+                host: this.config.host,
+                port: this.config.port,
+                reconnectInterval: this.config.reconnectInterval,
+                maxReconnectAttempts: this.config.maxReconnectAttempts,
+                requestTimeout: this.config.requestTimeout,
+                debugMode: this.config.debugMode
+            },
+            state: {
+                currentState: this.state,
+                isConnected: this.isConnected(),
+                reconnectAttempts: this.reconnectAttempts,
+                pendingRequestsCount: this.pendingRequests.size,
+                hasSocket: this.socket !== null
+            }
+        };
+
+        if (this.socket) {
+            diagnostics.socket = {
+                localAddress: this.socket.localAddress,
+                localPort: this.socket.localPort,
+                remoteAddress: this.socket.remoteAddress,
+                remotePort: this.socket.remotePort,
+                readyState: this.socket.readyState,
+                bytesRead: this.socket.bytesRead,
+                bytesWritten: this.socket.bytesWritten,
+                pending: this.socket.pending,
+                destroyed: this.socket.destroyed
+            };
+        }
+
+        return diagnostics;
     }
 
     /**

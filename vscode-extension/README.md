@@ -73,6 +73,8 @@ python Plugins/AdastreaDirector/Python/ipc_server.py --port 5555
 - `Director: Disconnect from Unreal Engine` - Disconnect from the server
 - `Director: Ask Question` - Ask a question to the Director AI
 - `Director: Check Connection Status` - Check the current connection status
+- `Director: Toggle Debug Mode` - Enable/disable verbose debug logging
+- `Director: Run Connection Diagnostics` - Run comprehensive connection diagnostics
 
 ## Configuration
 
@@ -98,6 +100,7 @@ Configure the extension in VS Code settings:
 | `director.reconnectInterval` | number | `5000` | Reconnection interval in milliseconds |
 | `director.maxReconnectAttempts` | number | `3` | Maximum number of reconnection attempts |
 | `director.requestTimeout` | number | `30000` | Request timeout in milliseconds |
+| `director.debugMode` | boolean | `false` | Enable debug mode with verbose logging |
 
 ## Connection Protocol
 
@@ -150,6 +153,84 @@ The extension adds a status bar item showing the connection state:
 - ⚫ **Disconnected** - Not connected
 
 Click the status bar item to check the current status.
+
+## Debug Mode
+
+The extension includes a comprehensive debug mode that provides detailed logging and diagnostics to help troubleshoot connection issues.
+
+### Enabling Debug Mode
+
+**Option 1: Via Command Palette**
+1. Press `Ctrl+Shift+P` (or `Cmd+Shift+P` on Mac)
+2. Run `Director: Toggle Debug Mode`
+3. Debug logs will appear in the "Adastrea Director - Debug" output channel
+
+**Option 2: Via Settings**
+```json
+{
+  "director.debugMode": true
+}
+```
+
+### Debug Features
+
+When debug mode is enabled, the extension provides:
+
+1. **Verbose Logging**: Detailed logs of all operations
+   - Connection attempts with socket details
+   - Request/response tracking
+   - Error details with stack traces
+   - State changes and transitions
+
+2. **Diagnostic Information**:
+   - System information (platform, Node version, VS Code version)
+   - Extension configuration
+   - Client state (connection status, pending requests, etc.)
+   - Socket information (addresses, ports, bytes transferred)
+   - Network connectivity tests
+   - Health check results
+
+3. **Connection Diagnostics**:
+   - Run `Director: Run Connection Diagnostics` to get a comprehensive report
+   - Tests network connectivity to the IPC server
+   - Provides troubleshooting recommendations
+   - All output is logged to the "Adastrea Director" output channel
+
+### Debug Output Channels
+
+The extension creates two output channels:
+
+1. **Adastrea Director** - Normal operation logs and diagnostics
+2. **Adastrea Director - Debug** - Verbose debug logs (only when debug mode is enabled)
+
+### Example Debug Output
+
+```
+[2025-12-09T11:33:01.796Z] ℹ INFO: Starting connection attempt
+  Details: {
+  "host": "localhost",
+  "port": 5555,
+  "reconnectInterval": 2000,
+  "maxReconnectAttempts": 3,
+  "requestTimeout": 30000
+}
+[2025-12-09T11:33:01.805Z] ℹ INFO: Socket connected successfully
+  Details: {
+  "localAddress": "127.0.0.1",
+  "localPort": 50946,
+  "remoteAddress": "127.0.0.1",
+  "remotePort": 5555
+}
+```
+
+### When to Use Debug Mode
+
+Enable debug mode when:
+- Troubleshooting connection issues
+- The extension can't reach the IPC server
+- Experiencing intermittent disconnections
+- Working with GitHub Copilot in VS Code and need detailed connection information
+- Reporting bugs or issues
 
 ## Troubleshooting
 
