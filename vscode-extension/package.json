@@ -2,7 +2,7 @@
   "name": "adastrea-director",
   "displayName": "Adastrea Director",
   "description": "VS Code extension for Adastrea Director - AI-powered game development assistant for Unreal Engine",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "publisher": "mittenzx",
   "engines": {
     "vscode": "^1.80.0"
@@ -18,22 +18,43 @@
     "adastrea"
   ],
   "activationEvents": [
-    "onCommand:director.connect",
-    "onCommand:director.disconnect",
-    "onCommand:director.askQuestion",
-    "onCommand:director.checkStatus",
-    "onCommand:director.toggleDebugMode",
-    "onCommand:director.runDiagnostics",
-    "onCommand:director.generateAndApplyCode",
-    "onCommand:director.runTests",
-    "onCommand:director.reviewPendingChanges",
-    "onCommand:director.viewApprovalHistory",
-    "onCommand:director.showFeedbackStats",
-    "onCommand:director.setApprovalThreshold",
-    "onCommand:director.provideFeedback"
+    "onLanguage:cpp",
+    "onLanguage:c",
+    "onStartupFinished"
   ],
   "main": "./out/extension.js",
   "contributes": {
+    "chatParticipants": [
+      {
+        "id": "director.chat",
+        "name": "director",
+        "fullName": "Adastrea Director",
+        "description": "AI-powered game development assistant for Unreal Engine with RAG-based knowledge",
+        "isSticky": true,
+        "commands": [
+          {
+            "name": "ask",
+            "description": "Ask a question about Unreal Engine or your project"
+          },
+          {
+            "name": "plan",
+            "description": "Generate a development plan for a goal"
+          },
+          {
+            "name": "analyze",
+            "description": "Analyze a development goal or task"
+          },
+          {
+            "name": "context",
+            "description": "Get relevant context from Director's RAG system"
+          },
+          {
+            "name": "help",
+            "description": "Show available commands and usage examples"
+          }
+        ]
+      }
+    ],
     "commands": [
       {
         "command": "director.connect",
@@ -142,6 +163,21 @@
           "type": "boolean",
           "default": true,
           "description": "Enable automatic feedback collection for continuous learning"
+        },
+        "director.copilot.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable GitHub Copilot Chat integration (@director participant)"
+        },
+        "director.copilot.enableHoverContext": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show Director context on hover for Unreal Engine symbols"
+        },
+        "director.copilot.enableCodeActions": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable Director code actions (Ask Director, Get Context)"
         }
       }
     }

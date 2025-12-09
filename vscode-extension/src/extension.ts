@@ -12,11 +12,20 @@ import { DirectorIPCClient, ConnectionState } from './ipcClient';
 import { CodeApplicator, CodeModification } from './codeApplicator';
 import { TestExecutor } from './testExecutor';
 import { FeedbackService } from './feedbackService';
+import { initializeCopilotParticipant } from './copilotParticipant';
+import { 
+    registerContextProvider, 
+    registerHoverProvider, 
+    registerCodeActionProvider,
+    DirectorEnhancedContext 
+} from './copilotContextProvider';
 
 let client: DirectorIPCClient | null = null;
 let codeApplicator: CodeApplicator | null = null;
 let testExecutor: TestExecutor | null = null;
 let feedbackService: FeedbackService | null = null;
+let copilotParticipant: vscode.ChatParticipant | null = null;
+let enhancedContext: DirectorEnhancedContext | null = null;
 let statusBarItem: vscode.StatusBarItem;
 let outputChannel: vscode.OutputChannel;
 let debugOutputChannel: vscode.OutputChannel;
@@ -103,6 +112,27 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand('director.provideFeedback', provideFeedback)
     );
 
+    // Register Copilot integration commands
+    context.subscriptions.push(
+        vscode.commands.registerCommand('director.askAboutSelection', askAboutSelection)
+    );
+
+    context.subscriptions.push(
+        vscode.commands.registerCommand('director.getContextForSelection', getContextForSelection)
+    );
+
+    // Initialize Copilot Chat participant
+    const getClientFunc = () => client;
+    copilotParticipant = initializeCopilotParticipant(context, getClientFunc, outputChannel);
+    
+    // Register context providers
+    registerContextProvider(context, getClientFunc, outputChannel);
+    registerHoverProvider(context, getClientFunc, outputChannel);
+    registerCodeActionProvider(context, getClientFunc, outputChannel);
+    
+    // Initialize enhanced context
+    enhancedContext = new DirectorEnhancedContext(getClientFunc, outputChannel);
+
     // Auto-connect if configured
     const config = vscode.workspace.getConfiguration('director');
     if (config.get('autoConnect')) {
@@ -110,6 +140,9 @@ export function activate(context: vscode.ExtensionContext) {
     }
 
     outputChannel.appendLine('Adastrea Director extension activated');
+    if (copilotParticipant) {
+        outputChannel.appendLine('✓ GitHub Copilot integration enabled - use @director in chat');
+    }
 }
 
 /**
@@ -839,4 +872,217 @@ async function provideFeedback() {
     }
 
     await feedbackService.requestUserFeedback(goal, 'Manual Feedback');
+}
+
+/**
+ * ============================================================
+ * Copilot Integration Commands
+ * ============================================================
+ */
+
+/**
+ * Ask Director about selected code
+ */
+async function askAboutSelection(document: vscode.TextDocument, range: vscode.Range) {
+    if (!client || !client.isConnected()) {
+        vscode.window.showWarningMessage('Not connected to Director');
+        return;
+    }
+
+    const selectedText = document.getText(range);
+    if (!selectedText) {
+        vscode.window.showInformationMessage('No code selected');
+        return;
+    }
+
+    const question = await vscode.window.showInputBox({
+        prompt: 'What would you like to know about this code?',
+        placeHolder: 'e.g., What does this function do? How can I improve it?'
+    });
+
+    if (!question) {
+        return;
+    }
+
+    outputChannel.appendLine(`\nAsking about selected code: ${question}`);
+    outputChannel.show(true);
+
+    try {
+        const query = `
+Question: ${question}
+
+Code context:
+File: ${document.fileName}
+Language: ${document.languageId}
+
+\`\`\`${document.languageId}
+${selectedText}
+\`\`\`
+`;
+
+        const response = await client.query(query);
+        
+        if (response.status === 'success' && response.result) {
+            outputChannel.appendLine(`\nAnswer:\n${response.result}`);
+            vscode.window.showInformationMessage('See answer in Output panel');
+        } else {
+            const error = response.error || 'Unknown error';
+            outputChannel.appendLine(`\nError: ${error}`);
+            vscode.window.showErrorMessage(`Query failed: ${error}`);
+        }
+    } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        outputChannel.appendLine(`\nError: ${errorMsg}`);
+        vscode.window.showErrorMessage(`Query failed: ${errorMsg}`);
+    }
+}
+
+/**
+ * Get Director context for selected code
+ */
+async function getContextForSelection(document: vscode.TextDocument, range: vscode.Range) {
+    if (!client || !client.isConnected()) {
+        vscode.window.showWarningMessage('Not connected to Director');
+        return;
+    }
+
+    if (!enhancedContext) {
+        vscode.window.showErrorMessage('Enhanced context not initialized');
+        return;
+    }
+
+    const selectedText = document.getText(range);
+    if (!selectedText) {
+        vscode.window.showInformationMessage('No code selected');
+        return;
+    }
+
+    outputChannel.appendLine(`\nGetting context for selected code...`);
+    outputChannel.show(true);
+
+    try {
+        const query = `
+Provide relevant context and documentation for this code:
+
+File: ${document.fileName}
+Language: ${document.languageId}
+
+\`\`\`${document.languageId}
+${selectedText}
+\`\`\`
+
+Include:
+- API documentation
+- Usage examples
+- Best practices
+- Common pitfalls
+`;
+
+        const response = await client.query(query);
+        
+        if (response.status === 'success' && response.result) {
+            outputChannel.appendLine(`\nContext:\n${response.result}`);
+            
+            // Also show in a webview for better formatting
+            const panel = vscode.window.createWebviewPanel(
+                'directorContext',
+                'Director Context',
+                vscode.ViewColumn.Beside,
+                { enableScripts: true }
+            );
+
+            panel.webview.html = getContextWebviewContent(response.result, selectedText);
+        } else {
+            const error = response.error || 'Unknown error';
+            outputChannel.appendLine(`\nError: ${error}`);
+            vscode.window.showErrorMessage(`Failed to get context: ${error}`);
+        }
+    } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        outputChannel.appendLine(`\nError: ${errorMsg}`);
+        vscode.window.showErrorMessage(`Failed to get context: ${errorMsg}`);
+    }
+}
+
+/**
+ * Generate HTML content for context webview
+ */
+function getContextWebviewContent(context: string, code: string): string {
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Director Context</title>
+    <style>
+        body {
+            font-family: var(--vscode-font-family);
+            color: var(--vscode-foreground);
+            background-color: var(--vscode-editor-background);
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1, h2, h3 {
+            color: var(--vscode-textLink-foreground);
+        }
+        pre {
+            background-color: var(--vscode-textCodeBlock-background);
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        code {
+            font-family: var(--vscode-editor-font-family);
+            background-color: var(--vscode-textCodeBlock-background);
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+        .code-block {
+            margin: 20px 0;
+        }
+        .context-section {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: var(--vscode-editorWidget-background);
+            border-left: 4px solid var(--vscode-textLink-foreground);
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🤖 Director Context</h1>
+    
+    <div class="code-block">
+        <h2>Your Code</h2>
+        <pre><code>${escapeHtml(code)}</code></pre>
+    </div>
+
+    <div class="context-section">
+        <h2>Context & Documentation</h2>
+        ${markdownToHtml(context)}
+    </div>
+</body>
+</html>`;
+}
+
+function escapeHtml(text: string): string {
+    return text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+function markdownToHtml(markdown: string): string {
+    // Simple markdown to HTML conversion
+    return markdown
+        .replace(/### (.*)/g, '<h3>$1</h3>')
+        .replace(/## (.*)/g, '<h2>$1</h2>')
+        .replace(/# (.*)/g, '<h1>$1</h1>')
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.*?)\*/g, '<em>$1</em>')
+        .replace(/`(.*?)`/g, '<code>$1</code>')
+        .replace(/\n\n/g, '<br><br>')
+        .replace(/\n/g, '<br>');
 }
