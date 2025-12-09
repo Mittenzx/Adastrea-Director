@@ -30,6 +30,7 @@ export interface ApprovalDecision {
     reason?: string;
     timestamp: Date;
     modification: CodeModification;
+    autoApproved?: boolean; // Explicit flag for auto-approval
 }
 
 export class CodeApplicator {
@@ -105,7 +106,7 @@ export class CodeApplicator {
         if (highConfidence.length > 0) {
             this.outputChannel.appendLine(`Auto-applying ${highConfidence.length} high-confidence modification(s)...`);
             for (const mod of highConfidence) {
-                await this.recordApproval(mod, true, 'Auto-approved (high confidence)');
+                await this.recordApproval(mod, true, 'Auto-approved (high confidence)', true);
             }
             await this.applyModifications(highConfidence);
         }
@@ -148,7 +149,7 @@ export class CodeApplicator {
 
             switch (choice.value) {
                 case 'approve':
-                    await this.recordApproval(mod, true, 'User approved');
+                    await this.recordApproval(mod, true, 'User approved', false);
                     await this.applyModifications([mod]);
                     break;
                 case 'reject':
@@ -156,7 +157,7 @@ export class CodeApplicator {
                         prompt: 'Why are you rejecting this change? (Optional)',
                         placeHolder: 'Reason for rejection...'
                     });
-                    await this.recordApproval(mod, false, reason || 'User rejected');
+                    await this.recordApproval(mod, false, reason || 'User rejected', false);
                     break;
                 case 'preview':
                     await this.showDiffPreview(mod);
@@ -165,7 +166,7 @@ export class CodeApplicator {
                     break;
                 case 'edit':
                     await this.openForEditing(mod);
-                    await this.recordApproval(mod, false, 'User chose to edit manually');
+                    await this.recordApproval(mod, false, 'User chose to edit manually', false);
                     break;
             }
         }
@@ -266,7 +267,9 @@ export class CodeApplicator {
             const start = new vscode.Position(mod.lineStart, 0);
             const end = new vscode.Position(mod.lineEnd, document.lineAt(mod.lineEnd).text.length);
             const range = new vscode.Range(start, end);
-            edit.replace(uri, range, mod.codeSnippet || '');
+            // Ensure code snippet is properly formatted for replacement
+            const codeToInsert = mod.codeSnippet || '';
+            edit.replace(uri, range, codeToInsert);
         } else {
             // Append to end of file
             const lastLine = document.lineCount - 1;
@@ -400,12 +403,13 @@ ${mod.codeSnippet || '(No code snippet)'}
     /**
      * Record approval decision
      */
-    private async recordApproval(mod: CodeModification, approved: boolean, reason?: string): Promise<void> {
+    private async recordApproval(mod: CodeModification, approved: boolean, reason?: string, autoApproved?: boolean): Promise<void> {
         const decision: ApprovalDecision = {
             approved,
             reason,
             timestamp: new Date(),
-            modification: mod
+            modification: mod,
+            autoApproved
         };
 
         this.approvalHistory.push(decision);
@@ -436,7 +440,7 @@ ${mod.codeSnippet || '(No code snippet)'}
         const approved = this.approvalHistory.filter(d => d.approved).length;
         const rejected = total - approved;
         const autoApproved = this.approvalHistory.filter(
-            d => d.approved && d.reason?.includes('Auto-approved')
+            d => d.approved && d.autoApproved === true
         ).length;
         const approvalRate = total > 0 ? approved / total : 0;
 

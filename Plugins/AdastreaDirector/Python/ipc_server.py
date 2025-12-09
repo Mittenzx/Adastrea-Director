@@ -879,7 +879,10 @@ JSON Response:"""
             # Get all tasks from the tree
             tasks = task_tree.get_all_tasks()
             
-            for task in tasks[:3]:  # Limit to first 3 tasks for now
+            # Limit number of tasks to generate code for (configurable via environment variable)
+            MAX_CODE_GEN_TASKS = int(os.environ.get('MAX_CODE_GEN_TASKS', '3'))
+            
+            for task in tasks[:MAX_CODE_GEN_TASKS]:
                 try:
                     implementation = code_agent.generate_implementation(task)
                     

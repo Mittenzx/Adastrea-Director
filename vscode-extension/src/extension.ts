@@ -46,9 +46,8 @@ export function activate(context: vscode.ExtensionContext) {
     updateStatusBar('disconnected');
     statusBarItem.show();
 
-    // Initialize Phase 2 services
+    // Initialize Phase 2 services (will be initialized after connection)
     codeApplicator = new CodeApplicator(outputChannel);
-    feedbackService = new FeedbackService(client!, outputChannel, context);
     
     // Register Phase 1 commands
     context.subscriptions.push(

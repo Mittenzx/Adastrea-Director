@@ -275,7 +275,7 @@ export class TestExecutor {
                     <td>${statusIcon} ${test.name}</td>
                     <td>${test.status.toUpperCase()}</td>
                     <td>${test.filePath || 'N/A'}</td>
-                    <td>${test.duration ? test.duration + 'ms' : 'N/A'}</td>
+                    <td>${test.duration !== undefined ? `${test.duration}ms` : 'N/A'}</td>
                 </tr>
             `;
         }).join('');
