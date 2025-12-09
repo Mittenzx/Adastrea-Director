@@ -2,13 +2,36 @@
 
 VS Code extension for [Adastrea Director](https://github.com/Mittenzx/Adastrea-Director) - an AI-powered game development assistant for Unreal Engine.
 
+## 🌟 What's New in Phase 2
+
+**Semi-Autonomous Development** is here! The extension now includes:
+
+- 🤖 **Automated Code Generation** - Generate and apply code from natural language
+- ✅ **Automated Testing** - Run tests and view results directly in VS Code
+- 👤 **Intelligent Approval Workflow** - Review changes with confidence scores
+- 📊 **Feedback & Learning** - Help improve suggestions through feedback
+- 🎯 **Auto-Approval** - High-confidence changes applied automatically
+
+See [PHASE2_GUIDE.md](PHASE2_GUIDE.md) for complete Phase 2 documentation.
+
 ## Features
 
+### Phase 1: Foundation (Complete ✅)
 - **IPC Connection**: Connect to Director IPC server (Python backend) on port 5555
 - **AI Queries**: Ask questions about your Unreal Engine project
 - **Connection Management**: Automatic reconnection with configurable retry logic
 - **Health Checks**: Regular health checks to ensure connection stability
 - **Status Indicator**: Visual status bar indicator showing connection state
+
+### Phase 2: Semi-Autonomous Development (Complete ✅)
+- **Code Generation**: Automated code generation with multiple approaches
+- **Code Application**: Apply code changes with intelligent approval workflow
+- **Automated Testing**: Execute and view test results
+- **Approval Workflow**: Review, approve, reject, or modify code changes
+- **Confidence Scoring**: AI-generated confidence levels for each change
+- **Auto-Approval**: Configurable thresholds for automatic application
+- **Feedback System**: Collect and analyze user feedback for continuous learning
+- **Statistics**: View approval rates, feedback metrics, and patterns
 
 ## Requirements
 
@@ -69,12 +92,22 @@ python Plugins/AdastreaDirector/Python/ipc_server.py --port 5555
 
 ### Available Commands
 
+#### Phase 1 Commands
 - `Director: Connect to Unreal Engine` - Connect to the Director IPC server
 - `Director: Disconnect from Unreal Engine` - Disconnect from the server
 - `Director: Ask Question` - Ask a question to the Director AI
 - `Director: Check Connection Status` - Check the current connection status
 - `Director: Toggle Debug Mode` - Enable/disable verbose debug logging
 - `Director: Run Connection Diagnostics` - Run comprehensive connection diagnostics
+
+#### Phase 2 Commands (New! ✨)
+- `Director: Generate and Apply Code` - Generate code from natural language and apply with approval
+- `Director: Run Tests` - Execute test suite and view results
+- `Director: Review Pending Changes` - Review code changes waiting for approval
+- `Director: View Approval History` - View approval statistics and history
+- `Director: Show Feedback Statistics` - View feedback metrics and patterns
+- `Director: Set Auto-Approval Threshold` - Configure confidence threshold for auto-approval
+- `Director: Provide Feedback` - Manually provide feedback on suggestions
 
 ## Configuration
 
@@ -101,6 +134,9 @@ Configure the extension in VS Code settings:
 | `director.maxReconnectAttempts` | number | `3` | Maximum number of reconnection attempts |
 | `director.requestTimeout` | number | `30000` | Request timeout in milliseconds |
 | `director.debugMode` | boolean | `false` | Enable debug mode with verbose logging |
+| `director.autoApprovalThreshold` | number | `0.9` | Auto-approval confidence threshold (0.0-1.0) |
+| `director.autoRunTests` | boolean | `false` | Automatically run tests after code changes |
+| `director.enableFeedbackCollection` | boolean | `true` | Enable automatic feedback collection |
 
 ## Connection Protocol
 
@@ -125,11 +161,18 @@ The extension communicates with the Director IPC server using a simple TCP socke
 
 ### Supported Request Types
 
+#### Phase 1 Request Types
 - `ping` - Health check
 - `query` - Ask a question to the AI
 - `plan` - Generate a development plan
 - `analyze` - Analyze a development goal
 - `metrics` - Get performance metrics
+
+#### Phase 2 Request Types (New! ✨)
+- `generate_code` - Generate code modifications for a goal
+- `apply_feedback` - Send user feedback for learning
+- `get_confidence` - Get confidence score for a change
+- `run_tests` - Execute test suite
 
 ### Protocol Limitations
 

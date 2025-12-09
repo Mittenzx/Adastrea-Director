@@ -7,7 +7,88 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.2.0] - 2024-12-09
 
-### Added
+### Added - Phase 2: Semi-Autonomous Development ✨
+
+#### Code Generation & Application
+- `Director: Generate and Apply Code` - Generate code from natural language goals
+- Automated code modification generation with multiple approaches
+- Code applicator service with intelligent approval workflow
+- Support for create, modify, and delete operations
+- Multi-file modification support in single operation
+- Confidence scoring for each generated modification
+
+#### Approval Workflow
+- Interactive approval UI with multiple options:
+  - ✓ Approve - Apply changes immediately
+  - ✗ Reject - Reject with optional reason
+  - 👁 Preview - View side-by-side diff
+  - ✎ Edit - Open file for manual editing
+- Auto-approval based on configurable confidence threshold
+- `Director: Review Pending Changes` - Review queued modifications
+- `Director: View Approval History` - View approval statistics
+- `Director: Set Auto-Approval Threshold` - Configure auto-approval
+
+#### Test Execution
+- `Director: Run Tests` - Execute test suites via IPC server
+- Support for multiple test types (all, ipc, plugin, unit, integration, remote)
+- Dedicated test output channel
+- Test results with pass/fail counts
+- Optional webview for visual test results
+- Navigation to test failure locations
+- Integration with feedback system
+
+#### Feedback & Learning
+- `Director: Provide Feedback` - Submit manual feedback
+- `Director: Show Feedback Statistics` - View feedback analytics
+- Feedback collection for approval/rejection decisions
+- Star ratings (1-5) for suggestions
+- Feedback storage in workspace state
+- Automatic sync to IPC server for learning
+- Common rejection reason tracking
+- Frequently approved file pattern identification
+
+#### IPC Protocol Extensions
+- `generate_code` - Request code generation for a goal
+- `apply_feedback` - Send user feedback to server
+- `get_confidence` - Get confidence score for changes
+- Enhanced `run_tests` - Execute test suites
+
+#### Configuration
+- `director.autoApprovalThreshold` - Confidence threshold (0.0-1.0, default: 0.9)
+- `director.autoRunTests` - Auto-run tests after code changes (default: false)
+- `director.enableFeedbackCollection` - Enable feedback collection (default: true)
+- `director.debugMode` - Enable debug mode with verbose logging (default: false)
+
+#### Services
+- **CodeApplicator**: Handles code application with approval workflow
+- **TestExecutor**: Manages test execution and result display
+- **FeedbackService**: Collects and analyzes user feedback
+
+### Changed
+- Updated package version to 0.2.0
+- Extension context now stored globally for cross-function access
+- TypeScript strict mode disabled for better compatibility
+- IPC server enhanced with Phase 2 request handlers
+- Connection workflow improved for Phase 2 service initialization
+
+### Technical Details
+
+#### New Services Architecture
+```
+Extension (extension.ts)
+    ├── CodeApplicator (codeApplicator.ts)
+    ├── TestExecutor (testExecutor.ts)
+    └── FeedbackService (feedbackService.ts)
+```
+
+#### Approval Workflow
+1. Code generated with confidence scores
+2. High confidence (≥threshold) → Auto-apply
+3. Low confidence → Request user approval
+4. User approves/rejects with optional feedback
+5. Feedback sent to server for learning
+
+#### Previous Version Features (0.1.0)
 
 #### Debug Mode
 - Comprehensive debug mode with verbose logging
@@ -27,21 +108,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Network connectivity testing
 - Health check integration
 - Troubleshooting recommendations
-
-#### Enhanced Logging
-- Timestamped log entries
-- Log levels (info, warning, error, debug)
-- Structured log details with JSON formatting
-- Socket event tracking (connect, data, error, close, timeout)
-- Request lifecycle tracking
-
-#### Configuration
-- `director.debugMode` - Enable/disable debug mode (default: false)
-
-### Changed
-- IPC client now supports debug mode configuration
-- Enhanced error messages with more context
-- Connection attempts now log detailed socket information
 
 ## [0.1.0] - 2024-12-09
 
@@ -140,17 +206,20 @@ Director Backend (RAG, Planning, Agents)
 
 See [Remote-Connection-Types-and-Actions.md](../Remote-Connection-Types-and-Actions.md) for the full roadmap.
 
-#### Phase 2 (Planned)
-- Copilot integration for context-aware code generation
-- Enhanced context retrieval from RAG system
-- Plan generation with visualization
-- Code application workflow
+#### Phase 2 (Complete ✅)
+- ✅ Code generation and application
+- ✅ Intelligent approval workflow
+- ✅ Test execution integration
+- ✅ Feedback and learning system
+- ✅ Confidence-based auto-approval
 
 #### Phase 3 (Planned)
-- Code generation pipeline
-- Test execution integration
-- Performance monitoring
-- Automated improvement suggestions
+- Fully autonomous development
+- Multi-agent collaboration
+- Continuous refactoring
+- Performance optimization
+- Automatic bug detection
+- Test generation
 
 ## [Unreleased]
 
@@ -170,6 +239,7 @@ See [Remote-Connection-Types-and-Actions.md](../Remote-Connection-Types-and-Acti
 
 ## Version History
 
+- **0.2.0** (2024-12-09) - Phase 2: Semi-Autonomous Development
 - **0.1.0** (2024-12-09) - Initial release with basic IPC communication
 
 ---
