@@ -2,9 +2,21 @@
 
 VS Code extension for [Adastrea Director](https://github.com/Mittenzx/Adastrea-Director) - an AI-powered game development assistant for Unreal Engine.
 
-## 🌟 What's New in Phase 2
+## 🌟 What's New in v0.3.0
 
-**Semi-Autonomous Development** is here! The extension now includes:
+**GitHub Copilot Integration is here!** ✨
+
+- 💬 **@director Chat Participant** - Interact with Director through Copilot Chat
+- 🎯 **Slash Commands** - `/ask`, `/plan`, `/analyze`, `/context`, `/help`
+- 🔍 **Hover Context** - See Director documentation on Unreal Engine symbols
+- 🛠️ **Code Actions** - Ask Director about code, get context
+- 📚 **RAG Integration** - Context-aware responses from Director's knowledge base
+
+See [COPILOT_INTEGRATION.md](COPILOT_INTEGRATION.md) for complete Copilot documentation.
+
+## Previous Releases
+
+### Phase 2: Semi-Autonomous Development
 
 - 🤖 **Automated Code Generation** - Generate and apply code from natural language
 - ✅ **Automated Testing** - Run tests and view results directly in VS Code
@@ -17,11 +29,24 @@ See [PHASE2_GUIDE.md](PHASE2_GUIDE.md) for complete Phase 2 documentation.
 ## Features
 
 ### Phase 1: Foundation (Complete ✅)
+
+#### Weeks 1-2: Extension Setup
 - **IPC Connection**: Connect to Director IPC server (Python backend) on port 5555
-- **AI Queries**: Ask questions about your Unreal Engine project
 - **Connection Management**: Automatic reconnection with configurable retry logic
 - **Health Checks**: Regular health checks to ensure connection stability
 - **Status Indicator**: Visual status bar indicator showing connection state
+
+#### Weeks 3-4: Copilot Integration ✨ NEW!
+- **Chat Participant**: `@director` participant in GitHub Copilot Chat
+- **Slash Commands**: `/ask`, `/plan`, `/analyze`, `/context`, `/help`
+- **Context Retrieval**: RAG-powered responses from Director's knowledge base
+- **Hover Documentation**: Context-aware documentation for Unreal Engine symbols
+- **Code Actions**: Quick actions to ask Director about code or get context
+
+#### Weeks 5-6: Basic Workflows
+- **AI Queries**: Ask questions about your Unreal Engine project
+- **Plan Generation**: Generate development plans for features
+- **Configuration**: Extensive settings for customization
 
 ### Phase 2: Semi-Autonomous Development (Complete ✅)
 - **Code Generation**: Automated code generation with multiple approaches
@@ -100,7 +125,18 @@ python Plugins/AdastreaDirector/Python/ipc_server.py --port 5555
 - `Director: Toggle Debug Mode` - Enable/disable verbose debug logging
 - `Director: Run Connection Diagnostics` - Run comprehensive connection diagnostics
 
-#### Phase 2 Commands (New! ✨)
+#### Copilot Integration (New! ✨)
+- **Chat**: Use `@director` in GitHub Copilot Chat for natural language queries
+  - `@director /ask <question>` - Ask about Unreal Engine
+  - `@director /plan <goal>` - Generate development plan
+  - `@director /analyze <task>` - Analyze complexity and requirements
+  - `@director /context <topic>` - Get RAG-powered context
+  - `@director /help` - Show available commands
+- **Code Actions**: Right-click on code
+  - "Ask Director about this code"
+  - "Get Director context"
+
+#### Phase 2 Commands
 - `Director: Generate and Apply Code` - Generate code from natural language and apply with approval
 - `Director: Run Tests` - Execute test suite and view results
 - `Director: Review Pending Changes` - Review code changes waiting for approval
@@ -137,6 +173,9 @@ Configure the extension in VS Code settings:
 | `director.autoApprovalThreshold` | number | `0.9` | Auto-approval confidence threshold (0.0-1.0) |
 | `director.autoRunTests` | boolean | `false` | Automatically run tests after code changes |
 | `director.enableFeedbackCollection` | boolean | `true` | Enable automatic feedback collection |
+| `director.copilot.enabled` | boolean | `true` | Enable GitHub Copilot Chat integration |
+| `director.copilot.enableHoverContext` | boolean | `true` | Show Director context on hover |
+| `director.copilot.enableCodeActions` | boolean | `true` | Enable Director code actions |
 
 ## Connection Protocol
 
