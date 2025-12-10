@@ -1,0 +1,306 @@
+================================================================================
+                    ADASTREA DIRECTOR - ANALYTICS DASHBOARD
+                          Visual UI Mockup & Layout
+================================================================================
+
+FULL WINDOW VIEW (1000x700 pixels)
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃                                                                            ┃
+┃  ⚡ Adastrea Director                                                     ┃
+┃  AI-Powered Game Development Assistant                                    ┃
+┃  ● Ready                                                                   ┃
+┃━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┃
+┃  Quick Actions                                                             ┃
+┃  ┌──────────────┐┌──────────────┐┌──────────────┐┌──────────────┐        ┃
+┃  │📁 Ingest    ││📄 Ingest    ││🔗 Ingest    ││🔑 Set API   │        ┃
+┃  │   Folder    ││   File      ││   Repo      ││   Key       │        ┃
+┃  └──────────────┘└──────────────┘└──────────────┘└──────────────┘        ┃
+┃  ┌──────────────┐┌──────────────┐  Text Size: [A-] [A+]                  ┃
+┃  │🗑️ Clear     ││📋 Copy      │                                          ┃
+┃  └──────────────┘└──────────────┘                                          ┃
+┃━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┃
+┃  ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓  ┃
+┃  ┃ Tabs                                                                 ┃  ┃
+┃  ┃ ┌──────────┐┌─────────┐┌───────┐┌─────────┐┌────────┐┌──────────┐ ┃  ┃
+┃  ┃ │💬 Conver ││📋 Ingest││🧪 Tests││🎮 Unreal││📊Status││>>>📊    │ ┃  ┃
+┃  ┃ │  sation  ││  List   ││        ││  MCP    ││        ││Analytics │ ┃  ┃
+┃  ┃ └──────────┘└─────────┘└───────┘└─────────┘└────────┘└──────────┘ ┃  ┃
+┃  ┃ ┌──────────┐                                                        ┃  ┃
+┃  ┃ │🖥️ Servers│                                                        ┃  ┃
+┃  ┃ └──────────┘                                                        ┃  ┃
+┃  ┃                                                                      ┃  ┃
+┃  ┃  ┌─────────────────────────────────────────────────────────────┐   ┃  ┃
+┃  ┃  │ 📊 Project Analytics Dashboard                              │   ┃  ┃
+┃  ┃  │                                   [📥 Export][🔄 Refresh Data]│   ┃  ┃
+┃  ┃  └─────────────────────────────────────────────────────────────┘   ┃  ┃
+┃  ┃  ══════════════════════════════════════════════════════════════   ┃  ┃
+┃  ┃                                                                      ┃  ┃
+┃  ┃  ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓   ┃  ┃
+┃  ┃  ┃ 💚 Project Health Score                                     ┃   ┃  ┃
+┃  ┃  ┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫   ┃  ┃
+┃  ┃  ┃ Overall Score:        85.3/100                              ┃   ┃  ┃
+┃  ┃  ┃ Status:               Excellent ✓                           ┃   ┃  ┃
+┃  ┃  ┃ Last Calculated:      15:30:45                              ┃   ┃  ┃
+┃  ┃  ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛   ┃  ┃
+┃  ┃                                                                      ┃  ┃
+┃  ┃  ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓   ┃  ┃
+┃  ┃  ┃ 📦 Asset Inventory                                          ┃   ┃  ┃
+┃  ┃  ┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫   ┃  ┃
+┃  ┃  ┃ Static Meshes:        127                                   ┃   ┃  ┃
+┃  ┃  ┃ Skeletal Meshes:      42                                    ┃   ┃  ┃
+┃  ┃  ┃ Blueprints:           83                                    ┃   ┃  ┃
+┃  ┃  ┃ Materials:            156                                   ┃   ┃  ┃
+┃  ┃  ┃ Textures:             234                                   ┃   ┃  ┃
+┃  ┃  ┃ Sounds:               67                                    ┃   ┃  ┃
+┃  ┃  ┃ Animations:           89                                    ┃   ┃  ┃
+┃  ┃  ┃ Particles:            34                                    ┃   ┃  ┃
+┃  ┃  ┃ ─────────────────────────────────────────────────────       ┃   ┃  ┃
+┃  ┃  ┃ Total Assets:         832                                   ┃   ┃  ┃
+┃  ┃  ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛   ┃  ┃
+┃  ┃                                                                      ┃  ┃
+┃  ┃  ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓   ┃  ┃
+┃  ┃  ┃ 🎯 Blueprint Analysis                                       ┃   ┃  ┃
+┃  ┃  ┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫   ┃  ┃
+┃  ┃  ┃ Total Blueprints:     83                                    ┃   ┃  ┃
+┃  ┃  ┃ Actor Blueprints:     52                                    ┃   ┃  ┃
+┃  ┃  ┃ Component Blueprints: 18                                    ┃   ┃  ┃
+┃  ┃  ┃ Interface Blueprints: 8                                     ┃   ┃  ┃
+┃  ┃  ┃ Function Libraries:   5                                     ┃   ┃  ┃
+┃  ┃  ┃ Average Nodes:        45.3                                  ┃   ┃  ┃
+┃  ┃  ┃ Max Nodes:            287                                   ┃   ┃  ┃
+┃  ┃  ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛   ┃  ┃
+┃  ┃                                                                      ┃  ┃
+┃  ┃  ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓   ┃  ┃
+┃  ┃  ┃ 📝 Code Metrics                                             ┃   ┃  ┃
+┃  ┃  ┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫   ┃  ┃
+┃  ┃  ┃ Total Lines:          45,892                                ┃   ┃  ┃
+┃  ┃  ┃ Code Lines:           38,234                                ┃   ┃  ┃
+┃  ┃  ┃ Comment Lines:        5,423                                 ┃   ┃  ┃
+┃  ┃  ┃ Blank Lines:          2,235                                 ┃   ┃  ┃
+┃  ┃  ┃ Python:               12,456                                ┃   ┃  ┃
+┃  ┃  ┃ C++:                  26,789                                ┃   ┃  ┃
+┃  ┃  ┃ Headers:              4,567                                 ┃   ┃  ┃
+┃  ┃  ┃ Blueprint Scripts:    2,080                                 ┃   ┃  ┃
+┃  ┃  ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛   ┃  ┃
+┃  ┃                                                                      ┃  ┃
+┃  ┃  ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓   ┃  ┃
+┃  ┃  ┃ ⚠️  Placeholder Content                                     ┃   ┃  ┃
+┃  ┃  ┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫   ┃  ┃
+┃  ┃  ┃ Default Cubes:        3 ⚠️                                  ┃   ┃  ┃
+┃  ┃  ┃ Default Spheres:      2 ⚠️                                  ┃   ┃  ┃
+┃  ┃  ┃ Temp Blueprints:      7 ⚠️                                  ┃   ┃  ┃
+┃  ┃  ┃ Missing Assets:       0 ✓                                   ┃   ┃  ┃
+┃  ┃  ┃ Placeholder Materials: 4 ⚠️                                 ┃   ┃  ┃
+┃  ┃  ┃ Placeholder Textures:  5 ⚠️                                 ┃   ┃  ┃
+┃  ┃  ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛   ┃  ┃
+┃  ┃                                                                      ┃  ┃
+┃  ┃  ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓   ┃  ┃
+┃  ┃  ┃ 🔌 Connection Health                                        ┃   ┃  ┃
+┃  ┃  ┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫   ┃  ┃
+┃  ┃  ┃ VS Code Connected:    ✅ Connected                          ┃   ┃  ┃
+┃  ┃  ┃ VS Code Uptime:       2h 34m                                ┃   ┃  ┃
+┃  ┃  ┃ VS Code Reconnects:   2                                     ┃   ┃  ┃
+┃  ┃  ┃ UE Connected:         ✅ Connected                          ┃   ┃  ┃
+┃  ┃  ┃ UE Uptime:            2h 31m                                ┃   ┃  ┃
+┃  ┃  ┃ UE Reconnects:        1                                     ┃   ┃  ┃
+┃  ┃  ┃ Avg Latency:          12.3 ms                               ┃   ┃  ┃
+┃  ┃  ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛   ┃  ┃
+┃  ┃                                                                      ┃  ┃
+┃  ┃  ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓   ┃  ┃
+┃  ┃  ┃ 🎮 PIE Sessions (Last 5)                                    ┃   ┃  ┃
+┃  ┃  ┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫   ┃  ┃
+┃  ┃  ┃ Total Sessions:       12                                    ┃   ┃  ┃
+┃  ┃  ┃ Average FPS:          58.7 ⚠️                               ┃   ┃  ┃
+┃  ┃  ┃ Average Frame Time:   17.2 ms                               ┃   ┃  ┃
+┃  ┃  ┃ Average Memory:       487.3 MB                              ┃   ┃  ┃
+┃  ┃  ┃ Peak Memory:          612.8 MB                              ┃   ┃  ┃
+┃  ┃  ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛   ┃  ┃
+┃  ┃                                                                      ┃  ┃
+┃  ┃  ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓   ┃  ┃
+┃  ┃  ┃ 🔨 Build Statistics                                         ┃   ┃  ┃
+┃  ┃  ┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫   ┃  ┃
+┃  ┃  ┃ Total Builds:         47                                    ┃   ┃  ┃
+┃  ┃  ┃ Failed Builds:        3 ⚠️                                  ┃   ┃  ┃
+┃  ┃  ┃ Success Rate:         93.6% ✓                               ┃   ┃  ┃
+┃  ┃  ┃ Last Build Time:      2m 34s                                ┃   ┃  ┃
+┃  ┃  ┃ Average Build Time:   2m 18s                                ┃   ┃  ┃
+┃  ┃  ┃ Last Build Status:    Success ✓                             ┃   ┃  ┃
+┃  ┃  ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛   ┃  ┃
+┃  ┃                                                                      ┃  ┃
+┃  ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛  ┃
+┃━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┃
+┃  💭 Ask a Question                                                      ┃
+┃  ┌────────────────────────────────────────────────────────┐  [Send ▶]  ┃
+┃  │ Type your question here...                             │            ┃
+┃  └────────────────────────────────────────────────────────┘            ┃
+┃━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┃
+┃  ● Ready • Please set your Gemini API Key if you haven't     v1.0.0    ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+
+================================================================================
+                         STATUS DASHBOARD VIEW
+                    (With "Collect UE Data" Button)
+================================================================================
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ 📊 System Status Dashboard                                              ┃
+┃                         [📥 Collect UE Data] [🔄 Refresh All]           ┃
+┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
+┃                                                                          ┃
+┃  ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓  ┃
+┃  ┃ 🔌 VS Code Extension                                               ┃  ┃
+┃  ┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫  ┃
+┃  ┃ Connection:           ● Connected                                  ┃  ┃
+┃  ┃ Version:              1.2.0                                        ┃  ┃
+┃  ┃ IPC Port:             5555                                         ┃  ┃
+┃  ┃ Auto-Connect:         Configurable in extension settings          ┃  ┃
+┃  ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛  ┃
+┃                                                                          ┃
+┃  ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓  ┃
+┃  ┃ 🎮 Unreal Engine Plugin                                            ┃  ┃
+┃  ┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫  ┃
+┃  ┃ Connection:           ● Connected                                  ┃  ┃
+┃  ┃ Remote Execution:     Plugin files present                         ┃  ┃
+┃  ┃ Python Plugin:        Check UE Editor                              ┃  ┃
+┃  ┃ MCP Server:           ● Running                                    ┃  ┃
+┃  ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛  ┃
+┃                                                                          ┃
+┃  ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓  ┃
+┃  ┃ ⚙️  Backend Services                                                ┃  ┃
+┃  ┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫  ┃
+┃  ┃ Agent Orchestrator:   ● Running                                    ┃  ┃
+┃  ┃ Agent Dashboard:      ● Stopped                                    ┃  ┃
+┃  ┃ MCP Server:           ● Running                                    ┃  ┃
+┃  ┃ RAG System:           ● Database present                           ┃  ┃
+┃  ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛  ┃
+┃                                                                          ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+
+================================================================================
+                       DATA COLLECTION FLOW
+================================================================================
+
+User clicks "📥 Collect UE Data" button
+              ↓
+┌─────────────────────────────────────────────┐
+│  Status: "Collecting data from UE..."      │
+│  [Progress indicator shown]                │
+└─────────────────────────────────────────────┘
+              ↓
+┌─────────────────────────────────────────────┐
+│  Background Thread Executes:               │
+│  1. Connect to UE via MCP                  │
+│  2. Query asset counts                     │
+│  3. Collect blueprint stats                │
+│  4. Detect placeholder content             │
+└─────────────────────────────────────────────┘
+              ↓
+┌─────────────────────────────────────────────┐
+│  Parse JSON Output from UE:                │
+│  - Extract between JSON markers            │
+│  - Validate data structure                 │
+│  - Update analytics in memory              │
+└─────────────────────────────────────────────┘
+              ↓
+┌─────────────────────────────────────────────┐
+│  Save to Disk:                             │
+│  ./analytics_data/analytics.json           │
+└─────────────────────────────────────────────┘
+              ↓
+┌─────────────────────────────────────────────┐
+│  Success Dialog:                           │
+│  "Analytics data has been collected        │
+│   from Unreal Engine.                      │
+│                                            │
+│   View the Analytics tab to see           │
+│   updated statistics."                     │
+│                       [OK]                 │
+└─────────────────────────────────────────────┘
+              ↓
+┌─────────────────────────────────────────────┐
+│  Analytics Tab Auto-Refreshes:             │
+│  - All 8 cards update with new data       │
+│  - Health score recalculated               │
+│  - Timestamps updated                      │
+└─────────────────────────────────────────────┘
+
+
+================================================================================
+                       COLOR SCHEME REFERENCE
+================================================================================
+
+Background Colors:
+  Primary Background:   #20232b (Dark blue-gray)
+  Secondary Background: #252526 (Panel background)
+  Tertiary Background:  #2d2d30 (Card background)
+  Text Background:      #2a2d35 (Input fields)
+
+Text Colors:
+  Primary Text:         #e3e4e8 (Light gray)
+  Secondary Text:       #cccccc (Medium gray)
+  Muted Text:          #858585 (Dimmed gray)
+
+Accent Colors:
+  Primary Accent:       #40a9ff (Bright blue)
+  Accent Hover:         #5bb8ff (Lighter blue)
+  Success:              #4ec9b0 (Teal green)
+  Warning:              #ce9178 (Orange)
+  Error:                #f48771 (Red)
+
+UI Element Colors:
+  Button Default:       #343843 (Medium gray)
+  Button Hover:         #4a4e5a (Lighter gray)
+  Border:               #3e3e42 (Dark border)
+  Selection:            #094771 (Dark blue)
+
+
+================================================================================
+                          ICON REFERENCE
+================================================================================
+
+Card Icons:
+  💚 - Project Health (Green heart = healthy)
+  📦 - Asset Inventory (Package = assets)
+  🎯 - Blueprint Analysis (Target = precision)
+  📝 - Code Metrics (Document = code)
+  ⚠️  - Placeholder Content (Warning = issues)
+  🔌 - Connection Health (Plug = connectivity)
+  🎮 - PIE Sessions (Controller = gameplay)
+  🔨 - Build Statistics (Hammer = building)
+
+Action Icons:
+  📥 - Export/Collect data
+  🔄 - Refresh/Reload
+  📁 - Folder operations
+  📄 - File operations
+  🔗 - Link/Repository
+  🔑 - API Key/Security
+  🗑️  - Clear/Delete
+  📋 - Copy/Clipboard
+
+Status Icons:
+  ✅ - Connected/Success
+  ❌ - Disconnected/Error
+  ● - Status indicator (colored dot)
+  ⚡ - Application title
+
+
+================================================================================
+                         FEATURE SUMMARY
+================================================================================
+
+✅ 8 Comprehensive Metric Cards
+✅ Real-time Data Collection from UE
+✅ Project Health Score (0-100)
+✅ Connection Status Monitoring
+✅ Export to JSON
+✅ Persistent Storage
+✅ Thread-safe Updates
+✅ Professional UE5-Inspired Design
+✅ Responsive Layout
+✅ Error Handling
+✅ User-friendly Interface
+
+================================================================================

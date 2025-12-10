@@ -13,6 +13,10 @@ from pathlib import Path
 # Import UE log capture module
 from ue_log_capture import UELogCapture
 
+# Import analytics modules
+from project_analytics import ProjectAnalytics
+from ue_data_collector import UEDataCollector
+
 # Try to import psutil for system health monitoring (optional dependency)
 try:
     import psutil
@@ -429,6 +433,9 @@ class AdastreaDirectorApp:
         # --- Status Dashboard Tab ---
         self.create_status_dashboard_tab()
         
+        # --- Analytics Dashboard Tab ---
+        self.create_analytics_dashboard_tab()
+        
         # --- Servers Tab ---
         self.create_servers_tab()
 
@@ -555,6 +562,10 @@ class AdastreaDirectorApp:
             font=("Segoe UI", 8)
         )
         version_label.pack(side=tk.RIGHT)
+        
+        # Initialize analytics system
+        self.project_analytics = ProjectAnalytics()
+        self.ue_data_collector = UEDataCollector()
         
         # Bind keyboard shortcuts
         self.bind_shortcuts()
@@ -1527,6 +1538,15 @@ class AdastreaDirectorApp:
         except Exception as e:
             self.log_mcp_output(f"⚠️ Warning: Could not start log capture: {e}\n", "warning")
         
+        # Update analytics with connection status
+        self.project_analytics.update_connection_metrics(ue_connected=True)
+        
+        # Set up UE data collector with MCP server
+        if hasattr(self, "ue_data_collector") and self.ue_data_collector is not None:
+            self.ue_data_collector.mcp_server = self.unreal_mcp_server
+        else:
+            self.ue_data_collector = UEDataCollector(mcp_server=self.unreal_mcp_server)
+        
         # Get project info on connection
         self.run_mcp_tool("editor_project_info")
     
@@ -1568,6 +1588,9 @@ class AdastreaDirectorApp:
         self.update_unreal_status("Disconnected", self.fg_muted)
         self.unreal_connect_button.config(state=tk.NORMAL)
         self.unreal_disconnect_button.config(state=tk.DISABLED)
+        
+        # Update analytics with connection status
+        self.project_analytics.update_connection_metrics(ue_connected=False)
         
         self.log_mcp_output("\n🔌 Disconnected from Unreal Engine.\n", "info")
     
@@ -1957,6 +1980,26 @@ class AdastreaDirectorApp:
         )
         status_label.pack(side=tk.LEFT)
         
+        # Collect UE Data button
+        collect_ue_button = tk.Button(
+            status_header,
+            text="📥 Collect UE Data",
+            command=self.collect_ue_analytics_data,
+            font=("Segoe UI", 9),
+            bg=self.accent_color,
+            fg="#20232b",
+            activebackground=self.accent_hover,
+            activeforeground="#20232b",
+            relief=tk.FLAT,
+            padx=15,
+            pady=6,
+            cursor="hand2",
+            borderwidth=0
+        )
+        collect_ue_button.pack(side=tk.RIGHT, padx=(0, 5))
+        self.create_tooltip(collect_ue_button, "Collect analytics data from Unreal Engine")
+        self.add_button_hover_effect(collect_ue_button, hover_color=self.accent_hover)
+        
         # Refresh button
         refresh_status_button = tk.Button(
             status_header,
@@ -2327,6 +2370,523 @@ class AdastreaDirectorApp:
                 self.status_labels[key].config(text=text, fg=color)
         
         self.root.after(0, update)
+    
+    def create_analytics_dashboard_tab(self):
+        """Create the Analytics Dashboard tab with project statistics and metrics."""
+        analytics_tab = tk.Frame(self.notebook, bg=self.bg_tertiary)
+        self.notebook.add(analytics_tab, text="📊 Analytics")
+        
+        # Header section
+        analytics_header = tk.Frame(analytics_tab, bg=self.bg_tertiary, padx=15, pady=10)
+        analytics_header.pack(fill=tk.X)
+        
+        analytics_label = tk.Label(
+            analytics_header,
+            text="📊 Project Analytics Dashboard",
+            font=("Segoe UI", 11, "bold"),
+            bg=self.bg_tertiary,
+            fg=self.fg_color
+        )
+        analytics_label.pack(side=tk.LEFT)
+        
+        # Refresh button
+        refresh_analytics_button = tk.Button(
+            analytics_header,
+            text="🔄 Refresh Data",
+            command=self.refresh_analytics_data,
+            font=("Segoe UI", 9),
+            bg=self.button_bg,
+            fg=self.fg_color,
+            activebackground=self.button_hover,
+            activeforeground=self.fg_color,
+            relief=tk.FLAT,
+            padx=15,
+            pady=6,
+            cursor="hand2",
+            borderwidth=1,
+            highlightthickness=1,
+            highlightbackground=self.button_bg
+        )
+        refresh_analytics_button.pack(side=tk.RIGHT, padx=(0, 5))
+        self.create_tooltip(refresh_analytics_button, "Refresh analytics from Unreal Engine")
+        self.add_button_hover_effect(refresh_analytics_button)
+        
+        # Export button
+        export_analytics_button = tk.Button(
+            analytics_header,
+            text="📥 Export",
+            command=self.export_analytics_data,
+            font=("Segoe UI", 9),
+            bg=self.button_bg,
+            fg=self.fg_color,
+            activebackground=self.button_hover,
+            activeforeground=self.fg_color,
+            relief=tk.FLAT,
+            padx=15,
+            pady=6,
+            cursor="hand2",
+            borderwidth=1,
+            highlightthickness=1,
+            highlightbackground=self.button_bg
+        )
+        export_analytics_button.pack(side=tk.RIGHT)
+        self.create_tooltip(export_analytics_button, "Export analytics data to JSON")
+        self.add_button_hover_effect(export_analytics_button)
+        
+        # Separator line
+        separator_line = tk.Frame(analytics_tab, height=1, bg=self.border_color)
+        separator_line.pack(fill=tk.X)
+        
+        # Main content area with scrollable frame
+        content_frame = tk.Frame(analytics_tab, bg=self.bg_tertiary)
+        content_frame.pack(fill=tk.BOTH, expand=True, padx=15, pady=15)
+        
+        # Create a canvas with scrollbar
+        canvas = tk.Canvas(content_frame, bg=self.bg_tertiary, highlightthickness=0)
+        scrollbar = ttk.Scrollbar(content_frame, orient="vertical", command=canvas.yview)
+        scrollable_frame = tk.Frame(canvas, bg=self.bg_tertiary)
+        
+        scrollable_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
+        
+        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
+        
+        canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        
+        # --- Project Health Score Card ---
+        self._create_analytics_card(
+            scrollable_frame,
+            "Project Health Score",
+            "💚",
+            [
+                ("Overall Score", "health_score"),
+                ("Status", "health_status"),
+                ("Last Calculated", "health_updated")
+            ]
+        )
+        
+        # --- Asset Counts Card ---
+        self._create_analytics_card(
+            scrollable_frame,
+            "Asset Inventory",
+            "📦",
+            [
+                ("Static Meshes", "asset_static_meshes"),
+                ("Skeletal Meshes", "asset_skeletal_meshes"),
+                ("Blueprints", "asset_blueprints"),
+                ("Materials", "asset_materials"),
+                ("Textures", "asset_textures"),
+                ("Sounds", "asset_sounds"),
+                ("Animations", "asset_animations"),
+                ("Particles", "asset_particles"),
+                ("Total Assets", "asset_total")
+            ]
+        )
+        
+        # --- Blueprint Statistics Card ---
+        self._create_analytics_card(
+            scrollable_frame,
+            "Blueprint Analysis",
+            "🎯",
+            [
+                ("Total Blueprints", "bp_total"),
+                ("Actor Blueprints", "bp_actors"),
+                ("Component Blueprints", "bp_components"),
+                ("Interface Blueprints", "bp_interfaces"),
+                ("Function Libraries", "bp_libraries"),
+                ("Average Nodes", "bp_avg_nodes"),
+                ("Max Nodes", "bp_max_nodes")
+            ]
+        )
+        
+        # --- Lines of Code Card ---
+        self._create_analytics_card(
+            scrollable_frame,
+            "Code Metrics",
+            "📝",
+            [
+                ("Total Lines", "loc_total"),
+                ("Code Lines", "loc_code"),
+                ("Comment Lines", "loc_comments"),
+                ("Blank Lines", "loc_blank"),
+                ("Python", "loc_python"),
+                ("C++", "loc_cpp"),
+                ("Headers", "loc_headers"),
+                ("Blueprint Scripts", "loc_blueprint")
+            ]
+        )
+        
+        # --- Placeholder Content Card ---
+        self._create_analytics_card(
+            scrollable_frame,
+            "Placeholder Content",
+            "⚠️",
+            [
+                ("Default Cubes", "placeholder_cubes"),
+                ("Default Spheres", "placeholder_spheres"),
+                ("Temp Blueprints", "placeholder_temp_bps"),
+                ("Missing Assets", "placeholder_missing"),
+                ("Placeholder Materials", "placeholder_mats"),
+                ("Placeholder Textures", "placeholder_texs")
+            ]
+        )
+        
+        # --- Connection Metrics Card ---
+        self._create_analytics_card(
+            scrollable_frame,
+            "Connection Health",
+            "🔌",
+            [
+                ("VS Code Connected", "conn_vscode"),
+                ("VS Code Uptime", "conn_vscode_uptime"),
+                ("VS Code Reconnects", "conn_vscode_reconnects"),
+                ("UE Connected", "conn_ue"),
+                ("UE Uptime", "conn_ue_uptime"),
+                ("UE Reconnects", "conn_ue_reconnects"),
+                ("Avg Latency", "conn_latency")
+            ]
+        )
+        
+        # --- PIE Session Summary Card ---
+        self._create_analytics_card(
+            scrollable_frame,
+            "PIE Sessions (Last 5)",
+            "🎮",
+            [
+                ("Total Sessions", "pie_total"),
+                ("Average FPS", "pie_avg_fps"),
+                ("Average Frame Time", "pie_avg_frame_time"),
+                ("Average Memory", "pie_avg_memory"),
+                ("Peak Memory", "pie_peak_memory")
+            ]
+        )
+        
+        # --- Build Metrics Card ---
+        self._create_analytics_card(
+            scrollable_frame,
+            "Build Statistics",
+            "🔨",
+            [
+                ("Total Builds", "build_total"),
+                ("Failed Builds", "build_failed"),
+                ("Success Rate", "build_success_rate"),
+                ("Last Build Time", "build_last_time"),
+                ("Average Build Time", "build_avg_time"),
+                ("Last Build Status", "build_last_status")
+            ]
+        )
+        
+        # Initialize analytics labels dictionary
+        self.analytics_labels = {}
+        
+        # Initial data load
+        self.root.after(1000, self.refresh_analytics_data)
+    
+    def _create_analytics_card(self, parent, title, icon, fields):
+        """Create an analytics card with specified fields."""
+        card = tk.Frame(parent, bg=self.bg_secondary, highlightthickness=1,
+                       highlightbackground=self.border_color)
+        card.pack(fill=tk.X, pady=(0, 10))
+        
+        card_inner = tk.Frame(card, bg=self.bg_secondary, padx=15, pady=12)
+        card_inner.pack(fill=tk.X)
+        
+        # Card header
+        header = tk.Label(
+            card_inner,
+            text=f"{icon} {title}",
+            font=("Segoe UI", 10, "bold"),
+            bg=self.bg_secondary,
+            fg=self.accent_color,
+            anchor=tk.W
+        )
+        header.pack(fill=tk.X, pady=(0, 10))
+        
+        # Create field rows
+        for field_name, field_key in fields:
+            row = tk.Frame(card_inner, bg=self.bg_secondary)
+            row.pack(fill=tk.X, pady=2)
+            
+            name_label = tk.Label(
+                row,
+                text=field_name + ":",
+                font=("Segoe UI", 9),
+                bg=self.bg_secondary,
+                fg=self.fg_secondary,
+                anchor=tk.W,
+                width=20
+            )
+            name_label.pack(side=tk.LEFT)
+            
+            value_label = tk.Label(
+                row,
+                text="Loading...",
+                font=("Segoe UI", 9, "bold"),
+                bg=self.bg_secondary,
+                fg=self.fg_color,
+                anchor=tk.W
+            )
+            value_label.pack(side=tk.LEFT, fill=tk.X, expand=True)
+            
+            self.analytics_labels[field_key] = value_label
+    
+    def refresh_analytics_data(self):
+        """Refresh all analytics data from various sources."""
+        def refresh_in_thread():
+            try:
+                # Get all metrics from analytics system
+                metrics = self.project_analytics.get_all_metrics()
+                
+                # Update UI on main thread
+                self.root.after(0, self._update_analytics_ui, metrics)
+            except Exception as e:
+                logger.error(f"Error refreshing analytics: {e}")
+                self.root.after(0, self._show_analytics_error, str(e))
+        
+        # Update status
+        self.update_status("Refreshing analytics data...", "busy")
+        
+        # Run in thread to avoid blocking UI
+        thread = threading.Thread(target=refresh_in_thread, daemon=True)
+        thread.start()
+    
+    def _update_analytics_ui(self, metrics):
+        """Update analytics UI with collected metrics."""
+        try:
+            # Health Score
+            health_score = self.project_analytics.calculate_health_score()
+            self._update_analytics_label("health_score", f"{health_score:.1f}/100")
+            
+            if health_score >= 80:
+                status_text = "Excellent"
+                status_color = self.success_color
+            elif health_score >= 60:
+                status_text = "Good"
+                status_color = self.accent_color
+            elif health_score >= 40:
+                status_text = "Fair"
+                status_color = self.warning_color
+            else:
+                status_text = "Needs Attention"
+                status_color = self.error_color
+            
+            self._update_analytics_label("health_status", status_text, status_color)
+            self._update_analytics_label("health_updated", datetime.now().strftime("%H:%M:%S"))
+            
+            # Asset Counts (with comma formatting for large numbers)
+            asset_counts = metrics.get('asset_counts', {})
+            self._update_analytics_label("asset_static_meshes", f"{asset_counts.get('static_meshes', 0):,}")
+            self._update_analytics_label("asset_skeletal_meshes", f"{asset_counts.get('skeletal_meshes', 0):,}")
+            self._update_analytics_label("asset_blueprints", f"{asset_counts.get('blueprints', 0):,}")
+            self._update_analytics_label("asset_materials", f"{asset_counts.get('materials', 0):,}")
+            self._update_analytics_label("asset_textures", f"{asset_counts.get('textures', 0):,}")
+            self._update_analytics_label("asset_sounds", f"{asset_counts.get('sounds', 0):,}")
+            self._update_analytics_label("asset_animations", f"{asset_counts.get('animations', 0):,}")
+            self._update_analytics_label("asset_particles", f"{asset_counts.get('particles', 0):,}")
+            self._update_analytics_label("asset_total", f"{asset_counts.get('total', 0):,}")
+            
+            # Blueprint Stats
+            bp_stats = metrics.get('blueprint_stats', {})
+            self._update_analytics_label("bp_total", str(bp_stats.get('total_blueprints', 0)))
+            self._update_analytics_label("bp_actors", str(bp_stats.get('actor_blueprints', 0)))
+            self._update_analytics_label("bp_components", str(bp_stats.get('component_blueprints', 0)))
+            self._update_analytics_label("bp_interfaces", str(bp_stats.get('interface_blueprints', 0)))
+            self._update_analytics_label("bp_libraries", str(bp_stats.get('function_libraries', 0)))
+            self._update_analytics_label("bp_avg_nodes", f"{bp_stats.get('avg_node_count', 0):.1f}")
+            self._update_analytics_label("bp_max_nodes", str(bp_stats.get('max_node_count', 0)))
+            
+            # LOC Stats (with comma formatting)
+            loc_stats = metrics.get('loc_stats', {})
+            self._update_analytics_label("loc_total", f"{loc_stats.get('total_lines', 0):,}")
+            self._update_analytics_label("loc_code", f"{loc_stats.get('code_lines', 0):,}")
+            self._update_analytics_label("loc_comments", f"{loc_stats.get('comment_lines', 0):,}")
+            self._update_analytics_label("loc_blank", f"{loc_stats.get('blank_lines', 0):,}")
+            self._update_analytics_label("loc_python", f"{loc_stats.get('python_lines', 0):,}")
+            self._update_analytics_label("loc_cpp", f"{loc_stats.get('cpp_lines', 0):,}")
+            self._update_analytics_label("loc_headers", f"{loc_stats.get('header_lines', 0):,}")
+            self._update_analytics_label("loc_blueprint", f"{loc_stats.get('blueprint_lines', 0):,}")
+            
+            # Placeholder Content
+            placeholders = metrics.get('placeholder_content', {})
+            self._update_analytics_label("placeholder_cubes", str(placeholders.get('default_cubes', 0)))
+            self._update_analytics_label("placeholder_spheres", str(placeholders.get('default_spheres', 0)))
+            self._update_analytics_label("placeholder_temp_bps", str(placeholders.get('temp_blueprints', 0)))
+            self._update_analytics_label("placeholder_missing", str(placeholders.get('missing_assets', 0)))
+            self._update_analytics_label("placeholder_mats", str(placeholders.get('placeholder_materials', 0)))
+            self._update_analytics_label("placeholder_texs", str(placeholders.get('placeholder_textures', 0)))
+            
+            # Connection Metrics
+            conn_metrics = metrics.get('connection_metrics', {})
+            self._update_analytics_label("conn_vscode", "✅ Connected" if conn_metrics.get('vscode_connected') else "❌ Disconnected")
+            uptime = conn_metrics.get('vscode_uptime_seconds', 0)
+            self._update_analytics_label("conn_vscode_uptime", self._format_duration(uptime))
+            self._update_analytics_label("conn_vscode_reconnects", str(conn_metrics.get('vscode_reconnect_count', 0)))
+            
+            self._update_analytics_label("conn_ue", "✅ Connected" if conn_metrics.get('ue_connected') else "❌ Disconnected")
+            uptime = conn_metrics.get('ue_uptime_seconds', 0)
+            self._update_analytics_label("conn_ue_uptime", self._format_duration(uptime))
+            self._update_analytics_label("conn_ue_reconnects", str(conn_metrics.get('ue_reconnect_count', 0)))
+            self._update_analytics_label("conn_latency", f"{conn_metrics.get('avg_latency_ms', 0):.1f} ms")
+            
+            # PIE Sessions
+            pie_sessions = metrics.get('pie_sessions', [])
+            self._update_analytics_label("pie_total", str(len(pie_sessions)))
+            
+            if pie_sessions:
+                avg_fps = sum(s.get('avg_fps', 0) for s in pie_sessions) / len(pie_sessions)
+                avg_frame_time = sum(s.get('avg_frame_time_ms', 0) for s in pie_sessions) / len(pie_sessions)
+                avg_memory = sum(s.get('avg_memory_mb', 0) for s in pie_sessions) / len(pie_sessions)
+                peak_memory = max(s.get('peak_memory_mb', 0) for s in pie_sessions)
+                
+                self._update_analytics_label("pie_avg_fps", f"{avg_fps:.1f}")
+                self._update_analytics_label("pie_avg_frame_time", f"{avg_frame_time:.2f} ms")
+                self._update_analytics_label("pie_avg_memory", f"{avg_memory:.1f} MB")
+                self._update_analytics_label("pie_peak_memory", f"{peak_memory:.1f} MB")
+            else:
+                self._update_analytics_label("pie_avg_fps", "N/A")
+                self._update_analytics_label("pie_avg_frame_time", "N/A")
+                self._update_analytics_label("pie_avg_memory", "N/A")
+                self._update_analytics_label("pie_peak_memory", "N/A")
+            
+            # Build Metrics
+            build_metrics = metrics.get('build_metrics', {})
+            total_builds = build_metrics.get('total_builds', 0)
+            failed_builds = build_metrics.get('failed_builds', 0)
+            
+            self._update_analytics_label("build_total", str(total_builds))
+            self._update_analytics_label("build_failed", str(failed_builds))
+            
+            if total_builds > 0:
+                success_rate = ((total_builds - failed_builds) / total_builds) * 100
+                self._update_analytics_label("build_success_rate", f"{success_rate:.1f}%")
+            else:
+                self._update_analytics_label("build_success_rate", "N/A")
+            
+            last_build_time = build_metrics.get('last_build_time_seconds', 0)
+            avg_build_time = build_metrics.get('avg_build_time_seconds', 0)
+            
+            self._update_analytics_label("build_last_time", self._format_duration(last_build_time))
+            self._update_analytics_label("build_avg_time", self._format_duration(avg_build_time))
+            self._update_analytics_label("build_last_status", build_metrics.get('last_build_status', 'unknown').title())
+            
+            self.update_status("Analytics refreshed successfully", "success")
+            
+        except Exception as e:
+            logger.error(f"Error updating analytics UI: {e}")
+            self.update_status(f"Error updating analytics: {e}", "error")
+    
+    def _update_analytics_label(self, key, text, color=None):
+        """Update an analytics label with thread-safe UI update."""
+        if key in self.analytics_labels:
+            self.analytics_labels[key].config(text=text)
+            if color:
+                self.analytics_labels[key].config(fg=color)
+    
+    def _format_duration(self, seconds):
+        """Format duration in seconds to human-readable string."""
+        if seconds == 0:
+            return "0s"
+        elif seconds < 60:
+            return f"{seconds:.0f}s"
+        elif seconds < 3600:
+            minutes = int(seconds / 60)
+            secs = int(seconds % 60)
+            return f"{minutes}m {secs}s" if secs > 0 else f"{minutes}m"
+        else:
+            hours = int(seconds / 3600)
+            minutes = int((seconds % 3600) / 60)
+            return f"{hours}h {minutes}m" if minutes > 0 else f"{hours}h"
+    
+    def _show_analytics_error(self, error_msg):
+        """Show error message when refreshing analytics fails."""
+        self.update_status(f"Analytics error: {error_msg}", "error")
+        messagebox.showerror("Analytics Error", f"Failed to refresh analytics:\n{error_msg}")
+    
+    def export_analytics_data(self):
+        """Export analytics data to JSON file."""
+        filename = filedialog.asksaveasfilename(
+            defaultextension=".json",
+            filetypes=[("JSON files", "*.json"), ("All files", "*.*")],
+            initialfile=f"analytics_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        )
+        
+        if filename:
+            try:
+                self.project_analytics.export_to_json(filename)
+                self.update_status("Analytics data exported successfully", "success")
+                messagebox.showinfo("Export Successful", f"Analytics data exported to:\n{filename}")
+            except Exception as e:
+                self.update_status(f"Export failed: {e}", "error")
+                messagebox.showerror("Export Error", f"Failed to export analytics:\n{e}")
+    
+    def collect_ue_analytics_data(self):
+        """Collect analytics data from Unreal Engine."""
+        if not self.ue_data_collector.is_connected():
+            messagebox.showwarning(
+                "Not Connected",
+                "Not connected to Unreal Engine.\n\nPlease connect to UE via the Unreal MCP tab first."
+            )
+            return
+        
+        # Show progress
+        self.update_status("Collecting data from Unreal Engine...", "busy")
+        
+        def collect_in_thread():
+            try:
+                import asyncio
+                
+                # Create new event loop for this thread
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                
+                # Collect asset counts
+                asset_counts = loop.run_until_complete(self.ue_data_collector.collect_asset_counts())
+                self.project_analytics.update_asset_counts(asset_counts)
+                
+                # Collect blueprint stats
+                bp_stats = loop.run_until_complete(self.ue_data_collector.collect_blueprint_stats())
+                self.project_analytics.update_blueprint_stats(bp_stats)
+                
+                # Collect placeholder content
+                placeholders = loop.run_until_complete(self.ue_data_collector.collect_placeholder_content())
+                self.project_analytics.update_placeholder_content(placeholders)
+                
+                # Close the loop
+                loop.close()
+                
+                # Update UI
+                self.root.after(0, self._on_ue_data_collected)
+                
+            except Exception as e:
+                logger.error(f"Error collecting UE data: {e}")
+                self.root.after(0, self._on_ue_data_collection_failed, str(e))
+        
+        # Run in thread
+        thread = threading.Thread(target=collect_in_thread, daemon=True)
+        thread.start()
+    
+    def _on_ue_data_collected(self):
+        """Handle successful UE data collection."""
+        self.update_status("UE data collected successfully", "success")
+        messagebox.showinfo(
+            "Data Collection Complete",
+            "Analytics data has been collected from Unreal Engine.\n\nView the Analytics tab to see updated statistics."
+        )
+        
+        # Refresh analytics display
+        self.refresh_analytics_data()
+    
+    def _on_ue_data_collection_failed(self, error_msg):
+        """Handle failed UE data collection."""
+        self.update_status(f"Data collection failed: {error_msg}", "error")
+        messagebox.showerror(
+            "Data Collection Failed",
+            f"Failed to collect data from Unreal Engine:\n\n{error_msg}\n\nMake sure UE is running and connected."
+        )
     
     def create_servers_tab(self):
         """Create the Servers tab for managing backend servers."""
