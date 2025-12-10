@@ -257,7 +257,7 @@ const logContent = await client.sendRequest({
 
 ### Created (11 files)
 
-1. `ue_log_capture.py` (395 lines) - Core log capture module
+1. `ue_log_capture.py` (409 lines) - Core log capture module
 2. `logs/README.md` - Logs directory documentation
 3. `UE_LOG_USAGE_GUIDE.md` (315 lines) - Usage guide
 4. `IMPLEMENTATION_SUMMARY_UE_LOGS.md` (295 lines) - Implementation details

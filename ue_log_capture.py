@@ -14,7 +14,6 @@ Features:
 - Integration with GUI and MCP systems
 """
 
-import os
 import threading
 import json
 from datetime import datetime
@@ -76,6 +75,7 @@ class UELogCapture:
         Args:
             session_name: Optional custom name for the session.
                          If None, uses default format: ue_output_YYYY-MM-DD_HH-MM-SS.log
+                         If provided, uses format: ue_{session_name}_{YYYY-MM-DD_HH-MM-SS}.log
         
         Returns:
             Path to the created log file.

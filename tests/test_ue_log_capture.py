@@ -7,11 +7,9 @@ logs are properly captured, formatted, and saved.
 """
 
 import pytest
-import os
 import tempfile
 import shutil
 from pathlib import Path
-from datetime import datetime
 from ue_log_capture import UELogCapture, get_global_capture
 
 

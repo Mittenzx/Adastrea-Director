@@ -1611,14 +1611,14 @@ class AdastreaDirectorApp:
     def _display_tool_result(self, result):
         """Display the result of an MCP tool call."""
         # Capture result for logging
-        result_text = ""
+        result_parts = []
         is_error = result.get("isError")
         
         if is_error:
             for content in result.get("content", []):
                 if content.get("type") == "text":
                     error_text = content['text']
-                    result_text += error_text + "\n"
+                    result_parts.append(error_text)
                     self.log_mcp_output(f"❌ {error_text}\n", "error")
         else:
             for content in result.get("content", []):
@@ -1627,18 +1627,19 @@ class AdastreaDirectorApp:
                     try:
                         data = json.loads(content["text"])
                         formatted = json.dumps(data, indent=2)
-                        result_text += formatted + "\n"
+                        result_parts.append(formatted)
                         self.log_mcp_output(formatted + "\n", "json")
                     except json.JSONDecodeError:
                         text = content["text"]
-                        result_text += text + "\n"
+                        result_parts.append(text)
                         self.log_mcp_output(text + "\n", "info")
                 elif content.get("type") == "image":
                     image_info = f"[Image: {content.get('mimeType', 'unknown')}]"
-                    result_text += image_info + "\n"
+                    result_parts.append(image_info)
                     self.log_mcp_output(f"{image_info}\n", "info")
         
         # Log the tool result to file
+        result_text = '\n'.join(result_parts)
         if self.ue_log_session_active and result_text:
             level = "ERROR" if is_error else "INFO"
             self.ue_log_capture.log(f"Tool Result:\n{result_text}", source="MCP-Result", level=level)

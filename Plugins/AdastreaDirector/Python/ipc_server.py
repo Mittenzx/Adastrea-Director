@@ -1060,7 +1060,9 @@ JSON Response:"""
         """Get or create the MCP server instance."""
         if self._mcp_server is None:
             try:
-                sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
+                mcp_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..'))
+                if mcp_path not in sys.path:
+                    sys.path.insert(0, mcp_path)
                 from mcp_server import UnrealMCPServer
                 self._mcp_server = UnrealMCPServer()
                 logger.info("MCP server instance created")
@@ -1081,7 +1083,14 @@ JSON Response:"""
         if not mcp:
             return {
                 'status': 'error',
-                'error': 'MCP server not available. Ensure mcp_server module is installed.'
+                'error': (
+                    "MCP server not available. To resolve:\n"
+                    "- Ensure the 'mcp_server' module is installed and accessible in your Python environment.\n"
+                    "- Check that your PYTHONPATH includes the directory containing 'mcp_server.py'.\n"
+                    "- You can install the module (if available via pip) with: pip install mcp_server\n"
+                    "- For manual installation, place 'mcp_server.py' in your project or site-packages directory.\n"
+                    "- See the documentation for more details or contact support if you need help."
+                )
             }
         
         try:
@@ -1341,7 +1350,9 @@ JSON Response:"""
         logger.debug("Get UE logs request received")
         
         try:
-            sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
+            ue_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..'))
+            if ue_path not in sys.path:
+                sys.path.insert(0, ue_path)
             from ue_log_capture import UELogCapture
             
             # Parse request
@@ -1405,7 +1416,9 @@ JSON Response:"""
         logger.info("Read UE log request received")
         
         try:
-            sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
+            ue_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..'))
+            if ue_path not in sys.path:
+                sys.path.insert(0, ue_path)
             from ue_log_capture import UELogCapture
             from pathlib import Path
             
@@ -1421,7 +1434,6 @@ JSON Response:"""
                     'error': 'No filename or path provided'
                 }
             
-            # Get capture instance once
             capture = UELogCapture()
             
             # Determine the file path
