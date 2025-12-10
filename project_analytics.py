@@ -450,8 +450,9 @@ class ProjectAnalytics:
         # PIE performance (up to -25 points for low FPS)
         if self.pie_sessions:
             recent_sessions = self.pie_sessions[-5:]  # Last 5 sessions
-            avg_fps = sum(s.avg_fps for s in recent_sessions if s.avg_fps > 0) / len(recent_sessions)
-            if avg_fps > 0:
+            valid_fps_sessions = [s.avg_fps for s in recent_sessions if s.avg_fps > 0]
+            if valid_fps_sessions:
+                avg_fps = sum(valid_fps_sessions) / len(valid_fps_sessions)
                 if avg_fps < 30:
                     score -= 25
                 elif avg_fps < 45:

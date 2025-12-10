@@ -153,6 +153,7 @@ class UEDataCollector:
             # Execute Python script in UE to get blueprint stats
             python_script = """
 import unreal
+import json
 
 # Get all blueprint assets
 asset_registry = unreal.AssetRegistryHelpers.get_asset_registry()
@@ -194,18 +195,32 @@ for bp_asset in blueprints:
 # Calculate averages
 stats['avg_nodes'] = stats['total_nodes'] / max(stats['total'], 1)
 
-print(unreal.SystemLibrary.parse_into_string(stats))
+# Use JSON for structured output
+unreal.log("BLUEPRINT_STATS_JSON_START")
+unreal.log(json.dumps(stats))
+unreal.log("BLUEPRINT_STATS_JSON_END")
 """
             
             if self.mcp_server:
                 result = self.mcp_server.handle_tool_call("editor_run_python", {"code": python_script})
                 
                 if not result.get('isError'):
-                    # Parse output
+                    # Parse output - look for JSON markers
                     for content in result.get('content', []):
                         if content.get('type') == 'text':
+                            text = content['text']
+                            # Extract JSON between markers
+                            if 'BLUEPRINT_STATS_JSON_START' in text and 'BLUEPRINT_STATS_JSON_END' in text:
+                                start = text.find('BLUEPRINT_STATS_JSON_START') + len('BLUEPRINT_STATS_JSON_START')
+                                end = text.find('BLUEPRINT_STATS_JSON_END')
+                                json_str = text[start:end].strip()
+                                try:
+                                    return json.loads(json_str)
+                                except json.JSONDecodeError:
+                                    pass
+                            # Fallback: try to parse the whole text as JSON
                             try:
-                                return json.loads(content['text'])
+                                return json.loads(text)
                             except json.JSONDecodeError:
                                 pass
             
@@ -242,6 +257,7 @@ print(unreal.SystemLibrary.parse_into_string(stats))
             # Execute Python script to find placeholder content
             python_script = """
 import unreal
+import json
 
 placeholders = {
     'cubes': 0,
@@ -286,7 +302,10 @@ for mat in materials:
     if 'placeholder' in mat_name or 'temp' in mat_name:
         placeholders['placeholder_mats'] += 1
 
-print(unreal.SystemLibrary.parse_into_string(placeholders))
+# Use JSON for structured output
+unreal.log("PLACEHOLDER_STATS_JSON_START")
+unreal.log(json.dumps(placeholders))
+unreal.log("PLACEHOLDER_STATS_JSON_END")
 """
             
             if self.mcp_server:
@@ -295,9 +314,23 @@ print(unreal.SystemLibrary.parse_into_string(placeholders))
                 if not result.get('isError'):
                     for content in result.get('content', []):
                         if content.get('type') == 'text':
+                            text = content['text']
+                            # Extract JSON between markers
+                            if 'PLACEHOLDER_STATS_JSON_START' in text and 'PLACEHOLDER_STATS_JSON_END' in text:
+                                start = text.find('PLACEHOLDER_STATS_JSON_START') + len('PLACEHOLDER_STATS_JSON_START')
+                                end = text.find('PLACEHOLDER_STATS_JSON_END')
+                                json_str = text[start:end].strip()
+                                try:
+                                    data = json.loads(json_str)
+                                    # Limit locations to prevent excessive data
+                                    if 'locations' in data:
+                                        data['locations'] = data['locations'][:20]
+                                    return data
+                                except json.JSONDecodeError:
+                                    pass
+                            # Fallback: try to parse as JSON
                             try:
-                                data = json.loads(content['text'])
-                                # Limit locations to prevent excessive data
+                                data = json.loads(text)
                                 if 'locations' in data:
                                     data['locations'] = data['locations'][:20]
                                 return data
