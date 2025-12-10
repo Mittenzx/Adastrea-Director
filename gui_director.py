@@ -1977,6 +1977,26 @@ class AdastreaDirectorApp:
         )
         status_label.pack(side=tk.LEFT)
         
+        # Collect UE Data button
+        collect_ue_button = tk.Button(
+            status_header,
+            text="📥 Collect UE Data",
+            command=self.collect_ue_analytics_data,
+            font=("Segoe UI", 9),
+            bg=self.accent_color,
+            fg="#20232b",
+            activebackground=self.accent_hover,
+            activeforeground="#20232b",
+            relief=tk.FLAT,
+            padx=15,
+            pady=6,
+            cursor="hand2",
+            borderwidth=0
+        )
+        collect_ue_button.pack(side=tk.RIGHT, padx=(0, 5))
+        self.create_tooltip(collect_ue_button, "Collect analytics data from Unreal Engine")
+        self.add_button_hover_effect(collect_ue_button, hover_color=self.accent_hover)
+        
         # Refresh button
         refresh_status_button = tk.Button(
             status_header,
@@ -2793,6 +2813,71 @@ class AdastreaDirectorApp:
             except Exception as e:
                 self.update_status(f"Export failed: {e}", "error")
                 messagebox.showerror("Export Error", f"Failed to export analytics:\n{e}")
+    
+    def collect_ue_analytics_data(self):
+        """Collect analytics data from Unreal Engine."""
+        if not self.ue_data_collector.is_connected():
+            messagebox.showwarning(
+                "Not Connected",
+                "Not connected to Unreal Engine.\n\nPlease connect to UE via the Unreal MCP tab first."
+            )
+            return
+        
+        # Show progress
+        self.update_status("Collecting data from Unreal Engine...", "busy")
+        
+        def collect_in_thread():
+            try:
+                import asyncio
+                
+                # Create new event loop for this thread
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                
+                # Collect asset counts
+                asset_counts = loop.run_until_complete(self.ue_data_collector.collect_asset_counts())
+                self.project_analytics.update_asset_counts(asset_counts)
+                
+                # Collect blueprint stats
+                bp_stats = loop.run_until_complete(self.ue_data_collector.collect_blueprint_stats())
+                self.project_analytics.update_blueprint_stats(bp_stats)
+                
+                # Collect placeholder content
+                placeholders = loop.run_until_complete(self.ue_data_collector.collect_placeholder_content())
+                self.project_analytics.update_placeholder_content(placeholders)
+                
+                # Close the loop
+                loop.close()
+                
+                # Update UI
+                self.root.after(0, self._on_ue_data_collected)
+                
+            except Exception as e:
+                logger.error(f"Error collecting UE data: {e}")
+                self.root.after(0, self._on_ue_data_collection_failed, str(e))
+        
+        # Run in thread
+        thread = threading.Thread(target=collect_in_thread, daemon=True)
+        thread.start()
+    
+    def _on_ue_data_collected(self):
+        """Handle successful UE data collection."""
+        self.update_status("UE data collected successfully", "success")
+        messagebox.showinfo(
+            "Data Collection Complete",
+            "Analytics data has been collected from Unreal Engine.\n\nView the Analytics tab to see updated statistics."
+        )
+        
+        # Refresh analytics display
+        self.refresh_analytics_data()
+    
+    def _on_ue_data_collection_failed(self, error_msg):
+        """Handle failed UE data collection."""
+        self.update_status(f"Data collection failed: {error_msg}", "error")
+        messagebox.showerror(
+            "Data Collection Failed",
+            f"Failed to collect data from Unreal Engine:\n\n{error_msg}\n\nMake sure UE is running and connected."
+        )
     
     def create_servers_tab(self):
         """Create the Servers tab for managing backend servers."""
