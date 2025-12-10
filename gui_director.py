@@ -1588,9 +1588,11 @@ class AdastreaDirectorApp:
         self.log_mcp_output(f"\n[{timestamp}] ", "timestamp")
         self.log_mcp_output(f"Running: {tool_name}\n", "header")
         
-        # Log the tool execution
+        # Log the tool execution (result will be logged in _display_tool_result)
         if self.ue_log_session_active:
-            self.ue_log_capture.log_tool_execution(tool_name, arguments, "Executing...")
+            params_str = json.dumps(arguments) if arguments else "{}"
+            self.ue_log_capture.log(f"Executing tool: {tool_name} with parameters: {params_str}", 
+                                   source="MCP-Tool", level="INFO")
         
         def run_tool_thread():
             try:

@@ -16,6 +16,7 @@ Features:
 
 import os
 import threading
+import json
 from datetime import datetime
 from pathlib import Path
 from typing import Optional, TextIO
@@ -205,8 +206,6 @@ class UELogCapture:
             parameters: Parameters passed to the tool
             result: Result from the tool execution
         """
-        import json
-        
         content = [
             f"Tool: {tool_name}",
             "",
@@ -291,13 +290,20 @@ class UELogCapture:
         return False
 
 
-# Global instance for easy access
+# Global instance for easy access across the application
+# Note: This singleton pattern is intentional for this use case as we typically
+# want a single log capture instance shared across all UE operations in the GUI.
+# For testing or advanced use cases, create separate UELogCapture instances directly.
 _global_capture: Optional[UELogCapture] = None
 
 
 def get_global_capture() -> UELogCapture:
     """
     Get or create the global UELogCapture instance.
+    
+    This provides a convenient singleton for simple use cases where you want
+    all UE operations to log to the same capture instance. For more control
+    or testing scenarios, create UELogCapture instances directly.
     
     Returns:
         Global UELogCapture instance.
