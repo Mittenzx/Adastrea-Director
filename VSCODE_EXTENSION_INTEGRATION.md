@@ -417,7 +417,7 @@ export function registerChatParticipant(context: vscode.ExtensionContext, client
 
 ### Test MCP Connection
 
-1. Start the IPC server:
+1. Start the IPC server from the repository root:
    ```bash
    python Plugins/AdastreaDirector/Python/ipc_server.py --port 5555
    ```

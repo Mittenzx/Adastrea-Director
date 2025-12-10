@@ -191,6 +191,17 @@ class IPCServer:
     def stop(self):
         """Stop the IPC server."""
         self.running = False
+        
+        # Clean up MCP server
+        if self._mcp_server:
+            try:
+                self._mcp_server.stop()
+                logger.info("MCP server stopped")
+            except Exception as e:
+                logger.error(f"Error stopping MCP server: {e}")
+            finally:
+                self._mcp_server = None
+        
         if self.socket:
             logger.info("Shutting down IPC server...")
             self.socket.close()
@@ -1410,23 +1421,36 @@ JSON Response:"""
                     'error': 'No filename or path provided'
                 }
             
+            # Get capture instance once
+            capture = UELogCapture()
+            
             # Determine the file path
             if file_path:
                 log_path = Path(file_path)
             else:
-                capture = UELogCapture()
                 log_path = capture.log_dir / filename
             
             # Security check: ensure the file is in the logs directory
-            capture = UELogCapture()
+            # Use is_relative_to for safer path validation (Python 3.9+)
             try:
                 log_path = log_path.resolve()
                 log_dir = capture.log_dir.resolve()
-                if not str(log_path).startswith(str(log_dir)):
-                    return {
-                        'status': 'error',
-                        'error': 'Access denied: File must be in logs directory'
-                    }
+                
+                # Check if log_path is within log_dir
+                try:
+                    # Python 3.9+ method (safer against symlinks)
+                    if not log_path.is_relative_to(log_dir):
+                        return {
+                            'status': 'error',
+                            'error': 'Access denied: File must be in logs directory'
+                        }
+                except AttributeError:
+                    # Fallback for Python < 3.9
+                    if not str(log_path).startswith(str(log_dir)):
+                        return {
+                            'status': 'error',
+                            'error': 'Access denied: File must be in logs directory'
+                        }
             except Exception as e:
                 logger.error(f"Path resolution error: {e}")
                 return {
