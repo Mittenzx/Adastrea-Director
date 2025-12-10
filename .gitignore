@@ -49,7 +49,8 @@ chroma_db_adastrea/
 
 # Logs
 *.log
-logs/
+# Note: logs/ directory itself is tracked (with README.md), but .log files are ignored
+logs/*.log
 
 # Testing
 .pytest_cache/
