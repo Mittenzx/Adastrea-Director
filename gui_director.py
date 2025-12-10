@@ -1542,7 +1542,10 @@ class AdastreaDirectorApp:
         self.project_analytics.update_connection_metrics(ue_connected=True)
         
         # Set up UE data collector with MCP server
-        self.ue_data_collector = UEDataCollector(mcp_server=self.unreal_mcp_server)
+        if hasattr(self, "ue_data_collector") and self.ue_data_collector is not None:
+            self.ue_data_collector.mcp_server = self.unreal_mcp_server
+        else:
+            self.ue_data_collector = UEDataCollector(mcp_server=self.unreal_mcp_server)
         
         # Get project info on connection
         self.run_mcp_tool("editor_project_info")

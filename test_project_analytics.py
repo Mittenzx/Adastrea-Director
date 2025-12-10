@@ -7,7 +7,6 @@ import pytest
 import os
 import json
 import tempfile
-from pathlib import Path
 from project_analytics import (
     ProjectAnalytics,
     AssetCounts,
@@ -89,8 +88,8 @@ def test_pie_session_initialization():
 def test_connection_metrics_initialization():
     """Test ConnectionMetrics dataclass initialization."""
     metrics = ConnectionMetrics()
-    assert metrics.vscode_connected == False
-    assert metrics.ue_connected == False
+    assert not metrics.vscode_connected
+    assert not metrics.ue_connected
     assert metrics.vscode_reconnect_count == 0
 
 

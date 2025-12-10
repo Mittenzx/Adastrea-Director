@@ -12,15 +12,12 @@ Collects and analyzes project statistics for debugging and analytics:
 - Connection health monitoring
 """
 
-import os
 import json
-import time
 import logging
-from dataclasses import dataclass, asdict
-from typing import Dict, List, Optional, Any
-from datetime import datetime, timedelta
+from dataclasses import dataclass, asdict, field
+from typing import Dict, List, Any
+from datetime import datetime
 from pathlib import Path
-import threading
 
 logger = logging.getLogger(__name__)
 
@@ -72,11 +69,7 @@ class LOCStats:
     header_lines: int = 0
     blueprint_lines: int = 0
     last_updated: str = ""
-    history: List[Dict] = None
-    
-    def __post_init__(self):
-        if self.history is None:
-            self.history = []
+    history: List[Dict] = field(default_factory=list)
     
     def to_dict(self) -> Dict:
         return asdict(self)
@@ -104,12 +97,8 @@ class PlaceholderContent:
     missing_assets: int = 0
     placeholder_materials: int = 0
     placeholder_textures: int = 0
-    locations: List[Dict] = None
+    locations: List[Dict] = field(default_factory=list)
     last_updated: str = ""
-    
-    def __post_init__(self):
-        if self.locations is None:
-            self.locations = []
     
     def to_dict(self) -> Dict:
         return asdict(self)
@@ -164,11 +153,7 @@ class BuildMetrics:
     failed_builds: int = 0
     last_build_status: str = "unknown"
     last_build_timestamp: str = ""
-    build_history: List[Dict] = None
-    
-    def __post_init__(self):
-        if self.build_history is None:
-            self.build_history = []
+    build_history: List[Dict] = field(default_factory=list)
     
     def to_dict(self) -> Dict:
         return asdict(self)

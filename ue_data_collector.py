@@ -8,7 +8,7 @@ Provides asset counts, blueprint information, and project statistics.
 
 import logging
 import json
-from typing import Dict, List, Optional, Any
+from typing import Dict, Any
 from datetime import datetime
 
 logger = logging.getLogger(__name__)
@@ -56,6 +56,8 @@ class UEDataCollector:
                 return await self._collect_via_mcp()
             elif self.remote_control_client:
                 return await self._collect_via_remote_control()
+            else:
+                return self._get_mock_asset_counts()
         except Exception as e:
             logger.error(f"Error collecting asset counts: {e}")
             return self._get_mock_asset_counts()
@@ -80,8 +82,8 @@ class UEDataCollector:
                             assets = data['assets']
                         elif isinstance(data, list):
                             assets = data
-                    except json.JSONDecodeError:
-                        pass
+                    except json.JSONDecodeError as e:
+                        logger.error(f"Failed to decode asset JSON: {e} (text: {content.get('text', '')[:100]})")
             
             # Count by type
             counts = {
@@ -189,7 +191,8 @@ for bp_asset in blueprints:
                     stats['interfaces'] += 1
                 elif 'Library' in parent_name:
                     stats['libraries'] += 1
-    except:
+    except Exception as e:
+        logger.error(f"Error analyzing blueprint: {e}")
         pass
 
 # Calculate averages
@@ -383,7 +386,7 @@ print(f"PIE monitoring started: {{session_id}}")
 """
             
             if self.mcp_server:
-                result = self.mcp_server.handle_tool_call("editor_run_python", {"code": python_script})
+                self.mcp_server.handle_tool_call("editor_run_python", {"code": python_script})
                 logger.info(f"PIE monitoring started: {session_id}")
             
         except Exception as e:
