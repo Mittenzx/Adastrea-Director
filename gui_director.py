@@ -1941,6 +1941,9 @@ class AdastreaDirectorApp:
     
     def create_status_dashboard_tab(self):
         """Create the Status Dashboard tab showing connection and service status."""
+        # Initialize status dictionary before creating status cards
+        self.status_labels = {}
+        
         status_tab = tk.Frame(self.notebook, bg=self.bg_tertiary)
         self.notebook.add(status_tab, text="📊 Status")
         
@@ -2067,9 +2070,6 @@ class AdastreaDirectorApp:
                 ("Python Version", "python_version")
             ]
         )
-        
-        # Initialize status dictionary
-        self.status_labels = {}
         
         # Initial status check
         self.root.after(500, self.refresh_all_status)
