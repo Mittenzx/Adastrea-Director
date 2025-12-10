@@ -2674,17 +2674,17 @@ class AdastreaDirectorApp:
             self._update_analytics_label("health_status", status_text, status_color)
             self._update_analytics_label("health_updated", datetime.now().strftime("%H:%M:%S"))
             
-            # Asset Counts
+            # Asset Counts (with comma formatting for large numbers)
             asset_counts = metrics.get('asset_counts', {})
-            self._update_analytics_label("asset_static_meshes", str(asset_counts.get('static_meshes', 0)))
-            self._update_analytics_label("asset_skeletal_meshes", str(asset_counts.get('skeletal_meshes', 0)))
-            self._update_analytics_label("asset_blueprints", str(asset_counts.get('blueprints', 0)))
-            self._update_analytics_label("asset_materials", str(asset_counts.get('materials', 0)))
-            self._update_analytics_label("asset_textures", str(asset_counts.get('textures', 0)))
-            self._update_analytics_label("asset_sounds", str(asset_counts.get('sounds', 0)))
-            self._update_analytics_label("asset_animations", str(asset_counts.get('animations', 0)))
-            self._update_analytics_label("asset_particles", str(asset_counts.get('particles', 0)))
-            self._update_analytics_label("asset_total", str(asset_counts.get('total', 0)))
+            self._update_analytics_label("asset_static_meshes", f"{asset_counts.get('static_meshes', 0):,}")
+            self._update_analytics_label("asset_skeletal_meshes", f"{asset_counts.get('skeletal_meshes', 0):,}")
+            self._update_analytics_label("asset_blueprints", f"{asset_counts.get('blueprints', 0):,}")
+            self._update_analytics_label("asset_materials", f"{asset_counts.get('materials', 0):,}")
+            self._update_analytics_label("asset_textures", f"{asset_counts.get('textures', 0):,}")
+            self._update_analytics_label("asset_sounds", f"{asset_counts.get('sounds', 0):,}")
+            self._update_analytics_label("asset_animations", f"{asset_counts.get('animations', 0):,}")
+            self._update_analytics_label("asset_particles", f"{asset_counts.get('particles', 0):,}")
+            self._update_analytics_label("asset_total", f"{asset_counts.get('total', 0):,}")
             
             # Blueprint Stats
             bp_stats = metrics.get('blueprint_stats', {})
@@ -2696,16 +2696,16 @@ class AdastreaDirectorApp:
             self._update_analytics_label("bp_avg_nodes", f"{bp_stats.get('avg_node_count', 0):.1f}")
             self._update_analytics_label("bp_max_nodes", str(bp_stats.get('max_node_count', 0)))
             
-            # LOC Stats
+            # LOC Stats (with comma formatting)
             loc_stats = metrics.get('loc_stats', {})
-            self._update_analytics_label("loc_total", str(loc_stats.get('total_lines', 0)))
-            self._update_analytics_label("loc_code", str(loc_stats.get('code_lines', 0)))
-            self._update_analytics_label("loc_comments", str(loc_stats.get('comment_lines', 0)))
-            self._update_analytics_label("loc_blank", str(loc_stats.get('blank_lines', 0)))
-            self._update_analytics_label("loc_python", str(loc_stats.get('python_lines', 0)))
-            self._update_analytics_label("loc_cpp", str(loc_stats.get('cpp_lines', 0)))
-            self._update_analytics_label("loc_headers", str(loc_stats.get('header_lines', 0)))
-            self._update_analytics_label("loc_blueprint", str(loc_stats.get('blueprint_lines', 0)))
+            self._update_analytics_label("loc_total", f"{loc_stats.get('total_lines', 0):,}")
+            self._update_analytics_label("loc_code", f"{loc_stats.get('code_lines', 0):,}")
+            self._update_analytics_label("loc_comments", f"{loc_stats.get('comment_lines', 0):,}")
+            self._update_analytics_label("loc_blank", f"{loc_stats.get('blank_lines', 0):,}")
+            self._update_analytics_label("loc_python", f"{loc_stats.get('python_lines', 0):,}")
+            self._update_analytics_label("loc_cpp", f"{loc_stats.get('cpp_lines', 0):,}")
+            self._update_analytics_label("loc_headers", f"{loc_stats.get('header_lines', 0):,}")
+            self._update_analytics_label("loc_blueprint", f"{loc_stats.get('blueprint_lines', 0):,}")
             
             # Placeholder Content
             placeholders = metrics.get('placeholder_content', {})
@@ -2785,12 +2785,18 @@ class AdastreaDirectorApp:
     
     def _format_duration(self, seconds):
         """Format duration in seconds to human-readable string."""
-        if seconds < 60:
+        if seconds == 0:
+            return "0s"
+        elif seconds < 60:
             return f"{seconds:.0f}s"
         elif seconds < 3600:
-            return f"{seconds/60:.1f}m"
+            minutes = int(seconds / 60)
+            secs = int(seconds % 60)
+            return f"{minutes}m {secs}s" if secs > 0 else f"{minutes}m"
         else:
-            return f"{seconds/3600:.1f}h"
+            hours = int(seconds / 3600)
+            minutes = int((seconds % 3600) / 60)
+            return f"{hours}h {minutes}m" if minutes > 0 else f"{hours}h"
     
     def _show_analytics_error(self, error_msg):
         """Show error message when refreshing analytics fails."""
