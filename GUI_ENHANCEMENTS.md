@@ -1,12 +1,89 @@
-# GUI Enhancements - Status Dashboard & Server Management
+# GUI Enhancements - Status Dashboard, Analytics & Server Management
 
 ## Overview
-This update adds two powerful new tabs to the Adastrea Director GUI, addressing the user's request to:
-1. Integrate all test and server run commands into GUI buttons (no terminal needed)
-2. Show VS Code extension connection status
-3. Show plugin connection status
+This update adds three powerful new tabs to the Adastrea Director GUI:
+1. **Analytics Dashboard** - Comprehensive project statistics and debugging metrics
+2. **Status Dashboard** - Connection and service status monitoring
+3. **Servers Tab** - Integrated server management with GUI buttons
+
+Addresses the user's request to:
+- Redesign GUI as debugging and analytics tool
+- Show thorough feedback about VS Code and UE connections
+- Display live project statistics
+- Track asset counts, blueprint counts, LOC history
+- Identify placeholder content
+- Capture PIE session statistics (FPS, memory)
+- Provide advanced analytics features
 
 ## New Features
+
+### 📊 Analytics Dashboard Tab
+
+A comprehensive analytics and debugging tool providing deep insights into your Unreal Engine project.
+
+#### Features:
+- **Project Health Score (0-100)**
+  - Overall quality metric
+  - Based on placeholders, builds, connections, PIE performance
+  - Color-coded status (Excellent/Good/Fair/Needs Attention)
+  - Real-time calculation
+
+- **Asset Inventory (9 Types)**
+  - Static Meshes
+  - Skeletal Meshes
+  - Blueprints
+  - Materials
+  - Textures
+  - Sounds
+  - Animations
+  - Particles
+  - Total count
+
+- **Blueprint Analysis (7 Metrics)**
+  - Total blueprints by type (actors, components, interfaces, libraries)
+  - Average node count
+  - Max node count
+  - Complexity tracking
+
+- **Code Metrics (8 Categories)**
+  - Total lines of code
+  - Code vs. comments vs. blank lines
+  - Python, C++, Header breakdown
+  - Blueprint script equivalents
+  - Historical tracking
+
+- **Placeholder Content Detection (6 Types)**
+  - Default cubes and spheres
+  - Temp blueprints
+  - Missing assets
+  - Placeholder materials and textures
+  - Location tracking
+
+- **Connection Health Monitoring (7 Metrics)**
+  - VS Code connection status
+  - VS Code uptime and reconnect count
+  - UE connection status
+  - UE uptime and reconnect count
+  - Average latency
+
+- **PIE Session Statistics (5 Metrics)**
+  - Total sessions recorded
+  - Average, min, max FPS
+  - Average frame time
+  - Memory usage (average and peak)
+
+- **Build Metrics (6 Statistics)**
+  - Total and failed builds
+  - Success rate percentage
+  - Last and average build times
+  - Build status
+
+#### UI Elements:
+- 🔄 **Refresh Data** button - Reload analytics from disk
+- 📥 **Export** button - Export to JSON with timestamp
+- 📥 **Collect UE Data** button (on Status tab) - Gather data from Unreal Engine
+- 8 metric cards with color-coded values
+- Real-time updates on data collection
 
 ### 📊 Status Dashboard Tab
 
