@@ -19,7 +19,7 @@ import threading
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, TextIO
+from typing import Optional, TextIO, List
 import logging
 
 logger = logging.getLogger(__name__)
@@ -96,8 +96,15 @@ class UELogCapture:
             
             self._current_log_path = self.log_dir / filename
             
-            # Open log file
-            self._current_log_file = open(self._current_log_path, 'w', encoding='utf-8')
+            # Open log file with error handling
+            try:
+                self._current_log_file = open(self._current_log_path, 'w', encoding='utf-8')
+            except (OSError, IOError) as e:
+                logger.error(f"Failed to create log file {self._current_log_path}: {e}")
+                self._current_log_path = None
+                self._current_log_file = None
+                self._session_start_time = None
+                raise RuntimeError(f"Could not create log file: {e}") from e
             
             # Write header
             self._write_header()
@@ -246,8 +253,18 @@ class UELogCapture:
                 ""
             ])
             
-            self._current_log_file.write("\n".join(footer) + "\n")
-            self._current_log_file.close()
+            # Write footer and close file with error handling
+            try:
+                self._current_log_file.write("\n".join(footer) + "\n")
+                self._current_log_file.flush()
+            except (OSError, IOError) as e:
+                logger.error(f"Failed to write footer to log file: {e}")
+            finally:
+                # Always try to close the file, even if writing failed
+                try:
+                    self._current_log_file.close()
+                except Exception as e:
+                    logger.error(f"Failed to close log file: {e}")
             
             logger.info(f"Ended UE log capture session: {self._current_log_path}")
             
@@ -265,7 +282,7 @@ class UELogCapture:
         with self._lock:
             return self._current_log_path
     
-    def list_log_files(self, limit: int = 10) -> list:
+    def list_log_files(self, limit: int = 10) -> List[Path]:
         """
         List recent log files.
         
@@ -276,7 +293,16 @@ class UELogCapture:
             List of Path objects for log files, sorted by modification time (newest first)
         """
         log_files = list(self.log_dir.glob("ue_*.log"))
-        log_files.sort(key=lambda p: p.stat().st_mtime, reverse=True)
+        
+        # Sort by modification time with error handling
+        def safe_mtime(p: Path) -> float:
+            try:
+                return p.stat().st_mtime
+            except (OSError, IOError) as e:
+                logger.warning(f"Could not stat log file {p}: {e}")
+                return 0.0
+        
+        log_files.sort(key=safe_mtime, reverse=True)
         return log_files[:limit]
     
     def __enter__(self):

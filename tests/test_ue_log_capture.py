@@ -225,6 +225,40 @@ class TestUELogCapture:
             assert "Session Started:" in content
             assert "Captured by: Adastrea Director" in content
             assert "=" * 80 in content
+    
+    def test_file_creation_error_handling(self, temp_log_dir):
+        """Test error handling when file creation fails."""
+        import os
+        
+        # Create a read-only directory
+        readonly_dir = os.path.join(temp_log_dir, "readonly")
+        os.makedirs(readonly_dir, mode=0o444)
+        
+        capture = UELogCapture(log_dir=readonly_dir)
+        
+        # Should raise RuntimeError when trying to create file
+        with pytest.raises(RuntimeError):
+            capture.start_session()
+        
+        # Cleanup
+        os.chmod(readonly_dir, 0o755)
+    
+    def test_list_log_files_with_deleted_files(self, log_capture):
+        """Test that list_log_files handles deleted files gracefully."""
+        # Create some log files
+        log_paths = []
+        for i in range(3):
+            log_path = log_capture.start_session(f"test_{i}")
+            log_paths.append(log_path)
+            log_capture.end_session()
+        
+        # Delete one of the files
+        if log_paths:
+            log_paths[1].unlink()
+        
+        # Should still return remaining files without error
+        log_files = log_capture.list_log_files()
+        assert len(log_files) >= 2  # At least 2 files should remain
 
 
 class TestGlobalCapture:
