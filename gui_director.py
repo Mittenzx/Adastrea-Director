@@ -10,6 +10,9 @@ import tempfile
 from datetime import datetime
 from pathlib import Path
 
+# Import UE log capture module
+from ue_log_capture import UELogCapture
+
 # Try to import psutil for system health monitoring (optional dependency)
 try:
     import psutil
@@ -1455,6 +1458,10 @@ class AdastreaDirectorApp:
         self.unreal_mcp_server = None
         self.mcp_connected = False
         
+        # Initialize UE log capture
+        self.ue_log_capture = UELogCapture()
+        self.ue_log_session_active = False
+        
         # Add initial message
         self.log_mcp_output("🎮 Unreal Engine MCP Integration\n\n", "header")
         self.log_mcp_output("Connect to Unreal Engine to use MCP tools.\n", "info")
@@ -1511,6 +1518,15 @@ class AdastreaDirectorApp:
         self.log_mcp_output("✅ Connected to Unreal Engine!\n", "success")
         self.log_mcp_output("You can now use the MCP tools.\n", "info")
         
+        # Start UE log capture session
+        try:
+            log_path = self.ue_log_capture.start_session("gui_session")
+            self.ue_log_session_active = True
+            self.log_mcp_output(f"📝 Log capture started: {log_path.name}\n", "info")
+            self.ue_log_capture.log("Connected to Unreal Engine via GUI", source="GUI", level="INFO")
+        except Exception as e:
+            self.log_mcp_output(f"⚠️ Warning: Could not start log capture: {e}\n", "warning")
+        
         # Get project info on connection
         self.run_mcp_tool("editor_project_info")
     
@@ -1530,6 +1546,16 @@ class AdastreaDirectorApp:
     
     def disconnect_from_unreal(self):
         """Disconnect from Unreal Engine."""
+        # End UE log capture session
+        if self.ue_log_session_active:
+            try:
+                self.ue_log_capture.log("Disconnecting from Unreal Engine", source="GUI", level="INFO")
+                self.ue_log_capture.end_session()
+                self.ue_log_session_active = False
+                self.log_mcp_output("📝 Log capture session ended.\n", "info")
+            except Exception as e:
+                self.log_mcp_output(f"⚠️ Warning: Error ending log capture: {e}\n", "warning")
+        
         if self.unreal_mcp_server:
             try:
                 self.unreal_mcp_server.stop()
@@ -1562,12 +1588,19 @@ class AdastreaDirectorApp:
         self.log_mcp_output(f"\n[{timestamp}] ", "timestamp")
         self.log_mcp_output(f"Running: {tool_name}\n", "header")
         
+        # Log the tool execution
+        if self.ue_log_session_active:
+            self.ue_log_capture.log_tool_execution(tool_name, arguments, "Executing...")
+        
         def run_tool_thread():
             try:
                 result = self.unreal_mcp_server.handle_tool_call(tool_name, arguments)
                 self.root.after(0, self._display_tool_result, result)
             except Exception as ex:
                 error_msg = str(ex)
+                # Log the error
+                if self.ue_log_session_active:
+                    self.ue_log_capture.log(f"Tool execution error: {error_msg}", source="MCP-Error", level="ERROR")
                 self.root.after(0, lambda msg=error_msg: self.log_mcp_output(f"❌ Error: {msg}\n", "error"))
         
         thread = threading.Thread(target=run_tool_thread, daemon=True)
@@ -1575,10 +1608,16 @@ class AdastreaDirectorApp:
     
     def _display_tool_result(self, result):
         """Display the result of an MCP tool call."""
-        if result.get("isError"):
+        # Capture result for logging
+        result_text = ""
+        is_error = result.get("isError")
+        
+        if is_error:
             for content in result.get("content", []):
                 if content.get("type") == "text":
-                    self.log_mcp_output(f"❌ {content['text']}\n", "error")
+                    error_text = content['text']
+                    result_text += error_text + "\n"
+                    self.log_mcp_output(f"❌ {error_text}\n", "error")
         else:
             for content in result.get("content", []):
                 if content.get("type") == "text":
@@ -1586,11 +1625,21 @@ class AdastreaDirectorApp:
                     try:
                         data = json.loads(content["text"])
                         formatted = json.dumps(data, indent=2)
+                        result_text += formatted + "\n"
                         self.log_mcp_output(formatted + "\n", "json")
                     except json.JSONDecodeError:
-                        self.log_mcp_output(content["text"] + "\n", "info")
+                        text = content["text"]
+                        result_text += text + "\n"
+                        self.log_mcp_output(text + "\n", "info")
                 elif content.get("type") == "image":
-                    self.log_mcp_output(f"[Image: {content.get('mimeType', 'unknown')}]\n", "info")
+                    image_info = f"[Image: {content.get('mimeType', 'unknown')}]"
+                    result_text += image_info + "\n"
+                    self.log_mcp_output(f"{image_info}\n", "info")
+        
+        # Log the tool result to file
+        if self.ue_log_session_active and result_text:
+            level = "ERROR" if is_error else "INFO"
+            self.ue_log_capture.log(f"Tool Result:\n{result_text}", source="MCP-Result", level=level)
     
     def list_mcp_tools(self):
         """List all available MCP tools."""
@@ -1618,6 +1667,10 @@ class AdastreaDirectorApp:
             self.log_mcp_output("❌ No Python code to execute.\n", "error")
             return
         
+        # Log the Python execution (we'll capture the result in _display_tool_result)
+        if self.ue_log_session_active:
+            self.ue_log_capture.log(f"Executing Python code:\n{code}", source="GUI-Python", level="INFO")
+        
         self.run_mcp_tool("editor_run_python", {"code": code})
     
     def execute_console_command(self):
@@ -1630,6 +1683,10 @@ class AdastreaDirectorApp:
         if not command:
             self.log_mcp_output("❌ No console command to execute.\n", "error")
             return
+        
+        # Log the console command execution
+        if self.ue_log_session_active:
+            self.ue_log_capture.log(f"Executing console command: {command}", source="GUI-Console", level="INFO")
         
         self.run_mcp_tool("editor_console_command", {"command": command})
     
