@@ -433,6 +433,7 @@ The improved GUI provides:
 - Python code execution directly in Unreal Editor
 - Console command execution
 - Real-time output display with JSON formatting
+- **✨ Automatic UE log capture** - All UE output is saved to dated log files for agent processing
 
 **Keyboard Shortcuts:**
 - `Enter` or `Ctrl+Enter` - Send question
@@ -454,17 +455,20 @@ Adastrea-Director/
 ├── README.md                      # This file - Quick start guide
 ├── CONTRIBUTING.md                # Contribution guidelines
 ├── WIKI_MIGRATION.md              # Documentation migration manifest
+├── UE_LOG_USAGE_GUIDE.md          # Guide for UE log capture and analysis
 ├── requirements.txt               # Python dependencies
 ├── ingest.py                      # Document ingestion script
 ├── ingest_game_repo.py            # Game repository ingestion
 ├── main.py                        # P1 CLI entry point
 ├── planner.py                     # P2 planning CLI
 ├── gui_director.py                # GUI application
+├── ue_log_capture.py              # UE log capture module
 ├── agent_orchestrator_cli.py      # P3 agent CLI
 ├── agent_dashboard.py             # P3 dashboard
 ├── agents/                        # Agent system
 │   ├── phase3/                    # P3 autonomous agents
 │   └── ...                        # P2 planning agents
+├── logs/                          # UE output logs (dated files)
 ├── tests/                         # Comprehensive test suite (230+ tests)
 ├── examples/                      # Example scripts
 ├── remote_control/                # Remote control API
