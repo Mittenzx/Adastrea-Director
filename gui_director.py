@@ -577,6 +577,10 @@ class AdastreaDirectorApp:
         self.show_welcome_message()
 
         self.check_api_key_on_startup()
+        
+        # Start auto-refresh for landing tab (every 5 seconds)
+        self.landing_refresh_id = None
+        self.start_landing_auto_refresh()
     
     def create_landing_tab(self):
         """Create the Landing/Home tab showing system status and connection diagram."""
@@ -3675,6 +3679,8 @@ class AdastreaDirectorApp:
 
 Your AI-powered game development assistant is ready to help.
 
+📊 Check the Home tab to see system connection status and recent activity.
+
 Getting Started:
 1. Set your Gemini API Key (🔑 button or Ctrl+K)
 2. Load documents into the knowledge base:
@@ -5167,6 +5173,29 @@ GitHub: Mittenzx/Adastrea-Director
         self.landing_log.insert(tk.END, f"{message}\n", level)
         self.landing_log.see(tk.END)
         self.landing_log.config(state=tk.DISABLED)
+    
+    def start_landing_auto_refresh(self):
+        """Start automatic refresh of landing page status."""
+        def auto_refresh():
+            # Only refresh if the landing tab is visible
+            try:
+                current_tab = self.notebook.index(self.notebook.select())
+                if current_tab == 0:  # Landing tab is at index 0
+                    self.refresh_landing_status()
+            except Exception:
+                pass
+            
+            # Schedule next refresh
+            self.landing_refresh_id = self.root.after(5000, auto_refresh)
+        
+        # Start the auto-refresh cycle
+        self.landing_refresh_id = self.root.after(5000, auto_refresh)
+    
+    def stop_landing_auto_refresh(self):
+        """Stop automatic refresh of landing page status."""
+        if self.landing_refresh_id:
+            self.root.after_cancel(self.landing_refresh_id)
+            self.landing_refresh_id = None
 
 def main():
     root = tk.Tk()
