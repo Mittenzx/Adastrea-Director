@@ -93,6 +93,9 @@ class AdastreaDirectorApp:
         # Configure root window
         self.root.configure(bg=self.bg_color)
         
+        # Set up window close protocol to cleanup resources
+        self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
+        
         # Conversation history
         self.conversation_history = []
         
@@ -669,6 +672,19 @@ class AdastreaDirectorApp:
         
         # Storage for component references
         self.landing_components = {}
+        
+        # Bind canvas resize event once during initialization with debouncing
+        if not hasattr(self, '_landing_resize_job'):
+            self._landing_resize_job = None
+        
+        def on_resize(event):
+            # Cancel previous scheduled redraw
+            if self._landing_resize_job:
+                self.root.after_cancel(self._landing_resize_job)
+            # Schedule new redraw with configured debounce delay
+            self._landing_resize_job = self.root.after(CANVAS_RESIZE_DEBOUNCE_MS, self.draw_connection_diagram)
+        
+        self.landing_canvas.bind("<Configure>", on_resize)
         
         # Log section
         log_frame = tk.Frame(content_frame, bg=self.bg_tertiary,
@@ -5048,16 +5064,16 @@ GitHub: Mittenzx/Adastrea-Director
         )
         
         # Draw VSCode component
-        vscode_box = self.landing_canvas.create_rectangle(
+        self.landing_canvas.create_rectangle(
             vscode_x - box_width/2, y_center - box_height/2,
             vscode_x + box_width/2, y_center + box_height/2,
             fill=self.bg_secondary, outline=self.border_color, width=2
         )
-        vscode_icon = self.landing_canvas.create_text(
+        self.landing_canvas.create_text(
             vscode_x, y_center - 15,
             text="🔌", font=("Segoe UI", 24), fill=self.fg_color
         )
-        vscode_label = self.landing_canvas.create_text(
+        self.landing_canvas.create_text(
             vscode_x, y_center + 15,
             text="VSCode", font=("Segoe UI", 10, "bold"), fill=self.fg_color
         )
@@ -5068,16 +5084,16 @@ GitHub: Mittenzx/Adastrea-Director
         )
         
         # Draw IPC Server component
-        ipc_box = self.landing_canvas.create_rectangle(
+        self.landing_canvas.create_rectangle(
             ipc_x - box_width/2, y_center - box_height/2,
             ipc_x + box_width/2, y_center + box_height/2,
             fill=self.bg_secondary, outline=self.border_color, width=2
         )
-        ipc_icon = self.landing_canvas.create_text(
+        self.landing_canvas.create_text(
             ipc_x, y_center - 15,
             text="🔗", font=("Segoe UI", 24), fill=self.fg_color
         )
-        ipc_label = self.landing_canvas.create_text(
+        self.landing_canvas.create_text(
             ipc_x, y_center + 15,
             text="IPC Server", font=("Segoe UI", 10, "bold"), fill=self.fg_color
         )
@@ -5088,16 +5104,16 @@ GitHub: Mittenzx/Adastrea-Director
         )
         
         # Draw Director component
-        director_box = self.landing_canvas.create_rectangle(
+        self.landing_canvas.create_rectangle(
             director_x - box_width/2, y_center - box_height/2,
             director_x + box_width/2, y_center + box_height/2,
             fill=self.bg_secondary, outline=self.border_color, width=2
         )
-        director_icon = self.landing_canvas.create_text(
+        self.landing_canvas.create_text(
             director_x, y_center - 15,
             text="⚡", font=("Segoe UI", 24), fill=self.fg_color
         )
-        director_label = self.landing_canvas.create_text(
+        self.landing_canvas.create_text(
             director_x, y_center + 15,
             text="Director", font=("Segoe UI", 10, "bold"), fill=self.fg_color
         )
@@ -5106,19 +5122,6 @@ GitHub: Mittenzx/Adastrea-Director
             director_x + DIAGRAM_STATUS_RADIUS, y_center + DIAGRAM_STATUS_Y_OFFSET + (DIAGRAM_STATUS_RADIUS * 2),
             fill=self.success_color, outline=""
         )
-        
-        # Bind canvas resize event with debouncing
-        if not hasattr(self, '_landing_resize_job'):
-            self._landing_resize_job = None
-        
-        def on_resize(event):
-            # Cancel previous scheduled redraw
-            if self._landing_resize_job:
-                self.root.after_cancel(self._landing_resize_job)
-            # Schedule new redraw with configured debounce delay
-            self._landing_resize_job = self.root.after(CANVAS_RESIZE_DEBOUNCE_MS, self.draw_connection_diagram)
-        
-        self.landing_canvas.bind("<Configure>", on_resize)
     
     def refresh_landing_status(self):
         """Refresh the status of all components on the landing page."""
@@ -5156,7 +5159,6 @@ GitHub: Mittenzx/Adastrea-Director
                                           fill=line_color, dash=(5, 5) if not (ipc_running and director_running) else ())
         
         # Log status updates
-        timestamp = datetime.now().strftime("%H:%M:%S")
         status_msg = f"Status check: VSCode={'✓' if vscode_connected else '✗'}, IPC={'✓' if ipc_running else '✗'}, Director={'✓' if director_running else '✗'}"
         self.log_to_landing(status_msg, "success" if (vscode_connected and ipc_running and director_running) else "warning")
     
@@ -5218,6 +5220,7 @@ GitHub: Mittenzx/Adastrea-Director
                 if current_tab == LANDING_TAB_INDEX:
                     self.refresh_landing_status()
             except Exception:
+                # Silently ignore exceptions (e.g., if notebook/tab doesn't exist during shutdown)
                 pass
             
             # Schedule next refresh using configured interval
@@ -5231,6 +5234,14 @@ GitHub: Mittenzx/Adastrea-Director
         if self.landing_refresh_id:
             self.root.after_cancel(self.landing_refresh_id)
             self.landing_refresh_id = None
+    
+    def on_closing(self):
+        """Handle application closing - cleanup resources."""
+        # Stop the auto-refresh timer
+        self.stop_landing_auto_refresh()
+        
+        # Destroy the window
+        self.root.destroy()
 
 def main():
     root = tk.Tk()
