@@ -1,8 +1,10 @@
-# UE Python API Capabilities Exploration - What Can Be Created
+# UE Python API Capabilities Exploration - What Can Be Created for Adastrea
 
 ## Executive Summary
 
-This document explores the full creative potential of the implemented UE Python API utilities for the Adastrea Director project. It covers what **can** be created, what **cannot** be created (and why), and what **could** be created with future extensions.
+This document explores the full creative potential of the implemented UE Python API utilities for the **Adastrea space game project**. It covers what **can** be created, what **cannot** be created (and why), and what **could** be created with future extensions.
+
+**Adastrea Context:** Adastrea is a space-themed game, so all examples focus on space stations, spacecraft, asteroids, planetary environments, and sci-fi gameplay elements rather than terrestrial environments.
 
 ---
 
@@ -10,20 +12,20 @@ This document explores the full creative potential of the implemented UE Python 
 
 ### 1. Procedural Environment Generation
 
-#### A. Architectural Layouts
+#### A. Space Station Layouts
 **What you can create:**
 ```python
-# City grid with buildings
+# Space station module grid
 gen = ProceduralEnvironmentGenerator()
 
-# Create city blocks (10x10 grid of building plots)
-building_locations = gen.create_actor_grid(
-    actor_class=unreal.StaticMeshActor,
+# Create station module layout (10x10 grid of station modules)
+station_modules = gen.create_actor_grid(
+    actor_class=unreal.StaticMeshActor,  # Station module mesh
     rows=10, cols=10, spacing=500.0,
     center=(0, 0, 0)
 )
 
-# Add street lights in circular patterns at intersections
+# Add corridor lights in circular patterns at junctions
 for x in range(0, 11, 2):
     for y in range(0, 11, 2):
         lights = gen.create_circular_layout(
@@ -35,117 +37,154 @@ for x in range(0, 11, 2):
 ```
 
 **Use cases:**
-- City blocks and urban layouts
-- Dungeon room grids
-- Warehouse/factory floor layouts
-- Parking lots and plaza layouts
-- Garden/park pathways
+- Space station modules and corridors
+- Docking bay layouts
+- Command center arrangements
+- Cargo bay organization
+- Hangar grid systems
 
-#### B. Natural Environments
+#### B. Asteroid Fields & Debris
 **What you can create:**
 ```python
-# Forest with random tree placement
-trees = gen.generate_random_scatter(
-    actor_class=unreal.StaticMeshActor,  # Tree blueprint
+# Asteroid field generation
+asteroids = gen.generate_random_scatter(
+    actor_class=unreal.StaticMeshActor,  # Asteroid mesh
     count=500,
     bounds=(-5000, -5000, 5000, 5000),
-    height_range=(0, 100),  # Terrain variation
+    height_range=(-1000, 1000),  # 3D space variation
     random_rotation=True,
-    random_scale=(0.7, 1.3)  # Natural size variation
+    random_scale=(0.3, 2.5)  # Size variation
 )
 
-# Rock formations around perimeter
-rocks = gen.generate_random_scatter(
-    actor_class=unreal.StaticMeshActor,  # Rock blueprint
-    count=100,
-    bounds=(-5000, -5000, 5000, 5000),
-    random_scale=(0.5, 2.0)
+# Space debris field
+debris = gen.generate_random_scatter(
+    actor_class=unreal.StaticMeshActor,  # Debris mesh
+    count=200,
+    bounds=(-3000, -3000, 3000, 3000),
+    height_range=(-500, 500),
+    random_rotation=True,
+    random_scale=(0.1, 1.0)
 )
 ```
 
 **Use cases:**
-- Forests (trees, bushes, undergrowth)
-- Rocky terrain (boulders, stones)
-- Beach environments (shells, driftwood)
-- Desert landscapes (cacti, rock formations)
-- Underwater scenes (coral, rocks, plants)
+- Asteroid fields (mining zones)
+- Space debris (wreckage, hazards)
+- Satellite constellations
+- Meteor clusters
+- Orbital junk fields
 
-#### C. Gameplay Elements
+#### C. Spacecraft & Gameplay Elements
 **What you can create:**
 ```python
-# Collectible placement on circular path
-collectibles = gen.create_circular_layout(
-    actor_class=unreal.Blueprint.load('/Game/Blueprints/BP_Coin'),
+# Patrol route markers for spacecraft
+patrol_route = gen.create_circular_layout(
+    actor_class=unreal.TargetPoint,
     count=20,
-    radius=1000.0,
+    radius=2000.0,
     face_center=False
 )
 
-# Enemy patrol points in grid
-patrol_points = gen.create_actor_grid(
-    actor_class=unreal.TargetPoint,
-    rows=5, cols=5, spacing=300.0
+# Power core grid for space station
+power_cores = gen.create_actor_grid(
+    actor_class=unreal.Blueprint.load('/Game/Blueprints/BP_PowerCore'),
+    rows=3, cols=3, spacing=400.0
+)
+
+# Collectible resource nodes scattered in asteroid field
+resource_nodes = gen.generate_random_scatter(
+    actor_class=unreal.Blueprint.load('/Game/Blueprints/BP_ResourceNode'),
+    count=50,
+    bounds=(-4000, -4000, 4000, 4000),
+    height_range=(-1000, 1000)
 )
 ```
 
 **Use cases:**
-- Collectible paths and patterns
-- Enemy spawn points
-- Waypoint systems
-- Checkpoint grids
-- Power-up distributions
+- Spacecraft patrol routes
+- Resource collection nodes
+- Power core/reactor placements
+- Weapon turret positions
+- Shield generator networks
+- Docking port locations
 
 ### 2. Material System Automation
 
-#### A. Color Variants
+#### A. Spacecraft & Station Material Variants
 **What you can create:**
 ```python
 mat_auto = MaterialSystemAutomation()
 
-# Create color palette for team-based game
-team_materials = mat_auto.create_material_library(
-    parent_material_path='/Game/Materials/M_TeamMaster',
-    destination_path='/Game/Materials/Teams',
+# Create faction-based spacecraft materials
+faction_materials = mat_auto.create_material_library(
+    parent_material_path='/Game/Materials/M_ShipHull',
+    destination_path='/Game/Materials/Factions',
     variants={
-        'MI_Team_Red': {'TeamColor': (1.0, 0.0, 0.0), 'Intensity': 1.5},
-        'MI_Team_Blue': {'TeamColor': (0.0, 0.0, 1.0), 'Intensity': 1.5},
-        'MI_Team_Green': {'TeamColor': (0.0, 1.0, 0.0), 'Intensity': 1.5},
-        'MI_Team_Yellow': {'TeamColor': (1.0, 1.0, 0.0), 'Intensity': 1.5}
+        'MI_Ship_Alliance': {'HullColor': (0.2, 0.4, 0.8), 'Metallic': 0.9},
+        'MI_Ship_Syndicate': {'HullColor': (0.8, 0.2, 0.2), 'Metallic': 0.9},
+        'MI_Ship_Neutral': {'HullColor': (0.6, 0.6, 0.6), 'Metallic': 0.8},
+        'MI_Ship_Pirate': {'HullColor': (0.3, 0.15, 0.1), 'Metallic': 0.7}
     }
 )
 ```
 
 **Use cases:**
-- Team color variants (multiplayer games)
-- Character customization options
-- Seasonal variations (spring/summer/fall/winter)
-- Damage states (pristine/damaged/destroyed)
-- Time-of-day variants (day/night)
+- Faction color schemes (different space factions)
+- Ship hull variants (military, civilian, cargo)
+- Station module types (residential, industrial, military)
+- Damage states (pristine/damaged/destroyed hulls)
+- Shield visual effects (energy colors)
 
-#### B. Surface Type Variations
+#### B. Space Environment Materials
 **What you can create:**
 ```python
-# Create weathered material variants
-weathering_variants = {
-    'MI_Wood_New': {'Roughness': 0.3, 'Dirt': 0.0},
-    'MI_Wood_Aged': {'Roughness': 0.5, 'Dirt': 0.3},
-    'MI_Wood_Old': {'Roughness': 0.7, 'Dirt': 0.6},
-    'MI_Wood_Rotten': {'Roughness': 0.9, 'Dirt': 0.9}
+# Create asteroid surface variants
+asteroid_variants = {
+    'MI_Asteroid_Iron': {'BaseColor': (0.4, 0.35, 0.3), 'Roughness': 0.8, 'Metallic': 0.3},
+    'MI_Asteroid_Ice': {'BaseColor': (0.7, 0.8, 0.9), 'Roughness': 0.2, 'Metallic': 0.0},
+    'MI_Asteroid_Rock': {'BaseColor': (0.3, 0.3, 0.3), 'Roughness': 0.9, 'Metallic': 0.0},
+    'MI_Asteroid_Rare': {'BaseColor': (0.6, 0.3, 0.8), 'Roughness': 0.6, 'Metallic': 0.5}
 }
 
 materials = mat_auto.create_material_library(
-    parent_material_path='/Game/Materials/M_Wood_Master',
-    destination_path='/Game/Materials/Wood',
-    variants=weathering_variants
+    parent_material_path='/Game/Materials/M_Asteroid',
+    destination_path='/Game/Materials/Asteroids',
+    variants=asteroid_variants
 )
 ```
 
 **Use cases:**
-- Weathering progressions
-- Wear-and-tear states
-- Elemental variations (fire/ice/electric)
-- Material quality levels (low/medium/high)
-- Biome-specific variants (desert/snow/swamp)
+- Asteroid compositions (iron, ice, rare minerals)
+- Station interior surfaces (metal, composite, crystal)
+- Planetary surface types (barren, volcanic, ice)
+- Energy field colors (shields, force fields)
+- Hologram/UI colors (different systems)
+
+#### C. Tech & UI Material Variants
+**What you can create:**
+```python
+# Create holographic interface materials
+holo_materials = {
+    'MI_Holo_Blue': {'EmissiveColor': (0.2, 0.6, 1.0), 'Opacity': 0.7},
+    'MI_Holo_Green': {'EmissiveColor': (0.2, 1.0, 0.4), 'Opacity': 0.7},
+    'MI_Holo_Red': {'EmissiveColor': (1.0, 0.2, 0.2), 'Opacity': 0.7},
+    'MI_Holo_Orange': {'EmissiveColor': (1.0, 0.5, 0.0), 'Opacity': 0.7}
+}
+
+# Energy core variants
+energy_materials = {
+    'MI_Core_Stable': {'EmissiveColor': (0.2, 0.4, 1.0), 'EmissivePower': 5.0},
+    'MI_Core_Overload': {'EmissiveColor': (1.0, 0.3, 0.0), 'EmissivePower': 10.0},
+    'MI_Core_Critical': {'EmissiveColor': (1.0, 0.0, 0.0), 'EmissivePower': 15.0}
+}
+```
+
+**Use cases:**
+- Holographic displays (navigation, UI, communications)
+- Energy core states (stable/overload/critical)
+- Warp drive effects (different speeds)
+- Weapon charge states (charging/ready/firing)
+- Alert level indicators (green/yellow/red)
 
 #### C. Performance Optimization Variants
 **What you can create:**
@@ -346,101 +385,110 @@ batch_optimize_textures(
 
 ### 5. Complex Workflow Automation
 
-#### A. Level Population Workflows
-**Complete level setup:**
+#### A. Space Station Population Workflows
+**Complete station setup:**
 ```python
-def populate_forest_level():
-    """Complete forest level generation."""
+def populate_space_station_level():
+    """Complete space station generation for Adastrea."""
     gen = ProceduralEnvironmentGenerator()
     
-    # 1. Place trees
-    trees = gen.generate_random_scatter(
-        unreal.Blueprint.load('/Game/Trees/BP_Oak'),
-        count=300,
-        bounds=(-3000, -3000, 3000, 3000),
-        random_scale=(0.8, 1.4)
+    # 1. Place station modules in grid
+    modules = gen.create_actor_grid(
+        unreal.Blueprint.load('/Game/Station/BP_Module'),
+        rows=8, cols=8, spacing=600.0
     )
     
-    # 2. Add undergrowth
-    bushes = gen.generate_random_scatter(
-        unreal.Blueprint.load('/Game/Plants/BP_Bush'),
-        count=500,
-        bounds=(-3000, -3000, 3000, 3000),
-        random_scale=(0.5, 1.0)
+    # 2. Add corridor lighting
+    corridor_lights = gen.generate_random_scatter(
+        unreal.PointLight,
+        count=200,
+        bounds=(-2400, -2400, 2400, 2400),
+        height_range=(250, 350),
+        random_scale=(0.8, 1.2)
     )
     
-    # 3. Place rocks
-    rocks = gen.generate_random_scatter(
-        unreal.StaticMeshActor,
-        count=100,
-        bounds=(-3000, -3000, 3000, 3000),
-        random_scale=(0.3, 2.0)
+    # 3. Place equipment terminals
+    terminals = gen.generate_random_scatter(
+        unreal.Blueprint.load('/Game/Props/BP_Terminal'),
+        count=50,
+        bounds=(-2400, -2400, 2400, 2400),
+        random_rotation=True
     )
     
-    # 4. Add ambient lighting
-    lights = gen.create_circular_layout(
-        unreal.SkyLight,
+    # 4. Add navigation beacons
+    beacons = gen.create_circular_layout(
+        unreal.Blueprint.load('/Game/Props/BP_NavBeacon'),
         count=8,
-        radius=4000.0,
-        center=(0, 0, 500)
+        radius=3000.0,
+        center=(0, 0, 0)
     )
     
-    print(f"Generated forest with:")
-    print(f"  {len(trees)} trees")
-    print(f"  {len(bushes)} bushes")
-    print(f"  {len(rocks)} rocks")
-    print(f"  {len(lights)} sky lights")
+    print(f"Generated space station with:")
+    print(f"  {len(modules)} station modules")
+    print(f"  {len(corridor_lights)} corridor lights")
+    print(f"  {len(terminals)} equipment terminals")
+    print(f"  {len(beacons)} navigation beacons")
 ```
 
-#### B. Material Library Generation
+#### B. Spacecraft Material Library Generation
 **Complete material system setup:**
 ```python
-def create_complete_material_library():
-    """Generate full material library for project."""
+def create_adastrea_spacecraft_materials():
+    """Generate complete spacecraft material library for Adastrea."""
     mat_auto = MaterialSystemAutomation()
     
-    # Team colors
-    team_mats = mat_auto.create_material_library(
-        '/Game/Materials/M_TeamBase',
-        '/Game/Materials/Teams',
+    # Faction hull materials
+    hull_mats = mat_auto.create_material_library(
+        '/Game/Materials/M_ShipHull_Master',
+        '/Game/Materials/Ships/Hulls',
         {
-            'MI_Team_Red': {'Color': (1,0,0)},
-            'MI_Team_Blue': {'Color': (0,0,1)},
-            'MI_Team_Green': {'Color': (0,1,0)},
-            'MI_Team_Yellow': {'Color': (1,1,0)}
+            'MI_Hull_Alliance': {'Color': (0.2, 0.4, 0.8), 'Metallic': 0.9},
+            'MI_Hull_Syndicate': {'Color': (0.8, 0.2, 0.2), 'Metallic': 0.9},
+            'MI_Hull_Freelance': {'Color': (0.5, 0.5, 0.5), 'Metallic': 0.8}
         }
     )
     
-    # Metal variants
-    metal_mats = mat_auto.create_material_library(
-        '/Game/Materials/M_MetalBase',
-        '/Game/Materials/Metals',
+    # Engine glow variants
+    engine_mats = mat_auto.create_material_library(
+        '/Game/Materials/M_Engine_Master',
+        '/Game/Materials/Ships/Engines',
         {
-            'MI_Steel': {'Metallic': 1.0, 'Roughness': 0.4},
-            'MI_Copper': {'Metallic': 1.0, 'Roughness': 0.3, 'BaseColor': (0.7, 0.3, 0.1)},
-            'MI_Gold': {'Metallic': 1.0, 'Roughness': 0.2, 'BaseColor': (1.0, 0.8, 0.0)}
+            'MI_Engine_Blue': {'GlowColor': (0.2, 0.5, 1.0), 'Intensity': 10.0},
+            'MI_Engine_Plasma': {'GlowColor': (0.8, 0.3, 1.0), 'Intensity': 12.0},
+            'MI_Engine_Ion': {'GlowColor': (0.3, 0.8, 0.9), 'Intensity': 8.0}
         }
     )
     
-    # Wood variants
-    wood_mats = mat_auto.create_material_library(
-        '/Game/Materials/M_WoodBase',
-        '/Game/Materials/Wood',
+    # Shield effect materials
+    shield_mats = mat_auto.create_material_library(
+        '/Game/Materials/M_Shield_Master',
+        '/Game/Materials/Effects/Shields',
         {
-            'MI_Oak': {'Roughness': 0.6, 'Color': (0.4, 0.3, 0.2)},
-            'MI_Pine': {'Roughness': 0.5, 'Color': (0.6, 0.5, 0.3)},
-            'MI_Mahogany': {'Roughness': 0.4, 'Color': (0.3, 0.1, 0.05)}
+            'MI_Shield_Standard': {'ShieldColor': (0.3, 0.6, 1.0), 'Opacity': 0.3},
+            'MI_Shield_Heavy': {'ShieldColor': (0.5, 0.3, 1.0), 'Opacity': 0.5},
+            'MI_Shield_Overload': {'ShieldColor': (1.0, 0.4, 0.0), 'Opacity': 0.7}
         }
     )
     
-    return team_mats + metal_mats + wood_mats
+    # Hologram UI materials
+    ui_mats = mat_auto.create_material_library(
+        '/Game/Materials/M_Hologram_Master',
+        '/Game/Materials/UI/Holograms',
+        {
+            'MI_Holo_Nav': {'HoloColor': (0.2, 0.8, 1.0)},
+            'MI_Holo_Combat': {'HoloColor': (1.0, 0.3, 0.2)},
+            'MI_Holo_Engineering': {'HoloColor': (0.8, 0.8, 0.2)}
+        }
+    )
+    
+    return hull_mats + engine_mats + shield_mats + ui_mats
 ```
 
 #### C. Quality Assurance Pipeline
-**Automated QA workflow:**
+**Automated QA workflow for Adastrea assets:**
 ```python
 def run_daily_qa_pipeline():
-    """Run complete QA validation."""
+    """Run complete QA validation for Adastrea space game assets."""
     # 1. Validate all new assets
     new_assets = find_assets_modified_today()
     validation_results = batch_validate_assets(new_assets)
@@ -448,7 +496,7 @@ def run_daily_qa_pipeline():
     # 2. Generate reports
     report = generate_validation_report(
         validation_results,
-        f'/Reports/qa_report_{date.today()}.txt'
+        f'/Reports/adastrea_qa_report_{date.today()}.txt'
     )
     
     # 3. Check for critical issues
@@ -456,10 +504,10 @@ def run_daily_qa_pipeline():
     
     # 4. Send notifications
     if critical:
-        send_slack_message(f"⚠️ {len(critical)} assets failed validation!")
+        send_slack_message(f"⚠️ Adastrea: {len(critical)} assets failed validation!")
         create_jira_tickets(critical)
     else:
-        send_slack_message(f"✅ All {len(new_assets)} new assets passed validation")
+        send_slack_message(f"✅ Adastrea: All {len(new_assets)} new assets passed validation")
     
     return validation_results
 ```
@@ -889,107 +937,115 @@ streaming.generate_world_composition(
 
 ---
 
-## 🎯 Practical Examples of What You Can Build Today
+## 🎯 Practical Examples of What You Can Build Today for Adastrea
 
-### Example 1: Procedural Dungeon Generator
+### Example 1: Procedural Asteroid Field Generator
 ```python
-def generate_dungeon(rooms=10, corridor_width=200):
-    """Generate a procedural dungeon layout."""
+def generate_asteroid_field(density='medium', area_size=5000):
+    """Generate a procedural asteroid field for mining zones."""
     gen = ProceduralEnvironmentGenerator()
     
-    # Create room grid
-    rooms = gen.create_actor_grid(
-        actor_class=unreal.TargetPoint,  # Room markers
-        rows=3, cols=4, spacing=1000.0
+    # Determine asteroid count based on density
+    density_map = {'low': 100, 'medium': 300, 'high': 500}
+    count = density_map.get(density, 300)
+    
+    # Create main asteroid field
+    asteroids = gen.generate_random_scatter(
+        actor_class=unreal.StaticMeshActor,  # Asteroid mesh
+        count=count,
+        bounds=(-area_size, -area_size, area_size, area_size),
+        height_range=(-area_size//2, area_size//2),  # Full 3D distribution
+        random_rotation=True,
+        random_scale=(0.5, 3.0)
     )
     
-    # Add torches in each room (circular pattern)
-    for room in rooms:
-        loc = room.get_actor_location()
-        torches = gen.create_circular_layout(
-            actor_class=unreal.PointLight,
-            count=4,
-            radius=300.0,
-            center=(loc.x, loc.y, loc.z + 200)
-        )
-    
-    # Scatter treasure chests
-    chests = gen.generate_random_scatter(
-        actor_class=unreal.Blueprint.load('/Game/Props/BP_Chest'),
-        count=5,
-        bounds=(-1500, -1500, 1500, 1500),
+    # Add resource-rich asteroids (marked with glow)
+    rich_asteroids = gen.generate_random_scatter(
+        actor_class=unreal.Blueprint.load('/Game/Asteroids/BP_RareAsteroid'),
+        count=count // 10,  # 10% rare
+        bounds=(-area_size, -area_size, area_size, area_size),
+        height_range=(-area_size//2, area_size//2),
         random_rotation=True
     )
     
-    return rooms, chests
+    # Add navigation beacons around perimeter
+    beacons = gen.create_circular_layout(
+        actor_class=unreal.PointLight,
+        count=8,
+        radius=area_size * 1.2,
+        center=(0, 0, 0)
+    )
+    
+    return asteroids, rich_asteroids, beacons
 ```
 
-### Example 2: Material Variation System
+### Example 2: Spacecraft Customization Material System
 ```python
-def create_character_customization_materials():
-    """Generate customization material library."""
+def create_spacecraft_customization_materials():
+    """Generate customization material library for player ships."""
     mat_auto = MaterialSystemAutomation()
     
-    # Skin tones
-    skin_variants = {
-        'MI_Skin_Light': {'SkinColor': (0.95, 0.8, 0.7)},
-        'MI_Skin_Medium': {'SkinColor': (0.7, 0.5, 0.4)},
-        'MI_Skin_Dark': {'SkinColor': (0.4, 0.3, 0.25)}
+    # Hull paint colors
+    hull_variants = {
+        'MI_Hull_Midnight': {'BaseColor': (0.05, 0.05, 0.1), 'Metallic': 0.9},
+        'MI_Hull_Crimson': {'BaseColor': (0.6, 0.1, 0.1), 'Metallic': 0.9},
+        'MI_Hull_Arctic': {'BaseColor': (0.8, 0.9, 1.0), 'Metallic': 0.85},
+        'MI_Hull_Gold': {'BaseColor': (0.8, 0.6, 0.2), 'Metallic': 1.0}
     }
     
-    # Hair colors
-    hair_variants = {
-        'MI_Hair_Blonde': {'HairColor': (0.9, 0.8, 0.5)},
-        'MI_Hair_Brown': {'HairColor': (0.3, 0.2, 0.1)},
-        'MI_Hair_Black': {'HairColor': (0.1, 0.1, 0.1)},
-        'MI_Hair_Red': {'HairColor': (0.6, 0.2, 0.1)}
+    # Engine trail colors
+    engine_variants = {
+        'MI_Engine_Blue': {'TrailColor': (0.3, 0.6, 1.0), 'Intensity': 8.0},
+        'MI_Engine_Green': {'TrailColor': (0.3, 1.0, 0.4), 'Intensity': 8.0},
+        'MI_Engine_Red': {'TrailColor': (1.0, 0.3, 0.2), 'Intensity': 8.0},
+        'MI_Engine_Purple': {'TrailColor': (0.6, 0.3, 1.0), 'Intensity': 8.0}
     }
     
-    # Eye colors
-    eye_variants = {
-        'MI_Eyes_Blue': {'EyeColor': (0.2, 0.5, 0.8)},
-        'MI_Eyes_Green': {'EyeColor': (0.2, 0.6, 0.3)},
-        'MI_Eyes_Brown': {'EyeColor': (0.4, 0.3, 0.2)}
+    # Cockpit window tint
+    cockpit_variants = {
+        'MI_Window_Clear': {'TintColor': (1.0, 1.0, 1.0), 'Opacity': 0.2},
+        'MI_Window_Tinted': {'TintColor': (0.3, 0.3, 0.4), 'Opacity': 0.4},
+        'MI_Window_Gold': {'TintColor': (0.8, 0.6, 0.2), 'Opacity': 0.3}
     }
     
     # Create all variants
-    skins = mat_auto.create_material_library(
-        '/Game/Characters/Materials/M_Skin_Master',
-        '/Game/Characters/Materials/Skin',
-        skin_variants
+    hulls = mat_auto.create_material_library(
+        '/Game/Ships/Materials/M_Hull_Master',
+        '/Game/Ships/Materials/Hulls',
+        hull_variants
     )
     
-    hairs = mat_auto.create_material_library(
-        '/Game/Characters/Materials/M_Hair_Master',
-        '/Game/Characters/Materials/Hair',
-        hair_variants
+    engines = mat_auto.create_material_library(
+        '/Game/Ships/Materials/M_Engine_Master',
+        '/Game/Ships/Materials/Engines',
+        engine_variants
     )
     
-    eyes = mat_auto.create_material_library(
-        '/Game/Characters/Materials/M_Eye_Master',
-        '/Game/Characters/Materials/Eyes',
-        eye_variants
+    cockpits = mat_auto.create_material_library(
+        '/Game/Ships/Materials/M_Cockpit_Master',
+        '/Game/Ships/Materials/Cockpits',
+        cockpit_variants
     )
     
-    return skins + hairs + eyes
+    return hulls + engines + cockpits
 ```
 
-### Example 3: Asset Quality Pipeline
+### Example 3: Space Station Asset Quality Pipeline
 ```python
-def setup_asset_quality_pipeline():
-    """Setup complete asset quality assurance system."""
+def setup_adastrea_quality_pipeline():
+    """Setup asset quality assurance system for Adastrea space assets."""
     
-    # Define strict validators
+    # Define strict validators for space game assets
     validators = [
         TextureValidator(
             require_prefix=True,
             require_power_of_2=True,
-            max_dimension=2048,  # Strict limit
+            max_dimension=2048,  # Performance target for space scenes
             warn_dimension=1024
         ),
         MeshValidator(
             require_prefix=True,
-            max_triangles=10000,  # Low poly requirement
+            max_triangles=15000,  # Lower for space environments (many objects)
             require_lods=True,
             min_lod_count=3,
             require_collision=True
@@ -997,116 +1053,126 @@ def setup_asset_quality_pipeline():
         MaterialValidator(require_prefix=True)
     ]
     
-    # Validate new assets
-    new_assets_path = '/Game/NewAssets'
+    # Validate new space station assets
+    station_assets_path = '/Game/Station'
     results = validate_folder(
-        new_assets_path,
+        station_assets_path,
         recursive=True,
         validators=validators
     )
     
+    # Validate spacecraft assets
+    ship_assets_path = '/Game/Ships'
+    ship_results = validate_folder(
+        ship_assets_path,
+        recursive=True,
+        validators=validators
+    )
+    
+    all_results = results + ship_results
+    
     # Generate report
-    report_path = f'/Reports/qa_report_{datetime.now().strftime("%Y%m%d")}.txt'
-    report = generate_validation_report(results, report_path)
+    report_path = f'/Reports/adastrea_qa_{datetime.now().strftime("%Y%m%d")}.txt'
+    report = generate_validation_report(all_results, report_path)
     
     # Get statistics
-    total = len(results)
-    passed = sum(1 for r in results if r.is_valid)
+    total = len(all_results)
+    passed = sum(1 for r in all_results if r.is_valid)
     failed = total - passed
     
-    print(f"Quality Report:")
+    print(f"Adastrea Quality Report:")
     print(f"  Total Assets: {total}")
     print(f"  Passed: {passed} ({100*passed/total:.1f}%)")
     print(f"  Failed: {failed} ({100*failed/total:.1f}%)")
     print(f"\nReport saved to: {report_path}")
     
-    # Return assets that need fixing
-    return [r for r in results if not r.is_valid]
+    return [r for r in all_results if not r.is_valid]
 ```
 
-### Example 4: Scene Optimization Pass
+### Example 4: Space Station Optimization Pass
 ```python
-def optimize_scene_for_mobile():
-    """Optimize current level for mobile platforms."""
+def optimize_station_for_performance():
+    """Optimize space station level for performance."""
     processor = AssetBatchProcessor()
     ops = LevelBatchOperations()
     
-    print("Starting mobile optimization...")
+    print("Starting Adastrea station optimization...")
     
-    # 1. Replace high-poly meshes with LODs
-    high_poly_actors = [
+    # 1. Find all static meshes in station
+    station_actors = [
         a for a in unreal.EditorLevelLibrary.get_all_level_actors()
-        if isinstance(a, unreal.StaticMeshActor)
+        if isinstance(a, unreal.StaticMeshActor) and 'Station' in a.get_name()
     ]
-    print(f"Found {len(high_poly_actors)} static mesh actors")
+    print(f"Found {len(station_actors)} station mesh actors")
     
-    # 2. Reduce light count
-    lights = [
+    # 2. Reduce decorative lights (keep functional ones)
+    all_lights = [
         a for a in unreal.EditorLevelLibrary.get_all_level_actors()
         if isinstance(a, unreal.Light)
     ]
     
-    # Remove every other light (simple optimization)
-    for i, light in enumerate(lights):
-        if i % 2 == 0:
+    decorative_lights = [l for l in all_lights if 'Decor' in l.get_actor_label()]
+    for i, light in enumerate(decorative_lights):
+        if i % 2 == 0:  # Remove every other decorative light
             unreal.EditorLevelLibrary.destroy_actor(light)
-    print(f"Reduced light count from {len(lights)} to {len(lights)//2}")
+    print(f"Optimized lighting: kept {len(decorative_lights)//2} of {len(decorative_lights)} decorative lights")
     
-    # 3. Optimize textures
-    textures = find_all_textures('/Game')
+    # 3. Optimize station textures
+    station_textures = find_all_textures('/Game/Station')
     result = batch_optimize_textures(
-        textures,
-        max_size=1024  # Mobile limit
+        station_textures,
+        max_size=1024  # Reduce for performance
     )
-    print(f"Optimized {result.success_count} textures")
+    print(f"Optimized {result.success_count} station textures")
     
-    # 4. Generate LODs for meshes without them
-    meshes_without_lods = find_meshes_without_lods('/Game')
-    lod_result = batch_generate_lods(meshes_without_lods, lod_count=3)
-    print(f"Generated LODs for {lod_result.success_count} meshes")
+    # 4. Generate LODs for station modules
+    station_meshes = find_meshes_without_lods('/Game/Station')
+    lod_result = batch_generate_lods(station_meshes, lod_count=3)
+    print(f"Generated LODs for {lod_result.success_count} station meshes")
     
-    print("\nMobile optimization complete!")
+    print("\nAdastrea station optimization complete!")
 ```
 
 ---
 
 ## 🚀 Integration with Adastrea Director AI Agents
 
-### How AI Agents Can Use These Utilities
+### How AI Agents Can Use These Utilities for Adastrea
 
-**1. Intelligent Content Generation**
+**1. Intelligent Space Environment Generation**
 ```python
 # AI agent receives natural language request:
-# "Create a forest environment with 200 trees"
+# "Create an asteroid mining field with 300 asteroids"
 
 agent_response = ai_agent.process_request(
-    "Create a forest environment with 200 trees"
+    "Create an asteroid mining field with 300 asteroids"
 )
 
 # Agent understands and calls:
 gen = ProceduralEnvironmentGenerator()
-trees = gen.generate_random_scatter(
-    actor_class=load_tree_blueprint(),
-    count=200,
-    bounds=(-2000, -2000, 2000, 2000),
-    random_scale=(0.7, 1.3)
+asteroids = gen.generate_random_scatter(
+    actor_class=load_asteroid_mesh(),
+    count=300,
+    bounds=(-5000, -5000, 5000, 5000),
+    height_range=(-2000, 2000),
+    random_scale=(0.5, 2.5)
 )
 
-agent.respond("Created forest with 200 trees")
+agent.respond("Created mining field with 300 asteroids in 3D space")
 ```
 
-**2. Automated Quality Assurance**
+**2. Automated Quality Assurance for Space Assets**
 ```python
-# AI agent monitors asset creation:
+# AI agent monitors spacecraft asset creation:
 agent.on_asset_created(asset_path):
-    # Automatically validate
+    # Automatically validate spacecraft assets
     validator = get_appropriate_validator(asset_path)
     result = validator.validate(asset_path)
     
     if not result.is_valid:
         # Notify artist with specific issues
         agent.send_notification(
-            f"Asset {asset_path} has {len(result.issues)} issues:",
+            f"Spacecraft asset {asset_path} has {len(result.issues)} issues:",
             result.issues
         )
         
@@ -1114,68 +1180,117 @@ agent.on_asset_created(asset_path):
         agent.attempt_auto_fix(result)
 ```
 
-**3. Intelligent Batch Operations**
+**3. Intelligent Batch Operations for Station Assets**
 ```python
-# AI agent understands: "Organize all textures by type"
+# AI agent understands: "Organize all station module textures by type"
 
-agent.understand_request("Organize all textures by type")
+agent.understand_request("Organize all station module textures by type")
 
 # Agent creates organization plan:
-textures = find_all_textures('/Game')
-for texture in textures:
+station_textures = find_all_textures('/Game/Station')
+for texture in station_textures:
     # AI determines texture type from name/properties
     texture_type = ai.classify_texture(texture)
     
     # Move to appropriate folder
     processor.batch_move_assets(
         [texture],
-        f'/Game/Textures/{texture_type}'
+        f'/Game/Station/Textures/{texture_type}'
     )
+```
+
+**4. Space-Specific Content Generation Suggestions**
+```python
+# AI understands Adastrea is a space game and suggests:
+agent.suggest_content_generation():
+    suggestions = [
+        "Generate debris field around damaged station",
+        "Create weapon turret placement grid",
+        "Add navigation beacon network",
+        "Populate hangar with docked ships",
+        "Generate shield generator array"
+    ]
+    
+    return suggestions
 ```
 
 ---
 
-## 📊 Summary Matrix
+## 📊 Summary Matrix for Adastrea Space Game
 
 | Category | ✅ Can Create | ❌ Cannot Create | 🔮 Future Potential |
 |----------|---------------|------------------|---------------------|
-| **Environments** | Grids, circles, scatter patterns | Real-time terrain deformation | Procedural landscapes |
-| **Materials** | Instance variants, libraries | Shader graphs | Graph generation |
-| **Blueprints** | Asset creation | Visual scripting | Graph automation |
-| **Validation** | Quality checks, reports | Real-time validation | AI-powered fixes |
-| **Batch Ops** | Rename, move, optimize | Complex transformations | ML-based optimization |
-| **Animation** | Asset organization | State machines, montages | Retargeting automation |
-| **Audio** | File import | Sound Cues, mix systems | Procedural audio |
+| **Space Environments** | Station grids, asteroid fields, debris | Real-time planetary deformation | Procedural planet surfaces |
+| **Spacecraft Materials** | Hull variants, engine glows, shields | Shader graphs | Graph generation |
+| **Station Assets** | Module creation, equipment placement | Blueprint visual scripting | Graph automation |
+| **Validation** | Quality checks, naming standards | Real-time validation | AI-powered fixes |
+| **Batch Ops** | Rename, move, optimize assets | Complex transformations | ML-based optimization |
+| **Ship Systems** | Asset organization, material variants | Gameplay systems | AI behavior trees |
+| **Audio** | File import, organization | Sound Cues, mix systems | Procedural audio |
 | **Physics** | Basic properties | Complex constraints | PhysicsAsset generation |
-| **UI/UMG** | Asset management | Widget creation | Layout generation |
-| **Cinematics** | Asset organization | Sequencer editing | Automated cinematics |
+| **UI/HUD** | Asset management | Widget creation | Hologram UI generation |
+| **Cinematics** | Asset organization | Sequencer editing | Automated cutscenes |
 
 ---
 
-## 💡 Conclusion
+## 💡 Conclusion for Adastrea Space Game
 
-**What makes this powerful:**
-1. **Immediate productivity gains** - Automate repetitive tasks today
-2. **Quality assurance** - Enforce standards automatically
-3. **Scalability** - Handle thousands of assets efficiently
-4. **Extensibility** - Foundation for future AI integration
-5. **Cross-version compatibility** - Works from UE 4.27 to 5.7
+**What makes this powerful for Adastrea:**
+1. **Immediate space content generation** - Asteroid fields, stations, debris fields
+2. **Spacecraft customization** - Hull colors, engine effects, faction variants
+3. **Quality assurance** - Enforce space asset standards automatically
+4. **Scalability** - Handle thousands of space objects efficiently
+5. **Extensibility** - Foundation for future AI-driven space content
 
-**The sweet spot:**
-- **Content generation**: Layouts, variants, organization
-- **Quality validation**: Standards, performance, compliance
-- **Batch operations**: Optimization, migration, cleanup
+**The sweet spot for Adastrea:**
+- **Space station generation**: Module layouts, corridor networks, equipment placement
+- **Spacecraft variants**: Faction ships, engine effects, damage states
+- **Asteroid fields**: Mining zones, debris fields, navigation hazards
+- **Quality validation**: Asset standards, performance checks, naming enforcement
+- **Batch operations**: Texture optimization, LOD generation, asset organization
 
-**Best used for:**
-- Procedural level population
-- Material variant generation
-- Asset quality pipelines
-- Project organization
-- Performance optimization
+**Best used for in Adastrea:**
+- Procedural space station population
+- Spacecraft material variant generation
+- Asteroid field and debris creation
+- Asset quality pipelines for space assets
+- Performance optimization for space scenes
 
 **Not suitable for:**
-- Gameplay logic (use Blueprints/C++)
-- Complex graph editing (use editor tools)
-- Real-time systems (editor-only)
+- Spacecraft flight logic (use Blueprints/C++)
+- Complex system interactions (use editor tools)
+- Real-time combat systems (editor-only)
 
-These utilities provide a **production-ready foundation** for content automation and quality assurance in Unreal Engine, with clear paths for future AI-enhanced workflows.
+These utilities provide a **production-ready foundation** for space content automation and quality assurance in the Adastrea project, with clear paths for future AI-enhanced space game workflows.
+
+### Adastrea-Specific Use Cases
+
+**Space Station Construction:**
+- Generate modular station layouts
+- Place functional equipment (terminals, power cores, life support)
+- Add lighting and navigation systems
+- Validate station asset quality
+
+**Asteroid Mining Operations:**
+- Create varied asteroid fields (dense, sparse, clustered)
+- Place resource-rich asteroids
+- Add navigation beacons and hazards
+- Generate mining equipment placement
+
+**Spacecraft Customization:**
+- Hull paint schemes (faction colors, custom designs)
+- Engine trail variants (blue ion, plasma, etc.)
+- Shield effect colors and intensities
+- Cockpit window tints and displays
+
+**Space Combat Zones:**
+- Debris field generation (battle aftermath)
+- Turret placement grids
+- Shield generator networks
+- Spawn point distributions
+
+**Quality Assurance:**
+- Validate spacecraft models (poly counts, LODs)
+- Check station textures (sizes, naming)
+- Verify material setups (emissive intensities)
+- Enforce Adastrea asset standards
