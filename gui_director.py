@@ -51,6 +51,14 @@ MCP_CONSOLE_PLACEHOLDER = "stat fps"
 # Constants for IPC and connection monitoring
 IPC_SERVER_PORT = 8765  # Default port for IPC server communication
 LANDING_AUTO_REFRESH_INTERVAL_MS = 5000  # Auto-refresh interval for landing page (5 seconds)
+LANDING_TAB_INDEX = 0  # Index of the landing tab in the notebook
+CANVAS_RESIZE_DEBOUNCE_MS = 100  # Debounce delay for canvas resize events
+
+# Constants for connection diagram layout
+DIAGRAM_BOX_WIDTH = 120  # Width of component boxes in connection diagram
+DIAGRAM_BOX_HEIGHT = 80  # Height of component boxes in connection diagram
+DIAGRAM_STATUS_RADIUS = 8  # Radius of status indicator circles
+DIAGRAM_STATUS_Y_OFFSET = 30  # Y offset from center for status indicators
 
 class AdastreaDirectorApp:
     def __init__(self, root):
@@ -5020,9 +5028,9 @@ GitHub: Mittenzx/Adastrea-Director
         ipc_x = spacing * 2
         director_x = spacing * 3
         
-        # Component size
-        box_width = 120
-        box_height = 80
+        # Use constants for component dimensions
+        box_width = DIAGRAM_BOX_WIDTH
+        box_height = DIAGRAM_BOX_HEIGHT
         
         # Draw connection lines first (so they appear behind boxes)
         # VSCode to IPC
@@ -5054,8 +5062,8 @@ GitHub: Mittenzx/Adastrea-Director
             text="VSCode", font=("Segoe UI", 10, "bold"), fill=self.fg_color
         )
         self.landing_components['vscode_status'] = self.landing_canvas.create_oval(
-            vscode_x - 8, y_center + 30,
-            vscode_x + 8, y_center + 46,
+            vscode_x - DIAGRAM_STATUS_RADIUS, y_center + DIAGRAM_STATUS_Y_OFFSET,
+            vscode_x + DIAGRAM_STATUS_RADIUS, y_center + DIAGRAM_STATUS_Y_OFFSET + (DIAGRAM_STATUS_RADIUS * 2),
             fill=self.fg_muted, outline=""
         )
         
@@ -5074,8 +5082,8 @@ GitHub: Mittenzx/Adastrea-Director
             text="IPC Server", font=("Segoe UI", 10, "bold"), fill=self.fg_color
         )
         self.landing_components['ipc_status'] = self.landing_canvas.create_oval(
-            ipc_x - 8, y_center + 30,
-            ipc_x + 8, y_center + 46,
+            ipc_x - DIAGRAM_STATUS_RADIUS, y_center + DIAGRAM_STATUS_Y_OFFSET,
+            ipc_x + DIAGRAM_STATUS_RADIUS, y_center + DIAGRAM_STATUS_Y_OFFSET + (DIAGRAM_STATUS_RADIUS * 2),
             fill=self.fg_muted, outline=""
         )
         
@@ -5094,8 +5102,8 @@ GitHub: Mittenzx/Adastrea-Director
             text="Director", font=("Segoe UI", 10, "bold"), fill=self.fg_color
         )
         self.landing_components['director_status'] = self.landing_canvas.create_oval(
-            director_x - 8, y_center + 30,
-            director_x + 8, y_center + 46,
+            director_x - DIAGRAM_STATUS_RADIUS, y_center + DIAGRAM_STATUS_Y_OFFSET,
+            director_x + DIAGRAM_STATUS_RADIUS, y_center + DIAGRAM_STATUS_Y_OFFSET + (DIAGRAM_STATUS_RADIUS * 2),
             fill=self.success_color, outline=""
         )
         
@@ -5107,8 +5115,8 @@ GitHub: Mittenzx/Adastrea-Director
             # Cancel previous scheduled redraw
             if self._landing_resize_job:
                 self.root.after_cancel(self._landing_resize_job)
-            # Schedule new redraw after 100ms delay (debouncing)
-            self._landing_resize_job = self.root.after(100, self.draw_connection_diagram)
+            # Schedule new redraw with configured debounce delay
+            self._landing_resize_job = self.root.after(CANVAS_RESIZE_DEBOUNCE_MS, self.draw_connection_diagram)
         
         self.landing_canvas.bind("<Configure>", on_resize)
     
@@ -5207,7 +5215,7 @@ GitHub: Mittenzx/Adastrea-Director
             # Only refresh if the landing tab is visible
             try:
                 current_tab = self.notebook.index(self.notebook.select())
-                if current_tab == 0:  # Landing tab is at index 0
+                if current_tab == LANDING_TAB_INDEX:
                     self.refresh_landing_status()
             except Exception:
                 pass
