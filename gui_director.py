@@ -48,6 +48,10 @@ TEST_STOP_TIMEOUT = 3  # Seconds to wait for graceful process termination before
 MCP_PYTHON_PLACEHOLDER = "import unreal\nprint(unreal.SystemLibrary.get_engine_version())"
 MCP_CONSOLE_PLACEHOLDER = "stat fps"
 
+# Constants for IPC and connection monitoring
+IPC_SERVER_PORT = 8765  # Default port for IPC server communication
+LANDING_AUTO_REFRESH_INTERVAL_MS = 5000  # Auto-refresh interval for landing page (5 seconds)
+
 class AdastreaDirectorApp:
     def __init__(self, root):
         self.root = root
@@ -5095,8 +5099,18 @@ GitHub: Mittenzx/Adastrea-Director
             fill=self.success_color, outline=""
         )
         
-        # Bind canvas resize event
-        self.landing_canvas.bind("<Configure>", lambda e: self.draw_connection_diagram())
+        # Bind canvas resize event with debouncing
+        if not hasattr(self, '_landing_resize_job'):
+            self._landing_resize_job = None
+        
+        def on_resize(event):
+            # Cancel previous scheduled redraw
+            if self._landing_resize_job:
+                self.root.after_cancel(self._landing_resize_job)
+            # Schedule new redraw after 100ms delay (debouncing)
+            self._landing_resize_job = self.root.after(100, self.draw_connection_diagram)
+        
+        self.landing_canvas.bind("<Configure>", on_resize)
     
     def refresh_landing_status(self):
         """Refresh the status of all components on the landing page."""
@@ -5139,21 +5153,30 @@ GitHub: Mittenzx/Adastrea-Director
         self.log_to_landing(status_msg, "success" if (vscode_connected and ipc_running and director_running) else "warning")
     
     def check_vscode_connection(self):
-        """Check if VSCode extension is connected."""
-        # Try to check if VSCode extension is connected via IPC
-        # For now, return False as a placeholder
-        # TODO: Implement actual VSCode connection check
+        """Check if VSCode extension is connected.
+        
+        Returns:
+            bool: True if VSCode extension is connected, False otherwise
+        
+        TODO: Implement actual VSCode connection check. Possible approaches:
+            1. Check for active WebSocket connection on VSCode extension port
+            2. Query a status file/endpoint created by the extension
+            3. Use IPC message protocol to ping the extension
+            4. Check process list for VSCode with extension loaded
+        """
+        # Placeholder implementation - always returns False
         return False
     
     def check_ipc_server(self):
-        """Check if IPC server is running."""
-        # Check if IPC server port is listening
-        # Common IPC server port
-        ipc_port = 8765
+        """Check if IPC server is running by attempting to connect to the IPC port.
+        
+        Returns:
+            bool: True if IPC server is reachable, False otherwise
+        """
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(0.5)
-            result = sock.connect_ex(('localhost', ipc_port))
+            result = sock.connect_ex(('localhost', IPC_SERVER_PORT))
             sock.close()
             return result == 0
         except Exception:
@@ -5175,7 +5198,11 @@ GitHub: Mittenzx/Adastrea-Director
         self.landing_log.config(state=tk.DISABLED)
     
     def start_landing_auto_refresh(self):
-        """Start automatic refresh of landing page status."""
+        """Start automatic refresh of landing page status.
+        
+        The refresh interval is controlled by LANDING_AUTO_REFRESH_INTERVAL_MS constant.
+        Refreshes only occur when the landing tab is visible to conserve resources.
+        """
         def auto_refresh():
             # Only refresh if the landing tab is visible
             try:
@@ -5185,11 +5212,11 @@ GitHub: Mittenzx/Adastrea-Director
             except Exception:
                 pass
             
-            # Schedule next refresh
-            self.landing_refresh_id = self.root.after(5000, auto_refresh)
+            # Schedule next refresh using configured interval
+            self.landing_refresh_id = self.root.after(LANDING_AUTO_REFRESH_INTERVAL_MS, auto_refresh)
         
         # Start the auto-refresh cycle
-        self.landing_refresh_id = self.root.after(5000, auto_refresh)
+        self.landing_refresh_id = self.root.after(LANDING_AUTO_REFRESH_INTERVAL_MS, auto_refresh)
     
     def stop_landing_auto_refresh(self):
         """Stop automatic refresh of landing page status."""
