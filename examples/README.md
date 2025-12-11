@@ -31,8 +31,57 @@ This directory contains example scripts demonstrating various features of Adastr
 
 ### UE Integration
 - **`ue_python_api_demo.py`** - Direct Unreal Engine Python API usage
+- **`python_research_demo.py`** - **NEW!** Complete examples for content generation and validation
+  - Procedural environment generation (grids, circles, scatter)
+  - Material instance library creation
+  - Asset validation workflows
+  - Batch processing operations
+  - 8 comprehensive examples
 - **`remote_control_demo.py`** - Remote Control API integration
 - **`test_agent_example.py`** - Test agent example
+
+## New Python Utilities (Research Results)
+
+The following utility modules are available for use within Unreal Engine's Python environment:
+
+### Content Generation (`ue_content_generation.py`)
+- **ProceduralEnvironmentGenerator**: Create procedural layouts
+  - Grid-based actor placement
+  - Circular arrangements
+  - Random scattering with variation
+- **MaterialSystemAutomation**: Automated material instance creation
+  - Single instance creation
+  - Material library generation
+  - Parameter configuration
+- **BlueprintTemplateSystem**: Blueprint creation from templates
+- **batch_spawn_actors**: Spawn multiple actors with custom configurations
+
+### Content Validation (`ue_content_validation.py`)
+- **TextureValidator**: Validate texture assets
+  - Naming conventions
+  - Dimension requirements (power of 2)
+  - Size limits
+- **MeshValidator**: Validate static mesh assets
+  - Triangle count limits
+  - LOD requirements
+  - Collision setup
+- **MaterialValidator**: Validate material assets
+  - Naming conventions
+  - Hierarchy validation
+- **batch_validate_assets**: Validate multiple assets at once
+- **validate_folder**: Validate all assets in a folder
+- **generate_validation_report**: Generate validation reports
+
+### Batch Processing (`ue_batch_processing.py`)
+- **AssetBatchProcessor**: Batch operations on assets
+  - Rename, move, duplicate, delete assets
+- **LevelBatchOperations**: Batch operations on actors
+  - Replace actor classes
+  - Transform actors with filters
+- **batch_generate_lods**: Generate LODs for multiple meshes
+- **batch_optimize_textures**: Optimize multiple textures
+
+For complete documentation, see [PYTHON_RESEARCH_UE427.md](../PYTHON_RESEARCH_UE427.md)
 
 ## Prerequisites
 
