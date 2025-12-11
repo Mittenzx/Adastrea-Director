@@ -48,6 +48,18 @@ TEST_STOP_TIMEOUT = 3  # Seconds to wait for graceful process termination before
 MCP_PYTHON_PLACEHOLDER = "import unreal\nprint(unreal.SystemLibrary.get_engine_version())"
 MCP_CONSOLE_PLACEHOLDER = "stat fps"
 
+# Constants for IPC and connection monitoring
+IPC_SERVER_PORT = 8765  # Default port for IPC server communication
+LANDING_AUTO_REFRESH_INTERVAL_MS = 5000  # Auto-refresh interval for landing page (5 seconds)
+LANDING_TAB_INDEX = 0  # Index of the landing tab in the notebook
+CANVAS_RESIZE_DEBOUNCE_MS = 100  # Debounce delay for canvas resize events
+
+# Constants for connection diagram layout
+DIAGRAM_BOX_WIDTH = 120  # Width of component boxes in connection diagram
+DIAGRAM_BOX_HEIGHT = 80  # Height of component boxes in connection diagram
+DIAGRAM_STATUS_RADIUS = 8  # Radius of status indicator circles
+DIAGRAM_STATUS_Y_OFFSET = 30  # Y offset from center for status indicators
+
 class AdastreaDirectorApp:
     def __init__(self, root):
         self.root = root
@@ -80,6 +92,9 @@ class AdastreaDirectorApp:
         
         # Configure root window
         self.root.configure(bg=self.bg_color)
+        
+        # Set up window close protocol to cleanup resources
+        self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
         
         # Conversation history
         self.conversation_history = []
@@ -359,6 +374,9 @@ class AdastreaDirectorApp:
         self.notebook = ttk.Notebook(tabs_card)
         self.notebook.pack(fill=tk.BOTH, expand=True, padx=1, pady=1)
         
+        # --- Landing/Home Tab (What's Happening) ---
+        self.create_landing_tab()
+        
         # --- Conversation Tab ---
         conversation_tab = tk.Frame(self.notebook, bg=self.bg_tertiary)
         self.notebook.add(conversation_tab, text="💬 Conversation")
@@ -574,6 +592,152 @@ class AdastreaDirectorApp:
         self.show_welcome_message()
 
         self.check_api_key_on_startup()
+        
+        # Start auto-refresh for landing tab (every 5 seconds)
+        self.landing_refresh_id = None
+        self.start_landing_auto_refresh()
+    
+    def create_landing_tab(self):
+        """Create the Landing/Home tab showing system status and connection diagram."""
+        landing_tab = tk.Frame(self.notebook, bg=self.bg_tertiary)
+        self.notebook.add(landing_tab, text="🏠 Home")
+        
+        # Header section
+        landing_header = tk.Frame(landing_tab, bg=self.bg_tertiary, padx=15, pady=10)
+        landing_header.pack(fill=tk.X)
+        
+        landing_label = tk.Label(
+            landing_header,
+            text="🏠 What's Happening",
+            font=("Segoe UI", 11, "bold"),
+            bg=self.bg_tertiary,
+            fg=self.fg_color
+        )
+        landing_label.pack(side=tk.LEFT)
+        
+        # Refresh button
+        refresh_landing_button = tk.Button(
+            landing_header,
+            text="🔄 Refresh",
+            command=self.refresh_landing_status,
+            font=("Segoe UI", 9),
+            bg=self.button_bg,
+            fg=self.fg_color,
+            activebackground=self.button_hover,
+            activeforeground=self.fg_color,
+            relief=tk.FLAT,
+            padx=15,
+            pady=6,
+            cursor="hand2",
+            borderwidth=1,
+            highlightthickness=1,
+            highlightbackground=self.button_bg
+        )
+        refresh_landing_button.pack(side=tk.RIGHT)
+        self.create_tooltip(refresh_landing_button, "Refresh system status")
+        self.add_button_hover_effect(refresh_landing_button)
+        
+        # Separator line
+        separator_line = tk.Frame(landing_tab, height=1, bg=self.border_color)
+        separator_line.pack(fill=tk.X)
+        
+        # Main content area with scrollable frame
+        content_frame = tk.Frame(landing_tab, bg=self.bg_tertiary)
+        content_frame.pack(fill=tk.BOTH, expand=True, padx=15, pady=15)
+        
+        # Create canvas for connection diagram
+        diagram_frame = tk.Frame(content_frame, bg=self.bg_tertiary, 
+                                highlightthickness=1, highlightbackground=self.border_color)
+        diagram_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
+        
+        # Title for diagram
+        diagram_title = tk.Label(
+            diagram_frame,
+            text="System Connection Status",
+            font=("Segoe UI", 10, "bold"),
+            bg=self.bg_tertiary,
+            fg=self.accent_color,
+            anchor=tk.W
+        )
+        diagram_title.pack(fill=tk.X, padx=15, pady=(10, 5))
+        
+        # Canvas for drawing connections
+        self.landing_canvas = tk.Canvas(
+            diagram_frame,
+            bg=self.bg_color,
+            height=300,
+            highlightthickness=0
+        )
+        self.landing_canvas.pack(fill=tk.BOTH, expand=True, padx=15, pady=(0, 15))
+        
+        # Storage for component references
+        self.landing_components = {}
+        
+        # Bind canvas resize event once during initialization with debouncing
+        if not hasattr(self, '_landing_resize_job'):
+            self._landing_resize_job = None
+        
+        def on_resize(event):
+            # Cancel previous scheduled redraw
+            if self._landing_resize_job:
+                self.root.after_cancel(self._landing_resize_job)
+            # Schedule new redraw with configured debounce delay
+            self._landing_resize_job = self.root.after(CANVAS_RESIZE_DEBOUNCE_MS, self.draw_connection_diagram)
+        
+        self.landing_canvas.bind("<Configure>", on_resize)
+        
+        # Log section
+        log_frame = tk.Frame(content_frame, bg=self.bg_tertiary,
+                            highlightthickness=1, highlightbackground=self.border_color)
+        log_frame.pack(fill=tk.BOTH, expand=True)
+        
+        log_header = tk.Label(
+            log_frame,
+            text="📝 Recent Activity",
+            font=("Segoe UI", 10, "bold"),
+            bg=self.bg_tertiary,
+            fg=self.accent_color,
+            anchor=tk.W
+        )
+        log_header.pack(fill=tk.X, padx=15, pady=(10, 5))
+        
+        # Log display
+        log_text_frame = tk.Frame(log_frame, bg=self.text_bg)
+        log_text_frame.pack(fill=tk.BOTH, expand=True, padx=15, pady=(0, 15))
+        
+        self.landing_log = scrolledtext.ScrolledText(
+            log_text_frame,
+            wrap=tk.WORD,
+            height=8,
+            state=tk.DISABLED,
+            bg=self.text_bg,
+            fg=self.fg_color,
+            font=("Consolas", 9),
+            relief=tk.FLAT,
+            padx=10,
+            pady=10,
+            selectbackground=self.highlight_bg,
+            selectforeground=self.fg_color,
+            borderwidth=0
+        )
+        self.landing_log.pack(fill=tk.BOTH, expand=True)
+        
+        # Configure log tags
+        self.landing_log.tag_config("timestamp", foreground=self.fg_muted, font=("Consolas", 8))
+        self.landing_log.tag_config("info", foreground=self.fg_secondary)
+        self.landing_log.tag_config("success", foreground=self.success_color)
+        self.landing_log.tag_config("warning", foreground=self.warning_color)
+        self.landing_log.tag_config("error", foreground=self.error_color)
+        
+        # Initial log message
+        self.log_to_landing("🏠 Welcome to Adastrea Director", "info")
+        self.log_to_landing("System initializing...", "info")
+        
+        # Draw initial diagram
+        self.draw_connection_diagram()
+        
+        # Initial status check
+        self.refresh_landing_status()
     
     def create_ingest_list_tab(self):
         """Create the Ingest List tab showing ingested and pending documents."""
@@ -3543,6 +3707,8 @@ class AdastreaDirectorApp:
 
 Your AI-powered game development assistant is ready to help.
 
+📊 Check the Home tab to see system connection status and recent activity.
+
 Getting Started:
 1. Set your Gemini API Key (🔑 button or Ctrl+K)
 2. Load documents into the knowledge base:
@@ -4853,6 +5019,229 @@ GitHub: Mittenzx/Adastrea-Director
         self.test_output.insert(tk.END, "Test results will appear here.\n", "info")
         self.test_output.config(state=tk.DISABLED)
         self.test_status_label.config(text="Ready", fg=self.fg_muted)
+    
+    def draw_connection_diagram(self):
+        """Draw the connection diagram showing VSCode, IPC, and Director."""
+        # Clear canvas
+        self.landing_canvas.delete("all")
+        
+        # Get canvas dimensions
+        width = self.landing_canvas.winfo_width()
+        height = self.landing_canvas.winfo_height()
+        
+        # Use default dimensions if canvas not yet rendered
+        if width <= 1:
+            width = 700
+        if height <= 1:
+            height = 300
+        
+        # Calculate positions for three components in a row
+        spacing = width / 4
+        y_center = height / 2
+        
+        # Component positions
+        vscode_x = spacing
+        ipc_x = spacing * 2
+        director_x = spacing * 3
+        
+        # Use constants for component dimensions
+        box_width = DIAGRAM_BOX_WIDTH
+        box_height = DIAGRAM_BOX_HEIGHT
+        
+        # Draw connection lines first (so they appear behind boxes)
+        # VSCode to IPC
+        self.landing_components['line_vscode_ipc'] = self.landing_canvas.create_line(
+            vscode_x + box_width/2, y_center,
+            ipc_x - box_width/2, y_center,
+            fill=self.fg_muted, width=2, dash=(5, 5)
+        )
+        
+        # IPC to Director
+        self.landing_components['line_ipc_director'] = self.landing_canvas.create_line(
+            ipc_x + box_width/2, y_center,
+            director_x - box_width/2, y_center,
+            fill=self.fg_muted, width=2, dash=(5, 5)
+        )
+        
+        # Draw VSCode component
+        self.landing_canvas.create_rectangle(
+            vscode_x - box_width/2, y_center - box_height/2,
+            vscode_x + box_width/2, y_center + box_height/2,
+            fill=self.bg_secondary, outline=self.border_color, width=2
+        )
+        self.landing_canvas.create_text(
+            vscode_x, y_center - 15,
+            text="🔌", font=("Segoe UI", 24), fill=self.fg_color
+        )
+        self.landing_canvas.create_text(
+            vscode_x, y_center + 15,
+            text="VSCode", font=("Segoe UI", 10, "bold"), fill=self.fg_color
+        )
+        self.landing_components['vscode_status'] = self.landing_canvas.create_oval(
+            vscode_x - DIAGRAM_STATUS_RADIUS, y_center + DIAGRAM_STATUS_Y_OFFSET,
+            vscode_x + DIAGRAM_STATUS_RADIUS, y_center + DIAGRAM_STATUS_Y_OFFSET + (DIAGRAM_STATUS_RADIUS * 2),
+            fill=self.fg_muted, outline=""
+        )
+        
+        # Draw IPC Server component
+        self.landing_canvas.create_rectangle(
+            ipc_x - box_width/2, y_center - box_height/2,
+            ipc_x + box_width/2, y_center + box_height/2,
+            fill=self.bg_secondary, outline=self.border_color, width=2
+        )
+        self.landing_canvas.create_text(
+            ipc_x, y_center - 15,
+            text="🔗", font=("Segoe UI", 24), fill=self.fg_color
+        )
+        self.landing_canvas.create_text(
+            ipc_x, y_center + 15,
+            text="IPC Server", font=("Segoe UI", 10, "bold"), fill=self.fg_color
+        )
+        self.landing_components['ipc_status'] = self.landing_canvas.create_oval(
+            ipc_x - DIAGRAM_STATUS_RADIUS, y_center + DIAGRAM_STATUS_Y_OFFSET,
+            ipc_x + DIAGRAM_STATUS_RADIUS, y_center + DIAGRAM_STATUS_Y_OFFSET + (DIAGRAM_STATUS_RADIUS * 2),
+            fill=self.fg_muted, outline=""
+        )
+        
+        # Draw Director component
+        self.landing_canvas.create_rectangle(
+            director_x - box_width/2, y_center - box_height/2,
+            director_x + box_width/2, y_center + box_height/2,
+            fill=self.bg_secondary, outline=self.border_color, width=2
+        )
+        self.landing_canvas.create_text(
+            director_x, y_center - 15,
+            text="⚡", font=("Segoe UI", 24), fill=self.fg_color
+        )
+        self.landing_canvas.create_text(
+            director_x, y_center + 15,
+            text="Director", font=("Segoe UI", 10, "bold"), fill=self.fg_color
+        )
+        self.landing_components['director_status'] = self.landing_canvas.create_oval(
+            director_x - DIAGRAM_STATUS_RADIUS, y_center + DIAGRAM_STATUS_Y_OFFSET,
+            director_x + DIAGRAM_STATUS_RADIUS, y_center + DIAGRAM_STATUS_Y_OFFSET + (DIAGRAM_STATUS_RADIUS * 2),
+            fill=self.success_color, outline=""
+        )
+    
+    def refresh_landing_status(self):
+        """Refresh the status of all components on the landing page."""
+        # Check VSCode connection
+        vscode_connected = self.check_vscode_connection()
+        
+        # Check IPC server
+        ipc_running = self.check_ipc_server()
+        
+        # Director is always running (this GUI is the director)
+        director_running = True
+        
+        # Update status indicators
+        if 'vscode_status' in self.landing_components:
+            color = self.success_color if vscode_connected else self.error_color
+            self.landing_canvas.itemconfig(self.landing_components['vscode_status'], fill=color)
+        
+        if 'ipc_status' in self.landing_components:
+            color = self.success_color if ipc_running else self.error_color
+            self.landing_canvas.itemconfig(self.landing_components['ipc_status'], fill=color)
+        
+        if 'director_status' in self.landing_components:
+            color = self.success_color if director_running else self.error_color
+            self.landing_canvas.itemconfig(self.landing_components['director_status'], fill=color)
+        
+        # Update connection lines
+        if 'line_vscode_ipc' in self.landing_components:
+            line_color = self.success_color if (vscode_connected and ipc_running) else self.fg_muted
+            self.landing_canvas.itemconfig(self.landing_components['line_vscode_ipc'], 
+                                          fill=line_color, dash=(5, 5) if not (vscode_connected and ipc_running) else ())
+        
+        if 'line_ipc_director' in self.landing_components:
+            line_color = self.success_color if (ipc_running and director_running) else self.fg_muted
+            self.landing_canvas.itemconfig(self.landing_components['line_ipc_director'], 
+                                          fill=line_color, dash=(5, 5) if not (ipc_running and director_running) else ())
+        
+        # Log status updates
+        status_msg = f"Status check: VSCode={'✓' if vscode_connected else '✗'}, IPC={'✓' if ipc_running else '✗'}, Director={'✓' if director_running else '✗'}"
+        self.log_to_landing(status_msg, "success" if (vscode_connected and ipc_running and director_running) else "warning")
+    
+    def check_vscode_connection(self):
+        """Check if VSCode extension is connected.
+        
+        Returns:
+            bool: True if VSCode extension is connected, False otherwise
+        
+        TODO: Implement actual VSCode connection check. Possible approaches:
+            1. Check for active WebSocket connection on VSCode extension port
+            2. Query a status file/endpoint created by the extension
+            3. Use IPC message protocol to ping the extension
+            4. Check process list for VSCode with extension loaded
+        """
+        # Placeholder implementation - always returns False
+        return False
+    
+    def check_ipc_server(self):
+        """Check if IPC server is running by attempting to connect to the IPC port.
+        
+        Returns:
+            bool: True if IPC server is reachable, False otherwise
+        """
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(0.5)
+            result = sock.connect_ex(('localhost', IPC_SERVER_PORT))
+            sock.close()
+            return result == 0
+        except Exception:
+            return False
+    
+    def log_to_landing(self, message, level="info"):
+        """Add a message to the landing page log.
+        
+        Args:
+            message: The message to log
+            level: Log level - "info", "success", "warning", "error"
+        """
+        timestamp = datetime.now().strftime("%H:%M:%S")
+        
+        self.landing_log.config(state=tk.NORMAL)
+        self.landing_log.insert(tk.END, f"[{timestamp}] ", "timestamp")
+        self.landing_log.insert(tk.END, f"{message}\n", level)
+        self.landing_log.see(tk.END)
+        self.landing_log.config(state=tk.DISABLED)
+    
+    def start_landing_auto_refresh(self):
+        """Start automatic refresh of landing page status.
+        
+        The refresh interval is controlled by LANDING_AUTO_REFRESH_INTERVAL_MS constant.
+        Refreshes only occur when the landing tab is visible to conserve resources.
+        """
+        def auto_refresh():
+            # Only refresh if the landing tab is visible
+            try:
+                current_tab = self.notebook.index(self.notebook.select())
+                if current_tab == LANDING_TAB_INDEX:
+                    self.refresh_landing_status()
+            except Exception:
+                # Silently ignore exceptions (e.g., if notebook/tab doesn't exist during shutdown)
+                pass
+            
+            # Schedule next refresh using configured interval
+            self.landing_refresh_id = self.root.after(LANDING_AUTO_REFRESH_INTERVAL_MS, auto_refresh)
+        
+        # Start the auto-refresh cycle
+        self.landing_refresh_id = self.root.after(LANDING_AUTO_REFRESH_INTERVAL_MS, auto_refresh)
+    
+    def stop_landing_auto_refresh(self):
+        """Stop automatic refresh of landing page status."""
+        if self.landing_refresh_id:
+            self.root.after_cancel(self.landing_refresh_id)
+            self.landing_refresh_id = None
+    
+    def on_closing(self):
+        """Handle application closing - cleanup resources."""
+        # Stop the auto-refresh timer
+        self.stop_landing_auto_refresh()
+        
+        # Destroy the window
+        self.root.destroy()
 
 def main():
     root = tk.Tk()

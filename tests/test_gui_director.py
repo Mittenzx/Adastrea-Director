@@ -486,5 +486,65 @@ class TestModuleImports:
                 pytest.fail(f"Required module '{module_name}' not available")
 
 
+class TestLandingTab:
+    """Test suite for the Landing/Home tab functionality."""
+    
+    def test_landing_tab_methods_exist(self):
+        """Test that landing tab methods are defined."""
+        import gui_director
+        
+        required_methods = [
+            'create_landing_tab',
+            'draw_connection_diagram',
+            'refresh_landing_status',
+            'check_vscode_connection',
+            'check_ipc_server',
+            'log_to_landing',
+            'start_landing_auto_refresh',
+            'stop_landing_auto_refresh'
+        ]
+        
+        for method_name in required_methods:
+            assert hasattr(gui_director.AdastreaDirectorApp, method_name), \
+                f"Method '{method_name}' not found in AdastreaDirectorApp"
+    
+    def test_check_ipc_server_handles_errors(self):
+        """Test that IPC server check handles connection errors gracefully."""
+        with patch('socket.socket') as mock_socket:
+            # Simulate connection failure - connect_ex returns non-zero integer on failure
+            mock_socket.return_value.connect_ex.return_value = 1  # Connection refused
+            mock_socket.return_value.close = Mock()
+            
+            import gui_director
+            mock_root = Mock(spec=tk.Tk)
+            
+            # This should not raise an exception
+            with patch('tkinter.Frame'), patch('tkinter.Label'), \
+                 patch('tkinter.Button'), patch('tkinter.Entry'), \
+                 patch('tkinter.scrolledtext.ScrolledText'), patch('tkinter.Menu'), \
+                 patch('tkinter.ttk.Notebook'), patch('tkinter.Canvas'):
+                app = gui_director.AdastreaDirectorApp(mock_root)
+                result = app.check_ipc_server()
+                assert result is False
+    
+    def test_check_ipc_server_handles_exceptions(self):
+        """Test that IPC server check handles socket exceptions gracefully."""
+        with patch('socket.socket') as mock_socket:
+            # Simulate an exception during socket operations
+            mock_socket.side_effect = Exception("Socket creation failed")
+            
+            import gui_director
+            mock_root = Mock(spec=tk.Tk)
+            
+            # This should not raise an exception
+            with patch('tkinter.Frame'), patch('tkinter.Label'), \
+                 patch('tkinter.Button'), patch('tkinter.Entry'), \
+                 patch('tkinter.scrolledtext.ScrolledText'), patch('tkinter.Menu'), \
+                 patch('tkinter.ttk.Notebook'), patch('tkinter.Canvas'):
+                app = gui_director.AdastreaDirectorApp(mock_root)
+                result = app.check_ipc_server()
+                assert result is False
+
+
 if __name__ == '__main__':
     pytest.main([__file__, '-v'])
