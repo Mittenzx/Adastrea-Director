@@ -34,7 +34,6 @@ try:
     from ue_content_generation import (
         ProceduralEnvironmentGenerator,
         MaterialSystemAutomation,
-        BlueprintTemplateSystem,
         batch_spawn_actors,
         ActorSpawnConfig
     )
@@ -421,7 +420,7 @@ def run_all_examples():
     try:
         version = unreal.SystemLibrary.get_engine_version()
         print(f"\nUnreal Engine Version: {version}")
-    except:
+    except Exception:
         print("\n✗ ERROR: Not running inside Unreal Engine!")
         print("This script must be run from UE's Python environment.")
         return

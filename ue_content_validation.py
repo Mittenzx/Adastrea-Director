@@ -277,8 +277,11 @@ class TextureValidator(BaseValidator):
             compression = asset.get_editor_property('compression_settings')
             if compression:
                 result.add_info(f"Compression: {compression}")
-        except:
-            pass
+        except Exception as e:
+            result.add_issue(
+                f"Failed to check compression settings: {e}",
+                ValidationSeverity.WARNING
+            )
         
         return result
     

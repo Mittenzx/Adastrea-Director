@@ -9,7 +9,7 @@ that require a running Unreal Engine instance.
 """
 
 import unittest
-from unittest.mock import Mock, MagicMock, patch
+from unittest.mock import Mock
 import sys
 import os
 

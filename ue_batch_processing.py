@@ -29,7 +29,7 @@ Note: This module must be run inside Unreal Engine's Python environment.
 """
 
 import logging
-from typing import List, Dict, Any, Optional, Callable
+from typing import List, Any, Optional, Callable
 from dataclasses import dataclass
 
 # Setup logging
@@ -431,7 +431,6 @@ class LevelBatchOperations:
                     else:
                         location = unreal.Vector(0, 0, 0)
                         rotation = unreal.Rotator(0, 0, 0)
-                        scale = unreal.Vector(1, 1, 1)
                     
                     # Spawn new actor
                     new_actor = self.editor_level_lib.spawn_actor_from_class(
@@ -555,13 +554,8 @@ def batch_generate_lods(
     if not UNREAL_AVAILABLE:
         raise RuntimeError("Unreal Python API not available")
     
-    if reduction_percentages is None:
-        reduction_percentages = [0.5, 0.25, 0.1]
-    
     success_count = 0
     failed_items = []
-    
-    mesh_subsystem = unreal.get_editor_subsystem(unreal.StaticMeshEditorSubsystem)
     
     for mesh_path in mesh_paths:
         try:
