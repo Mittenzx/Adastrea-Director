@@ -157,6 +157,9 @@ class IPCServer:
         self.register_handler('get_ue_logs', self._handle_get_ue_logs)
         self.register_handler('list_ue_logs', self._handle_list_ue_logs)
         self.register_handler('read_ue_log', self._handle_read_ue_log)
+        # RAG ingestion handler
+        self.register_handler('ingest', self._handle_ingest)
+        self.register_handler('clear_history', self._handle_clear_history)
 
     def register_handler(self, request_type: str, handler_func):
         """
@@ -1737,6 +1740,133 @@ JSON Response:"""
                 'status': 'error',
                 'error': str(e)
             }
+    
+    # RAG System Handlers
+    
+    def _handle_ingest(self, data: str) -> Dict[str, Any]:
+        """
+        Handle document ingestion request.
+        
+        Args:
+            data: JSON string with ingestion parameters:
+                - docs_dir: Directory containing documents to ingest
+                - persist_dir: Directory to persist the vector database
+                - progress_file: Optional path to file for progress updates
+                - force_reingest: Whether to force re-ingestion of all files
+                - collection_name: ChromaDB collection name
+            
+        Returns:
+            Dict with ingestion statistics
+        """
+        logger.info("Ingest request received")
+        
+        try:
+            # Parse ingestion parameters
+            params = json.loads(data) if isinstance(data, str) else data
+            docs_dir = params.get('docs_dir', '')
+            progress_file = params.get('progress_file', None)
+            force_reingest = params.get('force_reingest', False)
+            collection_name = params.get('collection_name', 'adastrea_docs')
+            persist_dir = params.get('persist_dir', './chroma_db')
+            
+            if not docs_dir:
+                return {
+                    'status': 'error',
+                    'error': 'docs_dir parameter is required and must be a valid directory path'
+                }
+            
+            # Import ingestion module
+            try:
+                from rag_ingestion import ingest_documents
+            except ImportError as e:
+                logger.error(f"Failed to import rag_ingestion module: {e}")
+                return {
+                    'status': 'error',
+                    'error': f'Ingestion module not available: {str(e)}'
+                }
+            
+            # Start ingestion
+            logger.info(f"Starting ingestion: docs_dir={docs_dir}, persist_dir={persist_dir}")
+            stats = ingest_documents(
+                docs_dir=docs_dir,
+                collection_name=collection_name,
+                persist_dir=persist_dir,
+                progress_file=progress_file,
+                force_reingest=force_reingest
+            )
+            
+            logger.info(f"Ingestion completed: {stats}")
+            return {
+                'status': 'success',
+                'stats': stats,
+                'message': f"Ingestion completed: {stats.get('added', 0)} added, {stats.get('updated', 0)} updated, {stats.get('skipped', 0)} skipped"
+            }
+            
+        except json.JSONDecodeError as e:
+            logger.error(f"Invalid JSON in ingest request: {e}")
+            return {
+                'status': 'error',
+                'error': f'Invalid request format: {str(e)}'
+            }
+        except Exception as e:
+            logger.error(f"Ingestion error: {e}", exc_info=True)
+            return {
+                'status': 'error',
+                'error': f'Ingestion failed: {str(e)}'
+            }
+    
+    def _handle_clear_history(self, data: str) -> Dict[str, Any]:
+        """
+        Handle clear conversation history request.
+        
+        This clears the conversation history in the RAG query agent if available.
+        Falls back to a simple success message if RAG system is not initialized.
+        
+        Args:
+            data: Ignored
+            
+        Returns:
+            Success response
+        """
+        logger.info("Clear history request received")
+        
+        try:
+            # Try to use RAG query agent if available
+            from rag_query import RAGQueryAgent
+            
+            # Check for persist directory
+            persist_dirs = [
+                './chroma_db',
+                '../../../chroma_db',
+                os.path.join(os.path.dirname(__file__), '..', '..', '..', 'chroma_db'),
+            ]
+            
+            persist_directory = None
+            for pd in persist_dirs:
+                if os.path.exists(pd):
+                    persist_directory = pd
+                    break
+            
+            if persist_directory:
+                query_agent = RAGQueryAgent(
+                    collection_name='adastrea_docs',
+                    persist_directory=persist_directory
+                )
+                query_agent.clear_conversation_history()
+                return {
+                    'status': 'success',
+                    'message': 'Conversation history cleared'
+                }
+        except ImportError:
+            logger.debug("RAG query module not available for clear_history")
+        except Exception as e:
+            logger.warning(f"Could not clear history via RAG agent: {e}")
+        
+        # Fallback: Return success even if RAG system not available
+        return {
+            'status': 'success',
+            'message': 'History cleared (or no history to clear)'
+        }
 
 
 def main():
