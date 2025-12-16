@@ -135,6 +135,7 @@ class IPCServer:
     def _register_default_handlers(self):
         """Register default request handlers."""
         self.register_handler('ping', self._handle_ping)
+        self.register_handler('validate_api_key', self._handle_validate_api_key)
         self.register_handler('metrics', self._handle_metrics)
         self.register_handler('query', self._handle_query)
         self.register_handler('plan', self._handle_plan)
@@ -382,6 +383,177 @@ class IPCServer:
             'message': 'pong',
             'timestamp': time.time()
         }
+    
+    def _handle_validate_api_key(self, data: str) -> Dict[str, Any]:
+        """
+        Validate an API key by attempting a simple test request.
+        
+        Args:
+            data: JSON string with 'provider' and 'api_key' fields
+            
+        Returns:
+            Dict with validation result
+        """
+        logger.info("API key validation requested")
+        
+        try:
+            # Parse request data
+            request_data = json.loads(data) if data else {}
+            provider = request_data.get('provider', '').lower()
+            api_key = request_data.get('api_key', '')
+            
+            if not provider or not api_key:
+                return {
+                    'status': 'error',
+                    'error': 'Missing provider or api_key in request'
+                }
+            
+            # Validate based on provider
+            if provider == 'gemini':
+                return self._validate_gemini_key(api_key)
+            elif provider == 'openai':
+                return self._validate_openai_key(api_key)
+            else:
+                return {
+                    'status': 'error',
+                    'error': f'Unsupported provider: {provider}'
+                }
+                
+        except json.JSONDecodeError as e:
+            logger.error(f"Failed to parse validation request: {e}")
+            return {
+                'status': 'error',
+                'error': f'Invalid JSON: {str(e)}'
+            }
+        except Exception as e:
+            logger.error(f"Error validating API key: {e}")
+            return {
+                'status': 'error',
+                'error': f'Validation error: {str(e)}'
+            }
+    
+    def _validate_gemini_key(self, api_key: str) -> Dict[str, Any]:
+        """
+        Validate a Gemini API key by attempting a simple test request.
+        
+        Args:
+            api_key: The Gemini API key to validate
+            
+        Returns:
+            Dict with validation result
+        """
+        try:
+            import google.generativeai as genai
+            
+            # Configure with the provided key
+            genai.configure(api_key=api_key)
+            
+            # Try to list models as a simple validation check
+            models = genai.list_models()
+            
+            # If we can list models, the key is valid
+            model_count = sum(1 for _ in models)
+            
+            return {
+                'status': 'success',
+                'valid': True,
+                'message': f'Gemini API key is valid. Found {model_count} available models.',
+                'provider': 'gemini'
+            }
+            
+        except Exception as e:
+            error_msg = str(e)
+            
+            # Check for common error patterns
+            if '401' in error_msg or 'API key not valid' in error_msg or 'INVALID_ARGUMENT' in error_msg:
+                return {
+                    'status': 'success',
+                    'valid': False,
+                    'error': 'API key is invalid or has been revoked',
+                    'provider': 'gemini'
+                }
+            elif 'quota' in error_msg.lower():
+                return {
+                    'status': 'success',
+                    'valid': True,
+                    'message': 'API key is valid but quota may be exceeded',
+                    'provider': 'gemini'
+                }
+            elif 'network' in error_msg.lower() or 'connection' in error_msg.lower():
+                return {
+                    'status': 'success',
+                    'valid': False,
+                    'error': 'Network error - cannot verify API key at this time',
+                    'provider': 'gemini'
+                }
+            else:
+                logger.warning(f"Gemini validation error: {error_msg}")
+                return {
+                    'status': 'success',
+                    'valid': False,
+                    'error': f'Validation failed: {error_msg}',
+                    'provider': 'gemini'
+                }
+    
+    def _validate_openai_key(self, api_key: str) -> Dict[str, Any]:
+        """
+        Validate an OpenAI API key by attempting a simple test request.
+        
+        Args:
+            api_key: The OpenAI API key to validate
+            
+        Returns:
+            Dict with validation result
+        """
+        try:
+            import openai
+            
+            # Set the API key
+            openai.api_key = api_key
+            
+            # Try to list models as a simple validation check
+            models = openai.Model.list()
+            
+            return {
+                'status': 'success',
+                'valid': True,
+                'message': f'OpenAI API key is valid. Found {len(models.data)} available models.',
+                'provider': 'openai'
+            }
+            
+        except Exception as e:
+            error_msg = str(e)
+            
+            # Check for common error patterns
+            if '401' in error_msg or 'Incorrect API key' in error_msg:
+                return {
+                    'status': 'success',
+                    'valid': False,
+                    'error': 'API key is invalid or has been revoked',
+                    'provider': 'openai'
+                }
+            elif 'quota' in error_msg.lower() or 'rate limit' in error_msg.lower():
+                return {
+                    'status': 'success',
+                    'valid': True,
+                    'message': 'API key is valid but rate limit/quota may be exceeded',
+                    'provider': 'openai'
+                }
+            elif 'network' in error_msg.lower() or 'connection' in error_msg.lower():
+                return {
+                    'status': 'success',
+                    'valid': False,
+                    'error': 'Network error - cannot verify API key at this time',
+                    'provider': 'openai'
+                }
+            else:
+                logger.warning(f"OpenAI validation error: {error_msg}")
+                return {
+                    'status': 'success',
+                    'valid': False,
+                    'error': f'Validation failed: {error_msg}',
+                    'provider': 'openai'
+                }
     
     def _handle_metrics(self, data: str) -> Dict[str, Any]:
         """
