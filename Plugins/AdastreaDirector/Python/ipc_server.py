@@ -1782,7 +1782,13 @@ JSON Response:"""
                 logger.error(f"Failed to import rag_ingestion module: {e}")
                 return {
                     'status': 'error',
-                    'error': f'Ingestion module not available: {str(e)}'
+                    'error': (
+                        f'Ingestion module not available: {str(e)}\n\n'
+                        'To resolve this issue:\n'
+                        '1. Ensure all Python dependencies are installed (see requirements.txt)\n'
+                        '2. Run: pip install -r requirements.txt\n'
+                        '3. Restart the Python backend'
+                    )
                 }
             
             # Start ingestion
@@ -1837,7 +1843,6 @@ JSON Response:"""
             # Check for persist directory
             persist_dirs = [
                 './chroma_db',
-                '../../../chroma_db',
                 os.path.join(os.path.dirname(__file__), '..', '..', '..', 'chroma_db'),
             ]
             
@@ -1848,8 +1853,10 @@ JSON Response:"""
                     break
             
             if persist_directory:
+                # Use default collection name consistent with ingest handler
+                default_collection = 'adastrea_docs'
                 query_agent = RAGQueryAgent(
-                    collection_name='adastrea_docs',
+                    collection_name=default_collection,
                     persist_directory=persist_directory
                 )
                 query_agent.clear_conversation_history()
@@ -1862,10 +1869,10 @@ JSON Response:"""
         except Exception as e:
             logger.warning(f"Could not clear history via RAG agent: {e}")
         
-        # Fallback: Return success even if RAG system not available
+        # Fallback: Return success with note that RAG system is not available
         return {
             'status': 'success',
-            'message': 'History cleared (or no history to clear)'
+            'message': 'No active conversation history (RAG system not initialized)'
         }
 
 
