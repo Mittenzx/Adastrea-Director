@@ -119,10 +119,11 @@ TSharedRef<SDockTab> FAdastreaDirectorEditorModule::SpawnAdastreaDirectorTab(con
 						SNew(STextBlock)
 						.Text(FText::FromString(
 							TEXT("To resolve this issue:\n\n")
-							TEXT("1. Configure your API key in Settings (if not done)\n")
-							TEXT("2. Ensure Python backend is properly installed\n")
-							TEXT("3. Check the Output Log for detailed error information\n")
-							TEXT("4. Restart Unreal Engine after fixing the issue")
+							TEXT("1. Create/edit .env file in your project root (copy from .env.example)\n")
+							TEXT("2. Add your API key: GEMINI_KEY=your-api-key-here\n")
+							TEXT("3. Ensure Python backend is properly installed\n")
+							TEXT("4. Check the Output Log for detailed error information\n")
+							TEXT("5. Restart Unreal Engine after fixing the issue")
 						))
 						.AutoWrapText(true)
 					]

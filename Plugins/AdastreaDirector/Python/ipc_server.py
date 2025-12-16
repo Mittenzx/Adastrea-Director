@@ -387,9 +387,10 @@ class IPCServer:
     def _handle_validate_api_key(self, data: str) -> Dict[str, Any]:
         """
         Validate an API key by attempting a simple test request.
+        API keys are read from environment variables (.env file).
         
         Args:
-            data: JSON string with 'provider' and 'api_key' fields
+            data: JSON string with 'provider' field
             
         Returns:
             Dict with validation result
@@ -400,18 +401,35 @@ class IPCServer:
             # Parse request data
             request_data = json.loads(data) if data else {}
             provider = request_data.get('provider', '').lower()
-            api_key = request_data.get('api_key', '')
             
-            if not provider or not api_key:
+            if not provider:
                 return {
                     'status': 'error',
-                    'error': 'Missing provider or api_key in request'
+                    'error': 'Missing provider in request'
                 }
             
-            # Validate based on provider
+            # Get API key from environment variables
+            api_key = None
             if provider == 'gemini':
+                # Check multiple env variable names for Gemini
+                api_key = os.environ.get('GEMINI_KEY') or os.environ.get('GOOGLE_API_KEY')
+                if not api_key:
+                    return {
+                        'status': 'success',
+                        'valid': False,
+                        'error': 'GEMINI_KEY not found in .env file. Please add GEMINI_KEY=your-api-key to your .env file.',
+                        'provider': 'gemini'
+                    }
                 return self._validate_gemini_key(api_key)
             elif provider == 'openai':
+                api_key = os.environ.get('OPENAI_API_KEY')
+                if not api_key:
+                    return {
+                        'status': 'success',
+                        'valid': False,
+                        'error': 'OPENAI_API_KEY not found in .env file. Please add OPENAI_API_KEY=your-api-key to your .env file.',
+                        'provider': 'openai'
+                    }
                 return self._validate_openai_key(api_key)
             else:
                 return {

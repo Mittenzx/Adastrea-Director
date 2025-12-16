@@ -121,30 +121,19 @@ FStartupValidationResult FAdastreaStartupValidator::ValidateAPIKey(FPythonBridge
 	}
 
 	FAdastreaSettings& Settings = FAdastreaSettings::Get();
-	
-	// Get the API key for current provider
-	FString APIKey;
 	FString Provider = Settings.GetLLMProvider();
 	
-	if (Provider == TEXT("gemini"))
-	{
-		APIKey = Settings.GetGeminiAPIKey();
-	}
-	else if (Provider == TEXT("openai"))
-	{
-		APIKey = Settings.GetOpenAIAPIKey();
-	}
-	else
+	if (Provider != TEXT("gemini") && Provider != TEXT("openai"))
 	{
 		return FStartupValidationResult::Failure(
 			FString::Printf(TEXT("Unknown LLM provider: %s"), *Provider)
 		);
 	}
 
-	// Build JSON request with API key and provider
+	// Build JSON request with provider only (API key is read from .env by Python backend)
 	TSharedPtr<FJsonObject> RequestData = MakeShared<FJsonObject>();
 	RequestData->SetStringField(TEXT("provider"), Provider);
-	RequestData->SetStringField(TEXT("api_key"), APIKey);
+	// Don't send api_key - the Python backend will read it from .env file
 
 	FString RequestDataString;
 	TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&RequestDataString);
@@ -192,7 +181,7 @@ FStartupValidationResult FAdastreaStartupValidator::ValidateAPIKey(FPythonBridge
 		if (bValid)
 		{
 			return FStartupValidationResult::Success(
-				FString::Printf(TEXT("%s API key validated successfully"), *Provider)
+				FString::Printf(TEXT("%s API key validated successfully (from .env)"), *Provider)
 			);
 		}
 		else
@@ -202,7 +191,7 @@ FStartupValidationResult FAdastreaStartupValidator::ValidateAPIKey(FPythonBridge
 			
 			return FStartupValidationResult::Failure(
 				FString::Printf(
-					TEXT("%s API key is invalid or cannot be verified.\n\n%s\n\nPlease check your API key in Settings."),
+					TEXT("%s API key validation failed.\n\n%s\n\nPlease check your .env file in the project root directory."),
 					*Provider,
 					*ErrorDetail
 				)

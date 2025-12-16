@@ -21,8 +21,12 @@ void FAdastreaSettings::LoadSettings()
 {
 	LLMProvider = LoadConfigValue(TEXT("LLMProvider"), TEXT("gemini"));
 	EmbeddingProvider = LoadConfigValue(TEXT("EmbeddingProvider"), TEXT("huggingface"));
-	GeminiAPIKey = LoadConfigValue(TEXT("GeminiAPIKey"), TEXT(""));
-	OpenAIAPIKey = LoadConfigValue(TEXT("OpenAIAPIKey"), TEXT(""));
+	
+	// API keys are no longer stored in config.ini - they're configured via .env file
+	// The Python backend reads them from environment variables
+	// For validation purposes, we'll mark them as empty here
+	GeminiAPIKey = TEXT("");
+	OpenAIAPIKey = TEXT("");
 	
 	FString FontSizeStr = LoadConfigValue(TEXT("DefaultFontSize"), TEXT("10"));
 	DefaultFontSize = FCString::Atoi(*FontSizeStr);
@@ -42,8 +46,7 @@ void FAdastreaSettings::SaveSettings()
 {
 	SaveConfigValue(TEXT("LLMProvider"), LLMProvider);
 	SaveConfigValue(TEXT("EmbeddingProvider"), EmbeddingProvider);
-	SaveConfigValue(TEXT("GeminiAPIKey"), GeminiAPIKey);
-	SaveConfigValue(TEXT("OpenAIAPIKey"), OpenAIAPIKey);
+	// API keys are not saved - they're managed via .env file
 	SaveConfigValue(TEXT("DefaultFontSize"), FString::FromInt(DefaultFontSize));
 	SaveConfigValue(TEXT("AutoSaveSettings"), bAutoSaveSettings ? TEXT("true") : TEXT("false"));
 	SaveConfigValue(TEXT("ShowTimestamps"), bShowTimestamps ? TEXT("true") : TEXT("false"));
@@ -51,38 +54,21 @@ void FAdastreaSettings::SaveSettings()
 
 bool FAdastreaSettings::ValidateSettings(FString& OutErrorMessage) const
 {
-	// Check if an API key is configured
-	if (!HasAPIKey())
+	// Note: API keys are now configured via .env file, not in plugin settings
+	// We skip local validation and rely on the Python backend validation
+	// which will check if the .env file has the required keys
+	
+	// Just validate that a provider is selected
+	if (LLMProvider.IsEmpty())
 	{
-		if (LLMProvider == TEXT("gemini"))
-		{
-			OutErrorMessage = TEXT("Gemini API key is not configured. Please configure it in Settings.");
-		}
-		else if (LLMProvider == TEXT("openai"))
-		{
-			OutErrorMessage = TEXT("OpenAI API key is not configured. Please configure it in Settings.");
-		}
-		else
-		{
-			OutErrorMessage = FString::Printf(TEXT("API key for provider '%s' is not configured."), *LLMProvider);
-		}
+		OutErrorMessage = TEXT("No LLM provider selected. Please select a provider in Settings.");
 		return false;
 	}
-
-	// Validate API key format (basic check)
-	const FString* APIKey = nullptr;
-	if (LLMProvider == TEXT("gemini"))
+	
+	// Provider must be valid
+	if (LLMProvider != TEXT("gemini") && LLMProvider != TEXT("openai"))
 	{
-		APIKey = &GeminiAPIKey;
-	}
-	else if (LLMProvider == TEXT("openai"))
-	{
-		APIKey = &OpenAIAPIKey;
-	}
-
-	if (APIKey && APIKey->Len() < 10)
-	{
-		OutErrorMessage = TEXT("API key appears to be invalid (too short). Please verify your API key in Settings.");
+		OutErrorMessage = FString::Printf(TEXT("Invalid LLM provider '%s'. Must be 'gemini' or 'openai'."), *LLMProvider);
 		return false;
 	}
 
@@ -91,15 +77,11 @@ bool FAdastreaSettings::ValidateSettings(FString& OutErrorMessage) const
 
 bool FAdastreaSettings::HasAPIKey() const
 {
-	if (LLMProvider == TEXT("gemini"))
-	{
-		return !GeminiAPIKey.IsEmpty();
-	}
-	else if (LLMProvider == TEXT("openai"))
-	{
-		return !OpenAIAPIKey.IsEmpty();
-	}
-	return false;
+	// API keys are configured via .env file
+	// We can't check them from the plugin side
+	// The Python backend will validate them during startup
+	// Return true here to allow the validation to proceed to backend checks
+	return true;
 }
 
 FString FAdastreaSettings::GetConfigFilePath()
