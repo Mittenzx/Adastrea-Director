@@ -515,10 +515,21 @@ class IPCServer:
                 model_count = len(list(models))
             except (ImportError, AttributeError):
                 # Fallback to old API (openai < 1.0.0)
+                # Use local state to avoid affecting global openai.api_key
                 import openai
-                openai.api_key = api_key
-                models = openai.Model.list()
-                model_count = len(models.data)
+                # Save current global state
+                old_api_key = getattr(openai, 'api_key', None)
+                try:
+                    openai.api_key = api_key
+                    models = openai.Model.list()
+                    model_count = len(models.data)
+                finally:
+                    # Restore previous state
+                    if old_api_key is not None:
+                        openai.api_key = old_api_key
+                    else:
+                        # Clear if it wasn't set before
+                        openai.api_key = None
             
             return {
                 'status': 'success',
