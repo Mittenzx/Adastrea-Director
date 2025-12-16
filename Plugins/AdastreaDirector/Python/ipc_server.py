@@ -517,10 +517,9 @@ class IPCServer:
                     'error': 'Validation failed due to an unexpected error. Check server logs for details.',
                     'provider': 'gemini'
                 }
-        finally:
-            # Note: genai library doesn't provide a way to restore previous state
-            # Multiple validations should be avoided or done sequentially
-            pass
+        # Note: genai library doesn't provide a way to restore previous state
+        # The global configuration remains set to the last validated key
+        # Multiple validations should be done sequentially to avoid issues
     
     def _validate_openai_key(self, api_key: str) -> Dict[str, Any]:
         """
