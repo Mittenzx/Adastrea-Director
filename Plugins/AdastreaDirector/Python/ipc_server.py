@@ -506,18 +506,24 @@ class IPCServer:
             Dict with validation result
         """
         try:
-            import openai
-            
-            # Set the API key
-            openai.api_key = api_key
-            
-            # Try to list models as a simple validation check
-            models = openai.Model.list()
+            # Import OpenAI client (supports both old and new API)
+            try:
+                # Try new API first (openai >= 1.0.0)
+                from openai import OpenAI
+                client = OpenAI(api_key=api_key)
+                models = client.models.list()
+                model_count = len(list(models))
+            except (ImportError, AttributeError):
+                # Fallback to old API (openai < 1.0.0)
+                import openai
+                openai.api_key = api_key
+                models = openai.Model.list()
+                model_count = len(models.data)
             
             return {
                 'status': 'success',
                 'valid': True,
-                'message': f'OpenAI API key is valid. Found {len(models.data)} available models.',
+                'message': f'OpenAI API key is valid. Found {model_count} available models.',
                 'provider': 'openai'
             }
             
@@ -525,7 +531,7 @@ class IPCServer:
             error_msg = str(e)
             
             # Check for common error patterns
-            if '401' in error_msg or 'Incorrect API key' in error_msg:
+            if '401' in error_msg or 'Incorrect API key' in error_msg or 'invalid_api_key' in error_msg:
                 return {
                     'status': 'success',
                     'valid': False,

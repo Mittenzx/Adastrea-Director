@@ -134,8 +134,6 @@ TSharedRef<SDockTab> FAdastreaDirectorEditorModule::SpawnAdastreaDirectorTab(con
 						SNew(SButton)
 						.Text(FText::FromString(TEXT("Open Settings")))
 						.OnClicked_Lambda([]() -> FReply {
-							// Import here to avoid circular dependency
-							class SSettingsDialog* SettingsClass = nullptr;
 							SSettingsDialog::OpenDialog();
 							return FReply::Handled();
 						})
