@@ -321,17 +321,24 @@ The error screen will show specific failure reasons. Common causes:
 
 ### Check Configuration File
 
-Settings are stored in: `<ProjectDir>/Saved/AdastreaDirector/config.ini`
+Plugin settings are stored in: `<ProjectDir>/Saved/AdastreaDirector/config.ini`
 
 Example valid configuration:
 ```ini
+# Note: API keys are NOT stored in config.ini - they're in .env file
 LLMProvider=gemini
 EmbeddingProvider=huggingface
-GeminiAPIKey=AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-OpenAIAPIKey=
 DefaultFontSize=10
 AutoSaveSettings=true
 ShowTimestamps=true
+```
+
+API keys are stored in `.env` file in project root:
+```
+GEMINI_KEY=AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+# or
+GOOGLE_API_KEY=AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+OPENAI_API_KEY=sk-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 ```
 
 ### Manual Backend Test

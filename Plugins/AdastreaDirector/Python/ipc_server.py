@@ -460,9 +460,7 @@ class IPCServer:
         Returns:
             Dict with validation result
         """
-        # Store original configuration to restore later (avoid global state pollution)
         import google.generativeai as genai
-        original_api_key = getattr(genai, '_client_manager', None)
         
         try:
             # Configure with the provided key (note: this still sets global state)
@@ -531,6 +529,8 @@ class IPCServer:
         Returns:
             Dict with validation result
         """
+        model_count = 0  # Initialize to avoid undefined variable
+        
         try:
             # Import OpenAI client (supports both old and new API)
             try:

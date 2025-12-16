@@ -1983,12 +1983,20 @@ void SAdastreaDirectorPanel::PerformSelfCheck()
 		AppendTestOutput(TEXT("Plugin is functional but review warnings above.\n"));
 		TestStatusMessage = FText::Format(LOCTEXT("SelfCheckWarnings", "⚠️ {0} passed, {1} warnings"), FText::AsNumber(PassCount), FText::AsNumber(WarningCount));
 	}
-	else if (FailCount == 0 && SkippedCount > 0)
+	else if (FailCount == 0 && SkippedCount > 0 && WarningCount == 0)
 	{
 		AppendTestOutput(TEXT("\n⚠️  CHECKS INCOMPLETE\n"));
 		AppendTestOutput(TEXT("Some checks were skipped due to missing dependencies.\n"));
 		AppendTestOutput(TEXT("Plugin may have limited functionality.\n"));
 		TestStatusMessage = FText::Format(LOCTEXT("SelfCheckSkipped", "⚠️ {0} passed, {1} skipped"), FText::AsNumber(PassCount), FText::AsNumber(SkippedCount));
+	}
+	else if (FailCount == 0 && SkippedCount > 0 && WarningCount > 0)
+	{
+		AppendTestOutput(TEXT("\n⚠️  CHECKS INCOMPLETE WITH WARNINGS\n"));
+		AppendTestOutput(TEXT("Some checks were skipped and warnings were raised.\n"));
+		AppendTestOutput(TEXT("Plugin may have limited functionality.\n"));
+		TestStatusMessage = FText::Format(LOCTEXT("SelfCheckSkippedWarnings", "⚠️ {0} passed, {1} skipped, {2} warnings"), 
+			FText::AsNumber(PassCount), FText::AsNumber(SkippedCount), FText::AsNumber(WarningCount));
 	}
 	else if (FailCount > 0)
 	{

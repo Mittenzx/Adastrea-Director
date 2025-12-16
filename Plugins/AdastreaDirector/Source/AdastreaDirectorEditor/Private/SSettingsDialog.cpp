@@ -16,7 +16,10 @@
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
 #include "Misc/SecureHash.h"
+#include "Misc/MessageDialog.h"
 #include "HAL/PlatformFileManager.h"
+#include "HAL/FileManager.h"
+#include "HAL/PlatformProcess.h"
 
 #define LOCTEXT_NAMESPACE "SettingsDialog"
 

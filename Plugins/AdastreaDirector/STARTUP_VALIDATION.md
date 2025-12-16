@@ -219,17 +219,26 @@ Output includes 8 comprehensive checks:
 
 ### Example Configuration
 
+**config.ini** (plugin settings):
 ```ini
 # Adastrea Director Configuration
 # Auto-generated file
+# Note: API keys are NOT stored here - they're in .env file
 
 AutoSaveSettings=true
 DefaultFontSize=10
 EmbeddingProvider=huggingface
-GeminiAPIKey=AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 LLMProvider=gemini
-OpenAIAPIKey=
 ShowTimestamps=true
+```
+
+**.env file** (API keys - in project root):
+```
+GEMINI_KEY=AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+# or alternatively:
+GOOGLE_API_KEY=AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+# For OpenAI:
+OPENAI_API_KEY=sk-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 ```
 
 ### Changing Settings
@@ -363,17 +372,20 @@ if (!result.bSuccess) {
 
 ### API Key Storage
 
-- Stored in plain text in `config.ini`
-- Located in project's `Saved` directory
-- Not committed to version control (add to .gitignore)
-- Consider encryption for production
+- Stored in plain text in `.env` file (industry standard)
+- `.env` file located in project root directory
+- **Must** be added to `.gitignore` (not committed to version control)
+- Read by Python backend from environment variables
+- Never stored in plugin's config.ini file
+- Consider using secret management tools for production deployments
 
 ### API Key Transmission
 
-- Sent to local Python backend via IPC
-- Not logged in normal mode
-- Only validated with provider API
-- Never transmitted to third parties
+- API keys are **never** sent over IPC
+- Python backend reads keys directly from environment variables
+- Keys are only transmitted to provider APIs for validation
+- Not logged in normal or verbose mode
+- Never transmitted to third parties or stored in logs
 
 ### Validation Requests
 
