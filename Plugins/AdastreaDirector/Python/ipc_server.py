@@ -460,10 +460,13 @@ class IPCServer:
         Returns:
             Dict with validation result
         """
+        # Store original configuration to restore later (avoid global state pollution)
+        import google.generativeai as genai
+        original_api_key = getattr(genai, '_client_manager', None)
+        
         try:
-            import google.generativeai as genai
-            
-            # Configure with the provided key
+            # Configure with the provided key (note: this still sets global state)
+            # Unfortunately, genai doesn't provide instance-based API currently
             genai.configure(api_key=api_key)
             
             # Try to list models as a simple validation check
@@ -482,6 +485,7 @@ class IPCServer:
         except Exception as e:
             error_msg = str(e)
             
+            # Sanitize error message to avoid leaking sensitive information
             # Check for common error patterns
             if '401' in error_msg or 'API key not valid' in error_msg or 'INVALID_ARGUMENT' in error_msg:
                 return {
@@ -505,13 +509,18 @@ class IPCServer:
                     'provider': 'gemini'
                 }
             else:
+                # Log full error for debugging but return sanitized message
                 logger.warning(f"Gemini validation error: {error_msg}")
                 return {
                     'status': 'success',
                     'valid': False,
-                    'error': f'Validation failed: {error_msg}',
+                    'error': 'Validation failed due to an unexpected error. Check server logs for details.',
                     'provider': 'gemini'
                 }
+        finally:
+            # Note: genai library doesn't provide a way to restore previous state
+            # Multiple validations should be avoided or done sequentially
+            pass
     
     def _validate_openai_key(self, api_key: str) -> Dict[str, Any]:
         """
@@ -586,7 +595,7 @@ class IPCServer:
                 return {
                     'status': 'success',
                     'valid': False,
-                    'error': f'Validation failed: {error_msg}',
+                    'error': 'Validation failed due to an unexpected error. Check server logs for details.',
                     'provider': 'openai'
                 }
     

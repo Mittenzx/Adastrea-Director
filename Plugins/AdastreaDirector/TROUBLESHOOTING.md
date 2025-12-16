@@ -307,6 +307,8 @@ The error screen will show specific failure reasons. Common causes:
 
 ### Enable Verbose Logging
 
+**Note:** Verbose logging is safe - API keys are configured via .env file and never transmitted through the plugin, so they will not appear in logs.
+
 1. Open `DefaultEngine.ini` in your project
 2. Add:
    ```ini

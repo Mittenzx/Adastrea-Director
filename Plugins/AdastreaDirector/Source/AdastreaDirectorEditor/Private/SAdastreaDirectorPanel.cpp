@@ -1976,6 +1976,13 @@ void SAdastreaDirectorPanel::PerformSelfCheck()
 		AppendTestOutput(TEXT("Plugin is fully functional and ready for production use.\n"));
 		TestStatusMessage = LOCTEXT("SelfCheckPassed", "✅ All self-checks passed!");
 	}
+	else if (FailCount == 0 && WarningCount > 0 && SkippedCount == 0)
+	{
+		AppendTestOutput(TEXT("\n⚠️  CHECKS PASSED WITH WARNINGS\n"));
+		AppendTestOutput(TEXT("All checks passed but some warnings were raised.\n"));
+		AppendTestOutput(TEXT("Plugin is functional but review warnings above.\n"));
+		TestStatusMessage = FText::Format(LOCTEXT("SelfCheckWarnings", "⚠️ {0} passed, {1} warnings"), FText::AsNumber(PassCount), FText::AsNumber(WarningCount));
+	}
 	else if (FailCount == 0 && SkippedCount > 0)
 	{
 		AppendTestOutput(TEXT("\n⚠️  CHECKS INCOMPLETE\n"));
@@ -1991,7 +1998,7 @@ void SAdastreaDirectorPanel::PerformSelfCheck()
 		{
 			AppendTestOutput(TEXT("\nRecommended Actions:\n"));
 			AppendTestOutput(TEXT("1. Check Python installation and dependencies\n"));
-			AppendTestOutput(TEXT("2. Verify API key configuration in Settings\n"));
+			AppendTestOutput(TEXT("2. Verify API key configuration in .env file\n"));
 			AppendTestOutput(TEXT("3. Review Output Log for detailed error messages\n"));
 			AppendTestOutput(TEXT("4. Restart Unreal Engine if issues persist\n"));
 		}

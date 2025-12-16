@@ -19,8 +19,19 @@ FAdastreaSettings::FAdastreaSettings()
 
 void FAdastreaSettings::LoadSettings()
 {
-	LLMProvider = LoadConfigValue(TEXT("LLMProvider"), TEXT("gemini"));
-	EmbeddingProvider = LoadConfigValue(TEXT("EmbeddingProvider"), TEXT("huggingface"));
+	// Load config map once instead of reading file multiple times
+	FString ConfigPath = GetConfigFilePath();
+	TMap<FString, FString> ConfigMap = LoadConfigMap(ConfigPath);
+	
+	// Helper lambda to get value with default
+	auto GetValue = [&ConfigMap](const FString& Key, const FString& DefaultValue) -> FString
+	{
+		const FString* Value = ConfigMap.Find(Key);
+		return Value ? *Value : DefaultValue;
+	};
+	
+	LLMProvider = GetValue(TEXT("LLMProvider"), TEXT("gemini"));
+	EmbeddingProvider = GetValue(TEXT("EmbeddingProvider"), TEXT("huggingface"));
 	
 	// API keys are no longer stored in config.ini - they're configured via .env file
 	// The Python backend reads them from environment variables
@@ -28,28 +39,61 @@ void FAdastreaSettings::LoadSettings()
 	GeminiAPIKey = TEXT("");
 	OpenAIAPIKey = TEXT("");
 	
-	FString FontSizeStr = LoadConfigValue(TEXT("DefaultFontSize"), TEXT("10"));
+	FString FontSizeStr = GetValue(TEXT("DefaultFontSize"), TEXT("10"));
 	DefaultFontSize = FCString::Atoi(*FontSizeStr);
 	if (DefaultFontSize < 8 || DefaultFontSize > 20)
 	{
 		DefaultFontSize = 10;
 	}
 	
-	FString AutoSaveStr = LoadConfigValue(TEXT("AutoSaveSettings"), TEXT("true"));
+	FString AutoSaveStr = GetValue(TEXT("AutoSaveSettings"), TEXT("true"));
 	bAutoSaveSettings = AutoSaveStr == TEXT("true");
 	
-	FString ShowTimestampsStr = LoadConfigValue(TEXT("ShowTimestamps"), TEXT("true"));
+	FString ShowTimestampsStr = GetValue(TEXT("ShowTimestamps"), TEXT("true"));
 	bShowTimestamps = ShowTimestampsStr == TEXT("true");
 }
 
 void FAdastreaSettings::SaveSettings()
 {
-	SaveConfigValue(TEXT("LLMProvider"), LLMProvider);
-	SaveConfigValue(TEXT("EmbeddingProvider"), EmbeddingProvider);
+	FString ConfigPath = GetConfigFilePath();
+	FString ConfigDir = FPaths::GetPath(ConfigPath);
+	
+	// Create directory if it doesn't exist
+	IPlatformFile& PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
+	if (!PlatformFile.DirectoryExists(*ConfigDir))
+	{
+		PlatformFile.CreateDirectoryTree(*ConfigDir);
+	}
+	
+	// Load existing content
+	TMap<FString, FString> ConfigMap = LoadConfigMap(ConfigPath);
+	
+	// Update all values in the map (write once, not multiple times)
+	ConfigMap.FindOrAdd(TEXT("LLMProvider")) = LLMProvider;
+	ConfigMap.FindOrAdd(TEXT("EmbeddingProvider")) = EmbeddingProvider;
 	// API keys are not saved - they're managed via .env file
-	SaveConfigValue(TEXT("DefaultFontSize"), FString::FromInt(DefaultFontSize));
-	SaveConfigValue(TEXT("AutoSaveSettings"), bAutoSaveSettings ? TEXT("true") : TEXT("false"));
-	SaveConfigValue(TEXT("ShowTimestamps"), bShowTimestamps ? TEXT("true") : TEXT("false"));
+	ConfigMap.FindOrAdd(TEXT("DefaultFontSize")) = FString::FromInt(DefaultFontSize);
+	ConfigMap.FindOrAdd(TEXT("AutoSaveSettings")) = bAutoSaveSettings ? TEXT("true") : TEXT("false");
+	ConfigMap.FindOrAdd(TEXT("ShowTimestamps")) = bShowTimestamps ? TEXT("true") : TEXT("false");
+	
+	// Write back to file once
+	FString NewContent;
+	NewContent += TEXT("# Adastrea Director Configuration\n");
+	NewContent += TEXT("# Auto-generated file\n\n");
+	
+	// Sort keys for deterministic output
+	TArray<FString> SortedKeys;
+	ConfigMap.GetKeys(SortedKeys);
+	SortedKeys.Sort();
+	for (const FString& SortedKey : SortedKeys)
+	{
+		NewContent += FString::Printf(TEXT("%s=%s\n"), *SortedKey, *ConfigMap[SortedKey]);
+	}
+	
+	if (!FFileHelper::SaveStringToFile(NewContent, *ConfigPath))
+	{
+		UE_LOG(LogAdastreaDirector, Error, TEXT("Failed to save settings to: %s"), *ConfigPath);
+	}
 }
 
 bool FAdastreaSettings::ValidateSettings(FString& OutErrorMessage) const
@@ -115,10 +159,13 @@ TMap<FString, FString> FAdastreaSettings::LoadConfigMap(const FString& ConfigPat
 			continue;
 		}
 		
-		FString LineKey, LineValue;
-		if (TrimmedLine.Split(TEXT("="), &LineKey, &LineValue))
+		// Find first '=' to handle values that contain '=' characters
+		int32 EqualIndex = INDEX_NONE;
+		if (TrimmedLine.FindChar(TEXT('='), EqualIndex) && EqualIndex > 0)
 		{
-			ConfigMap.Add(LineKey.TrimStartAndEnd(), LineValue.TrimStartAndEnd());
+			FString LineKey = TrimmedLine.Left(EqualIndex).TrimStartAndEnd();
+			FString LineValue = TrimmedLine.Mid(EqualIndex + 1).TrimStartAndEnd();
+			ConfigMap.Add(LineKey, LineValue);
 		}
 	}
 	

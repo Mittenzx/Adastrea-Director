@@ -319,6 +319,8 @@ Every validation result includes:
 
 ### Enable Verbose Validation Logging
 
+**Security Note:** Verbose logging is safe - API keys are stored in .env files and validated by the Python backend reading environment variables. They are never transmitted through the plugin's IPC layer, so they will not appear in Unreal Engine logs.
+
 In `DefaultEngine.ini`:
 ```ini
 [Core.Log]
