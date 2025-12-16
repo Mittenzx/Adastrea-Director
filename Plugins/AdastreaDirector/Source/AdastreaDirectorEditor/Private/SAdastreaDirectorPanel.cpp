@@ -5,6 +5,8 @@
 #include "SStatusIndicator.h"
 #include "AdastreaDirectorEditorModule.h"
 #include "AdastreaDirectorModule.h"
+#include "AdastreaSettings.h"
+#include "AdastreaStartupValidator.h"
 #include "PythonBridge.h"
 #include "Widgets/Input/SEditableTextBox.h"
 #include "Widgets/Input/SMultiLineEditableTextBox.h"
@@ -1758,12 +1760,14 @@ void SAdastreaDirectorPanel::PerformSelfCheck()
 	AppendTestOutput(FString::Printf(TEXT("═══════════════════════════════════════════════════════════════\n")));
 	AppendTestOutput(FString::Printf(TEXT("🔍 ADASTREA DIRECTOR SELF-CHECK\n")));
 	AppendTestOutput(FString::Printf(TEXT("Timestamp: %s\n"), *Timestamp));
+	AppendTestOutput(FString::Printf(TEXT("Plugin Version: 1.0.0 (UE5.6+)\n")));
 	AppendTestOutput(FString::Printf(TEXT("═══════════════════════════════════════════════════════════════\n\n")));
 
 	int32 PassCount = 0;
 	int32 FailCount = 0;
 	int32 SkippedCount = 0;
-	int32 TotalChecks = 6;
+	int32 WarningCount = 0;
+	int32 TotalChecks = 8; // Increased to include new checks
 	int32 CurrentCheck = 0;
 
 	// Check 1: Runtime Module
@@ -1772,12 +1776,24 @@ void SAdastreaDirectorPanel::PerformSelfCheck()
 	FAdastreaDirectorModule* RuntimeModule = FModuleManager::GetModulePtr<FAdastreaDirectorModule>("AdastreaDirector");
 	if (RuntimeModule)
 	{
-		AppendTestOutput(TEXT("✅ [1/6] Runtime Module: Loaded successfully\n"));
+		AppendTestOutput(TEXT("✅ [1/8] Runtime Module: Loaded successfully\n"));
 		PassCount++;
+		
+		// Check if fully initialized
+		if (RuntimeModule->IsFullyInitialized())
+		{
+			AppendTestOutput(TEXT("    → Startup validation passed\n"));
+		}
+		else
+		{
+			FString InitError = RuntimeModule->GetInitializationError();
+			AppendTestOutput(FString::Printf(TEXT("    ⚠️ Initialization incomplete: %s\n"), *InitError));
+			WarningCount++;
+		}
 	}
 	else
 	{
-		AppendTestOutput(TEXT("❌ [1/6] Runtime Module: NOT LOADED\n"));
+		AppendTestOutput(TEXT("❌ [1/8] Runtime Module: NOT LOADED\n"));
 		FailCount++;
 		// Cannot continue without runtime module
 		TestStatusMessage = LOCTEXT("SelfCheckFailed", "Self-check failed - runtime module not loaded");
@@ -1785,22 +1801,44 @@ void SAdastreaDirectorPanel::PerformSelfCheck()
 		return;
 	}
 
-	// Check 2: Python Bridge
+	// Check 2: Settings Configuration
+	CurrentCheck++;
+	TestProgress = static_cast<float>(CurrentCheck) / TotalChecks;
+	{
+		FAdastreaSettings& Settings = FAdastreaSettings::Get();
+		FString ErrorMessage;
+		if (Settings.ValidateSettings(ErrorMessage))
+		{
+			AppendTestOutput(TEXT("✅ [2/8] Settings Configuration: Valid\n"));
+			AppendTestOutput(FString::Printf(TEXT("    → LLM Provider: %s\n"), *Settings.GetLLMProvider()));
+			AppendTestOutput(FString::Printf(TEXT("    → Embedding Provider: %s\n"), *Settings.GetEmbeddingProvider()));
+			AppendTestOutput(FString::Printf(TEXT("    → API Key: %s\n"), Settings.HasAPIKey() ? TEXT("Configured") : TEXT("Not configured")));
+			PassCount++;
+		}
+		else
+		{
+			AppendTestOutput(TEXT("❌ [2/8] Settings Configuration: INVALID\n"));
+			AppendTestOutput(FString::Printf(TEXT("    → Error: %s\n"), *ErrorMessage));
+			FailCount++;
+		}
+	}
+
+	// Check 3: Python Bridge
 	CurrentCheck++;
 	TestProgress = static_cast<float>(CurrentCheck) / TotalChecks;
 	FPythonBridge* PythonBridge = RuntimeModule->GetPythonBridge();
 	if (PythonBridge)
 	{
-		AppendTestOutput(TEXT("✅ [2/6] Python Bridge: Initialized\n"));
+		AppendTestOutput(TEXT("✅ [3/8] Python Bridge: Initialized\n"));
 		PassCount++;
 	}
 	else
 	{
-		AppendTestOutput(TEXT("❌ [2/6] Python Bridge: NOT INITIALIZED\n"));
+		AppendTestOutput(TEXT("❌ [3/8] Python Bridge: NOT INITIALIZED\n"));
 		FailCount++;
 	}
 
-	// Check 3: Python Process
+	// Check 4: Python Process
 	CurrentCheck++;
 	TestProgress = static_cast<float>(CurrentCheck) / TotalChecks;
 	if (PythonBridge)
@@ -1808,36 +1846,37 @@ void SAdastreaDirectorPanel::PerformSelfCheck()
 		FString Status = PythonBridge->GetStatus();
 		if (!Status.Contains(TEXT("not running")))
 		{
-			AppendTestOutput(TEXT("✅ [3/6] Python Process: Running\n"));
+			AppendTestOutput(TEXT("✅ [4/8] Python Process: Running\n"));
+			AppendTestOutput(FString::Printf(TEXT("    → Status: %s\n"), *Status));
 			PassCount++;
 		}
 		else
 		{
-			AppendTestOutput(TEXT("❌ [3/6] Python Process: NOT RUNNING\n"));
+			AppendTestOutput(TEXT("❌ [4/8] Python Process: NOT RUNNING\n"));
 			FailCount++;
 		}
 	}
 	else
 	{
-		AppendTestOutput(TEXT("⚠️ [3/6] Python Process: Cannot check (bridge not initialized)\n"));
+		AppendTestOutput(TEXT("⚠️ [4/8] Python Process: Cannot check (bridge not initialized)\n"));
 		SkippedCount++;
 	}
 
-	// Check 4: IPC Connection
+	// Check 5: IPC Connection
 	CurrentCheck++;
 	TestProgress = static_cast<float>(CurrentCheck) / TotalChecks;
 	if (PythonBridge && PythonBridge->IsReady())
 	{
-		AppendTestOutput(TEXT("✅ [4/6] IPC Connection: Connected\n"));
+		AppendTestOutput(TEXT("✅ [5/8] IPC Connection: Connected\n"));
 		PassCount++;
 	}
 	else
 	{
-		AppendTestOutput(TEXT("❌ [4/6] IPC Connection: NOT CONNECTED\n"));
+		AppendTestOutput(TEXT("❌ [5/8] IPC Connection: NOT CONNECTED\n"));
 		FailCount++;
 	}
 
-	// Check 5: Backend Health (Ping test)
+	// Check 6: Backend Health (Ping test)
 	CurrentCheck++;
 	TestProgress = static_cast<float>(CurrentCheck) / TotalChecks;
 	if (PythonBridge && PythonBridge->IsReady())
@@ -1846,22 +1885,48 @@ void SAdastreaDirectorPanel::PerformSelfCheck()
 		bool bPingSuccess = PythonBridge->SendRequest(TEXT("ping"), TEXT(""), Response);
 		if (bPingSuccess && Response.Contains(TEXT("pong")))
 		{
-			AppendTestOutput(TEXT("✅ [5/6] Backend Health: Responding (ping → pong)\n"));
+			AppendTestOutput(TEXT("✅ [6/8] Backend Health: Responding (ping → pong)\n"));
 			PassCount++;
 		}
 		else
 		{
-			AppendTestOutput(TEXT("❌ [5/6] Backend Health: NOT RESPONDING\n"));
+			AppendTestOutput(TEXT("❌ [6/8] Backend Health: NOT RESPONDING\n"));
 			FailCount++;
 		}
 	}
 	else
 	{
-		AppendTestOutput(TEXT("⚠️ [5/6] Backend Health: Cannot check (not connected)\n"));
+		AppendTestOutput(TEXT("⚠️ [6/8] Backend Health: Cannot check (not connected)\n"));
 		SkippedCount++;
 	}
 
-	// Check 6: Query Processing (verify query handler responds correctly)
+	// Check 7: API Key Validation (if backend is ready)
+	CurrentCheck++;
+	TestProgress = static_cast<float>(CurrentCheck) / TotalChecks;
+	if (PythonBridge && PythonBridge->IsReady())
+	{
+		
+		FStartupValidationResult APIKeyResult = FAdastreaStartupValidator::ValidateAPIKey(PythonBridge);
+		if (APIKeyResult.bSuccess)
+		{
+			AppendTestOutput(TEXT("✅ [7/8] API Key Validation: VALID\n"));
+			AppendTestOutput(FString::Printf(TEXT("    → %s\n"), *APIKeyResult.DetailedStatus));
+			PassCount++;
+		}
+		else
+		{
+			AppendTestOutput(TEXT("❌ [7/8] API Key Validation: INVALID\n"));
+			AppendTestOutput(FString::Printf(TEXT("    → %s\n"), *APIKeyResult.ErrorMessage));
+			FailCount++;
+		}
+	}
+	else
+	{
+		AppendTestOutput(TEXT("⚠️ [7/8] API Key Validation: Cannot check (backend not ready)\n"));
+		SkippedCount++;
+	}
+
+	// Check 8: Query Processing (verify query handler responds correctly)
 	CurrentCheck++;
 	TestProgress = static_cast<float>(CurrentCheck) / TotalChecks;
 	if (PythonBridge && PythonBridge->IsReady())
@@ -1871,46 +1936,80 @@ void SAdastreaDirectorPanel::PerformSelfCheck()
 		bool bQuerySuccess = PythonBridge->SendRequest(TEXT("query"), TEXT("test"), Response);
 		if (bQuerySuccess && (Response.Contains(TEXT("success")) || Response.Contains(TEXT("result"))))
 		{
-			AppendTestOutput(TEXT("✅ [6/6] Query Processing: Working\n"));
+			AppendTestOutput(TEXT("✅ [8/8] Query Processing: Working\n"));
 			PassCount++;
 		}
 		else
 		{
 			// Truncate response for display if too long
 			FString DisplayResponse = Response.Len() > 100 ? Response.Left(100) + TEXT("...") : Response;
-			AppendTestOutput(FString::Printf(TEXT("❌ [6/6] Query Processing: FAILED - %s\n"), *DisplayResponse));
+			AppendTestOutput(FString::Printf(TEXT("❌ [8/8] Query Processing: FAILED - %s\n"), *DisplayResponse));
 			FailCount++;
 		}
 	}
 	else
 	{
-		AppendTestOutput(TEXT("⚠️ [6/6] Query Processing: Cannot check (not connected)\n"));
+		AppendTestOutput(TEXT("⚠️ [8/8] Query Processing: Cannot check (not connected)\n"));
 		SkippedCount++;
 	}
 
 	// Summary
 	AppendTestOutput(TEXT("\n═══════════════════════════════════════════════════════════════\n"));
 	AppendTestOutput(TEXT("SELF-CHECK SUMMARY\n"));
-	AppendTestOutput(FString::Printf(TEXT("Passed: %d/%d\n"), PassCount, TotalChecks));
-	AppendTestOutput(FString::Printf(TEXT("Failed: %d/%d\n"), FailCount, TotalChecks));
+	AppendTestOutput(TEXT("───────────────────────────────────────────────────────────────\n"));
+	AppendTestOutput(FString::Printf(TEXT("✅ Passed:  %d/%d\n"), PassCount, TotalChecks));
+	AppendTestOutput(FString::Printf(TEXT("❌ Failed:  %d/%d\n"), FailCount, TotalChecks));
 	if (SkippedCount > 0)
 	{
-		AppendTestOutput(FString::Printf(TEXT("Skipped: %d/%d\n"), SkippedCount, TotalChecks));
+		AppendTestOutput(FString::Printf(TEXT("⚠️  Skipped: %d/%d\n"), SkippedCount, TotalChecks));
 	}
-	
-	if (FailCount == 0 && SkippedCount == 0)
+	if (WarningCount > 0)
 	{
-		AppendTestOutput(TEXT("\n✅ All self-checks passed! Plugin is functioning correctly.\n"));
+		AppendTestOutput(FString::Printf(TEXT("⚠️  Warnings: %d\n"), WarningCount));
+	}
+	AppendTestOutput(TEXT("───────────────────────────────────────────────────────────────\n"));
+	
+	// Determine overall status
+	if (FailCount == 0 && SkippedCount == 0 && WarningCount == 0)
+	{
+		AppendTestOutput(TEXT("\n✅ ALL CHECKS PASSED\n"));
+		AppendTestOutput(TEXT("Plugin is fully functional and ready for production use.\n"));
 		TestStatusMessage = LOCTEXT("SelfCheckPassed", "✅ All self-checks passed!");
 	}
-	else if (FailCount == 0 && SkippedCount > 0)
+	else if (FailCount == 0 && WarningCount > 0 && SkippedCount == 0)
 	{
-		AppendTestOutput(TEXT("\n⚠️ Some checks were skipped due to dependencies.\n"));
+		AppendTestOutput(TEXT("\n⚠️  CHECKS PASSED WITH WARNINGS\n"));
+		AppendTestOutput(TEXT("All checks passed but some warnings were raised.\n"));
+		AppendTestOutput(TEXT("Plugin is functional but review warnings above.\n"));
+		TestStatusMessage = FText::Format(LOCTEXT("SelfCheckWarnings", "⚠️ {0} passed, {1} warnings"), FText::AsNumber(PassCount), FText::AsNumber(WarningCount));
+	}
+	else if (FailCount == 0 && SkippedCount > 0 && WarningCount == 0)
+	{
+		AppendTestOutput(TEXT("\n⚠️  CHECKS INCOMPLETE\n"));
+		AppendTestOutput(TEXT("Some checks were skipped due to missing dependencies.\n"));
+		AppendTestOutput(TEXT("Plugin may have limited functionality.\n"));
 		TestStatusMessage = FText::Format(LOCTEXT("SelfCheckSkipped", "⚠️ {0} passed, {1} skipped"), FText::AsNumber(PassCount), FText::AsNumber(SkippedCount));
 	}
-	else
+	else if (FailCount == 0 && SkippedCount > 0 && WarningCount > 0)
 	{
-		AppendTestOutput(TEXT("\n❌ Some self-checks failed. Please check the issues above.\n"));
+		AppendTestOutput(TEXT("\n⚠️  CHECKS INCOMPLETE WITH WARNINGS\n"));
+		AppendTestOutput(TEXT("Some checks were skipped and warnings were raised.\n"));
+		AppendTestOutput(TEXT("Plugin may have limited functionality.\n"));
+		TestStatusMessage = FText::Format(LOCTEXT("SelfCheckSkippedWarnings", "⚠️ {0} passed, {1} skipped, {2} warnings"), 
+			FText::AsNumber(PassCount), FText::AsNumber(SkippedCount), FText::AsNumber(WarningCount));
+	}
+	else if (FailCount > 0)
+	{
+		AppendTestOutput(TEXT("\n❌ CHECKS FAILED\n"));
+		AppendTestOutput(TEXT("Critical issues detected. Please review failures above.\n"));
+		if (FailCount > 3)
+		{
+			AppendTestOutput(TEXT("\nRecommended Actions:\n"));
+			AppendTestOutput(TEXT("1. Check Python installation and dependencies\n"));
+			AppendTestOutput(TEXT("2. Verify API key configuration in .env file\n"));
+			AppendTestOutput(TEXT("3. Review Output Log for detailed error messages\n"));
+			AppendTestOutput(TEXT("4. Restart Unreal Engine if issues persist\n"));
+		}
 		TestStatusMessage = FText::Format(LOCTEXT("SelfCheckPartialFail", "❌ {0}/{1} checks failed"), FText::AsNumber(FailCount), FText::AsNumber(TotalChecks));
 	}
 	AppendTestOutput(TEXT("═══════════════════════════════════════════════════════════════\n"));
