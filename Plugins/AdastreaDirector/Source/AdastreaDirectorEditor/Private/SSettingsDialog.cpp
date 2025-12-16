@@ -150,6 +150,8 @@ TSharedRef<SWidget> SSettingsDialog::CreateAPIKeysSection()
 							TEXT("1. Copy .env.example to .env in your project root\n")
 							TEXT("2. Edit .env and add your API key:\n")
 							TEXT("   GEMINI_KEY=your-api-key-here\n")
+							TEXT("   (or GOOGLE_API_KEY for compatibility)\n")
+							TEXT("   OPENAI_API_KEY=your-key (if using OpenAI)\n")
 							TEXT("3. Restart Unreal Engine\n\n")
 							TEXT(".env location: %s\n")
 							TEXT("Status: %s"),
@@ -313,7 +315,7 @@ TSharedRef<SWidget> SSettingsDialog::CreateAPIKeysSection()
 					SNew(SButton)
 					.Text(LOCTEXT("CreateEnvButton", "Create .env from Template"))
 					.ToolTipText(LOCTEXT("CreateEnvTooltip", "Copy .env.example to .env"))
-					.IsEnabled_Lambda([bEnvFileExists]() { return !bEnvFileExists; })
+					.IsEnabled_Lambda([EnvFilePath]() { return !FPaths::FileExists(EnvFilePath); })
 					.OnClicked_Lambda([EnvFilePath, EnvExamplePath]() -> FReply {
 						if (FPaths::FileExists(EnvExamplePath))
 						{
