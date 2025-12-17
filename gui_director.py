@@ -2130,6 +2130,8 @@ class AdastreaDirectorApp:
         """
         Append a line of ingestion output to the ingestion log.
         This is called from the execution thread to stream output in real-time.
+        Output lines are displayed without timestamp prefix since they come from
+        the subprocess with their own formatting.
         
         Args:
             line: Output line from the ingestion process
@@ -2137,7 +2139,7 @@ class AdastreaDirectorApp:
         if not line:
             return
         
-        # Determine log level based on content
+        # Determine log level based on content for syntax highlighting
         line_lower = line.lower()
         if any(word in line_lower for word in ['error', 'failed', '✗', '❌']):
             level = "error"
@@ -2150,6 +2152,7 @@ class AdastreaDirectorApp:
         else:
             level = "info"
         
+        # Insert without timestamp (subprocess output already formatted)
         self.ingestion_log.config(state=tk.NORMAL)
         self.ingestion_log.insert(tk.END, f"{line}\n", level)
         self.ingestion_log.see(tk.END)
@@ -4981,7 +4984,7 @@ GitHub: Mittenzx/Adastrea-Director
                     'stdout': subprocess.PIPE,
                     'stderr': subprocess.STDOUT,  # Merge stderr into stdout for streaming
                     'text': True,
-                    'bufsize': 1  # Line buffered for real-time output
+                    'bufsize': 1  # Line buffering in text mode for real-time output
                 }
                 if sys.platform == 'win32' and hasattr(subprocess, 'CREATE_NO_WINDOW'):
                     kwargs['creationflags'] = subprocess.CREATE_NO_WINDOW
@@ -4990,13 +4993,16 @@ GitHub: Mittenzx/Adastrea-Director
                 
                 output_lines = []
                 try:
+                    # Stream output line by line until process completes
                     for line in iter(process.stdout.readline, ''):
                         if line:
                             output_lines.append(line)
                             # Stream to ingestion log in real-time
                             self.root.after(0, self._append_ingest_output, line.rstrip())
                 except Exception as read_error:
-                    self.root.after(0, self._append_ingest_output, f"Warning: Error reading output: {read_error}")
+                    error_type = type(read_error).__name__
+                    self.root.after(0, self._append_ingest_output, 
+                                  f"Warning: {error_type} reading output: {read_error}")
                 finally:
                     if process.stdout:
                         process.stdout.close()
