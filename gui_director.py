@@ -9,6 +9,7 @@ import socket
 import tempfile
 from datetime import datetime
 from pathlib import Path
+from collections import deque
 
 # Import UE log capture module
 from ue_log_capture import UELogCapture
@@ -2125,6 +2126,93 @@ class AdastreaDirectorApp:
         self.ingestion_log.insert(tk.END, f"{message}\n", level)
         self.ingestion_log.see(tk.END)
         self.ingestion_log.config(state=tk.DISABLED)
+    
+    # Class-level constants for syntax highlighting keywords (moved for performance)
+    _ERROR_KEYWORDS = ['error', 'failed', '✗', '❌']
+    _WARNING_KEYWORDS = ['warning', 'warn', '⚠']
+    _SUCCESS_KEYWORDS = ['success', 'completed', '✓', '✅']
+    _PROGRESS_KEYWORDS = ['ingestion in progress', 'processing']
+    
+    def _append_ingest_output_batch(self, lines):
+        """
+        Append multiple lines of ingestion output to the ingestion log.
+        This batches multiple lines together to improve performance and avoid
+        overwhelming the GUI event queue.
+        
+        Args:
+            lines: List of output lines from the ingestion process
+        """
+        # Check if widget still exists before batch update
+        try:
+            if not self.ingestion_log.winfo_exists():
+                return
+        except tk.TclError:
+            return
+        
+        # Batch all GUI operations into a single update
+        try:
+            self.ingestion_log.config(state=tk.NORMAL)
+            for line in lines:
+                # Determine log level for each line
+                line_lower = line.lower()
+                if any(word in line_lower for word in self._ERROR_KEYWORDS):
+                    level = "error"
+                elif any(word in line_lower for word in self._WARNING_KEYWORDS):
+                    level = "warning"
+                elif any(word in line_lower for word in self._SUCCESS_KEYWORDS):
+                    level = "success"
+                elif any(word in line_lower for word in self._PROGRESS_KEYWORDS):
+                    level = "progress"
+                else:
+                    level = "info"
+                
+                self.ingestion_log.insert(tk.END, f"{line}\n", level)
+            
+            self.ingestion_log.see(tk.END)
+            self.ingestion_log.config(state=tk.DISABLED)
+        except tk.TclError:
+            # Widget was destroyed during update
+            pass
+    
+    def _append_ingest_output(self, line):
+        """
+        Append a line of ingestion output to the ingestion log.
+        This is scheduled from a background thread via root.after() but executed 
+        on the main GUI thread. Output lines are displayed without timestamp prefix 
+        since they come from the subprocess with their own formatting.
+        
+        Args:
+            line: Output line from the ingestion process
+        """
+        # Check if widget still exists before updating
+        try:
+            if not self.ingestion_log.winfo_exists():
+                return
+        except tk.TclError:
+            return
+        
+        # Determine log level based on content for syntax highlighting
+        line_lower = line.lower()
+        if any(word in line_lower for word in self._ERROR_KEYWORDS):
+            level = "error"
+        elif any(word in line_lower for word in self._WARNING_KEYWORDS):
+            level = "warning"
+        elif any(word in line_lower for word in self._SUCCESS_KEYWORDS):
+            level = "success"
+        elif any(word in line_lower for word in self._PROGRESS_KEYWORDS):
+            level = "progress"
+        else:
+            level = "info"
+        
+        # Insert without timestamp (subprocess output already formatted)
+        try:
+            self.ingestion_log.config(state=tk.NORMAL)
+            self.ingestion_log.insert(tk.END, f"{line}\n", level)
+            self.ingestion_log.see(tk.END)
+            self.ingestion_log.config(state=tk.DISABLED)
+        except tk.TclError:
+            # Widget was destroyed during update
+            pass
     
     def create_status_dashboard_tab(self):
         """Create the Status Dashboard tab showing connection and service status."""
@@ -4942,26 +5030,115 @@ GitHub: Mittenzx/Adastrea-Director
         thread = threading.Thread(target=self._execute_command, args=(command, show_progress))
         thread.start()
 
+    def _get_subprocess_kwargs(self, merge_stderr=False):
+        """
+        Build subprocess.Popen kwargs with platform-specific settings.
+        
+        Args:
+            merge_stderr: If True, merge stderr into stdout for unified streaming
+            
+        Returns:
+            Dictionary of kwargs for subprocess.Popen
+        """
+        kwargs = {
+            'stdout': subprocess.PIPE,
+            'stderr': subprocess.STDOUT if merge_stderr else subprocess.PIPE,
+            'text': True
+        }
+        if sys.platform == 'win32' and hasattr(subprocess, 'CREATE_NO_WINDOW'):
+            kwargs['creationflags'] = subprocess.CREATE_NO_WINDOW
+        return kwargs
+    
     def _execute_command(self, command, show_progress=False):
         """The actual command execution logic."""
+        process = None
         try:
-            # Use CREATE_NO_WINDOW on Windows to prevent console window from appearing
-            kwargs = {'stdout': subprocess.PIPE, 'stderr': subprocess.PIPE, 'text': True}
-            if sys.platform == 'win32' and hasattr(subprocess, 'CREATE_NO_WINDOW'):
-                kwargs['creationflags'] = subprocess.CREATE_NO_WINDOW
-            
-            process = subprocess.Popen(command, **kwargs)
-            stdout, stderr = process.communicate()
-            
-            output = stdout
-            if process.returncode != 0:
-                output += f"\n--- ERROR ---\n{stderr}"
+            # For ingestion, stream output line by line to the log
+            if show_progress:
+                # Line buffering for real-time output, keep stderr separate for better error handling
+                kwargs = self._get_subprocess_kwargs(merge_stderr=False)
+                kwargs['bufsize'] = 1  # Line buffering in text mode
+                
+                process = subprocess.Popen(command, **kwargs)
+                
+                # Batch output updates for better performance
+                output_batch = []
+                batch_size = 5  # Batch size for UI updates
+                
+                try:
+                    # Stream stdout line by line until process completes
+                    for line in iter(process.stdout.readline, ''):
+                        # Strip line for display (original with newline not needed)
+                        stripped_line = line.rstrip()
+                        output_batch.append(stripped_line)
+                        
+                        # Batch UI updates to avoid overwhelming event queue
+                        if len(output_batch) >= batch_size:
+                            batch_copy = output_batch.copy()
+                            self.root.after(0, self._append_ingest_output_batch, batch_copy)
+                            output_batch.clear()
+                    
+                    # Send any remaining lines
+                    if output_batch:
+                        batch_copy = output_batch.copy()
+                        self.root.after(0, self._append_ingest_output_batch, batch_copy)
+                    
+                    # Close stdout before reading stderr to avoid blocking
+                    if process.stdout and not process.stdout.closed:
+                        process.stdout.close()
+                    
+                    # Wait for process to complete to ensure all stderr is available
+                    process.wait()
+                    
+                    # Read stderr after process completes (non-blocking)
+                    stderr_output = process.stderr.read() if process.stderr else ""
+                    
+                except (IOError, UnicodeDecodeError, OSError) as read_error:
+                    # Handle specific expected exceptions during output reading
+                    error_type = type(read_error).__name__
+                    error_msg = f"Warning: {error_type} reading ingestion process output: {read_error}"
+                    self.root.after(0, self._append_ingest_output, error_msg)
+                    stderr_output = ""
+                    # Terminate the process if it's still running
+                    if process.poll() is None:
+                        process.terminate()
+                        process.wait()
+                finally:
+                    # Ensure stdout is closed (stderr closed by communicate/read above)
+                    if process.stdout and not process.stdout.closed:
+                        process.stdout.close()
+                    if process.stderr and not process.stderr.closed:
+                        process.stderr.close()
+                
+                # Ensure process has completed and returncode is set
+                if process.returncode is None:
+                    process.wait()
+                
+                # Build summary output for conversation tab (not full duplicate)
+                if process.returncode == 0:
+                    output = "Ingestion completed successfully. See Ingest List tab for details."
+                else:
+                    # Include errors in summary for conversation tab
+                    output = f"Ingestion failed with exit code {process.returncode}."
+                    if stderr_output:
+                        output += f"\n--- ERROR ---\n{stderr_output}"
+            else:
+                # For non-ingestion commands, use the old buffered method
+                kwargs = self._get_subprocess_kwargs(merge_stderr=False)
+                
+                process = subprocess.Popen(command, **kwargs)
+                stdout, stderr = process.communicate()
+                output = stdout
+                if process.returncode != 0:
+                    output += f"\n--- ERROR ---\n{stderr}"
             
             # Schedule the UI update to run on the main thread
             self.root.after(0, self._update_ui_after_execution, output, process.returncode, show_progress)
 
         except Exception as e:
-            self.root.after(0, self._update_ui_after_execution, str(e), 1, show_progress)
+            # Ensure returncode is set for unexpected exceptions
+            returncode = process.returncode if process and process.returncode is not None else 1
+            self.root.after(0, self._update_ui_after_execution, str(e), returncode, show_progress)
 
     def _update_ui_after_execution(self, output, returncode, show_progress=False):
         """Updates the GUI elements after the script has finished."""
