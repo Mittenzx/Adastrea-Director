@@ -2167,6 +2167,26 @@ class AdastreaDirectorApp:
         self.create_tooltip(collect_ue_button, "Collect analytics data from Unreal Engine")
         self.add_button_hover_effect(collect_ue_button, hover_color=self.accent_hover)
         
+        # Test Connection button
+        test_connection_button = tk.Button(
+            status_header,
+            text="🔍 Test Connection",
+            command=self.test_all_connections,
+            font=("Segoe UI", 9),
+            bg=self.success_color,
+            fg="#20232b",
+            activebackground="#60e0c0",
+            activeforeground="#20232b",
+            relief=tk.FLAT,
+            padx=15,
+            pady=6,
+            cursor="hand2",
+            borderwidth=0
+        )
+        test_connection_button.pack(side=tk.RIGHT, padx=(0, 5))
+        self.create_tooltip(test_connection_button, "Run comprehensive connection tests")
+        self.add_button_hover_effect(test_connection_button, hover_color="#60e0c0")
+        
         # Refresh button
         refresh_status_button = tk.Button(
             status_header,
@@ -2534,6 +2554,222 @@ class AdastreaDirectorApp:
                 self.status_labels[key].config(text=text, fg=color)
         
         self.root.after(0, update)
+    
+    def test_all_connections(self):
+        """Run comprehensive connection tests and display results."""
+        self.update_status("Running connection tests...", "busy")
+        
+        # Create a dialog to show test results
+        dialog = tk.Toplevel(self.root)
+        dialog.title("Connection Test Results")
+        dialog.geometry("700x600")
+        dialog.configure(bg=self.bg_color)
+        dialog.transient(self.root)
+        dialog.grab_set()
+        
+        # Center the dialog
+        dialog.update_idletasks()
+        x = (dialog.winfo_screenwidth() // 2) - (dialog.winfo_width() // 2)
+        y = (dialog.winfo_screenheight() // 2) - (dialog.winfo_height() // 2)
+        dialog.geometry(f"+{x}+{y}")
+        
+        # Header
+        header_frame = tk.Frame(dialog, bg=self.bg_color)
+        header_frame.pack(fill=tk.X, padx=20, pady=(20, 10))
+        
+        tk.Label(
+            header_frame,
+            text="🔍 Connection Test Results",
+            font=("Segoe UI", 14, "bold"),
+            bg=self.bg_color,
+            fg=self.accent_color
+        ).pack(side=tk.LEFT)
+        
+        # Status label
+        status_label = tk.Label(
+            header_frame,
+            text="Testing...",
+            font=("Segoe UI", 10),
+            bg=self.bg_color,
+            fg=self.fg_muted
+        )
+        status_label.pack(side=tk.RIGHT)
+        
+        # Results area with scrollbar
+        results_frame = tk.Frame(dialog, bg=self.bg_color)
+        results_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=(0, 10))
+        
+        results_text = scrolledtext.ScrolledText(
+            results_frame,
+            wrap=tk.WORD,
+            height=20,
+            state=tk.DISABLED,
+            bg=self.text_bg,
+            fg=self.fg_color,
+            font=("Consolas", 9),
+            relief=tk.FLAT,
+            padx=15,
+            pady=15,
+            selectbackground=self.highlight_bg,
+            selectforeground=self.fg_color,
+            borderwidth=0
+        )
+        results_text.pack(fill=tk.BOTH, expand=True)
+        
+        # Configure tags for colored output
+        results_text.tag_config("header", foreground=self.accent_color, font=("Consolas", 10, "bold"))
+        results_text.tag_config("pass", foreground=self.success_color)
+        results_text.tag_config("fail", foreground=self.error_color)
+        results_text.tag_config("error", foreground=self.warning_color)
+        results_text.tag_config("info", foreground=self.fg_secondary)
+        
+        # Button frame
+        button_frame = tk.Frame(dialog, bg=self.bg_color)
+        button_frame.pack(side=tk.BOTTOM, pady=(0, 20))
+        
+        close_button = tk.Button(
+            button_frame,
+            text="Close",
+            command=dialog.destroy,
+            bg=self.button_bg,
+            fg=self.fg_color,
+            activebackground=self.button_active,
+            activeforeground=self.fg_color,
+            relief=tk.FLAT,
+            padx=30,
+            pady=8,
+            cursor="hand2",
+            font=("Segoe UI", 10),
+            borderwidth=1,
+            highlightthickness=1,
+            highlightbackground=self.button_bg
+        )
+        close_button.pack()
+        
+        # Run tests in a thread
+        def run_tests():
+            try:
+                # Try to connect to IPC server and run tests
+                results_text.config(state=tk.NORMAL)
+                results_text.insert(tk.END, "🔍 Running comprehensive connection tests...\n\n", "header")
+                results_text.config(state=tk.DISABLED)
+                
+                # Check if IPC server is available
+                host = "localhost"
+                port = 5555
+                
+                try:
+                    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    sock.settimeout(2)
+                    sock.connect((host, port))
+                    
+                    # Send test_connection request
+                    request = json.dumps({'type': 'test_connection', 'data': ''})
+                    sock.sendall((request + '\n').encode('utf-8'))
+                    
+                    # Receive response
+                    response_data = sock.recv(8192).decode('utf-8').strip()
+                    sock.close()
+                    
+                    # Parse response
+                    response = json.loads(response_data)
+                    
+                    # Display results
+                    results_text.config(state=tk.NORMAL)
+                    
+                    if response.get('status') == 'success':
+                        overall_status = response.get('overall_status', 'unknown')
+                        message = response.get('message', '')
+                        
+                        results_text.insert(tk.END, f"{message}\n\n", "pass" if overall_status == "pass" else "fail")
+                        
+                        # Display component results
+                        components = response.get('components', {})
+                        
+                        for comp_name, comp_data in components.items():
+                            comp_title = {
+                                'backend': 'Python Backend',
+                                'llm': 'LLM Connection',
+                                'rag': 'RAG System'
+                            }.get(comp_name, comp_name.title())
+                            
+                            results_text.insert(tk.END, f"\n{'='*60}\n", "info")
+                            results_text.insert(tk.END, f"{comp_title}\n", "header")
+                            results_text.insert(tk.END, f"{'='*60}\n\n", "info")
+                            
+                            tests = comp_data.get('tests', [])
+                            for test in tests:
+                                test_name = test.get('name', 'Unknown Test')
+                                test_status = test.get('status', 'unknown')
+                                test_message = test.get('message', '')
+                                test_solution = test.get('solution', '')
+                                
+                                # Status icon and color
+                                if test_status == 'pass':
+                                    icon = "✅"
+                                    tag = "pass"
+                                elif test_status == 'fail':
+                                    icon = "❌"
+                                    tag = "fail"
+                                else:
+                                    icon = "⚠️"
+                                    tag = "error"
+                                
+                                results_text.insert(tk.END, f"{icon} {test_name}\n", tag)
+                                results_text.insert(tk.END, f"   {test_message}\n", "info")
+                                
+                                if test_solution:
+                                    results_text.insert(tk.END, f"   💡 Solution: {test_solution}\n", "info")
+                                
+                                results_text.insert(tk.END, "\n")
+                        
+                        # Display next steps if any
+                        next_steps = response.get('next_steps', [])
+                        if next_steps:
+                            results_text.insert(tk.END, f"\n{'='*60}\n", "info")
+                            results_text.insert(tk.END, "Next Steps\n", "header")
+                            results_text.insert(tk.END, f"{'='*60}\n\n", "info")
+                            for step in next_steps:
+                                results_text.insert(tk.END, f"{step}\n", "info")
+                        
+                        # Update status label
+                        status_text = "✅ All tests passed!" if overall_status == "pass" else "❌ Some tests failed"
+                        status_label.config(text=status_text, fg=self.success_color if overall_status == "pass" else self.error_color)
+                        
+                    else:
+                        error_msg = response.get('error', 'Unknown error')
+                        results_text.insert(tk.END, f"❌ Test failed: {error_msg}\n", "fail")
+                        status_label.config(text="❌ Test failed", fg=self.error_color)
+                    
+                    results_text.config(state=tk.DISABLED)
+                    results_text.see(tk.END)
+                    
+                    self.root.after(0, lambda: self.update_status("Connection test complete", "success"))
+                    
+                except socket.error as e:
+                    results_text.config(state=tk.NORMAL)
+                    results_text.insert(tk.END, "❌ Python Backend is not running\n\n", "fail")
+                    results_text.insert(tk.END, "The IPC server (Python backend) is not reachable.\n", "info")
+                    results_text.insert(tk.END, f"Error: {e}\n\n", "info")
+                    results_text.insert(tk.END, "💡 Solution:\n", "header")
+                    results_text.insert(tk.END, "1. Open a terminal in the project directory\n", "info")
+                    results_text.insert(tk.END, f"2. Run: python Plugins/AdastreaDirector/Python/ipc_server.py --port {port}\n", "info")
+                    results_text.insert(tk.END, "3. Wait for 'IPC Server started' message\n", "info")
+                    results_text.insert(tk.END, "4. Click 'Test Connection' again\n", "info")
+                    results_text.config(state=tk.DISABLED)
+                    status_label.config(text="❌ Backend not running", fg=self.error_color)
+                    self.root.after(0, lambda: self.update_status("Backend not running", "error"))
+                    
+            except Exception as e:
+                results_text.config(state=tk.NORMAL)
+                results_text.insert(tk.END, f"❌ Unexpected error: {e}\n", "fail")
+                results_text.config(state=tk.DISABLED)
+                status_label.config(text="❌ Error", fg=self.error_color)
+                self.root.after(0, lambda: self.update_status(f"Test error: {e}", "error"))
+        
+        # Start test thread
+        test_thread = threading.Thread(target=run_tests, daemon=True)
+        test_thread.start()
     
     def create_analytics_dashboard_tab(self):
         """Create the Analytics Dashboard tab with project statistics and metrics."""
