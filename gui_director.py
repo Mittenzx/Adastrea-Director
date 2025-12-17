@@ -4974,20 +4974,20 @@ GitHub: Mittenzx/Adastrea-Director
     def _execute_command(self, command, show_progress=False):
         """The actual command execution logic."""
         try:
-            # Use CREATE_NO_WINDOW on Windows to prevent console window from appearing
-            kwargs = {
-                'stdout': subprocess.PIPE,
-                'stderr': subprocess.STDOUT,  # Merge stderr into stdout for streaming
-                'text': True,
-                'bufsize': 1  # Line buffered for real-time output
-            }
-            if sys.platform == 'win32' and hasattr(subprocess, 'CREATE_NO_WINDOW'):
-                kwargs['creationflags'] = subprocess.CREATE_NO_WINDOW
-            
-            process = subprocess.Popen(command, **kwargs)
-            
             # For ingestion, stream output line by line to the log
             if show_progress:
+                # Use CREATE_NO_WINDOW on Windows to prevent console window from appearing
+                kwargs = {
+                    'stdout': subprocess.PIPE,
+                    'stderr': subprocess.STDOUT,  # Merge stderr into stdout for streaming
+                    'text': True,
+                    'bufsize': 1  # Line buffered for real-time output
+                }
+                if sys.platform == 'win32' and hasattr(subprocess, 'CREATE_NO_WINDOW'):
+                    kwargs['creationflags'] = subprocess.CREATE_NO_WINDOW
+                
+                process = subprocess.Popen(command, **kwargs)
+                
                 output_lines = []
                 try:
                     for line in iter(process.stdout.readline, ''):
@@ -5006,6 +5006,11 @@ GitHub: Mittenzx/Adastrea-Director
                 output = ''.join(output_lines)
             else:
                 # For non-ingestion commands, use the old method
+                kwargs = {'stdout': subprocess.PIPE, 'stderr': subprocess.PIPE, 'text': True}
+                if sys.platform == 'win32' and hasattr(subprocess, 'CREATE_NO_WINDOW'):
+                    kwargs['creationflags'] = subprocess.CREATE_NO_WINDOW
+                
+                process = subprocess.Popen(command, **kwargs)
                 stdout, stderr = process.communicate()
                 output = stdout
                 if process.returncode != 0:
