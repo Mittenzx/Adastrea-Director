@@ -9,6 +9,7 @@ import socket
 import tempfile
 from datetime import datetime
 from pathlib import Path
+from collections import deque
 
 # Import UE log capture module
 from ue_log_capture import UELogCapture
@@ -2141,8 +2142,37 @@ class AdastreaDirectorApp:
         Args:
             lines: List of output lines from the ingestion process
         """
-        for line in lines:
-            self._append_ingest_output(line)
+        # Check if widget still exists before batch update
+        try:
+            if not self.ingestion_log.winfo_exists():
+                return
+        except tk.TclError:
+            return
+        
+        # Batch all GUI operations into a single update
+        try:
+            self.ingestion_log.config(state=tk.NORMAL)
+            for line in lines:
+                # Determine log level for each line
+                line_lower = line.lower()
+                if any(word in line_lower for word in self._ERROR_KEYWORDS):
+                    level = "error"
+                elif any(word in line_lower for word in self._WARNING_KEYWORDS):
+                    level = "warning"
+                elif any(word in line_lower for word in self._SUCCESS_KEYWORDS):
+                    level = "success"
+                elif any(word in line_lower for word in self._PROGRESS_KEYWORDS):
+                    level = "progress"
+                else:
+                    level = "info"
+                
+                self.ingestion_log.insert(tk.END, f"{line}\n", level)
+            
+            self.ingestion_log.see(tk.END)
+            self.ingestion_log.config(state=tk.DISABLED)
+        except tk.TclError:
+            # Widget was destroyed during update
+            pass
     
     def _append_ingest_output(self, line):
         """
@@ -5031,10 +5061,6 @@ GitHub: Mittenzx/Adastrea-Director
                 
                 process = subprocess.Popen(command, **kwargs)
                 
-                # Use deque with maxlen to prevent unbounded memory growth
-                from collections import deque
-                output_lines = deque(maxlen=1000)  # Keep last 1000 lines for summary
-                
                 # Batch output updates for better performance
                 output_batch = []
                 batch_size = 5  # Batch size for UI updates
@@ -5042,8 +5068,9 @@ GitHub: Mittenzx/Adastrea-Director
                 try:
                     # Stream stdout line by line until process completes
                     for line in iter(process.stdout.readline, ''):
-                        output_lines.append(line)
-                        output_batch.append(line.rstrip())
+                        # Strip line for display (original with newline not needed)
+                        stripped_line = line.rstrip()
+                        output_batch.append(stripped_line)
                         
                         # Batch UI updates to avoid overwhelming event queue
                         if len(output_batch) >= batch_size:
@@ -5056,7 +5083,14 @@ GitHub: Mittenzx/Adastrea-Director
                         batch_copy = output_batch.copy()
                         self.root.after(0, self._append_ingest_output_batch, batch_copy)
                     
-                    # Read stderr separately to preserve error context
+                    # Close stdout before reading stderr to avoid blocking
+                    if process.stdout and not process.stdout.closed:
+                        process.stdout.close()
+                    
+                    # Wait for process to complete to ensure all stderr is available
+                    process.wait()
+                    
+                    # Read stderr after process completes (non-blocking)
                     stderr_output = process.stderr.read() if process.stderr else ""
                     
                 except (IOError, UnicodeDecodeError, OSError) as read_error:
