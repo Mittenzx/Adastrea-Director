@@ -38,6 +38,10 @@ logging.basicConfig(
 )
 logger = logging.getLogger('AdastreaIPCServer')
 
+# Constants
+DEFAULT_CHROMA_DB_NAME = "chroma_db"
+DEFAULT_COLLECTION_NAME = "adastrea_docs"
+
 
 class PerformanceMetrics:
     """Track performance metrics for the IPC server."""
@@ -141,6 +145,11 @@ class IPCServer:
         self.register_handler('ping', self._handle_ping)
         self.register_handler('validate_api_key', self._handle_validate_api_key)
         self.register_handler('metrics', self._handle_metrics)
+        # Connection testing handlers
+        self.register_handler('test_connection', self._handle_test_connection)
+        self.register_handler('test_llm_connection', self._handle_test_llm_connection)
+        self.register_handler('test_rag_system', self._handle_test_rag_system)
+        self.register_handler('test_python_backend', self._handle_test_python_backend)
         self.register_handler('query', self._handle_query)
         self.register_handler('plan', self._handle_plan)
         self.register_handler('analyze', self._handle_analyze)
@@ -696,6 +705,306 @@ class IPCServer:
             'metrics': stats
         }
 
+    def _handle_test_llm_connection(self, data: str) -> Dict[str, Any]:
+        """
+        Test LLM connection and API key validity.
+        
+        Returns detailed status about:
+        - API key configuration
+        - API key validity
+        - Connection to LLM provider
+        """
+        logger.info("Testing LLM connection")
+        
+        result = {
+            'status': 'success',
+            'component': 'llm',
+            'tests': []
+        }
+        
+        # Test 1: Check if API key is configured
+        api_key_configured = False
+        api_key_source = None
+        provider = os.environ.get('LLM_PROVIDER', 'gemini').lower()
+        
+        if provider == 'gemini':
+            api_key = os.environ.get('GEMINI_KEY') or os.environ.get('GOOGLE_API_KEY')
+            api_key_var = 'GEMINI_KEY or GOOGLE_API_KEY'
+        else:
+            api_key = os.environ.get('OPENAI_API_KEY')
+            api_key_var = 'OPENAI_API_KEY'
+        
+        if api_key:
+            api_key_configured = True
+            api_key_source = api_key_var
+            result['tests'].append({
+                'name': 'API Key Configuration',
+                'status': 'pass',
+                'message': f'API key is configured ({api_key_var})'
+            })
+        else:
+            result['tests'].append({
+                'name': 'API Key Configuration',
+                'status': 'fail',
+                'message': f'No API key found. Please set {api_key_var} in your .env file',
+                'solution': f'Add {api_key_var}=your-api-key to .env file in project root'
+            })
+            result['overall_status'] = 'fail'
+            return result
+        
+        # Test 2: Validate API key with provider
+        try:
+            if provider == 'gemini':
+                validation_result = self._validate_gemini_key(api_key)
+            else:
+                validation_result = self._validate_openai_key(api_key)
+            
+            if validation_result.get('valid'):
+                result['tests'].append({
+                    'name': 'API Key Validity',
+                    'status': 'pass',
+                    'message': validation_result.get('message', 'API key is valid')
+                })
+                result['overall_status'] = 'pass'
+            else:
+                result['tests'].append({
+                    'name': 'API Key Validity',
+                    'status': 'fail',
+                    'message': validation_result.get('error', 'API key validation failed'),
+                    'solution': f'Check your API key is correct and has not been revoked. Get a new key from the provider.'
+                })
+                result['overall_status'] = 'fail'
+        except Exception as e:
+            result['tests'].append({
+                'name': 'API Key Validity',
+                'status': 'error',
+                'message': f'Error testing API key: {str(e)}',
+                'solution': 'Check your internet connection and try again'
+            })
+            result['overall_status'] = 'error'
+        
+        return result
+
+    def _handle_test_rag_system(self, data: str) -> Dict[str, Any]:
+        """
+        Test RAG system availability and document database.
+        
+        Returns detailed status about:
+        - Vector database existence
+        - Document count
+        - RAG system readiness
+        """
+        logger.info("Testing RAG system")
+        
+        result = {
+            'status': 'success',
+            'component': 'rag',
+            'tests': []
+        }
+        
+        # Test 1: Check if persist directory exists
+        persist_directory = os.environ.get('CHROMA_PERSIST_DIRECTORY')
+        if not persist_directory:
+            # Try default location
+            project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..'))
+            persist_directory = os.path.join(project_root, DEFAULT_CHROMA_DB_NAME)
+        
+        if not os.path.exists(persist_directory):
+            result['tests'].append({
+                'name': 'Vector Database',
+                'status': 'fail',
+                'message': f'Vector database not found at {persist_directory}',
+                'solution': 'Run: python ingest.py --docs-dir <your_docs_folder>'
+            })
+            result['overall_status'] = 'fail'
+            return result
+        
+        result['tests'].append({
+            'name': 'Vector Database',
+            'status': 'pass',
+            'message': f'Vector database found at {persist_directory}'
+        })
+        
+        # Test 2: Check if documents are ingested
+        try:
+            import chromadb
+            
+            # Note: Telemetry is already disabled globally at startup in gui_director.py and ingest.py
+            
+            client = chromadb.PersistentClient(path=persist_directory)
+            collection = client.get_or_create_collection(name=DEFAULT_COLLECTION_NAME)
+            doc_count = collection.count()
+            
+            if doc_count > 0:
+                result['tests'].append({
+                    'name': 'Document Ingestion',
+                    'status': 'pass',
+                    'message': f'{doc_count} documents indexed and ready'
+                })
+                result['overall_status'] = 'pass'
+                result['document_count'] = doc_count
+            else:
+                result['tests'].append({
+                    'name': 'Document Ingestion',
+                    'status': 'fail',
+                    'message': 'No documents have been ingested',
+                    'solution': 'Run: python ingest.py --docs-dir <your_docs_folder>'
+                })
+                result['overall_status'] = 'fail'
+        except Exception as e:
+            result['tests'].append({
+                'name': 'Document Ingestion',
+                'status': 'error',
+                'message': f'Error checking documents: {str(e)}',
+                'solution': 'Try re-running ingestion: python ingest.py --docs-dir <your_docs_folder>'
+            })
+            result['overall_status'] = 'error'
+        
+        return result
+
+    def _handle_test_python_backend(self, data: str) -> Dict[str, Any]:
+        """
+        Test Python backend health and dependencies.
+        
+        Returns detailed status about:
+        - Python version
+        - Required dependencies
+        - Backend services
+        """
+        logger.info("Testing Python backend")
+        
+        result = {
+            'status': 'success',
+            'component': 'backend',
+            'tests': []
+        }
+        
+        # Test 1: Python version
+        import sys
+        python_version = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+        
+        if sys.version_info >= (3, 9):
+            result['tests'].append({
+                'name': 'Python Version',
+                'status': 'pass',
+                'message': f'Python {python_version} (compatible)'
+            })
+        else:
+            result['tests'].append({
+                'name': 'Python Version',
+                'status': 'fail',
+                'message': f'Python {python_version} (requires 3.9+)',
+                'solution': 'Upgrade to Python 3.9 or higher'
+            })
+            result['overall_status'] = 'fail'
+        
+        # Test 2: Critical dependencies
+        critical_deps = [
+            ('chromadb', 'Vector database'),
+            ('langchain', 'LLM framework'),
+            ('google.generativeai', 'Gemini SDK')
+        ]
+        
+        all_deps_ok = True
+        for module_name, description in critical_deps:
+            try:
+                __import__(module_name)
+                result['tests'].append({
+                    'name': f'{description}',
+                    'status': 'pass',
+                    'message': f'{module_name} is installed'
+                })
+            except ImportError:
+                all_deps_ok = False
+                result['tests'].append({
+                    'name': f'{description}',
+                    'status': 'fail',
+                    'message': f'{module_name} is not installed',
+                    'solution': f'Run: pip install {module_name}'
+                })
+        
+        if all_deps_ok and 'overall_status' not in result:
+            result['overall_status'] = 'pass'
+        elif not all_deps_ok:
+            result['overall_status'] = 'fail'
+        
+        # Test 3: IPC Server running (always passes if we're here)
+        result['tests'].append({
+            'name': 'IPC Server',
+            'status': 'pass',
+            'message': f'IPC server is running on port {self.port}'
+        })
+        
+        return result
+
+    def _handle_test_connection(self, data: str) -> Dict[str, Any]:
+        """
+        Test all components of the system.
+        
+        Runs comprehensive tests on:
+        - Python backend
+        - LLM connection
+        - RAG system
+        
+        Returns a consolidated report with actionable next steps.
+        """
+        logger.info("Running comprehensive connection test")
+        
+        # Run all tests
+        backend_result = self._handle_test_python_backend("")
+        llm_result = self._handle_test_llm_connection("")
+        rag_result = self._handle_test_rag_system("")
+        
+        # Consolidate results
+        result = {
+            'status': 'success',
+            'components': {
+                'backend': backend_result,
+                'llm': llm_result,
+                'rag': rag_result
+            }
+        }
+        
+        # Determine overall status
+        all_pass = (
+            backend_result.get('overall_status') == 'pass' and
+            llm_result.get('overall_status') == 'pass' and
+            rag_result.get('overall_status') == 'pass'
+        )
+        
+        if all_pass:
+            result['overall_status'] = 'pass'
+            result['message'] = '✅ All systems operational! Ready to answer questions.'
+        else:
+            result['overall_status'] = 'fail'
+            
+            # Build a specific failure message
+            failed_components = []
+            if backend_result.get('overall_status') != 'pass':
+                failed_components.append('Python Backend')
+            if llm_result.get('overall_status') != 'pass':
+                failed_components.append('LLM Connection')
+            if rag_result.get('overall_status') != 'pass':
+                failed_components.append('RAG System')
+            
+            result['message'] = f'❌ Issues detected: {", ".join(failed_components)}'
+            
+            # Provide next steps based on failures
+            next_steps = []
+            
+            if llm_result.get('overall_status') != 'pass':
+                next_steps.append('1. Configure your API key (see LLM Connection test details)')
+            
+            if rag_result.get('overall_status') != 'pass':
+                next_steps.append('2. Ingest documents: python ingest.py --docs-dir <your_docs_folder>')
+            
+            if backend_result.get('overall_status') != 'pass':
+                next_steps.append('3. Install missing dependencies: pip install -r requirements.txt')
+            
+            result['next_steps'] = next_steps
+        
+        return result
+
     def _handle_query(self, data: str) -> Dict[str, Any]:
         """
         Handle documentation query request using the RAG system.
@@ -718,7 +1027,7 @@ class IPCServer:
             if persist_directory:
                 logger.info(f"Using RAG database at: {persist_directory}")
                 query_agent = RAGQueryAgent(
-                    collection_name='adastrea_docs',
+                    collection_name=DEFAULT_COLLECTION_NAME,
                     persist_directory=persist_directory
                 )
                 
@@ -768,26 +1077,76 @@ Answer:"""
             
         except Exception as e:
             logger.error(f"LLM query error: {e}")
-            # Final fallback with helpful message
-            result_text = dedent(f"""
-                I received your query: "{data}"
+            # Run diagnostic tests to identify the specific issue
+            try:
+                test_results = self._handle_test_connection("")
+                
+                if test_results.get('overall_status') == 'fail':
+                    # Build a specific error message based on test results
+                    error_parts = [f'I received your query: "{data}"', 
+                                 '',
+                                 'However, I cannot provide a response due to the following issues:',
+                                 '']
+                    
+                    components = test_results.get('components', {})
+                    
+                    # Check each component and add specific messages
+                    if components.get('llm', {}).get('overall_status') != 'pass':
+                        error_parts.append('❌ LLM Connection: API key is not configured or invalid')
+                        llm_tests = components.get('llm', {}).get('tests', [])
+                        for test in llm_tests:
+                            if test.get('status') == 'fail' and test.get('solution'):
+                                error_parts.append(f"   💡 {test.get('solution')}")
+                        error_parts.append('')
+                    
+                    if components.get('rag', {}).get('overall_status') != 'pass':
+                        error_parts.append('❌ RAG System: Document database is not set up')
+                        error_parts.append('   💡 Run: python ingest.py --docs-dir <your_docs_folder>')
+                        error_parts.append('')
+                    
+                    if components.get('backend', {}).get('overall_status') != 'pass':
+                        error_parts.append('❌ Python Backend: Missing dependencies')
+                        error_parts.append('   💡 Run: pip install -r requirements.txt')
+                        error_parts.append('')
+                    
+                    # Add next steps from test results
+                    next_steps = test_results.get('next_steps', [])
+                    if next_steps:
+                        error_parts.append('📝 To fix these issues:')
+                        for step in next_steps:
+                            error_parts.append(f'   {step}')
+                    
+                    error_parts.append('')
+                    error_parts.append('💡 TIP: Use the "Test Connection" button in the GUI to see detailed diagnostics.')
+                    
+                    result_text = '\n'.join(error_parts)
+                else:
+                    # Fallback to generic message if tests pass but query still fails
+                    result_text = dedent(f"""
+                        I received your query: "{data}"
+                        
+                        An unexpected error occurred while processing your request: {str(e)}
+                        
+                        All system components appear to be working. This may be a temporary issue.
+                        Please try again, or check the server logs for more details.
+                    """).strip()
+            except Exception as test_error:
+                logger.error(f"Error running diagnostic tests: {test_error}")
+                # Ultimate fallback
+                result_text = dedent(f"""
+                    I received your query: "{data}"
 
-                However, I'm unable to provide a meaningful response at this time because:
-                
-                1. The RAG (Retrieval-Augmented Generation) system is not initialized. 
-                   Please run the ingestion process to load your project documents.
-                
-                2. No LLM API key is configured. Please set up your API key:
-                   - For Gemini (recommended): Set GEMINI_KEY environment variable
-                   - For OpenAI: Set OPENAI_API_KEY environment variable
-                
-                To set up the system:
-                1. Create a .env file with your API key
-                2. Run: python ingest.py --docs-dir <your_docs_folder>
-                3. Restart the IPC server
-                
-                For more information, see the README.md file.
-            """).strip()
+                    However, I'm unable to provide a meaningful response at this time.
+                    
+                    💡 To diagnose the issue:
+                    1. Use the "Test Connection" button in the GUI Status Dashboard
+                    2. This will show you exactly which component needs attention:
+                       - Python Backend (dependencies)
+                       - LLM Connection (API key)
+                       - RAG System (document database)
+                    
+                    For more information, see the README.md file.
+                """).strip()
             
             return {
                 'status': 'success',
