@@ -2126,6 +2126,35 @@ class AdastreaDirectorApp:
         self.ingestion_log.see(tk.END)
         self.ingestion_log.config(state=tk.DISABLED)
     
+    def _append_ingest_output(self, line):
+        """
+        Append a line of ingestion output to the ingestion log.
+        This is called from the execution thread to stream output in real-time.
+        
+        Args:
+            line: Output line from the ingestion process
+        """
+        if not line:
+            return
+        
+        # Determine log level based on content
+        line_lower = line.lower()
+        if any(word in line_lower for word in ['error', 'failed', '✗', '❌']):
+            level = "error"
+        elif any(word in line_lower for word in ['warning', 'warn', '⚠']):
+            level = "warning"
+        elif any(word in line_lower for word in ['success', 'completed', '✓', '✅']):
+            level = "success"
+        elif "ingestion in progress" in line_lower or "processing" in line_lower:
+            level = "progress"
+        else:
+            level = "info"
+        
+        self.ingestion_log.config(state=tk.NORMAL)
+        self.ingestion_log.insert(tk.END, f"{line}\n", level)
+        self.ingestion_log.see(tk.END)
+        self.ingestion_log.config(state=tk.DISABLED)
+    
     def create_status_dashboard_tab(self):
         """Create the Status Dashboard tab showing connection and service status."""
         # Initialize status dictionary before creating status cards
@@ -4946,16 +4975,41 @@ GitHub: Mittenzx/Adastrea-Director
         """The actual command execution logic."""
         try:
             # Use CREATE_NO_WINDOW on Windows to prevent console window from appearing
-            kwargs = {'stdout': subprocess.PIPE, 'stderr': subprocess.PIPE, 'text': True}
+            kwargs = {
+                'stdout': subprocess.PIPE,
+                'stderr': subprocess.STDOUT,  # Merge stderr into stdout for streaming
+                'text': True,
+                'bufsize': 1  # Line buffered for real-time output
+            }
             if sys.platform == 'win32' and hasattr(subprocess, 'CREATE_NO_WINDOW'):
                 kwargs['creationflags'] = subprocess.CREATE_NO_WINDOW
             
             process = subprocess.Popen(command, **kwargs)
-            stdout, stderr = process.communicate()
             
-            output = stdout
-            if process.returncode != 0:
-                output += f"\n--- ERROR ---\n{stderr}"
+            # For ingestion, stream output line by line to the log
+            if show_progress:
+                output_lines = []
+                try:
+                    for line in iter(process.stdout.readline, ''):
+                        if line:
+                            output_lines.append(line)
+                            # Stream to ingestion log in real-time
+                            self.root.after(0, self._append_ingest_output, line.rstrip())
+                except Exception as read_error:
+                    self.root.after(0, self._append_ingest_output, f"Warning: Error reading output: {read_error}")
+                finally:
+                    if process.stdout:
+                        process.stdout.close()
+                
+                # Wait for process to complete
+                process.wait()
+                output = ''.join(output_lines)
+            else:
+                # For non-ingestion commands, use the old method
+                stdout, stderr = process.communicate()
+                output = stdout
+                if process.returncode != 0:
+                    output += f"\n--- ERROR ---\n{stderr}"
             
             # Schedule the UI update to run on the main thread
             self.root.after(0, self._update_ui_after_execution, output, process.returncode, show_progress)
