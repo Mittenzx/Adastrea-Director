@@ -5001,8 +5001,8 @@ GitHub: Mittenzx/Adastrea-Director
                             self.root.after(0, self._append_ingest_output, line.rstrip())
                 except Exception as read_error:
                     error_type = type(read_error).__name__
-                    self.root.after(0, self._append_ingest_output, 
-                                  f"Warning: {error_type} reading output: {read_error}")
+                    self.root.after(0, self._append_ingest_output,
+                                    f"Warning: {error_type} reading output: {read_error}")
                 finally:
                     if process.stdout:
                         process.stdout.close()
