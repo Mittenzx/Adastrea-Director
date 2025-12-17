@@ -1020,26 +1020,76 @@ Answer:"""
             
         except Exception as e:
             logger.error(f"LLM query error: {e}")
-            # Final fallback with helpful message
-            result_text = dedent(f"""
-                I received your query: "{data}"
+            # Run diagnostic tests to identify the specific issue
+            try:
+                test_results = self._handle_test_connection("")
+                
+                if test_results.get('overall_status') == 'fail':
+                    # Build a specific error message based on test results
+                    error_parts = [f'I received your query: "{data}"', 
+                                 '',
+                                 'However, I cannot provide a response due to the following issues:',
+                                 '']
+                    
+                    components = test_results.get('components', {})
+                    
+                    # Check each component and add specific messages
+                    if components.get('llm', {}).get('overall_status') != 'pass':
+                        error_parts.append('❌ LLM Connection: API key is not configured or invalid')
+                        llm_tests = components.get('llm', {}).get('tests', [])
+                        for test in llm_tests:
+                            if test.get('status') == 'fail' and test.get('solution'):
+                                error_parts.append(f"   💡 {test.get('solution')}")
+                        error_parts.append('')
+                    
+                    if components.get('rag', {}).get('overall_status') != 'pass':
+                        error_parts.append('❌ RAG System: Document database is not set up')
+                        error_parts.append('   💡 Run: python ingest.py --docs-dir <your_docs_folder>')
+                        error_parts.append('')
+                    
+                    if components.get('backend', {}).get('overall_status') != 'pass':
+                        error_parts.append('❌ Python Backend: Missing dependencies')
+                        error_parts.append('   💡 Run: pip install -r requirements.txt')
+                        error_parts.append('')
+                    
+                    # Add next steps from test results
+                    next_steps = test_results.get('next_steps', [])
+                    if next_steps:
+                        error_parts.append('📝 To fix these issues:')
+                        for step in next_steps:
+                            error_parts.append(f'   {step}')
+                    
+                    error_parts.append('')
+                    error_parts.append('💡 TIP: Use the "Test Connection" button in the GUI to see detailed diagnostics.')
+                    
+                    result_text = '\n'.join(error_parts)
+                else:
+                    # Fallback to generic message if tests pass but query still fails
+                    result_text = dedent(f"""
+                        I received your query: "{data}"
+                        
+                        An unexpected error occurred while processing your request: {str(e)}
+                        
+                        All system components appear to be working. This may be a temporary issue.
+                        Please try again, or check the server logs for more details.
+                    """).strip()
+            except Exception as test_error:
+                logger.error(f"Error running diagnostic tests: {test_error}")
+                # Ultimate fallback
+                result_text = dedent(f"""
+                    I received your query: "{data}"
 
-                However, I'm unable to provide a meaningful response at this time because:
-                
-                1. The RAG (Retrieval-Augmented Generation) system is not initialized. 
-                   Please run the ingestion process to load your project documents.
-                
-                2. No LLM API key is configured. Please set up your API key:
-                   - For Gemini (recommended): Set GEMINI_KEY environment variable
-                   - For OpenAI: Set OPENAI_API_KEY environment variable
-                
-                To set up the system:
-                1. Create a .env file with your API key
-                2. Run: python ingest.py --docs-dir <your_docs_folder>
-                3. Restart the IPC server
-                
-                For more information, see the README.md file.
-            """).strip()
+                    However, I'm unable to provide a meaningful response at this time.
+                    
+                    💡 To diagnose the issue:
+                    1. Use the "Test Connection" button in the GUI Status Dashboard
+                    2. This will show you exactly which component needs attention:
+                       - Python Backend (dependencies)
+                       - LLM Connection (API key)
+                       - RAG System (document database)
+                    
+                    For more information, see the README.md file.
+                """).strip()
             
             return {
                 'status': 'success',
