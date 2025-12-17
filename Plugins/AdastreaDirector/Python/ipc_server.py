@@ -38,6 +38,10 @@ logging.basicConfig(
 )
 logger = logging.getLogger('AdastreaIPCServer')
 
+# Constants
+DEFAULT_CHROMA_DB_NAME = "chroma_db"
+DEFAULT_COLLECTION_NAME = "adastrea_docs"
+
 
 class PerformanceMetrics:
     """Track performance metrics for the IPC server."""
@@ -732,7 +736,7 @@ class IPCServer:
         if not persist_directory:
             # Try default location
             project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..'))
-            persist_directory = os.path.join(project_root, 'chroma_db')
+            persist_directory = os.path.join(project_root, DEFAULT_CHROMA_DB_NAME)
         
         if not os.path.exists(persist_directory):
             result['tests'].append({
@@ -754,10 +758,10 @@ class IPCServer:
         try:
             import chromadb
             
-            # Note: Telemetry is already disabled globally at startup (line 29 of gui_director.py and line 29 of this file)
+            # Note: Telemetry is already disabled globally at startup in gui_director.py and ingest.py
             
             client = chromadb.PersistentClient(path=persist_directory)
-            collection = client.get_or_create_collection(name="adastrea_docs")
+            collection = client.get_or_create_collection(name=DEFAULT_COLLECTION_NAME)
             doc_count = collection.count()
             
             if doc_count > 0:
@@ -956,9 +960,9 @@ class IPCServer:
             else:
                 # Check for common persist directory locations
                 persist_dirs = [
-                    './chroma_db',
-                    '../../../chroma_db',
-                    os.path.join(os.path.dirname(__file__), '..', '..', '..', 'chroma_db'),
+                    f'./{DEFAULT_CHROMA_DB_NAME}',
+                    f'../../../{DEFAULT_CHROMA_DB_NAME}',
+                    os.path.join(os.path.dirname(__file__), '..', '..', '..', DEFAULT_CHROMA_DB_NAME),
                 ]
                 
                 for pd in persist_dirs:
@@ -969,7 +973,7 @@ class IPCServer:
             if persist_directory:
                 logger.info(f"Using RAG database at: {persist_directory}")
                 query_agent = RAGQueryAgent(
-                    collection_name='adastrea_docs',
+                    collection_name=DEFAULT_COLLECTION_NAME,
                     persist_directory=persist_directory
                 )
                 
