@@ -24,7 +24,7 @@ import argparse
 import logging
 import threading
 import time
-from typing import Dict, Any
+from typing import Dict, Any, Optional, Tuple
 from collections import defaultdict
 from textwrap import dedent
 
@@ -128,6 +128,10 @@ class IPCServer:
         
         # MCP server instance (lazy initialization)
         self._mcp_server = None
+        
+        # Ingestion lock to prevent concurrent ingestion requests
+        self._ingestion_lock = threading.Lock()
+        self._is_ingesting = False
         
         # Register default handlers
         self._register_default_handlers()
@@ -341,6 +345,68 @@ class IPCServer:
         return response
 
     # Helper methods
+    
+    def _find_persist_directory(self) -> Optional[str]:
+        """
+        Find the ChromaDB persist directory.
+        
+        Checks for the CHROMA_PERSIST_DIRECTORY environment variable first,
+        then falls back to checking common locations.
+        
+        Returns:
+            Path to persist directory if found, None otherwise
+        """
+        # Check environment variable first
+        env_persist_dir = os.environ.get('CHROMA_PERSIST_DIRECTORY')
+        if env_persist_dir and os.path.exists(env_persist_dir):
+            return env_persist_dir
+        
+        # Check common persist directory locations
+        persist_dirs = [
+            './chroma_db',
+            '../../../chroma_db',
+            os.path.join(os.path.dirname(__file__), '..', '..', '..', 'chroma_db'),
+        ]
+        
+        for pd in persist_dirs:
+            if os.path.exists(pd):
+                return pd
+        
+        return None
+    
+    def _validate_path_safety(self, path: str, require_exists: bool = False) -> Tuple[bool, Optional[str]]:
+        """
+        Validate that a path is safe from path traversal attacks.
+        
+        Args:
+            path: Path to validate
+            require_exists: If True, path must exist
+            
+        Returns:
+            Tuple of (is_valid, error_message)
+        """
+        if not path:
+            return False, "Path cannot be empty"
+        
+        # Check for path traversal attempts
+        if ".." in path:
+            return False, "Path contains '..' which is not allowed for security reasons"
+        
+        # Convert to absolute path
+        try:
+            abs_path = os.path.abspath(path)
+        except Exception as e:
+            return False, f"Invalid path format: {str(e)}"
+        
+        # Check if path exists if required
+        if require_exists and not os.path.exists(abs_path):
+            return False, f"Path does not exist: {path}"
+        
+        # Check if it's a directory when it exists
+        if require_exists and os.path.exists(abs_path) and not os.path.isdir(abs_path):
+            return False, f"Path is not a directory: {path}"
+        
+        return True, None
     
     @staticmethod
     def _extract_code_block_content(text: str) -> str:
@@ -644,25 +710,8 @@ class IPCServer:
         try:
             from rag_query import RAGQueryAgent
             
-            # Initialize persist_directory before the conditional block for clarity
-            persist_directory = None
-            
-            # Check for persist directory - environment variable takes precedence
-            env_persist_dir = os.environ.get('CHROMA_PERSIST_DIRECTORY')
-            if env_persist_dir and os.path.exists(env_persist_dir):
-                persist_directory = env_persist_dir
-            else:
-                # Check for common persist directory locations
-                persist_dirs = [
-                    './chroma_db',
-                    '../../../chroma_db',
-                    os.path.join(os.path.dirname(__file__), '..', '..', '..', 'chroma_db'),
-                ]
-                
-                for pd in persist_dirs:
-                    if os.path.exists(pd):
-                        persist_directory = pd
-                        break
+            # Use helper method to find persist directory
+            persist_directory = self._find_persist_directory()
             
             if persist_directory:
                 logger.info(f"Using RAG database at: {persist_directory}")
@@ -1760,6 +1809,15 @@ JSON Response:"""
         """
         logger.info("Ingest request received")
         
+        # Check if ingestion is already in progress
+        with self._ingestion_lock:
+            if self._is_ingesting:
+                return {
+                    'status': 'error',
+                    'error': 'Ingestion is already in progress. Please wait for it to complete.'
+                }
+            self._is_ingesting = True
+        
         try:
             # Parse ingestion parameters
             params = json.loads(data) if isinstance(data, str) else data
@@ -1769,11 +1827,37 @@ JSON Response:"""
             collection_name = params.get('collection_name', 'adastrea_docs')
             persist_dir = params.get('persist_dir', './chroma_db')
             
+            # Validate required parameter
             if not docs_dir:
                 return {
                     'status': 'error',
                     'error': 'docs_dir parameter is required and must be a valid directory path'
                 }
+            
+            # Validate path safety for docs_dir
+            is_valid, error_msg = self._validate_path_safety(docs_dir, require_exists=True)
+            if not is_valid:
+                return {
+                    'status': 'error',
+                    'error': f'Invalid docs_dir: {error_msg}'
+                }
+            
+            # Validate path safety for persist_dir (doesn't need to exist yet)
+            is_valid, error_msg = self._validate_path_safety(persist_dir, require_exists=False)
+            if not is_valid:
+                return {
+                    'status': 'error',
+                    'error': f'Invalid persist_dir: {error_msg}'
+                }
+            
+            # Validate path safety for progress_file if provided
+            if progress_file:
+                is_valid, error_msg = self._validate_path_safety(progress_file, require_exists=False)
+                if not is_valid:
+                    return {
+                        'status': 'error',
+                        'error': f'Invalid progress_file: {error_msg}'
+                    }
             
             # Import ingestion module
             try:
@@ -1791,8 +1875,14 @@ JSON Response:"""
                     )
                 }
             
+            # Log all parameters for debugging
+            logger.info(
+                f"Starting ingestion: docs_dir={docs_dir}, persist_dir={persist_dir}, "
+                f"collection_name={collection_name}, force_reingest={force_reingest}, "
+                f"progress_file={progress_file}"
+            )
+            
             # Start ingestion
-            logger.info(f"Starting ingestion: docs_dir={docs_dir}, persist_dir={persist_dir}")
             stats = ingest_documents(
                 docs_dir=docs_dir,
                 collection_name=collection_name,
@@ -1801,11 +1891,21 @@ JSON Response:"""
                 force_reingest=force_reingest
             )
             
-            logger.info(f"Ingestion completed: {stats}")
+            # Build message from stats
+            if isinstance(stats, dict) and all(k in stats for k in ('added', 'updated', 'skipped')):
+                message = (
+                    f"Ingestion completed: {stats['added']} added, "
+                    f"{stats['updated']} updated, {stats['skipped']} skipped"
+                )
+            else:
+                # Fallback for unexpected stats structure
+                message = f"Ingestion completed. Stats: {stats}"
+            
+            logger.info(f"Ingestion completed successfully: {stats}")
             return {
                 'status': 'success',
                 'stats': stats,
-                'message': f"Ingestion completed: {stats.get('added', 0)} added, {stats.get('updated', 0)} updated, {stats.get('skipped', 0)} skipped"
+                'message': message
             }
             
         except json.JSONDecodeError as e:
@@ -1820,19 +1920,23 @@ JSON Response:"""
                 'status': 'error',
                 'error': f'Ingestion failed: {str(e)}'
             }
+        finally:
+            # Always release the lock
+            with self._ingestion_lock:
+                self._is_ingesting = False
     
     def _handle_clear_history(self, data: str) -> Dict[str, Any]:
         """
         Handle clear conversation history request.
         
         This clears the conversation history in the RAG query agent if available.
-        Falls back to a simple success message if RAG system is not initialized.
+        Returns error if RAG system is not available for more explicit feedback.
         
         Args:
             data: Ignored
             
         Returns:
-            Success response
+            Success response or error if RAG system unavailable
         """
         logger.info("Clear history request received")
         
@@ -1840,40 +1944,45 @@ JSON Response:"""
             # Try to use RAG query agent if available
             from rag_query import RAGQueryAgent
             
-            # Check for persist directory
-            persist_dirs = [
-                './chroma_db',
-                os.path.join(os.path.dirname(__file__), '..', '..', '..', 'chroma_db'),
-            ]
+            # Use helper method to find persist directory
+            persist_directory = self._find_persist_directory()
             
-            persist_directory = None
-            for pd in persist_dirs:
-                if os.path.exists(pd):
-                    persist_directory = pd
-                    break
-            
-            if persist_directory:
-                # Use default collection name consistent with ingest handler
-                default_collection = 'adastrea_docs'
-                query_agent = RAGQueryAgent(
-                    collection_name=default_collection,
-                    persist_directory=persist_directory
-                )
-                query_agent.clear_conversation_history()
+            if not persist_directory:
+                logger.warning("No persist directory found for clear_history")
                 return {
-                    'status': 'success',
-                    'message': 'Conversation history cleared'
+                    'status': 'error',
+                    'error': 'RAG database not found. Please ingest documents first.'
                 }
-        except ImportError:
-            logger.debug("RAG query module not available for clear_history")
+            
+            # Use default collection name consistent with ingest handler
+            query_agent = RAGQueryAgent(
+                collection_name='adastrea_docs',
+                persist_directory=persist_directory
+            )
+            query_agent.clear_conversation_history()
+            
+            logger.info("Conversation history cleared successfully")
+            return {
+                'status': 'success',
+                'message': 'Conversation history cleared'
+            }
+            
+        except ImportError as e:
+            # RAG module not available
+            logger.warning(f"RAG query module not available for clear_history: {e}")
+            return {
+                'status': 'error',
+                'error': 'RAG system is not available. Ensure all dependencies are installed.',
+                'details': str(e)
+            }
         except Exception as e:
-            logger.warning(f"Could not clear history via RAG agent: {e}")
-        
-        # Fallback: Return success with note that RAG system is not available
-        return {
-            'status': 'success',
-            'message': 'No active conversation history (RAG system not initialized)'
-        }
+            # Other errors during clear history
+            logger.error(f"Failed to clear history via RAG agent: {e}", exc_info=True)
+            return {
+                'status': 'error',
+                'error': 'Failed to clear conversation history.',
+                'details': str(e)
+            }
 
 
 def main():
