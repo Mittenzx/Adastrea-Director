@@ -2661,15 +2661,25 @@ class AdastreaDirectorApp:
                 try:
                     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                     sock.settimeout(2)
-                    sock.connect((host, port))
-                    
-                    # Send test_connection request
-                    request = json.dumps({'type': 'test_connection', 'data': ''})
-                    sock.sendall((request + '\n').encode('utf-8'))
-                    
-                    # Receive response
-                    response_data = sock.recv(8192).decode('utf-8').strip()
-                    sock.close()
+                    try:
+                        sock.connect((host, port))
+                        
+                        # Send test_connection request
+                        request = json.dumps({'type': 'test_connection', 'data': ''})
+                        sock.sendall((request + '\n').encode('utf-8'))
+                        
+                        # Receive response (read until newline delimiter)
+                        response_data = b''
+                        while True:
+                            chunk = sock.recv(1024)
+                            if not chunk:
+                                break
+                            response_data += chunk
+                            if b'\n' in chunk:
+                                break
+                        response_data = response_data.decode('utf-8').strip()
+                    finally:
+                        sock.close()
                     
                     # Parse response
                     response = json.loads(response_data)
@@ -2753,7 +2763,11 @@ class AdastreaDirectorApp:
                     results_text.insert(tk.END, f"Error: {e}\n\n", "info")
                     results_text.insert(tk.END, "💡 Solution:\n", "header")
                     results_text.insert(tk.END, "1. Open a terminal in the project directory\n", "info")
-                    results_text.insert(tk.END, f"2. Run: python Plugins/AdastreaDirector/Python/ipc_server.py --port {port}\n", "info")
+                    # Try to find the actual script path
+                    script_path = os.path.join("Plugins", "AdastreaDirector", "Python", "ipc_server.py")
+                    if not os.path.exists(os.path.join(SCRIPT_DIR, script_path)):
+                        script_path = "ipc_server.py"  # Fallback for different installation layouts
+                    results_text.insert(tk.END, f"2. Run: python {script_path} --port {port}\n", "info")
                     results_text.insert(tk.END, "3. Wait for 'IPC Server started' message\n", "info")
                     results_text.insert(tk.END, "4. Click 'Test Connection' again\n", "info")
                     results_text.config(state=tk.DISABLED)

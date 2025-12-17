@@ -754,8 +754,7 @@ class IPCServer:
         try:
             import chromadb
             
-            # Disable telemetry
-            os.environ["ANONYMIZED_TELEMETRY"] = "False"
+            # Note: Telemetry is already disabled globally at startup (line 29 of gui_director.py and line 29 of this file)
             
             client = chromadb.PersistentClient(path=persist_directory)
             collection = client.get_or_create_collection(name="adastrea_docs")
