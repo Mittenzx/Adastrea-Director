@@ -388,23 +388,25 @@ class IPCServer:
         if not path:
             return False, "Path cannot be empty"
         
-        # Check for path traversal attempts
-        if ".." in path:
-            return False, "Path contains '..' which is not allowed for security reasons"
-        
-        # Convert to absolute path
+        # Convert to absolute path and normalize (handles .., ., //, etc.)
         try:
-            abs_path = os.path.abspath(path)
+            abs_path = os.path.abspath(os.path.normpath(path))
         except Exception as e:
             return False, f"Invalid path format: {str(e)}"
         
-        # Check if path exists if required
-        if require_exists and not os.path.exists(abs_path):
-            return False, f"Path does not exist: {path}"
+        # Additional security check: reject if path contains .. after normalization
+        # This catches edge cases that might slip through normalization
+        if ".." in path:
+            return False, "Path contains '..' which is not allowed for security reasons"
         
-        # Check if it's a directory when it exists
-        if require_exists and os.path.exists(abs_path) and not os.path.isdir(abs_path):
-            return False, f"Path is not a directory: {path}"
+        # Check if path exists if required
+        if require_exists:
+            if not os.path.exists(abs_path):
+                return False, f"Path does not exist: {path}"
+            
+            # Check if it's a directory (os.path.isdir returns False for non-existent paths)
+            if not os.path.isdir(abs_path):
+                return False, f"Path is not a directory: {path}"
         
         return True, None
     
@@ -1893,10 +1895,18 @@ JSON Response:"""
             
             # Build message from stats
             if isinstance(stats, dict) and all(k in stats for k in ('added', 'updated', 'skipped')):
-                message = (
-                    f"Ingestion completed: {stats['added']} added, "
-                    f"{stats['updated']} updated, {stats['skipped']} skipped"
-                )
+                # Validate that values are integers
+                try:
+                    added = int(stats['added'])
+                    updated = int(stats['updated'])
+                    skipped = int(stats['skipped'])
+                    message = (
+                        f"Ingestion completed: {added} added, "
+                        f"{updated} updated, {skipped} skipped"
+                    )
+                except (ValueError, TypeError):
+                    # Fallback if values aren't numeric
+                    message = f"Ingestion completed. Stats: {stats}"
             else:
                 # Fallback for unexpected stats structure
                 message = f"Ingestion completed. Stats: {stats}"
