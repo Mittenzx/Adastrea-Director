@@ -9,6 +9,7 @@ import pytest
 import logging
 import tempfile
 import time
+import re
 from pathlib import Path
 from logging_config import (
     setup_logging,
@@ -216,7 +217,6 @@ def test_log_format_includes_timestamp(temp_log_dir, clean_logging):
     log_content = log_files[0].read_text()
     
     # Check for timestamp format YYYY-MM-DD HH:MM:SS
-    import re
     timestamp_pattern = r'\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}'
     assert re.search(timestamp_pattern, log_content), "Log should include timestamp"
 

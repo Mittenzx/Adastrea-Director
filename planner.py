@@ -355,7 +355,7 @@ def main():
     args = parser.parse_args()
     
     # Setup logging
-    setup_logging(debug=args.debug if hasattr(args, 'debug') else False)
+    setup_logging(debug=args.debug)
     logger.info("Planning system starting")
     logger.debug(f"Arguments: {vars(args)}")
     

@@ -659,7 +659,7 @@ def main():
         return
     
     # Setup logging with debug mode if requested
-    setup_logging(debug=args.debug if hasattr(args, 'debug') else False)
+    setup_logging(debug=args.debug)
     logger.info(f"Adastrea Director starting - Version: P2 Complete")
     logger.debug(f"Arguments: {vars(args)}")
     

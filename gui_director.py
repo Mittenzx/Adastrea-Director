@@ -3841,10 +3841,6 @@ class AdastreaDirectorApp:
     
     def refresh_debug_logs(self):
         """Refresh the debug logs display."""
-        import os
-        from pathlib import Path
-        from datetime import datetime
-        
         # Find the latest log file
         log_dir = Path(__file__).parent / "logs"
         if not log_dir.exists():
