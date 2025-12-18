@@ -243,6 +243,9 @@ python planner.py "Add a new inventory system"
 
 # Export plan to file
 python planner.py "Optimize rendering pipeline" --export markdown --output plan.md
+
+# Enable debug logging for troubleshooting
+python planner.py --debug "Optimize rendering pipeline"
 ```
 
 The planning system will:
@@ -251,6 +254,9 @@ The planning system will:
 - Estimate effort and assess feasibility
 - Suggest implementation approaches with code examples
 - Export a complete plan for review
+
+**Debugging & Logging:**
+All commands support `--debug` flag for detailed logging output. Logs are saved to `logs/adastrea_YYYYMMDD.log` and can be viewed in the GUI's Debug Logs tab
 
 #### Context-Aware Assistant (P1)
 
@@ -423,6 +429,7 @@ The improved GUI provides:
 - **Knowledge Base Updates**: One-click knowledge base updates
 - **Ingest List Tab**: Visual checklist of ingested documents with statistics
 - **🎮 Unreal MCP Tab**: Direct integration with Unreal Engine via MCP
+- **🐛 Debug Logs Tab**: Real-time log viewer with auto-refresh and colorized output
 - **Conversation History**: Full conversation display with timestamps and color-coding
 - **Keyboard Shortcuts**: Fast workflow with comprehensive keyboard support
 - **Copy & Export**: One-click copy to clipboard and export conversations to file
@@ -430,6 +437,7 @@ The improved GUI provides:
 - **Menu Bar**: File, Edit, and Help menus with full functionality
 - **Tooltips**: Helpful hints on all interactive elements
 - **Status Feedback**: Real-time status updates with visual indicators
+- **Comprehensive Logging**: All operations logged with structured output for debugging
 
 **🎮 Unreal MCP Tab Features:**
 - Connect/disconnect to Unreal Engine via MCP server
