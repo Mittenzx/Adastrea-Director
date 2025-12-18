@@ -18,6 +18,9 @@ from ue_log_capture import UELogCapture
 from project_analytics import ProjectAnalytics
 from ue_data_collector import UEDataCollector
 
+# Import logging configuration
+from logging_config import setup_logging, get_logger
+
 # Try to import psutil for system health monitoring (optional dependency)
 try:
     import psutil
@@ -67,6 +70,11 @@ class AdastreaDirectorApp:
         self.root.title("Adastrea Director - AI Game Development Assistant")
         self.root.geometry("1000x700")
         self.root.minsize(800, 600)
+        
+        # Setup logging for GUI
+        setup_logging(debug=False, console=True)
+        self.logger = get_logger(__name__)
+        self.logger.info("Adastrea Director GUI starting")
         
         # Enhanced color scheme - Unreal Engine 5 inspired with card-based design support
         # Base UE5 colors
@@ -457,6 +465,9 @@ class AdastreaDirectorApp:
         
         # --- Servers Tab ---
         self.create_servers_tab()
+        
+        # --- Debug Logs Tab ---
+        self.create_debug_logs_tab()
 
         # --- Query Input Area (Card-based design) ---
         query_card = tk.Frame(main_frame, bg=self.bg_tertiary, highlightthickness=1,
@@ -3703,6 +3714,231 @@ class AdastreaDirectorApp:
         self.server_output.insert(tk.END, "Click a server button above to start services.\n", "info")
         self.server_output.insert(tk.END, "Output from running servers will appear here.\n", "info")
         self.server_output.config(state=tk.DISABLED)
+    
+    def create_debug_logs_tab(self):
+        """Create the Debug Logs tab for viewing application logs."""
+        debug_tab = tk.Frame(self.notebook, bg=self.bg_tertiary)
+        self.notebook.add(debug_tab, text="🐛 Debug Logs")
+        
+        # Header section
+        header_frame = tk.Frame(debug_tab, bg=self.bg_tertiary, padx=15, pady=10)
+        header_frame.pack(fill=tk.X)
+        
+        title_label = tk.Label(
+            header_frame,
+            text="🐛 Debug Logs & Diagnostics",
+            font=("Segoe UI", 11, "bold"),
+            bg=self.bg_tertiary,
+            fg=self.fg_color
+        )
+        title_label.pack(side=tk.LEFT)
+        
+        # Button frame for controls
+        button_frame = tk.Frame(header_frame, bg=self.bg_tertiary)
+        button_frame.pack(side=tk.RIGHT)
+        
+        # Refresh button
+        refresh_button = tk.Button(
+            button_frame,
+            text="🔄 Refresh",
+            command=self.refresh_debug_logs,
+            font=("Segoe UI", 9),
+            bg=self.accent_color,
+            fg=self.bg_color,
+            activebackground=self.accent_hover,
+            activeforeground=self.bg_color,
+            relief=tk.FLAT,
+            padx=15,
+            pady=6,
+            cursor="hand2"
+        )
+        refresh_button.pack(side=tk.LEFT, padx=2)
+        self.create_tooltip(refresh_button, "Refresh log display")
+        
+        # Auto-refresh checkbox
+        self.auto_refresh_logs = tk.BooleanVar(value=False)
+        auto_refresh_check = tk.Checkbutton(
+            button_frame,
+            text="Auto-refresh",
+            variable=self.auto_refresh_logs,
+            command=self.toggle_auto_refresh_logs,
+            font=("Segoe UI", 9),
+            bg=self.bg_tertiary,
+            fg=self.fg_color,
+            selectcolor=self.bg_color,
+            activebackground=self.bg_tertiary,
+            activeforeground=self.fg_color,
+            cursor="hand2"
+        )
+        auto_refresh_check.pack(side=tk.LEFT, padx=5)
+        self.create_tooltip(auto_refresh_check, "Auto-refresh logs every 5 seconds")
+        
+        # Clear button
+        clear_button = tk.Button(
+            button_frame,
+            text="🗑️ Clear",
+            command=self.clear_debug_logs,
+            font=("Segoe UI", 9),
+            bg=self.button_bg,
+            fg=self.fg_color,
+            activebackground=self.button_hover,
+            activeforeground=self.fg_color,
+            relief=tk.FLAT,
+            padx=15,
+            pady=6,
+            cursor="hand2"
+        )
+        clear_button.pack(side=tk.LEFT, padx=2)
+        self.create_tooltip(clear_button, "Clear log display")
+        
+        # Info section
+        info_frame = tk.Frame(debug_tab, bg=self.bg_tertiary, padx=15, pady=5)
+        info_frame.pack(fill=tk.X)
+        
+        self.log_file_label = tk.Label(
+            info_frame,
+            text="Log file: Checking...",
+            font=("Segoe UI", 8),
+            bg=self.bg_tertiary,
+            fg=self.fg_secondary,
+            anchor="w"
+        )
+        self.log_file_label.pack(side=tk.LEFT)
+        
+        # Log display area
+        log_frame = tk.Frame(debug_tab, bg=self.bg_tertiary, padx=15, pady=5)
+        log_frame.pack(fill=tk.BOTH, expand=True)
+        
+        # Text widget with scrollbar
+        self.debug_log_text = scrolledtext.ScrolledText(
+            log_frame,
+            wrap=tk.WORD,
+            font=("Consolas", 9),
+            bg=self.text_bg,
+            fg=self.fg_color,
+            insertbackground=self.fg_color,
+            selectbackground=self.highlight_bg,
+            selectforeground=self.fg_color,
+            relief=tk.FLAT,
+            padx=10,
+            pady=10,
+            state=tk.DISABLED
+        )
+        self.debug_log_text.pack(fill=tk.BOTH, expand=True)
+        
+        # Configure text tags for log levels
+        self.debug_log_text.tag_config("DEBUG", foreground="#858585")
+        self.debug_log_text.tag_config("INFO", foreground="#40a9ff")
+        self.debug_log_text.tag_config("WARNING", foreground="#ce9178")
+        self.debug_log_text.tag_config("ERROR", foreground="#f48771")
+        self.debug_log_text.tag_config("CRITICAL", foreground="#ff0000", font=("Consolas", 9, "bold"))
+        
+        # Initialize auto-refresh state
+        self.log_refresh_timer = None
+        
+        # Load logs initially
+        self.refresh_debug_logs()
+    
+    def refresh_debug_logs(self):
+        """Refresh the debug logs display."""
+        import os
+        from pathlib import Path
+        from datetime import datetime
+        
+        # Find the latest log file
+        log_dir = Path(__file__).parent / "logs"
+        if not log_dir.exists():
+            self.debug_log_text.config(state=tk.NORMAL)
+            self.debug_log_text.delete(1.0, tk.END)
+            self.debug_log_text.insert(tk.END, "No logs directory found.\n")
+            self.debug_log_text.insert(tk.END, "Logs will be created when the application runs.\n")
+            self.debug_log_text.config(state=tk.DISABLED)
+            self.log_file_label.config(text="Log file: None")
+            return
+        
+        log_files = sorted(log_dir.glob("adastrea_*.log"), key=lambda p: p.stat().st_mtime, reverse=True)
+        if not log_files:
+            self.debug_log_text.config(state=tk.NORMAL)
+            self.debug_log_text.delete(1.0, tk.END)
+            self.debug_log_text.insert(tk.END, "No log files found.\n")
+            self.debug_log_text.config(state=tk.DISABLED)
+            self.log_file_label.config(text="Log file: None")
+            return
+        
+        latest_log = log_files[0]
+        
+        # Update log file label
+        file_size = latest_log.stat().st_size
+        size_str = f"{file_size / 1024:.1f} KB" if file_size < 1024 * 1024 else f"{file_size / (1024 * 1024):.1f} MB"
+        self.log_file_label.config(text=f"Log file: {latest_log.name} ({size_str})")
+        
+        # Read log file (last 10000 lines to avoid memory issues)
+        try:
+            with open(latest_log, 'r', encoding='utf-8') as f:
+                lines = f.readlines()
+                # Keep last 10000 lines
+                if len(lines) > 10000:
+                    lines = lines[-10000:]
+                log_content = ''.join(lines)
+        except Exception as e:
+            log_content = f"Error reading log file: {e}\n"
+        
+        # Update text widget
+        self.debug_log_text.config(state=tk.NORMAL)
+        self.debug_log_text.delete(1.0, tk.END)
+        
+        # Parse and colorize log content
+        for line in log_content.split('\n'):
+            if not line.strip():
+                self.debug_log_text.insert(tk.END, "\n")
+                continue
+            
+            # Detect log level and apply tag
+            tag = None
+            if " - DEBUG - " in line:
+                tag = "DEBUG"
+            elif " - INFO - " in line:
+                tag = "INFO"
+            elif " - WARNING - " in line:
+                tag = "WARNING"
+            elif " - ERROR - " in line:
+                tag = "ERROR"
+            elif " - CRITICAL - " in line:
+                tag = "CRITICAL"
+            
+            if tag:
+                self.debug_log_text.insert(tk.END, line + "\n", tag)
+            else:
+                self.debug_log_text.insert(tk.END, line + "\n")
+        
+        self.debug_log_text.config(state=tk.DISABLED)
+        # Auto-scroll to bottom
+        self.debug_log_text.see(tk.END)
+    
+    def clear_debug_logs(self):
+        """Clear the debug logs display."""
+        self.debug_log_text.config(state=tk.NORMAL)
+        self.debug_log_text.delete(1.0, tk.END)
+        self.debug_log_text.insert(tk.END, "Logs cleared. Click Refresh to reload.\n")
+        self.debug_log_text.config(state=tk.DISABLED)
+    
+    def toggle_auto_refresh_logs(self):
+        """Toggle auto-refresh for debug logs."""
+        if self.auto_refresh_logs.get():
+            # Start auto-refresh
+            self.auto_refresh_logs_worker()
+        else:
+            # Stop auto-refresh
+            if self.log_refresh_timer:
+                self.root.after_cancel(self.log_refresh_timer)
+                self.log_refresh_timer = None
+    
+    def auto_refresh_logs_worker(self):
+        """Worker function for auto-refreshing logs."""
+        if self.auto_refresh_logs.get():
+            self.refresh_debug_logs()
+            # Schedule next refresh
+            self.log_refresh_timer = self.root.after(5000, self.auto_refresh_logs_worker)
     
     def start_server(self, server_type):
         """Start a backend server."""
