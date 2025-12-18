@@ -7,10 +7,8 @@ including log file creation, formatting, rotation, and context management.
 
 import pytest
 import logging
-import tempfile
 import time
 import re
-from pathlib import Path
 from logging_config import (
     setup_logging,
     get_logger,
@@ -160,6 +158,23 @@ def test_log_debug_info(temp_log_dir, clean_logging):
     assert "Test context" in log_content
     assert "key1=value1" in log_content
     assert "key2=value2" in log_content
+
+
+def test_log_debug_info_no_kwargs(temp_log_dir, clean_logging):
+    """Test debug info logging without key-value pairs."""
+    setup_logging(debug=True, log_dir=temp_log_dir, console=False)
+    logger = get_logger("test")
+    
+    log_debug_info(logger, "Test context without kwargs")
+    
+    # Force flush
+    for handler in logging.getLogger().handlers:
+        handler.flush()
+    
+    log_files = list(temp_log_dir.glob("adastrea_*.log"))
+    log_content = log_files[0].read_text()
+    
+    assert "Test context without kwargs" in log_content
 
 
 def test_log_context_success(temp_log_dir, clean_logging):

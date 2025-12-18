@@ -3872,7 +3872,7 @@ class AdastreaDirectorApp:
         try:
             with open(latest_log, 'r', encoding='utf-8') as f:
                 lines = f.readlines()
-                # Keep last 10000 lines
+                # Keep last 10000 lines to avoid memory issues
                 if len(lines) > 10000:
                     lines = lines[-10000:]
                 log_content = ''.join(lines)
@@ -3883,29 +3883,37 @@ class AdastreaDirectorApp:
         self.debug_log_text.config(state=tk.NORMAL)
         self.debug_log_text.delete(1.0, tk.END)
         
-        # Parse and colorize log content
-        for line in log_content.split('\n'):
-            if not line.strip():
-                self.debug_log_text.insert(tk.END, "\n")
-                continue
+        # Parse and colorize log content in chunks to avoid UI freezing
+        lines = log_content.split('\n')
+        chunk_size = 500  # Process 500 lines at a time
+        
+        for i in range(0, len(lines), chunk_size):
+            chunk = lines[i:i + chunk_size]
+            for line in chunk:
+                if not line.strip():
+                    self.debug_log_text.insert(tk.END, "\n")
+                    continue
+                
+                # Detect log level and apply tag
+                tag = None
+                if " - DEBUG - " in line:
+                    tag = "DEBUG"
+                elif " - INFO - " in line:
+                    tag = "INFO"
+                elif " - WARNING - " in line:
+                    tag = "WARNING"
+                elif " - ERROR - " in line:
+                    tag = "ERROR"
+                elif " - CRITICAL - " in line:
+                    tag = "CRITICAL"
+                
+                if tag:
+                    self.debug_log_text.insert(tk.END, line + "\n", tag)
+                else:
+                    self.debug_log_text.insert(tk.END, line + "\n")
             
-            # Detect log level and apply tag
-            tag = None
-            if " - DEBUG - " in line:
-                tag = "DEBUG"
-            elif " - INFO - " in line:
-                tag = "INFO"
-            elif " - WARNING - " in line:
-                tag = "WARNING"
-            elif " - ERROR - " in line:
-                tag = "ERROR"
-            elif " - CRITICAL - " in line:
-                tag = "CRITICAL"
-            
-            if tag:
-                self.debug_log_text.insert(tk.END, line + "\n", tag)
-            else:
-                self.debug_log_text.insert(tk.END, line + "\n")
+            # Update UI between chunks to keep responsive
+            self.debug_log_text.update_idletasks()
         
         self.debug_log_text.config(state=tk.DISABLED)
         # Auto-scroll to bottom

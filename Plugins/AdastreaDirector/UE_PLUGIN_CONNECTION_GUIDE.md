@@ -43,12 +43,12 @@ The Adastrea Director plugin uses a **hybrid architecture** with three main comp
 │  └──────────────────────┼─────────────────────────────┘ │
 └────────────────────────┼────────────────────────────────┘
                          │ IPC (JSON over TCP Socket)
-                         │ Port: 5555 (default)
+                         │ Port: 5555 (default for UE plugin)
 ┌────────────────────────▼────────────────────────────────┐
 │             Python Backend (Subprocess)                  │
 │  ┌──────────────────────────────────────────────────┐  │
 │  │            ipc_server.py                          │  │
-│  │  - Socket server on port 5555                    │  │
+│  │  - Socket server on port 5555 (UE plugin)       │  │
 │  │  - Request routing and handling                  │  │
 │  │  - Performance metrics tracking                  │  │
 │  │  - Graceful shutdown                             │  │
@@ -74,14 +74,14 @@ The Adastrea Director plugin uses a **hybrid architecture** with three main comp
 - **Slate UI**: User interface for queries, ingestion, and monitoring
 
 #### 2. **Python Backend (External Process)**
-- **IPC Server**: Listens on port 5555, routes requests to appropriate handlers
+- **IPC Server**: Listens on port 5555 (UE plugin default), routes requests to appropriate handlers
 - **RAG System**: Handles document ingestion and query processing
 - **Agent System**: Provides planning, profiling, and other AI capabilities
 
 #### 3. **Communication Protocol**
 - **Transport**: TCP sockets (localhost only for security)
 - **Format**: JSON messages with newline delimiters
-- **Port**: 5555 (configurable)
+- **Port**: 5555 (default for UE plugin; note: standalone GUI may use port 8765)
 - **Latency**: < 1ms for simple requests, 100-500ms for RAG queries
 
 ---

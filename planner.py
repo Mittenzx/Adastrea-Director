@@ -27,7 +27,7 @@ from agents import (
 )
 from exceptions import APIKeyError
 from llm_config import get_provider_name
-from logging_config import setup_logging, get_logger, LogContext
+from logging_config import setup_logging, get_logger
 
 console = Console()
 logger = get_logger(__name__)
@@ -362,9 +362,31 @@ def main():
     try:
         # Initialize planning system
         planner = PlanningSystem(model_name=args.model)
+    except APIKeyError as e:
+        logger.error(f"Failed to initialize planning system due to API key error: {e}", exc_info=True)
+        provider_name = get_provider_name()
+        console.print("[red]Failed to initialize planning system due to an API key problem.[/red]")
+        console.print(f"[yellow]Provider: {provider_name}[/yellow]")
+        console.print(f"[yellow]Details: {e}[/yellow]\n")
+        console.print(
+            "[cyan]Common fixes:[/cyan]\n"
+            "  • Verify that your LLM API key is set (e.g., in environment variables or config file)\n"
+            "  • Ensure the API key is valid and has not expired or been revoked\n"
+            "  • If you recently changed providers, update the corresponding API key\n"
+            "  • Re-run with [bold]--debug[/bold] for more detailed logs"
+        )
+        sys.exit(1)
     except Exception as e:
         logger.error(f"Failed to initialize planning system: {e}", exc_info=True)
-        console.print(f"[red]Failed to initialize: {e}[/red]")
+        console.print("[red]Failed to initialize planning system.[/red]")
+        console.print(f"[yellow]Details: {e}[/yellow]\n")
+        console.print(
+            "[cyan]Common fixes:[/cyan]\n"
+            "  • Check that your LLM API key is configured correctly\n"
+            "  • Ensure required dependencies are installed and up to date\n"
+            "  • Verify your internet connection and any proxy settings\n"
+            "  • Re-run with [bold]--debug[/bold] for more detailed logs"
+        )
         sys.exit(1)
     
     # Interactive mode or single goal

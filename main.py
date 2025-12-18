@@ -22,7 +22,7 @@ from exceptions import (
     NetworkError,
     EmptyDatabaseError,
 )
-from logging_config import setup_logging, get_logger, LogContext
+from logging_config import setup_logging, get_logger
 
 # Disable ChromaDB telemetry BEFORE any imports that might import chromadb
 # This prevents "capture() takes 1 positional argument but 3 were given" errors

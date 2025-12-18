@@ -17,7 +17,6 @@ Usage:
 
 import logging
 import logging.handlers
-import os
 import sys
 from pathlib import Path
 from datetime import datetime
@@ -192,6 +191,6 @@ class LogContext:
         return False  # Don't suppress exceptions
 
 
-# Setup basic logging by default (can be reconfigured later)
-if not logging.getLogger().handlers:
-    setup_logging()
+# Note: Automatic initialization removed to avoid issues with multiple imports
+# or testing scenarios. Call setup_logging() explicitly in your application's
+# entry point (e.g., main(), __init__(), etc.)

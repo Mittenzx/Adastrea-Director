@@ -51,7 +51,7 @@ import hashlib
 import json
 from pathlib import Path
 from typing import List, Dict, Any, Optional, Tuple
-from logging_config import setup_logging, get_logger, LogContext
+from logging_config import setup_logging, get_logger
 from exceptions import (
     APIKeyError,
     DatabaseError,
@@ -1513,7 +1513,12 @@ def main():
         )
     except Exception as e:
         logger.error(f"Failed to initialize ingestion agent: {e}", exc_info=True)
-        console.print(f"[red]Failed to initialize: {e}[/red]")
+        console.print(f"[red]Failed to initialize ingestion agent: {e}[/red]")
+        console.print(
+            "[yellow]Common fixes: check that the persist directory exists and is writable, "
+            "verify required dependencies are installed, and confirm any necessary API keys "
+            "or environment variables are set correctly.[/yellow]"
+        )
         sys.exit(1)
 
     # Show stats if requested
