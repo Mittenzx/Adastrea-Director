@@ -22,6 +22,7 @@ from exceptions import (
     NetworkError,
     EmptyDatabaseError,
 )
+from logging_config import setup_logging, get_logger, LogContext
 
 # Disable ChromaDB telemetry BEFORE any imports that might import chromadb
 # This prevents "capture() takes 1 positional argument but 3 were given" errors
@@ -58,6 +59,7 @@ except ImportError as e:
     sys.exit(1)
 
 console = Console(legacy_windows=False)
+logger = get_logger(__name__)
 
 
 class QueryAgent:
@@ -85,6 +87,7 @@ class QueryAgent:
             retrieval_k: Number of documents to retrieve (default: 6)
             fetch_k: Number of documents to fetch before MMR reranking (default: 20)
         """
+        logger.info(f"Initializing QueryAgent with collection={collection_name}, model={model_name}")
         self.collection_name = collection_name
         self.persist_directory = persist_directory
         self.model_name = model_name
@@ -101,6 +104,8 @@ class QueryAgent:
         self.retrieval_k = retrieval_k
         self.fetch_k = fetch_k
         
+        logger.debug(f"Query parameters: search_type={search_type}, retrieval_k={retrieval_k}, fetch_k={fetch_k}")
+        
         # Simple in-memory cache for query results (FIFO eviction, max 50 entries)
         self.query_cache: Dict[str, Dict[str, Any]] = {}
         self.cache_max_size = 50
@@ -110,11 +115,13 @@ class QueryAgent:
 
     def _initialize_components(self):
         """Initialize LLM, embeddings, vector store, and conversation chain."""
+        logger.info("Initializing components: embeddings, vector store, LLM, and conversation chain")
         try:
             # Initialize embeddings based on EMBEDDING_PROVIDER environment variable
             # Default is HuggingFace (no API key required)
             # Set EMBEDDING_PROVIDER=openai to use OpenAI embeddings instead
             embedding_provider = os.environ.get("EMBEDDING_PROVIDER", "hf").lower()
+            logger.debug(f"Using embedding provider: {embedding_provider}")
             
             # Validate provider value
             valid_providers = ["hf", "huggingface", "openai"]
@@ -153,6 +160,7 @@ class QueryAgent:
                     sys.exit(1)
 
             # Load vector store
+            logger.info(f"Loading vector store from {self.persist_directory}")
             self.vectorstore = Chroma(
                 collection_name=self.collection_name,
                 embedding_function=self.embeddings,
@@ -160,8 +168,11 @@ class QueryAgent:
             )
 
             # Check if database has documents
-            if self.vectorstore._collection.count() == 0:
+            doc_count = self.vectorstore._collection.count()
+            logger.info(f"Vector store loaded with {doc_count} documents")
+            if doc_count == 0:
                 error = EmptyDatabaseError(self.collection_name)
+                logger.error(f"Empty database: {error.message}")
                 console.print(f"[red]{error.message}[/red]")
                 console.print(f"[yellow]{error.details}[/yellow]")
                 sys.exit(1)
@@ -517,8 +528,14 @@ class AdastreaDirectorCLI:
 
 def main():
     """Main entry point for the application."""
+    # Setup logging before anything else
     parser = argparse.ArgumentParser(
         description="Adastrea Director - AI Game Development Assistant"
+    )
+    parser.add_argument(
+        "--debug",
+        action="store_true",
+        help="Enable debug logging"
     )
     
     # Config management arguments
@@ -641,6 +658,11 @@ def main():
             console.print(f"[red]Failed to show config: {e}[/red]\n")
         return
     
+    # Setup logging with debug mode if requested
+    setup_logging(debug=args.debug if hasattr(args, 'debug') else False)
+    logger.info(f"Adastrea Director starting - Version: P2 Complete")
+    logger.debug(f"Arguments: {vars(args)}")
+    
     # Validate arguments
     if args.retrieval_k <= 0:
         parser.error("--retrieval-k must be greater than 0")
@@ -649,20 +671,29 @@ def main():
     if args.search_type == "mmr" and args.fetch_k < args.retrieval_k:
         parser.error("--fetch-k must be >= --retrieval-k when using MMR search")
 
-    # Initialize agent
-    agent = QueryAgent(
-        collection_name=args.collection_name,
-        persist_directory=args.persist_dir,
-        model_name=args.model,
-        temperature=args.temperature,
-        search_type=args.search_type,
-        retrieval_k=args.retrieval_k,
-        fetch_k=args.fetch_k,
-    )
+    try:
+        # Initialize agent
+        logger.info("Creating QueryAgent instance")
+        agent = QueryAgent(
+            collection_name=args.collection_name,
+            persist_directory=args.persist_dir,
+            model_name=args.model,
+            temperature=args.temperature,
+            search_type=args.search_type,
+            retrieval_k=args.retrieval_k,
+            fetch_k=args.fetch_k,
+        )
 
-    # Run CLI
-    cli = AdastreaDirectorCLI(agent)
-    cli.run()
+        # Run CLI
+        logger.info("Starting CLI interface")
+        cli = AdastreaDirectorCLI(agent)
+        cli.run()
+    except Exception as e:
+        logger.error(f"Application error: {e}", exc_info=True)
+        console.print(f"[red]Fatal error: {e}[/red]")
+        sys.exit(1)
+    finally:
+        logger.info("Adastrea Director shutting down")
 
 
 if __name__ == "__main__":
