@@ -27,8 +27,10 @@ from agents import (
 )
 from exceptions import APIKeyError
 from llm_config import get_provider_name
+from logging_config import setup_logging, get_logger, LogContext
 
 console = Console()
+logger = get_logger(__name__)
 
 
 class PlanningSystem:
@@ -51,6 +53,7 @@ class PlanningSystem:
             model_name: LLM model to use (default: gemini-1.5-flash for Gemini, gpt-3.5-turbo for OpenAI)
             enable_code_generation: Whether to enable code generation agent
         """
+        logger.info(f"Initializing PlanningSystem with model={model_name}, code_gen={enable_code_generation}")
         self.model_name = model_name
         self.enable_code_generation = enable_code_generation
         
@@ -58,14 +61,19 @@ class PlanningSystem:
         console.print("[cyan]Initializing planning agents...[/cyan]")
         
         try:
+            logger.info("Creating GoalAnalysisAgent")
             self.goal_agent = GoalAnalysisAgent(model_name=model_name)
+            logger.info("Creating TaskDecompositionAgent")
             self.task_agent = TaskDecompositionAgent(model_name=model_name)
             
             if enable_code_generation:
+                logger.info("Creating CodeGenerationAgent")
                 self.code_agent = CodeGenerationAgent(model_name=model_name)
             else:
+                logger.info("Code generation disabled")
                 self.code_agent = None
             
+            logger.info("Planning system initialized successfully")
             console.print("[green]✓ Planning system initialized[/green]\n")
         
         except Exception as e:
@@ -88,22 +96,29 @@ class PlanningSystem:
         Returns:
             Dictionary containing the complete plan with goal, tasks, and suggestions
         """
+        logger.info(f"Creating plan for goal: {goal_description[:100]}...")
         console.print(f"\n[bold cyan]Planning:[/bold cyan] {goal_description}\n")
         
         # Step 1: Analyze goal
+        logger.debug("Step 1: Analyzing goal")
         with console.status("[cyan]Analyzing goal...[/cyan]"):
             goal = self.goal_agent.parse_goal(goal_description)
             feasibility = self.goal_agent.analyze_goal_feasibility(goal)
+        
+        logger.info(f"Goal analyzed: type={goal.goal_type.value}, priority={goal.priority.value}")
         
         console.print("[green]✓ Goal analyzed[/green]")
         self._display_goal(goal, feasibility)
         
         # Step 2: Decompose into tasks
+        logger.debug("Step 2: Decomposing into tasks")
         with console.status("[cyan]Decomposing into tasks...[/cyan]"):
             task_tree = self.task_agent.decompose_goal(goal)
             prioritized_tasks = self.task_agent.prioritize_tasks(task_tree.root_tasks)
         
-        console.print(f"[green]✓ Created {task_tree.get_task_count()} tasks[/green]")
+        task_count = task_tree.get_task_count()
+        logger.info(f"Created {task_count} tasks")
+        console.print(f"[green]✓ Created {task_count} tasks[/green]")
         self._display_tasks(prioritized_tasks)
         
         # Step 3: Generate code suggestions (if enabled)
@@ -302,6 +317,11 @@ def main():
         description="Adastrea Director - Planning System (Phase 2)"
     )
     parser.add_argument(
+        "--debug",
+        action="store_true",
+        help="Enable debug logging"
+    )
+    parser.add_argument(
         "goal",
         nargs="?",
         type=str,
@@ -334,8 +354,18 @@ def main():
     
     args = parser.parse_args()
     
-    # Initialize planning system
-    planner = PlanningSystem(model_name=args.model)
+    # Setup logging
+    setup_logging(debug=args.debug if hasattr(args, 'debug') else False)
+    logger.info("Planning system starting")
+    logger.debug(f"Arguments: {vars(args)}")
+    
+    try:
+        # Initialize planning system
+        planner = PlanningSystem(model_name=args.model)
+    except Exception as e:
+        logger.error(f"Failed to initialize planning system: {e}", exc_info=True)
+        console.print(f"[red]Failed to initialize: {e}[/red]")
+        sys.exit(1)
     
     # Interactive mode or single goal
     if args.interactive or not args.goal:

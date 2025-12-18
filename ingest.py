@@ -51,6 +51,7 @@ import hashlib
 import json
 from pathlib import Path
 from typing import List, Dict, Any, Optional, Tuple
+from logging_config import setup_logging, get_logger, LogContext
 from exceptions import (
     APIKeyError,
     DatabaseError,
@@ -121,6 +122,7 @@ except ImportError as e:
     sys.exit(1)
 
 console = Console(legacy_windows=False)
+logger = get_logger(__name__)
 
 
 class ProgressWriter:
@@ -1406,6 +1408,11 @@ def main():
         description="Ingest documents into Adastrea Director knowledge base"
     )
     parser.add_argument(
+        "--debug",
+        action="store_true",
+        help="Enable debug logging"
+    )
+    parser.add_argument(
         "--docs-dir",
         type=str,
         help="Directory containing documents to ingest",
@@ -1483,20 +1490,31 @@ def main():
 
     args = parser.parse_args()
 
+    # Setup logging
+    setup_logging(debug=args.debug if hasattr(args, 'debug') else False)
+    logger.info("Document ingestion starting")
+    logger.debug(f"Arguments: {vars(args)}")
+
     # Print banner
     console.print("\n[bold cyan]🤖 Adastrea Director - Document Ingestion[/bold cyan]\n")
 
     # Create progress writer if requested
     progress_writer = ProgressWriter(args.progress_file) if args.progress_file else None
 
-    # Initialize agent
-    agent = DocumentIngestionAgent(
-        collection_name=args.collection_name,
-        persist_directory=args.persist_dir,
-        chunk_size=args.chunk_size,
-        chunk_overlap=args.chunk_overlap,
-        progress_writer=progress_writer,
-    )
+    try:
+        # Initialize agent
+        logger.info("Initializing DocumentIngestionAgent")
+        agent = DocumentIngestionAgent(
+            collection_name=args.collection_name,
+            persist_directory=args.persist_dir,
+            chunk_size=args.chunk_size,
+            chunk_overlap=args.chunk_overlap,
+            progress_writer=progress_writer,
+        )
+    except Exception as e:
+        logger.error(f"Failed to initialize ingestion agent: {e}", exc_info=True)
+        console.print(f"[red]Failed to initialize: {e}[/red]")
+        sys.exit(1)
 
     # Show stats if requested
     if args.stats:
