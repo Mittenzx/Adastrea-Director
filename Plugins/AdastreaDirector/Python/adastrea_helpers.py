@@ -6,7 +6,6 @@ All functions return a consistent result format: {"status": "ok"|"error", "messa
 """
 
 import unreal
-import json
 import os
 import traceback
 
@@ -74,7 +73,15 @@ def import_texture(file_path, target_folder="/Game/Textures", asset_name=None):
                 local_path=file_path
             )
         else:
-            return standardized_result("error", "Import task completed but no asset was created")
+            return standardized_result(
+                "error",
+                f"Import task completed but no asset was created for texture '{file_path}'. "
+                "Check the Unreal Editor log for detailed import errors. "
+                "Possible causes: unsupported file format, invalid asset path, or corrupted file.",
+                file_path=file_path,
+                destination_path=target_folder,
+                asset_name=asset_name
+            )
     
     except Exception as e:
         return standardized_result(
@@ -123,7 +130,15 @@ def import_static_mesh(file_path, target_folder="/Game/Meshes", asset_name=None)
                 local_path=file_path
             )
         else:
-            return standardized_result("error", "Import task completed but no asset was created")
+            return standardized_result(
+                "error",
+                f"Import task completed but no asset was created for mesh '{file_path}'. "
+                "Check the Unreal Editor log for detailed import errors. "
+                "Possible causes: unsupported file format, invalid mesh data, or incorrect import settings.",
+                file_path=file_path,
+                destination_path=target_folder,
+                asset_name=asset_name
+            )
     
     except Exception as e:
         return standardized_result(
@@ -172,7 +187,15 @@ def import_audio(file_path, target_folder="/Game/Audio", asset_name=None):
                 local_path=file_path
             )
         else:
-            return standardized_result("error", "Import task completed but no asset was created")
+            return standardized_result(
+                "error",
+                f"Import task completed but no asset was created for audio '{file_path}'. "
+                "Check the Unreal Editor log for detailed import errors. "
+                "Possible causes: unsupported audio format, invalid sample rate, or corrupted file.",
+                file_path=file_path,
+                destination_path=target_folder,
+                asset_name=asset_name
+            )
     
     except Exception as e:
         return standardized_result(
@@ -209,33 +232,46 @@ def reflect_class(class_name):
         try:
             # Try loading from Engine module
             uclass = unreal.load_class(None, f"/Script/Engine.{class_name}")
-        except:
+        except Exception:
+            # Engine module may not contain the requested class; ignore and try other modules
             pass
         
         if not uclass:
             try:
                 # Try loading from CoreUObject module
                 uclass = unreal.load_class(None, f"/Script/CoreUObject.{class_name}")
-            except:
+            except Exception:
+                # CoreUObject may also not contain the class; final failure is handled below
                 pass
         
         if not uclass:
-            return standardized_result("error", f"Class not found: {class_name}")
-        
-        properties = []
-        functions = []
+            return standardized_result(
+                "error",
+                f"Class not found: {class_name}. "
+                "Try using the full class path like '/Script/Engine.Actor' or check UE documentation.",
+                class_name=class_name
+            )
         
         # Note: UE Python API has limited reflection capabilities
-        # We can verify the class exists but detailed introspection is limited
+        # We can verify the class exists but detailed introspection is not available
+        # For detailed class information, refer to:
+        # - Unreal Engine C++ API documentation
+        # - Unreal Engine Python API documentation
+        # - Use unreal.Class methods like get_default_object() for some properties
+        
+        class_path = uclass.get_path_name() if hasattr(uclass, 'get_path_name') else "unknown"
         
         return standardized_result(
             "ok",
             f"Class found: {class_name}",
             class_name=class_name,
-            class_path=uclass.get_path_name() if hasattr(uclass, 'get_path_name') else "unknown",
-            properties=properties,
-            functions=functions,
-            note="Limited reflection available in UE Python API - use UE documentation for detailed class info"
+            class_path=class_path,
+            note=(
+                "UE Python API has limited reflection capabilities. "
+                "For property and function details, refer to UE C++ API documentation. "
+                f"Class path: {class_path}"
+            ),
+            recommendation="Use Unreal Engine documentation for detailed class information"
         )
     
     except Exception as e:
@@ -266,7 +302,13 @@ def create_actor(actor_class, location=None, rotation=None, name=None):
         # Load actor class
         actor_class_obj = unreal.load_class(None, actor_class)
         if not actor_class_obj:
-            return standardized_result("error", f"Actor class not found: {actor_class}")
+            return standardized_result(
+                "error",
+                f"Actor class not found: '{actor_class}'. "
+                "Expected format: '/Script/Engine.StaticMeshActor' or '/Script/Engine.PointLight'. "
+                "Check the class path and ensure it exists in the engine.",
+                actor_class=actor_class
+            )
         
         # Set location and rotation
         loc = unreal.Vector(location[0], location[1], location[2]) if location else unreal.Vector(0, 0, 0)

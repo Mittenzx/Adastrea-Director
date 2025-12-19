@@ -206,11 +206,17 @@ FString USceneContextCapture::QueryScene(const FString& FiltersJson)
 		return TEXT("[]");
 	}
 
-	// Parse filters
-	FString ClassContains = Filters->HasField(TEXT("class_contains")) ? Filters->GetStringField(TEXT("class_contains")) : TEXT("");
-	FString NameContains = Filters->HasField(TEXT("name_contains")) ? Filters->GetStringField(TEXT("name_contains")) : TEXT("");
-	FString LabelContains = Filters->HasField(TEXT("label_contains")) ? Filters->GetStringField(TEXT("label_contains")) : TEXT("");
-	int32 MaxResults = Filters->HasField(TEXT("max_results")) ? Filters->GetIntegerField(TEXT("max_results")) : DefaultMaxResults;
+	// Parse filters using safe TryGet methods to avoid exceptions
+	FString ClassContains;
+	FString NameContains;
+	FString LabelContains;
+	int32 MaxResults = DefaultMaxResults;
+	
+	Filters->TryGetStringField(TEXT("class_contains"), ClassContains);
+	Filters->TryGetStringField(TEXT("name_contains"), NameContains);
+	Filters->TryGetStringField(TEXT("label_contains"), LabelContains);
+	Filters->TryGetNumberField(TEXT("max_results"), MaxResults);
+	
 	if (MaxResults <= 0) MaxResults = DefaultMaxResults;
 
 	TArray<TSharedPtr<FJsonValue>> Results;

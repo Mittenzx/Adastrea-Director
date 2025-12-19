@@ -172,12 +172,9 @@ FString FToolExecutionGuard::GenerateSignature(const FString& ToolName, const FS
 	// Create unique signature from tool name and arguments
 	FString Combined = ToolName + TEXT("::") + Arguments;
 	
-	// Use MD5 hash for compact signature
-	FMD5 MD5;
-	MD5.Update((const uint8*)TCHAR_TO_UTF8(*Combined), Combined.Len());
-	
-	FMD5Hash Hash;
-	Hash.Set(MD5);
+	// Use Blake3 hash for compact signature (MD5 is deprecated)
+	const FTCHARToUTF8 Utf8Combined(*Combined);
+	const FBlake3Hash Hash = FBlake3::HashBuffer(Utf8Combined.Get(), Utf8Combined.Length());
 	
 	return Hash.ToString();
 }
