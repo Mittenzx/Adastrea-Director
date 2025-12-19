@@ -37,7 +37,7 @@
 #define LOCTEXT_NAMESPACE "AdastreaDirectorPanel"
 
 // Plugin name constant for consistency
-static const FName PluginName(TEXT("AdastreaDirector"));
+static const FString PluginName(TEXT("AdastreaDirector"));
 
 SAdastreaDirectorPanel::~SAdastreaDirectorPanel()
 {
