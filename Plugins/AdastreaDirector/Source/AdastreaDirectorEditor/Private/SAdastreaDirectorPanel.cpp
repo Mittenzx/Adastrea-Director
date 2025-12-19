@@ -50,14 +50,27 @@ SAdastreaDirectorPanel::~SAdastreaDirectorPanel()
 
 FString SAdastreaDirectorPanel::GetPluginVersion()
 {
-	// Get the plugin descriptor to read the version
-	TSharedPtr<IPlugin> Plugin = IPluginManager::Get().FindPlugin(PluginName);
-	if (Plugin.IsValid())
+	// Cache the version string to avoid repeated plugin manager lookups
+	static FString CachedVersion;
+	static bool bVersionCached = false;
+	
+	if (!bVersionCached)
 	{
-		const FPluginDescriptor& Descriptor = Plugin->GetDescriptor();
-		return Descriptor.VersionName;
+		// Get the plugin descriptor to read the version
+		TSharedPtr<IPlugin> Plugin = IPluginManager::Get().FindPlugin(PluginName);
+		if (Plugin.IsValid())
+		{
+			const FPluginDescriptor& Descriptor = Plugin->GetDescriptor();
+			CachedVersion = Descriptor.VersionName;
+		}
+		else
+		{
+			CachedVersion = TEXT("Unknown");
+		}
+		bVersionCached = true;
 	}
-	return TEXT("Unknown");
+	
+	return CachedVersion;
 }
 
 void SAdastreaDirectorPanel::Construct(const FArguments& InArgs)
