@@ -463,6 +463,7 @@ PublicDependencyModuleNames.AddRange(new string[] {
     "Engine",
     "UnrealEd",
     "LevelEditor",
+    "Json",          // NEW - Required for JSON serialization
     "ImageWrapper",  // NEW
     "RenderCore",    // NEW
     "RHI"            // NEW
