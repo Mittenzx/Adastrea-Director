@@ -210,7 +210,7 @@ bool FToolExecutionGuard::WouldCreatePythonLoop(const FString& ToolName) const
 	return false;
 }
 
-bool FToolExecutionGuard::CheckSceneQueryCompletion(const FString& ToolName, const FString& Result) const
+bool FToolExecutionGuard::CheckSceneQueryCompletion(const FString& ToolName, const FString& Result)
 {
 	// Check if scene_query returned non-empty results
 	if (ToolName == TEXT("scene_query"))
@@ -227,7 +227,7 @@ bool FToolExecutionGuard::CheckSceneQueryCompletion(const FString& ToolName, con
 				const TArray<TSharedPtr<FJsonValue>>* ResultsArray;
 				if (JsonObject->TryGetArrayField(TEXT("results"), ResultsArray))
 				{
-					const_cast<FToolExecutionGuard*>(this)->bLastSceneQueryFoundResults = (ResultsArray->Num() > 0);
+					bLastSceneQueryFoundResults = (ResultsArray->Num() > 0);
 					return bLastSceneQueryFoundResults;
 				}
 			}

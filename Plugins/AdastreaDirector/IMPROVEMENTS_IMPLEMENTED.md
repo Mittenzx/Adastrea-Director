@@ -159,6 +159,11 @@ selected = unreal.SceneContextCapture.get_selected_actors_summary()
 - Scene summary: <100ms for 100 actors
 - Query: <50ms for simple filters
 
+**Note on Performance:** The viewport screenshot capture uses synchronous rendering fence operations which can cause brief frame drops (~1-2 frames). This is necessary to ensure rendering stability when capturing the viewport. For production use where frame rate is critical, consider:
+- Capturing screenshots only when requested, not every frame
+- Using async capture on a background thread (future enhancement)
+- Limiting capture frequency with a cooldown timer
+
 ### Benefits
 - ✅ Agent can verify changes visually
 - ✅ Reduces errors through visual feedback

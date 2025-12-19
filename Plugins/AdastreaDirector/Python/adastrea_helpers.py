@@ -198,29 +198,44 @@ def reflect_class(class_name):
         >>> if result["status"] == "ok":
         >>>     for prop in result["details"]["properties"]:
         >>>         print(f"{prop['name']}: {prop['type']}")
+    
+    Note:
+        Unreal Engine Python API has limited reflection capabilities.
+        This function provides basic class information where available.
     """
     try:
-        # Try to find the class
-        uclass = unreal.load_object(None, f"/Script/Engine.{class_name}")
+        # Try to load the class using proper class loading
+        uclass = None
+        try:
+            # Try loading from Engine module
+            uclass = unreal.load_class(None, f"/Script/Engine.{class_name}")
+        except:
+            pass
+        
         if not uclass:
-            # Try CoreUObject
-            uclass = unreal.load_object(None, f"/Script/CoreUObject.{class_name}")
+            try:
+                # Try loading from CoreUObject module
+                uclass = unreal.load_class(None, f"/Script/CoreUObject.{class_name}")
+            except:
+                pass
+        
         if not uclass:
             return standardized_result("error", f"Class not found: {class_name}")
         
         properties = []
         functions = []
         
-        # Note: Unreal Python API has limited reflection capabilities
-        # This is a simplified implementation
+        # Note: UE Python API has limited reflection capabilities
+        # We can verify the class exists but detailed introspection is limited
         
         return standardized_result(
             "ok",
-            f"Reflected class: {class_name}",
+            f"Class found: {class_name}",
             class_name=class_name,
+            class_path=uclass.get_path_name() if hasattr(uclass, 'get_path_name') else "unknown",
             properties=properties,
             functions=functions,
-            note="Limited reflection available in UE Python API"
+            note="Limited reflection available in UE Python API - use UE documentation for detailed class info"
         )
     
     except Exception as e:

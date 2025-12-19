@@ -183,6 +183,9 @@ FString USceneContextCapture::GetSceneSummary(int32 PageSize)
 
 FString USceneContextCapture::QueryScene(const FString& FiltersJson)
 {
+	// Default max results for scene queries
+	static constexpr int32 DefaultMaxResults = 20;
+	
 	TSharedPtr<FJsonObject> Filters;
 	TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(FiltersJson);
 	
@@ -207,8 +210,8 @@ FString USceneContextCapture::QueryScene(const FString& FiltersJson)
 	FString ClassContains = Filters->HasField(TEXT("class_contains")) ? Filters->GetStringField(TEXT("class_contains")) : TEXT("");
 	FString NameContains = Filters->HasField(TEXT("name_contains")) ? Filters->GetStringField(TEXT("name_contains")) : TEXT("");
 	FString LabelContains = Filters->HasField(TEXT("label_contains")) ? Filters->GetStringField(TEXT("label_contains")) : TEXT("");
-	int32 MaxResults = Filters->HasField(TEXT("max_results")) ? Filters->GetIntegerField(TEXT("max_results")) : 20;
-	if (MaxResults <= 0) MaxResults = 20;
+	int32 MaxResults = Filters->HasField(TEXT("max_results")) ? Filters->GetIntegerField(TEXT("max_results")) : DefaultMaxResults;
+	if (MaxResults <= 0) MaxResults = DefaultMaxResults;
 
 	TArray<TSharedPtr<FJsonValue>> Results;
 	int32 ResultCount = 0;
@@ -327,12 +330,14 @@ TSharedPtr<FJsonObject> USceneContextCapture::SerializeActor(AActor* Actor)
 	RotationObj->SetNumberField(TEXT("roll"), Rotation.Roll);
 	ActorObj->SetObjectField(TEXT("rotation"), RotationObj);
 
-	// Components (limited to first 5)
+	// Components (limited to avoid large JSON payloads)
+	static constexpr int32 MaxComponentsToSerialize = 5;
+	
 	TArray<TSharedPtr<FJsonValue>> Components;
 	int32 ComponentCount = 0;
 	for (UActorComponent* Comp : Actor->GetComponents())
 	{
-		if (Comp && ComponentCount < 5)
+		if (Comp && ComponentCount < MaxComponentsToSerialize)
 		{
 			TSharedPtr<FJsonObject> CompObj = SerializeComponent(Comp);
 			if (CompObj.IsValid())

@@ -114,5 +114,5 @@ private:
 	 * @param Result Tool result
 	 * @return true if completion indicated
 	 */
-	bool CheckSceneQueryCompletion(const FString& ToolName, const FString& Result) const;
+	bool CheckSceneQueryCompletion(const FString& ToolName, const FString& Result);
 };
