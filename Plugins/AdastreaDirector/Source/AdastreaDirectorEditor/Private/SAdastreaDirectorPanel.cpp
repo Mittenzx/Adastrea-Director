@@ -36,6 +36,9 @@
 
 #define LOCTEXT_NAMESPACE "AdastreaDirectorPanel"
 
+// Plugin name constant for consistency
+static const FName PluginName(TEXT("AdastreaDirector"));
+
 SAdastreaDirectorPanel::~SAdastreaDirectorPanel()
 {
 	// Clean up progress file if it exists
@@ -48,7 +51,7 @@ SAdastreaDirectorPanel::~SAdastreaDirectorPanel()
 FString SAdastreaDirectorPanel::GetPluginVersion()
 {
 	// Get the plugin descriptor to read the version
-	TSharedPtr<IPlugin> Plugin = IPluginManager::Get().FindPlugin(TEXT("AdastreaDirector"));
+	TSharedPtr<IPlugin> Plugin = IPluginManager::Get().FindPlugin(PluginName);
 	if (Plugin.IsValid())
 	{
 		const FPluginDescriptor& Descriptor = Plugin->GetDescriptor();
