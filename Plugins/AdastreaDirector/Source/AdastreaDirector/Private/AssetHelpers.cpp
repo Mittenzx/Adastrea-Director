@@ -160,9 +160,9 @@ FAdastreaResult UAssetHelpers::ImportAssetGeneric(const FString& FilePath, const
 	FString FinalAssetName = GetAssetNameFromPath(FilePath, AssetName);
 
 	// Use EditorAssetLibrary for simplified import
-	TArray<FString> ImportedAssets = UEditorAssetLibrary::ImportAsset(FilePath, TargetFolder);
+	FString ImportedAssetPath = UEditorAssetLibrary::ImportAsset(FilePath, TargetFolder);
 	
-	if (ImportedAssets.Num() == 0)
+	if (ImportedAssetPath.IsEmpty())
 	{
 		return FAdastreaResult::MakeError(FString::Printf(
 			TEXT("Import task completed but no asset was created for %s '%s'. ")
@@ -170,9 +170,6 @@ FAdastreaResult UAssetHelpers::ImportAssetGeneric(const FString& FilePath, const
 			TEXT("Possible causes: unsupported file format, invalid %s data, or corrupted file."),
 			*AssetType, *FilePath, *AssetType));
 	}
-
-	// Get the first imported asset path
-	FString ImportedAssetPath = ImportedAssets[0];
 
 	FAdastreaResult Result = FAdastreaResult::MakeSuccess(FString::Printf(TEXT("Successfully imported %s: %s"), *AssetType, *ImportedAssetPath));
 	Result.AddDetail(TEXT("asset_path"), ImportedAssetPath);

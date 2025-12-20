@@ -77,14 +77,10 @@ FAdastreaResult UUEBridge::GetSelectedAssets(TArray<FUEAssetInfo>& OutAssets)
 		return FAdastreaResult::MakeError(TEXT("Failed to get EditorAssetSubsystem"));
 	}
 
-	TArray<FString> SelectedAssetPaths = EditorAssetSubsystem->GetSelectedAssetData();
-	
-	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
-	IAssetRegistry& AssetRegistry = AssetRegistryModule.Get();
+	TArray<FAssetData> SelectedAssets = EditorAssetSubsystem->GetSelectedAssets();
 
-	for (const FString& AssetPath : SelectedAssetPaths)
+	for (const FAssetData& AssetData : SelectedAssets)
 	{
-		FAssetData AssetData = AssetRegistry.GetAssetByObjectPath(FSoftObjectPath(AssetPath));
 		if (AssetData.IsValid())
 		{
 			FUEAssetInfo Info;

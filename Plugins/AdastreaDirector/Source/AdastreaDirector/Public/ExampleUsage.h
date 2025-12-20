@@ -3,6 +3,10 @@
 /**
  * Example usage of Adastrea Director C++ API
  * 
+ * NOTE: This is example code for documentation purposes.
+ * Do not include this header in your actual project files.
+ * Copy the relevant examples into your own code files.
+ * 
  * This file demonstrates how to use the C++ bridge classes
  * to interact with Unreal Engine without Python dependencies.
  * 
@@ -11,11 +15,20 @@
  * - Editor utility widgets
  * - Blueprint functions
  * - Console commands
+ * 
+ * To use these examples:
+ * 1. Include the necessary headers in your .cpp file:
+ *    #include "UEBridge.h"
+ *    #include "AssetHelpers.h"
+ *    #include "StandardResult.h"
+ * 2. Copy the function(s) you need
+ * 3. Call them from your code
  */
 
-#include "UEBridge.h"
-#include "AssetHelpers.h"
-#include "StandardResult.h"
+// Forward declarations - include these headers in your .cpp file
+class UUEBridge;
+class UAssetHelpers;
+struct FAdastreaResult;
 
 // ============================================================================
 // Example 1: Console Commands
