@@ -74,7 +74,9 @@ Since the ingestion cannot be completed in this sandboxed environment, I've crea
 4. ✅ HuggingFace cache status
 5. ✅ Database existence
 6. ✅ Ingestion tracking file
-7. ✅ Plugin configuration guidance
+7. ✅ Plugin configuration guidance (informational only)
+
+**Note**: The script performs 6 validation checks (items 1-6 above) and provides plugin configuration guidance as informational output (item 7).
 
 **How to use:**
 ```bash

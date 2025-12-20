@@ -51,7 +51,13 @@ echo -e "${CYAN}Checking dependencies...${NC}"
 if ! python3 -c "import langchain_community" 2>/dev/null; then
     echo -e "${YELLOW}⚠ Dependencies not installed${NC}"
     echo "Installing dependencies..."
-    pip install -r requirements.txt
+    if [ -f requirements.txt ]; then
+        pip install -r requirements.txt
+    else
+        echo -e "${RED}Error: requirements.txt not found in the current directory${NC}"
+        echo "Please ensure requirements.txt is present and re-run this script."
+        exit 1
+    fi
 fi
 echo -e "${GREEN}✓ Dependencies OK${NC}"
 

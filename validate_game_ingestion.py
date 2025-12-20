@@ -6,15 +6,16 @@ This script checks:
 1. Python version compatibility
 2. Required dependencies installation
 3. Internet connectivity (for first-time model download)
-4. Database existence and accessibility
-5. Plugin configuration readiness
+4. HuggingFace cache status
+5. Database existence and accessibility
+6. Ingestion tracking file
+7. Plugin configuration guidance (informational)
 
 Usage:
     python3 validate_game_ingestion.py
 """
 
 import sys
-import os
 from pathlib import Path
 
 # Colors for terminal output
@@ -144,13 +145,13 @@ def check_database():
     
     print_success(f"Database found at: {db_path.absolute()}")
     
-    # Try to check database size
+    # Try to check database size (non-fatal if this fails)
     try:
         size_bytes = sum(f.stat().st_size for f in db_path.rglob('*') if f.is_file())
         size_mb = size_bytes / (1024 * 1024)
         print(f"  Size: {size_mb:.1f} MB")
-    except Exception:
-        pass
+    except Exception as e:
+        print_warning(f"Could not determine database size: {e}")
     
     return True
 
