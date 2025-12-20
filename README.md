@@ -119,20 +119,26 @@ For detailed project roadmap, sprint planning, and task tracking, see the [Wiki]
 
 Populate the database with your game repository so all agents have access to your codebase:
 
+**Method 1: Quick Ingestion Script (Easiest)**
 ```bash
-# Set your GitHub token (for private repository access)
+./quick_ingest_game.sh
+```
+
+**Method 2: Manual Ingestion**
+```bash
+# Set your GitHub token (for private repository access, if needed)
 export GITHUB_TOKEN="ghp_your_token_here"
 
 # Populate the database (uses HuggingFace embeddings - no API key required!)
-python ingest_game_repo.py
+python3 ingest_game_repo.py
 ```
 
-**Alternative: Use GitHub Actions (Recommended) ⭐**
+**Method 3: Use GitHub Actions (Automated) ⭐**
 1. Add `GAME_REPO_TOKEN` secret in [repository settings](https://github.com/Mittenzx/Adastrea-Director/settings/secrets/actions)
 2. Go to [Actions](https://github.com/Mittenzx/Adastrea-Director/actions) → "Populate Database with Adastrea Game Repository"
 3. Click "Run workflow"
 
-📖 **For detailed setup guides**, see the [Wiki](https://github.com/Mittenzx/Adastrea-Director/wiki)
+📖 **For detailed instructions, troubleshooting, and plugin integration**, see [GAME_REPO_INGESTION_GUIDE.md](GAME_REPO_INGESTION_GUIDE.md)
 
 Once populated, all agents will have full context about your Adastrea game when providing assistance!
 
