@@ -57,6 +57,7 @@ IPC_SERVER_PORT = 8765  # Default port for IPC server communication
 LANDING_AUTO_REFRESH_INTERVAL_MS = 5000  # Auto-refresh interval for landing page (5 seconds)
 LANDING_TAB_INDEX = 0  # Index of the landing tab in the notebook
 CANVAS_RESIZE_DEBOUNCE_MS = 100  # Debounce delay for canvas resize events
+INIT_REFRESH_DELAY_MS = 100  # Delay before initial refresh to ensure mainloop has started
 
 # Constants for connection diagram layout
 DIAGRAM_BOX_WIDTH = 120  # Width of component boxes in connection diagram
@@ -932,7 +933,7 @@ class AdastreaDirectorApp:
         self.ingest_stats_label.pack(side=tk.LEFT)
         
         # Delay initial load of ingest list until after mainloop starts
-        self.root.after(100, self.refresh_ingest_list)
+        self.root.after(INIT_REFRESH_DELAY_MS, self.refresh_ingest_list)
     
     def create_tests_tab(self):
         """Create the Tests tab for running Python test scripts."""
@@ -1681,25 +1682,41 @@ class AdastreaDirectorApp:
                     self.mcp_connected = True
                     try:
                         self.root.after(0, self._on_unreal_connected)
-                    except RuntimeError:
-                        pass  # Main thread not in main loop yet
+                    except RuntimeError as e:
+                        if "main thread is not in main loop" in str(e):
+                            self.logger.debug("Unreal connection callback deferred - mainloop not started yet")
+                        else:
+                            self.logger.error(f"Unexpected RuntimeError in connect_thread: {e}")
+                            raise
                 else:
                     try:
                         self.root.after(0, self._on_unreal_connection_failed, 
                                        "Could not connect to Unreal Engine. Make sure it's running with Remote Execution enabled.")
-                    except RuntimeError:
-                        pass  # Main thread not in main loop yet
+                    except RuntimeError as e:
+                        if "main thread is not in main loop" in str(e):
+                            self.logger.debug("Unreal connection failure callback deferred - mainloop not started yet")
+                        else:
+                            self.logger.error(f"Unexpected RuntimeError in connect_thread: {e}")
+                            raise
             except ImportError as e:
                 try:
                     self.root.after(0, self._on_unreal_connection_failed, 
                                    f"MCP server module not found: {e}")
-                except RuntimeError:
-                    pass  # Main thread not in main loop yet
+                except RuntimeError as e:
+                    if "main thread is not in main loop" in str(e):
+                        self.logger.debug("Unreal import error callback deferred - mainloop not started yet")
+                    else:
+                        self.logger.error(f"Unexpected RuntimeError in connect_thread: {e}")
+                        raise
             except Exception as e:
                 try:
                     self.root.after(0, self._on_unreal_connection_failed, str(e))
-                except RuntimeError:
-                    pass  # Main thread not in main loop yet
+                except RuntimeError as e:
+                    if "main thread is not in main loop" in str(e):
+                        self.logger.debug("Unreal exception callback deferred - mainloop not started yet")
+                    else:
+                        self.logger.error(f"Unexpected RuntimeError in connect_thread: {e}")
+                        raise
         
         thread = threading.Thread(target=connect_thread, daemon=True)
         thread.start()
@@ -1964,15 +1981,21 @@ class AdastreaDirectorApp:
                 # Update UI on main thread - use try-except to handle early calls
                 try:
                     self.root.after(0, self._update_ingest_list_ui, ingested_docs)
-                except RuntimeError:
-                    # Main thread not in main loop yet, ignore
-                    pass
+                except RuntimeError as e:
+                    if "main thread is not in main loop" in str(e):
+                        self.logger.debug("Ingest list update deferred - mainloop not started yet")
+                    else:
+                        self.logger.error(f"Unexpected RuntimeError in refresh_ingest_list: {e}")
+                        raise
             except Exception as e:
                 try:
                     self.root.after(0, self._show_ingest_error, str(e))
-                except RuntimeError:
-                    # Main thread not in main loop yet, ignore
-                    pass
+                except RuntimeError as e:
+                    if "main thread is not in main loop" in str(e):
+                        self.logger.debug("Ingest error display deferred - mainloop not started yet")
+                    else:
+                        self.logger.error(f"Unexpected RuntimeError in refresh_ingest_list: {e}")
+                        raise
         
         # Run in thread to avoid blocking UI
         thread = threading.Thread(target=refresh_in_thread, daemon=True)
