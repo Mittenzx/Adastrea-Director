@@ -25,7 +25,7 @@ def print_test(name, passed, details=""):
 def test_python_version():
     """Check Python version is compatible."""
     version = sys.version_info
-    is_compatible = version.major == 3 and 9 <= version.minor <= 12
+    is_compatible = version.major == 3 and 9 <= version.minor <= 13
     print_test(
         "Python version compatibility",
         is_compatible,
@@ -43,13 +43,15 @@ def test_script_files_exist():
         "validate_game_ingestion.py"
     ]
     
-    all_exist = True
+    missing_scripts = []
     for script in scripts:
         exists = Path(script).exists()
         print_test(f"Script exists: {script}", exists)
-        all_exist = all_exist and exists
+        if not exists:
+            missing_scripts.append(script)
     
-    return all_exist
+    all_scripts_exist = not missing_scripts
+    return all_scripts_exist
 
 
 def test_documentation_exists():
@@ -61,13 +63,15 @@ def test_documentation_exists():
         "INGESTION_IMPLEMENTATION_SUMMARY.md"
     ]
     
-    all_exist = True
+    missing_docs = []
     for doc in docs:
         exists = Path(doc).exists()
         print_test(f"Documentation exists: {doc}", exists)
-        all_exist = all_exist and exists
+        if not exists:
+            missing_docs.append(doc)
     
-    return all_exist
+    all_docs_exist = not missing_docs
+    return all_docs_exist
 
 
 def test_dependencies_installed():
@@ -84,7 +88,7 @@ def test_dependencies_installed():
     all_installed = True
     for package_name, import_name in dependencies:
         try:
-            if import_name == "python-dotenv":
+            if package_name == "python-dotenv":
                 __import__("dotenv")
             else:
                 __import__(import_name.replace("-", "_"))
@@ -124,19 +128,21 @@ def test_imports_work():
 
 
 def test_environment_file_exists():
-    """Check that environment example file exists."""
+    """Check that environment example file exists and contains required configuration."""
     env_file = Path(".env.example")
     exists = env_file.exists()
     print_test(".env.example exists", exists)
     
-    if exists:
-        content = env_file.read_text()
-        has_embedding = "EMBEDDING_PROVIDER" in content
-        has_huggingface = "HUGGINGFACE" in content
-        print_test("Contains embedding configuration", has_embedding and has_huggingface)
-        return exists and has_embedding and has_huggingface
+    if not exists:
+        return False
     
-    return exists
+    content = env_file.read_text()
+    has_embedding = "EMBEDDING_PROVIDER" in content
+    has_huggingface = "HUGGINGFACE" in content
+    has_config = has_embedding and has_huggingface
+    print_test("Contains embedding configuration", has_config)
+    
+    return has_config
 
 
 def main():
