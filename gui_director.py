@@ -57,6 +57,7 @@ IPC_SERVER_PORT = 8765  # Default port for IPC server communication
 LANDING_AUTO_REFRESH_INTERVAL_MS = 5000  # Auto-refresh interval for landing page (5 seconds)
 LANDING_TAB_INDEX = 0  # Index of the landing tab in the notebook
 CANVAS_RESIZE_DEBOUNCE_MS = 100  # Debounce delay for canvas resize events
+INIT_REFRESH_DELAY_MS = 100  # Delay before initial refresh to ensure mainloop has started
 
 # Constants for connection diagram layout
 DIAGRAM_BOX_WIDTH = 120  # Width of component boxes in connection diagram
@@ -931,8 +932,8 @@ class AdastreaDirectorApp:
         )
         self.ingest_stats_label.pack(side=tk.LEFT)
         
-        # Initial load of ingest list
-        self.refresh_ingest_list()
+        # Delay initial load of ingest list until after mainloop starts
+        self.root.after(INIT_REFRESH_DELAY_MS, self.refresh_ingest_list)
     
     def create_tests_tab(self):
         """Create the Tests tab for running Python test scripts."""
@@ -1679,15 +1680,43 @@ class AdastreaDirectorApp:
                 # Validate the return type and check if connected
                 if success is True or (success is not False and self.unreal_mcp_server.is_connected()):
                     self.mcp_connected = True
-                    self.root.after(0, self._on_unreal_connected)
+                    try:
+                        self.root.after(0, self._on_unreal_connected)
+                    except RuntimeError as e:
+                        if "main thread is not in main loop" in str(e):
+                            self.logger.debug("Unreal connection callback deferred - mainloop not started yet")
+                        else:
+                            self.logger.error(f"Unexpected RuntimeError in connect_thread: {e}")
+                            raise
                 else:
-                    self.root.after(0, self._on_unreal_connection_failed, 
-                                   "Could not connect to Unreal Engine. Make sure it's running with Remote Execution enabled.")
+                    try:
+                        self.root.after(0, self._on_unreal_connection_failed, 
+                                       "Could not connect to Unreal Engine. Make sure it's running with Remote Execution enabled.")
+                    except RuntimeError as e:
+                        if "main thread is not in main loop" in str(e):
+                            self.logger.debug("Unreal connection failure callback deferred - mainloop not started yet")
+                        else:
+                            self.logger.error(f"Unexpected RuntimeError in connect_thread: {e}")
+                            raise
             except ImportError as e:
-                self.root.after(0, self._on_unreal_connection_failed, 
-                               f"MCP server module not found: {e}")
+                try:
+                    self.root.after(0, self._on_unreal_connection_failed, 
+                                   f"MCP server module not found: {e}")
+                except RuntimeError as e:
+                    if "main thread is not in main loop" in str(e):
+                        self.logger.debug("Unreal import error callback deferred - mainloop not started yet")
+                    else:
+                        self.logger.error(f"Unexpected RuntimeError in connect_thread: {e}")
+                        raise
             except Exception as e:
-                self.root.after(0, self._on_unreal_connection_failed, str(e))
+                try:
+                    self.root.after(0, self._on_unreal_connection_failed, str(e))
+                except RuntimeError as e:
+                    if "main thread is not in main loop" in str(e):
+                        self.logger.debug("Unreal exception callback deferred - mainloop not started yet")
+                    else:
+                        self.logger.error(f"Unexpected RuntimeError in connect_thread: {e}")
+                        raise
         
         thread = threading.Thread(target=connect_thread, daemon=True)
         thread.start()
@@ -1949,13 +1978,27 @@ class AdastreaDirectorApp:
                 # Get ingested documents from the database
                 ingested_docs = self.get_ingested_documents()
                 
-                # Update UI on main thread
-                self.root.after(0, self._update_ingest_list_ui, ingested_docs)
+                # Update UI on main thread - use try-except to handle early calls
+                try:
+                    self.root.after(0, self._update_ingest_list_ui, ingested_docs)
+                except RuntimeError as e:
+                    if "main thread is not in main loop" in str(e):
+                        self.logger.debug("Ingest list update deferred - mainloop not started yet")
+                    else:
+                        self.logger.error(f"Unexpected RuntimeError in refresh_ingest_list: {e}")
+                        raise
             except Exception as e:
-                self.root.after(0, self._show_ingest_error, str(e))
+                try:
+                    self.root.after(0, self._show_ingest_error, str(e))
+                except RuntimeError as e:
+                    if "main thread is not in main loop" in str(e):
+                        self.logger.debug("Ingest error display deferred - mainloop not started yet")
+                    else:
+                        self.logger.error(f"Unexpected RuntimeError in refresh_ingest_list: {e}")
+                        raise
         
         # Run in thread to avoid blocking UI
-        thread = threading.Thread(target=refresh_in_thread)
+        thread = threading.Thread(target=refresh_in_thread, daemon=True)
         thread.start()
     
     def get_ingested_documents(self):
@@ -2886,6 +2929,9 @@ class AdastreaDirectorApp:
     
     def create_analytics_dashboard_tab(self):
         """Create the Analytics Dashboard tab with project statistics and metrics."""
+        # Initialize analytics labels dictionary first
+        self.analytics_labels = {}
+        
         analytics_tab = tk.Frame(self.notebook, bg=self.bg_tertiary)
         self.notebook.add(analytics_tab, text="📊 Analytics")
         
@@ -3092,9 +3138,6 @@ class AdastreaDirectorApp:
                 ("Last Build Status", "build_last_status")
             ]
         )
-        
-        # Initialize analytics labels dictionary
-        self.analytics_labels = {}
         
         # Initial data load
         self.root.after(1000, self.refresh_analytics_data)
@@ -5898,7 +5941,7 @@ GitHub: Mittenzx/Adastrea-Director
     
     def stop_landing_auto_refresh(self):
         """Stop automatic refresh of landing page status."""
-        if self.landing_refresh_id:
+        if hasattr(self, 'landing_refresh_id') and self.landing_refresh_id:
             self.root.after_cancel(self.landing_refresh_id)
             self.landing_refresh_id = None
     
