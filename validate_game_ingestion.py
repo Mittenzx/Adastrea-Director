@@ -225,7 +225,11 @@ def main():
         
         if not results['database']:
             print_warning("\nNext step: Run ingestion to create database")
-            print_warning("  ./quick_ingest_game.sh")
+            # Check if quick_ingest_game.sh exists
+            if Path("quick_ingest_game.sh").exists():
+                print_warning("  ./quick_ingest_game.sh")
+            else:
+                print_warning("  python3 ingest_game_repo.py")
         
         if not results['internet'] and not results['cache']:
             print_warning("\nNote: First ingestion requires internet access")

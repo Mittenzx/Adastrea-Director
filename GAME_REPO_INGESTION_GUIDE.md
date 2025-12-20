@@ -19,7 +19,9 @@ This automated script will:
 ### Method 2: Manual Ingestion
 
 ```bash
-# Ingest the game repository
+# Ingest the game repository (uses default settings)
+# Default collection: adastrea_game_docs
+# Default database: ./chroma_db_adastrea
 python3 ingest_game_repo.py
 
 # Check ingestion statistics
@@ -27,6 +29,11 @@ python3 ingest_game_repo.py --stats
 
 # Force re-ingestion (if docs have changed)
 python3 ingest_game_repo.py --force
+
+# Customize collection name and database location (optional)
+python3 ingest_game_repo.py \
+  --collection-name adastrea_game_docs \
+  --persist-dir ./chroma_db_adastrea
 ```
 
 ## Prerequisites
