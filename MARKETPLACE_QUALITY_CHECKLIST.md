@@ -18,7 +18,7 @@
 | Support URL | ✅ Complete | GitHub Issues |
 | License | ✅ Complete | MIT License |
 | Platform Support | ✅ Complete | Win64, Mac, Linux |
-| Engine Versions | ✅ Complete | UE 4.27 - 5.7 |
+| Engine Versions | ✅ Complete | UE 4.27 - 5.6 |
 
 **Score: 11/11 (100%)**
 
