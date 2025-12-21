@@ -3,9 +3,9 @@
 /**
  * Example usage of Adastrea Director C++ API
  * 
- * NOTE: This is example code for documentation purposes.
- * Do not include this header in your actual project files.
- * Copy the relevant examples into your own code files.
+ * NOTE: This header contains example code for documentation purposes.
+ * It is recommended to copy the relevant examples into your own source files
+ * (e.g., your own headers and .cpp files) rather than depending on this file directly.
  * 
  * This file demonstrates how to use the C++ bridge classes
  * to interact with Unreal Engine without Python dependencies.

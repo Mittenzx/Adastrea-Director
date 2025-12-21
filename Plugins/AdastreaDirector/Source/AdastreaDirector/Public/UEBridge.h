@@ -156,15 +156,15 @@ public:
 	 * @param ActorClass Class name of actor to spawn
 	 * @param Location Spawn location
 	 * @param Rotation Spawn rotation
-	 * @param ActorName Optional name for the actor
-	 * @return Result of the operation
+	 * @param ActorName Optional name for the actor (sets the actor label/display name)
+	 * @return Result of the operation with actor_name (internal) and actor_label (display) in details
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Adastrea|Actors")
 	static FAdastreaResult SpawnActor(const FString& ActorClass, FVector Location, FRotator Rotation, const FString& ActorName = TEXT(""));
 
 	/**
 	 * Delete an actor from the current level by name.
-	 * @param ActorName Name of the actor to delete
+	 * @param ActorName Name of the actor to delete (accepts either internal name or display label)
 	 * @return Result of the operation
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Adastrea|Actors")

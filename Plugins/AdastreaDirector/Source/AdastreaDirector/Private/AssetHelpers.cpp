@@ -74,8 +74,8 @@ FAdastreaResult UAssetHelpers::CreateBlueprint(const FString& BlueprintName, con
 		return FAdastreaResult::MakeError(FString::Printf(TEXT("Failed to create blueprint: %s"), *BlueprintName));
 	}
 
-	// Save the asset
-	FString AssetPath = PackagePathStr + BlueprintName;
+	// Get the actual path from the created asset
+	FString AssetPath = NewAsset->GetPathName();
 	bool bSaved = UEditorAssetLibrary::SaveAsset(AssetPath, false);
 
 	FAdastreaResult Result = FAdastreaResult::MakeSuccess(FString::Printf(TEXT("Created blueprint: %s"), *BlueprintName));
@@ -118,8 +118,8 @@ FAdastreaResult UAssetHelpers::CreateMaterial(const FString& MaterialName, const
 		return FAdastreaResult::MakeError(FString::Printf(TEXT("Failed to create material: %s"), *MaterialName));
 	}
 
-	// Save the asset
-	FString AssetPath = PackagePathStr + MaterialName;
+	// Get the actual path from the created asset
+	FString AssetPath = NewAsset->GetPathName();
 	bool bSaved = UEditorAssetLibrary::SaveAsset(AssetPath, false);
 
 	FAdastreaResult Result = FAdastreaResult::MakeSuccess(FString::Printf(TEXT("Created material: %s"), *MaterialName));

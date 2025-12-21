@@ -108,7 +108,10 @@ FAdastreaResult UUEBridge::FindAssetsByClass(const FString& AssetClass, const FS
 
 	// Create filter
 	FARFilter Filter;
-	Filter.ClassPaths.Add(FTopLevelAssetPath(AssetClass));
+	FTopLevelAssetPath ClassPath = AssetClass.StartsWith(TEXT("/")) || AssetClass.Contains(TEXT("."))
+		? FTopLevelAssetPath(AssetClass)
+		: FTopLevelAssetPath(TEXT("/Script/Engine"), *AssetClass);
+	Filter.ClassPaths.Add(ClassPath);
 	Filter.PackagePaths.Add(FName(*Path));
 	Filter.bRecursivePaths = true;
 
@@ -294,6 +297,9 @@ FAdastreaResult UUEBridge::SpawnActor(const FString& ActorClass, FVector Locatio
 	Result.AddDetail(TEXT("actor_name"), SpawnedActor->GetName());
 	Result.AddDetail(TEXT("actor_label"), SpawnedActor->GetActorLabel());
 	Result.AddDetail(TEXT("actor_class"), ActorClass);
+	
+	// Note: actor_name is the internal name (GetName()), actor_label is the display name (GetActorLabel())
+	// DeleteActor() accepts either name for lookup flexibility
 	return Result;
 #else
 	return FAdastreaResult::MakeError(TEXT("Editor-only functionality"));
@@ -309,12 +315,12 @@ FAdastreaResult UUEBridge::DeleteActor(const FString& ActorName)
 		return FAdastreaResult::MakeError(TEXT("Failed to get editor world"));
 	}
 
-	// Find the actor
+	// Find the actor (check both internal name and label for flexibility)
 	AActor* FoundActor = nullptr;
 	for (TActorIterator<AActor> It(World); It; ++It)
 	{
 		AActor* Actor = *It;
-		if (Actor && Actor->GetName() == ActorName)
+		if (Actor && (Actor->GetName() == ActorName || Actor->GetActorLabel() == ActorName))
 		{
 			FoundActor = Actor;
 			break;
