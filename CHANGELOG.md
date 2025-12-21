@@ -10,6 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Professional 128x128 plugin icon with AI/Director theme
 - Comprehensive CHANGELOG.md for version tracking
+- Updated Unreal Engine compatibility range to 4.27–5.6 with explicit EngineVersion specification (UE5.7 no longer supported)
+
+### Changed
+- Adjusted supported Unreal Engine versions to 4.27–5.6 (dropped UE5.7 from previously supported range)
+- Removed deprecated EditorStyle module dependency
+- Plugin now explicitly targets UE5.6.0 in .uplugin file to align with the new 4.27–5.6 support range (excluding UE5.7)
 
 ## [1.0.0] - 2025-12-16
 
@@ -115,12 +121,12 @@ Adastrea Director 1.0.0 marks the completion of Phase 2 (The Planner) and includ
 - **10/10 Future Potential**: Autonomous performance profiling, bug detection, and AI-assisted content generation
 - **ROI**: 210% return in 6 months (P1-P2), scaling to 63% return annually (P3-P4)
 
-The plugin integrates seamlessly with Unreal Engine 4.27-5.7, providing developers with powerful AI assistance without leaving the editor.
+The plugin integrates seamlessly with Unreal Engine 4.27-5.6, providing developers with powerful AI assistance without leaving the editor.
 
 ### System Requirements
 
 - **Python**: 3.9 or higher (3.12+ recommended)
-- **Unreal Engine**: 4.27 - 5.7 (for plugin)
+- **Unreal Engine**: 4.27 - 5.6 (for plugin)
 - **Operating Systems**: Windows, macOS, Linux
 - **Optional**: GitHub Personal Access Token for repository ingestion
 

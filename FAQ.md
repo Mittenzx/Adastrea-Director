@@ -19,7 +19,7 @@ Adastrea Director is open-source and free to use under the MIT License. There ar
 
 ### What Unreal Engine versions are supported?
 
-The plugin supports Unreal Engine 4.27 through 5.7. The standalone Python version works with any project type.
+The plugin supports Unreal Engine 4.27 through 5.6. The standalone Python version works with any project type.
 
 ## Installation & Setup
 
