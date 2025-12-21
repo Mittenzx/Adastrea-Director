@@ -117,6 +117,8 @@ For detailed project roadmap, sprint planning, and task tracking, see the [Wiki]
 
 **⚡ Want to start using Adastrea Director immediately with full game context?**
 
+**🎉 NEW: HuggingFace access is now enabled! Game repository ingestion is ready to use.**
+
 Populate the database with your game repository so all agents have access to your codebase:
 
 **Method 1: Quick Ingestion Script (Easiest)**
@@ -138,7 +140,10 @@ python3 ingest_game_repo.py
 2. Go to [Actions](https://github.com/Mittenzx/Adastrea-Director/actions) → "Populate Database with Adastrea Game Repository"
 3. Click "Run workflow"
 
-📖 **For detailed instructions, troubleshooting, and plugin integration**, see [GAME_REPO_INGESTION_GUIDE.md](GAME_REPO_INGESTION_GUIDE.md)
+📖 **Documentation:**
+- **Quick Status**: [INGESTION_STATUS.md](INGESTION_STATUS.md) - Current status and quick reference
+- **Complete Guide**: [GAME_REPO_INGESTION_GUIDE.md](GAME_REPO_INGESTION_GUIDE.md) - Detailed instructions and troubleshooting
+- **Quick Start**: [START_HERE_INGESTION.md](START_HERE_INGESTION.md) - 60-second setup guide
 
 Once populated, all agents will have full context about your Adastrea game when providing assistance!
 
