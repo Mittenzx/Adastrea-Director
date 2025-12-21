@@ -47,6 +47,9 @@ public class AdastreaDirector : ModuleRules
 				"Projects",
 				"Json",
 				"JsonUtilities",
+				"AssetTools",        // For asset import and creation
+				"AssetRegistry",     // For asset queries
+				"EditorScriptingUtilities", // For EditorAssetLibrary
 				// ... add private dependencies that you statically link with here ...	
 			}
 		);
