@@ -81,6 +81,7 @@ void SAdastreaDirectorPanel::Construct(const FArguments& InArgs)
 	IngestionProgress = 0.0f;
 	IngestionStatusMessage = LOCTEXT("IngestionIdle", "Ready to ingest documents");
 	IngestionDetailsMessage = FText::GetEmpty();
+	DatabaseStatusMessage = LOCTEXT("DbStatusNotLoaded", "Not loaded - Click Refresh to check");
 	CurrentResults = LOCTEXT("WelcomeMessage", "Welcome to Adastrea Director!\n\nEnter a query above and click 'Send Query' or press Enter to get started.\n\nExample: \"What is Unreal Engine?\"");
 	LastProgressUpdateTime = 0.0;
 	CurrentTabIndex = 0; // Start with Query tab
@@ -442,7 +443,7 @@ TSharedRef<SWidget> SAdastreaDirectorPanel::CreateIngestionTab()
 			[
 				SAssignNew(DbPathBox, SEditableTextBox)
 				.HintText(LOCTEXT("DbPathHint", "Path to ChromaDB database..."))
-				.Text(FText::FromString(FPaths::ProjectDir() / TEXT("chroma_db")))
+				.Text(FText::FromString(TEXT("C:\\Users\\David Henderson\\Documents\\Adastrea-Director\\chroma_db_adastrea")))
 			]
 
 			+ SHorizontalBox::Slot()
@@ -451,6 +452,41 @@ TSharedRef<SWidget> SAdastreaDirectorPanel::CreateIngestionTab()
 				SNew(SButton)
 				.Text(LOCTEXT("BrowseDbButton", "Browse..."))
 				.OnClicked(this, &SAdastreaDirectorPanel::OnBrowseDbPathClicked)
+			]
+		]
+
+		// Database Status Section
+		+ SVerticalBox::Slot()
+		.AutoHeight()
+		.Padding(10.0f, 10.0f, 10.0f, 5.0f)
+		[
+			SNew(STextBlock)
+			.Text(LOCTEXT("DbStatusLabel", "Database Status:"))
+			.Font(FCoreStyle::GetDefaultFontStyle("Bold", 10))
+		]
+
+		+ SVerticalBox::Slot()
+		.AutoHeight()
+		.Padding(10.0f, 0.0f, 10.0f, 10.0f)
+		[
+			SNew(SHorizontalBox)
+			
+			+ SHorizontalBox::Slot()
+			.FillWidth(1.0f)
+			[
+				SAssignNew(DatabaseStatusText, STextBlock)
+				.Text_Lambda([this]() { return DatabaseStatusMessage; })
+				.AutoWrapText(true)
+			]
+
+			+ SHorizontalBox::Slot()
+			.AutoWidth()
+			.Padding(5.0f, 0.0f, 0.0f, 0.0f)
+			[
+				SNew(SButton)
+				.Text(LOCTEXT("RefreshDbStatusButton", "Refresh"))
+				.OnClicked(this, &SAdastreaDirectorPanel::OnRefreshDbStatusClicked)
+				.IsEnabled_Lambda([this]() { return CanRefreshDbStatus(); })
 			]
 		]
 
@@ -865,7 +901,7 @@ FReply SAdastreaDirectorPanel::OnClearHistoryClicked()
 	const FText Title = LOCTEXT("ClearHistoryTitle", "Clear Conversation History");
 	const FText Message = LOCTEXT("ClearHistoryMessage", "Are you sure you want to clear the conversation history?\n\nThis action cannot be undone.");
 	
-	EAppReturnType::Type UserResponse = FMessageDialog::Open(EAppMsgType::YesNo, Message, &Title);
+	EAppReturnType::Type UserResponse = FMessageDialog::Open(EAppMsgType::YesNo, Message, Title);
 	
 	if (UserResponse != EAppReturnType::Yes)
 	{
@@ -1021,6 +1057,74 @@ bool SAdastreaDirectorPanel::CanStopIngestion() const
 	return bIsIngesting;
 }
 
+FReply SAdastreaDirectorPanel::OnRefreshDbStatusClicked()
+{
+	// Get the Python bridge
+	FAdastreaDirectorModule* RuntimeModule = FModuleManager::GetModulePtr<FAdastreaDirectorModule>("AdastreaDirector");
+	
+	if (!RuntimeModule || !RuntimeModule->GetPythonBridge())
+	{
+		DatabaseStatusMessage = LOCTEXT("DbStatusError", "Error: Python bridge not available");
+		return FReply::Handled();
+	}
+
+	auto PythonBridge = RuntimeModule->GetPythonBridge();
+
+	// Send database info request
+	FString Response;
+	bool bSuccess = PythonBridge->SendRequest(TEXT("db_info"), TEXT("{}"), Response);
+
+	if (bSuccess)
+	{
+		// Parse the response
+		TSharedPtr<FJsonObject> JsonObject;
+		TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(Response);
+		
+		if (FJsonSerializer::Deserialize(Reader, JsonObject) && JsonObject.IsValid())
+		{
+			FString Status = JsonObject->GetStringField(TEXT("status"));
+			
+			if (Status == TEXT("success"))
+			{
+				// Get the info object
+				const TSharedPtr<FJsonObject>* InfoObject;
+				if (JsonObject->TryGetObjectField(TEXT("info"), InfoObject) && InfoObject)
+				{
+					FString CollectionName = (*InfoObject)->GetStringField(TEXT("collection_name"));
+					int32 DocumentCount = (*InfoObject)->GetIntegerField(TEXT("document_count"));
+					FString PersistDirectory = (*InfoObject)->GetStringField(TEXT("persist_directory"));
+					
+					FString StatusText = FString::Printf(TEXT("Collection: %s\nDocuments: %d\nLocation: %s"), 
+						*CollectionName, DocumentCount, *PersistDirectory);
+					
+					DatabaseStatusMessage = FText::FromString(StatusText);
+				}
+			}
+			else
+			{
+				FString Error = JsonObject->GetStringField(TEXT("error"));
+				DatabaseStatusMessage = FText::FromString(FString::Printf(TEXT("Error: %s"), *Error));
+			}
+		}
+		else
+		{
+			DatabaseStatusMessage = LOCTEXT("DbStatusParseError", "Error: Failed to parse response");
+		}
+	}
+	else
+	{
+		DatabaseStatusMessage = LOCTEXT("DbStatusRequestError", "Error: Failed to send request");
+	}
+
+	return FReply::Handled();
+}
+
+bool SAdastreaDirectorPanel::CanRefreshDbStatus() const
+{
+	// Can always refresh status
+	return true;
+}
+
 void SAdastreaDirectorPanel::StartIngestion(const FString& DocsPath, const FString& DbPath)
 {
 	// Get the Python bridge
@@ -1048,7 +1152,7 @@ void SAdastreaDirectorPanel::StartIngestion(const FString& DocsPath, const FStri
 	RequestData->SetStringField(TEXT("persist_dir"), DbPath);
 	RequestData->SetStringField(TEXT("progress_file"), ProgressFilePath);
 	RequestData->SetBoolField(TEXT("force_reingest"), false);
-	RequestData->SetStringField(TEXT("collection_name"), TEXT("adastrea_docs"));
+	RequestData->SetStringField(TEXT("collection_name"), TEXT("adastrea_game_docs"));
 
 	FString RequestDataString;
 	TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&RequestDataString);

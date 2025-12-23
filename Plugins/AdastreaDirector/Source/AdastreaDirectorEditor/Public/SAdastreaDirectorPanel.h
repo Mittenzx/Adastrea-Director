@@ -78,6 +78,9 @@ private:
 	/** Ingestion details text */
 	TSharedPtr<STextBlock> IngestionDetailsText;
 
+	/** Database status text */
+	TSharedPtr<STextBlock> DatabaseStatusText;
+
 	/** Is ingestion currently running */
 	bool bIsIngesting;
 
@@ -89,6 +92,9 @@ private:
 
 	/** Ingestion details message */
 	FText IngestionDetailsMessage;
+
+	/** Database status message */
+	FText DatabaseStatusMessage;
 
 	/** Path to progress file for ingestion updates */
 	FString ProgressFilePath;
@@ -149,6 +155,12 @@ private:
 
 	/** Helper to check if ingestion can be stopped */
 	bool CanStopIngestion() const;
+
+	/** Called when Refresh Database Status button is clicked */
+	FReply OnRefreshDbStatusClicked();
+
+	/** Helper to check if database status can be refreshed */
+	bool CanRefreshDbStatus() const;
 
 	/** Update ingestion progress from progress file */
 	void UpdateIngestionProgress();

@@ -32,8 +32,8 @@ class IntegratedIPCServer(IPCServer):
         port: int = 5555,
         enable_rag: bool = False,
         enable_planning: bool = False,
-        collection_name: str = 'adastrea_docs',
-        persist_directory: str = './chroma_db'
+        collection_name: str = 'adastrea_game_docs',
+        persist_directory: str = 'C:\\Users\\David Henderson\\Documents\\Adastrea-Director\\chroma_db_adastrea'
     ):
         """
         Initialize integrated IPC server.

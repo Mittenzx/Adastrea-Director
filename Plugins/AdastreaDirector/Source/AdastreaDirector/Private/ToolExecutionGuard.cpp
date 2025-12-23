@@ -176,7 +176,14 @@ FString FToolExecutionGuard::GenerateSignature(const FString& ToolName, const FS
 	const FTCHARToUTF8 Utf8Combined(*Combined);
 	const FBlake3Hash Hash = FBlake3::HashBuffer(Utf8Combined.Get(), Utf8Combined.Length());
 	
-	return Hash.ToString();
+	// Convert hash bytes to hex string
+	const uint8* HashBytes = Hash.GetBytes();
+	FString HashString;
+	for (int32 i = 0; i < 32; ++i)
+	{
+		HashString += FString::Printf(TEXT("%02x"), HashBytes[i]);
+	}
+	return HashString;
 }
 
 bool FToolExecutionGuard::WouldCreatePythonLoop(const FString& ToolName) const

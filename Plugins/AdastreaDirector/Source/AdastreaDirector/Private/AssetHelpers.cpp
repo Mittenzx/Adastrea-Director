@@ -159,8 +159,18 @@ FAdastreaResult UAssetHelpers::ImportAssetGeneric(const FString& FilePath, const
 	// Get or generate asset name
 	FString FinalAssetName = GetAssetNameFromPath(FilePath, AssetName);
 
-	// Use EditorAssetLibrary for simplified import
-	FString ImportedAssetPath = UEditorAssetLibrary::ImportAsset(FilePath, TargetFolder);
+	// Use AssetTools for import
+	FAssetToolsModule& AssetToolsModule = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools");
+	TArray<FString> FilesToImport;
+	FilesToImport.Add(FilePath);
+	
+	TArray<UObject*> ImportedObjects = AssetToolsModule.Get().ImportAssets(FilesToImport, TargetFolder);
+	
+	FString ImportedAssetPath;
+	if (ImportedObjects.Num() > 0 && ImportedObjects[0])
+	{
+		ImportedAssetPath = ImportedObjects[0]->GetPathName();
+	}
 	
 	if (ImportedAssetPath.IsEmpty())
 	{

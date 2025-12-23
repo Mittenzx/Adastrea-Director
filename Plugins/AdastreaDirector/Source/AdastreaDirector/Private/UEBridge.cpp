@@ -13,6 +13,7 @@
 #include "Subsystems/EditorActorSubsystem.h"
 #include "Subsystems/EditorAssetSubsystem.h"
 #include "Kismet/GameplayStatics.h"
+#include "FileHelpers.h"
 #include "UObject/UObjectGlobals.h"
 #include "HAL/PlatformFileManager.h"
 #include "Misc/Paths.h"
@@ -77,7 +78,8 @@ FAdastreaResult UUEBridge::GetSelectedAssets(TArray<FUEAssetInfo>& OutAssets)
 		return FAdastreaResult::MakeError(TEXT("Failed to get EditorAssetSubsystem"));
 	}
 
-	TArray<FAssetData> SelectedAssets = EditorAssetSubsystem->GetSelectedAssets();
+	TArray<FAssetData> SelectedAssets;
+	EditorAssetSubsystem->GetSelectedAssets(SelectedAssets);
 
 	for (const FAssetData& AssetData : SelectedAssets)
 	{
@@ -379,7 +381,10 @@ FAdastreaResult UUEBridge::LoadLevel(const FString& LevelPath)
 		return FAdastreaResult::MakeError(TEXT("Level path cannot be empty"));
 	}
 
-	bool bLoaded = GEditor->LoadMap(LevelPath, true, true);
+	FWorldContext& WorldContext = GEditor->GetEditorWorldContext();
+	FURL URL(*LevelPath);
+	FString Error;
+	bool bLoaded = GEditor->LoadMap(WorldContext, URL, nullptr, Error);
 	if (bLoaded)
 	{
 		FAdastreaResult Result = FAdastreaResult::MakeSuccess(FString::Printf(TEXT("Loaded level: %s"), *LevelPath));
@@ -402,7 +407,7 @@ FAdastreaResult UUEBridge::SaveCurrentLevel()
 		return FAdastreaResult::MakeError(TEXT("Failed to get editor world"));
 	}
 
-	bool bSaved = GEditor->SaveLevel(World->GetCurrentLevel());
+	bool bSaved = FEditorFileUtils::SaveLevel(World->GetCurrentLevel());
 	if (bSaved)
 	{
 		return FAdastreaResult::MakeSuccess(TEXT("Saved current level"));
