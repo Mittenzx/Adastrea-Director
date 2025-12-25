@@ -17,27 +17,24 @@ Features:
 - Progress callbacks for GUI integration
 """
 
-import os
-import sys
 import time
 import threading
 from pathlib import Path
 from typing import List, Optional, Callable, Dict, Any, Set
 from datetime import datetime, timedelta
-import json
 
 from logging_config import get_logger
 
 # Try to import watchdog for file watching (optional dependency)
 try:
     from watchdog.observers import Observer
-    from watchdog.events import FileSystemEventHandler, FileModifiedEvent, FileCreatedEvent
+    from watchdog.events import FileSystemEventHandler
     WATCHDOG_AVAILABLE = True
 except ImportError:
     WATCHDOG_AVAILABLE = False
 
 # Import existing ingestion infrastructure
-from ingest import DocumentIngestionAgent, ProgressWriter
+from ingest import DocumentIngestionAgent
 
 logger = get_logger(__name__)
 
@@ -334,16 +331,16 @@ class AutoIngestion:
             
             files_to_process = list(self.file_queue)
             self.file_queue.clear()
+            
+            # Initialize agent if needed (inside lock to avoid race condition)
+            if self.agent is None:
+                self.agent = DocumentIngestionAgent(
+                    collection_name=self.collection_name,
+                    persist_directory=self.persist_directory,
+                )
         
         logger.info(f"Processing {len(files_to_process)} queued files")
         self._notify_progress(f"Processing {len(files_to_process)} changed files", 50)
-        
-        # Initialize agent if needed
-        if self.agent is None:
-            self.agent = DocumentIngestionAgent(
-                collection_name=self.collection_name,
-                persist_directory=self.persist_directory,
-            )
         
         # Process each file
         for file_path in files_to_process:

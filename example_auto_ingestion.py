@@ -24,7 +24,6 @@ Usage:
 
 import argparse
 import sys
-from pathlib import Path
 
 # Import the new modules
 from auto_ingestion import AutoIngestion

@@ -19,10 +19,10 @@ Features:
 """
 
 import os
-import sys
 import json
 import shutil
 import subprocess
+import tempfile
 from pathlib import Path
 from typing import Optional, Dict, Any, List, Callable
 from datetime import datetime
@@ -293,6 +293,7 @@ class GitHubIntegration:
                 capture_output=True,
                 text=True,
                 check=True,
+                timeout=10,
             )
             return result.stdout.strip()
         except Exception as e:
@@ -327,11 +328,8 @@ class GitHubIntegration:
         
         owner, repo_name = parsed
         
-        # Construct full URL
-        if self.github_token:
-            clone_url = f"https://{self.github_token}@github.com/{owner}/{repo_name}.git"
-        else:
-            clone_url = f"https://github.com/{owner}/{repo_name}.git"
+        # Construct full URL without embedding token to avoid leaking credentials
+        clone_url = f"https://github.com/{owner}/{repo_name}.git"
         
         # Determine clone path
         clone_path = self.repos_directory / f"{owner}_{repo_name}"
@@ -350,12 +348,41 @@ class GitHubIntegration:
                 cmd.extend(["-b", branch])
             cmd.extend([clone_url, str(clone_path)])
             
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                timeout=300,  # 5 minute timeout
-            )
+            # Set up environment for secure credential handling if token is available
+            env = os.environ.copy()
+            credential_helper_file = None
+            
+            if self.github_token:
+                # Create a temporary credential helper script to avoid exposing token in command line
+                credential_helper_file = tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.sh')
+                credential_helper_file.write('#!/bin/sh\n')
+                credential_helper_file.write('echo username=x-access-token\n')
+                credential_helper_file.write(f'echo password={self.github_token}\n')
+                credential_helper_file.close()
+                os.chmod(credential_helper_file.name, 0o700)
+                
+                # Configure git to use our credential helper
+                cmd = ["git", "-c", f"credential.helper={credential_helper_file.name}", "clone"]
+                if branch:
+                    cmd.extend(["-b", branch])
+                cmd.extend([clone_url, str(clone_path)])
+                env["GIT_TERMINAL_PROMPT"] = "0"
+            
+            try:
+                result = subprocess.run(
+                    cmd,
+                    capture_output=True,
+                    text=True,
+                    timeout=300,  # 5 minute timeout
+                    env=env,
+                )
+            finally:
+                # Clean up credential helper file
+                if credential_helper_file:
+                    try:
+                        os.unlink(credential_helper_file.name)
+                    except Exception:
+                        pass
             
             if result.returncode != 0:
                 logger.error(f"Clone failed: {result.stderr}")
@@ -374,6 +401,7 @@ class GitHubIntegration:
                         capture_output=True,
                         text=True,
                         check=True,
+                        timeout=10,
                     )
                     branch = result.stdout.strip() or "main"
                 except Exception:
@@ -405,10 +433,22 @@ class GitHubIntegration:
         except subprocess.TimeoutExpired:
             logger.error("Clone operation timed out")
             self._notify_progress("Clone timed out (5 minutes)", 0)
+            # Clean up potentially incomplete clone directory
+            if clone_path.exists():
+                try:
+                    shutil.rmtree(clone_path)
+                except Exception as cleanup_error:
+                    logger.warning(f"Failed to clean up incomplete clone at {clone_path}: {cleanup_error}")
             return None
         except Exception as e:
             logger.error(f"Failed to clone repository: {e}")
             self._notify_progress(f"Clone failed: {e}", 0)
+            # Clean up potentially incomplete clone directory
+            if clone_path.exists():
+                try:
+                    shutil.rmtree(clone_path)
+                except Exception as cleanup_error:
+                    logger.warning(f"Failed to clean up incomplete clone at {clone_path}: {cleanup_error}")
             return None
     
     def ingest_repository(self, repo_name: str) -> bool:
@@ -512,6 +552,7 @@ class GitHubIntegration:
                 ["git", "-C", str(repo.clone_path), "fetch"],
                 capture_output=True,
                 check=True,
+                timeout=60,
             )
             
             # Get local and remote commit hashes
@@ -522,6 +563,7 @@ class GitHubIntegration:
                 capture_output=True,
                 text=True,
                 check=True,
+                timeout=10,
             )
             remote_commit = result.stdout.strip()
             
@@ -557,11 +599,12 @@ class GitHubIntegration:
         
         try:
             # Pull latest changes
-            result = subprocess.run(
+            subprocess.run(
                 ["git", "-C", str(repo.clone_path), "pull"],
                 capture_output=True,
                 text=True,
                 check=True,
+                timeout=60,
             )
             
             # Update commit hash
@@ -609,11 +652,12 @@ class GitHubIntegration:
         
         try:
             # Checkout branch
-            result = subprocess.run(
+            subprocess.run(
                 ["git", "-C", str(repo.clone_path), "checkout", branch],
                 capture_output=True,
                 text=True,
                 check=True,
+                timeout=60,
             )
             
             # Update repository info
