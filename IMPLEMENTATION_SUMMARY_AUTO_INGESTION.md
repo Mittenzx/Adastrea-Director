@@ -466,7 +466,8 @@ class ProjectDetector:
             True if name is safe, False otherwise
         """
         # Only allow alphanumeric, underscore, and hyphen
-        return bool(re.match(r'^[a-zA-Z0-9_-]+$', name))
+        # Must start with alphanumeric or underscore
+        return bool(re.match(r'^[a-zA-Z0-9_][a-zA-Z0-9_-]*$', name))
 ```
 
 #### 4. Plugin Dependency Tracking
@@ -526,9 +527,9 @@ class ProjectDetector:
                         plugin_files.append(uplugin)
         
         return plugin_files
-    
-    # _is_safe_name helper method defined in section 3 is reused here
 ```
+
+**Note:** This method uses the `_is_safe_name` helper (shown in section 3) to validate plugin names.
 
 #### 5. Enhanced Auto-Ingestion Integration
 
