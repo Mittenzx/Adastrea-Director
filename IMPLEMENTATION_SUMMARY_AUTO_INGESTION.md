@@ -527,7 +527,7 @@ class ProjectDetector:
         
         return plugin_files
     
-    # Note: _is_safe_name method shown in section 3 above
+    # _is_safe_name helper method defined in section 3 is reused here
 ```
 
 #### 5. Enhanced Auto-Ingestion Integration
