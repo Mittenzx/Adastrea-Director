@@ -397,43 +397,76 @@ def parse_uproject(uproject_path: Path) -> Dict[str, Any]:
 Use module information to detect source directories:
 
 ```python
+import re
 from pathlib import Path
 from typing import List
 from logging_config import get_logger
 
 logger = get_logger(__name__)
 
-def detect_module_dirs(self, modules: List[str]) -> List[Path]:
-    """
-    Detect module source directories based on module names.
+class ProjectDetector:
+    def __init__(self, root_path: Path) -> None:
+        self.root_path = root_path
     
-    Args:
-        modules: List of module names from .uproject
+    def detect_module_dirs(self, modules: List[str]) -> List[Path]:
+        """
+        Detect module source directories based on module names.
         
-    Returns:
-        List of module source directories
-    """
-    module_dirs = []
+        Args:
+            modules: List of module names from .uproject
+            
+        Returns:
+            List of module source directories
+        """
+        module_dirs = []
+        
+        # Check standard locations
+        source_dir = self.root_path / "Source"
+        if source_dir.exists():
+            for module_name in modules:
+                # Validate module name to prevent path traversal
+                if not self._is_safe_name(module_name):
+                    logger.warning(f"Skipping unsafe module name: {module_name}")
+                    continue
+                    
+                module_path = source_dir / module_name
+                # Ensure resolved path is within source directory
+                try:
+                    module_path = module_path.resolve()
+                    if not module_path.is_relative_to(source_dir.resolve()):
+                        logger.warning(f"Module path outside source dir: {module_path}")
+                        continue
+                except (ValueError, OSError) as e:
+                    logger.warning(f"Invalid module path {module_name}: {e}")
+                    continue
+                    
+                if module_path.exists() and module_path.is_dir():
+                    logger.info(f"Found module directory: {module_path}")
+                    module_dirs.append(module_path)
+        
+        # Check Plugins directory
+        plugins_dir = self.root_path / "Plugins"
+        if plugins_dir.exists():
+            for plugin_dir in plugins_dir.iterdir():
+                if plugin_dir.is_dir():
+                    plugin_source = plugin_dir / "Source"
+                    if plugin_source.exists():
+                        module_dirs.append(plugin_source)
+        
+        return module_dirs
     
-    # Check standard locations
-    source_dir = self.root_path / "Source"
-    if source_dir.exists():
-        for module_name in modules:
-            module_path = source_dir / module_name
-            if module_path.exists() and module_path.is_dir():
-                logger.info(f"Found module directory: {module_path}")
-                module_dirs.append(module_path)
-    
-    # Check Plugins directory
-    plugins_dir = self.root_path / "Plugins"
-    if plugins_dir.exists():
-        for plugin_dir in plugins_dir.iterdir():
-            if plugin_dir.is_dir():
-                plugin_source = plugin_dir / "Source"
-                if plugin_source.exists():
-                    module_dirs.append(plugin_source)
-    
-    return module_dirs
+    def _is_safe_name(self, name: str) -> bool:
+        """
+        Validate that a name contains only safe characters.
+        
+        Args:
+            name: Module or plugin name to validate
+            
+        Returns:
+            True if name is safe, False otherwise
+        """
+        # Only allow alphanumeric, underscore, and hyphen
+        return bool(re.match(r'^[a-zA-Z0-9_-]+$', name))
 ```
 
 #### 4. Plugin Dependency Tracking
@@ -447,32 +480,65 @@ from logging_config import get_logger
 
 logger = get_logger(__name__)
 
-def collect_plugin_files(self, plugin_names: List[str]) -> List[Path]:
-    """
-    Collect .uplugin files for enabled plugins.
+class ProjectDetector:
+    def __init__(self, root_path: Path) -> None:
+        self.root_path = root_path
     
-    Args:
-        plugin_names: List of plugin names from .uproject
+    def collect_plugin_files(self, plugin_names: List[str]) -> List[Path]:
+        """
+        Collect .uplugin files for enabled plugins.
         
-    Returns:
-        List of .uplugin file paths
-    """
-    plugin_files = []
-    plugins_dir = self.root_path / "Plugins"
-    
-    if not plugins_dir.exists():
+        Args:
+            plugin_names: List of plugin names from .uproject
+            
+        Returns:
+            List of .uplugin file paths
+        """
+        plugin_files = []
+        plugins_dir = self.root_path / "Plugins"
+        
+        if not plugins_dir.exists():
+            return plugin_files
+        
+        for plugin_name in plugin_names:
+            # Validate plugin name to prevent path traversal
+            if not self._is_safe_name(plugin_name):
+                logger.warning(f"Skipping unsafe plugin name: {plugin_name}")
+                continue
+            
+            # Search in Plugins directory
+            for plugin_dir in plugins_dir.iterdir():
+                if plugin_dir.is_dir():
+                    uplugin = plugin_dir / f"{plugin_name}.uplugin"
+                    
+                    # Ensure resolved path is within plugins directory
+                    try:
+                        uplugin = uplugin.resolve()
+                        if not uplugin.is_relative_to(plugins_dir.resolve()):
+                            logger.warning(f"Plugin path outside Plugins dir: {uplugin}")
+                            continue
+                    except (ValueError, OSError) as e:
+                        logger.warning(f"Invalid plugin path {plugin_name}: {e}")
+                        continue
+                    
+                    if uplugin.exists():
+                        logger.info(f"Found plugin descriptor: {uplugin}")
+                        plugin_files.append(uplugin)
+        
         return plugin_files
     
-    for plugin_name in plugin_names:
-        # Search in Plugins directory
-        for plugin_dir in plugins_dir.iterdir():
-            if plugin_dir.is_dir():
-                uplugin = plugin_dir / f"{plugin_name}.uplugin"
-                if uplugin.exists():
-                    logger.info(f"Found plugin descriptor: {uplugin}")
-                    plugin_files.append(uplugin)
-    
-    return plugin_files
+    def _is_safe_name(self, name: str) -> bool:
+        """
+        Validate that a name contains only safe characters.
+        
+        Args:
+            name: Module or plugin name to validate
+            
+        Returns:
+            True if name is safe, False otherwise
+        """
+        # Only allow alphanumeric, underscore, and hyphen
+        return bool(re.match(r'^[a-zA-Z0-9_-]+$', name))
 ```
 
 #### 5. Enhanced Auto-Ingestion Integration
@@ -480,6 +546,7 @@ def collect_plugin_files(self, plugin_names: List[str]) -> List[Path]:
 Integrate .uproject parsing into `AutoIngestion`:
 
 ```python
+import json
 from pathlib import Path
 from typing import Optional
 from logging_config import get_logger
@@ -571,10 +638,14 @@ With .uproject integration, the following files are automatically detected and i
 
 ### Security Considerations
 
-1. **JSON Validation**: Validate .uproject structure before parsing
-2. **Path Sanitization**: Sanitize all paths from .uproject data
-3. **Version Checking**: Validate engine version compatibility
-4. **Plugin Verification**: Verify plugin existence before loading
+1. **JSON Validation**: Validate .uproject structure before parsing to prevent malformed data
+2. **Path Traversal Prevention**: 
+   - Module and plugin names are validated with regex (`^[a-zA-Z0-9_-]+$`)
+   - Resolved paths are checked to remain within project boundaries using `is_relative_to()`
+   - Invalid names are logged and skipped to prevent directory traversal attacks
+3. **Name Sanitization**: Only alphanumeric characters, underscores, and hyphens allowed in module/plugin names
+4. **Version Checking**: Validate engine version compatibility before processing
+5. **Error Handling**: Graceful handling of file access errors and malformed JSON
 
 ### Testing
 
