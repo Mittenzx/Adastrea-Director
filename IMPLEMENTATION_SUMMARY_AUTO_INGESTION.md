@@ -630,7 +630,8 @@ With .uproject integration, the following files are automatically detected and i
 
 1. **JSON Validation**: Validate .uproject structure before parsing to prevent malformed data
 2. **Path Traversal Prevention**: 
-   - Module and plugin names are validated with regex (`^[a-zA-Z0-9_-]+$`)
+   - Module and plugin names are validated with regex (`^[a-zA-Z0-9_][a-zA-Z0-9_-]*$`)
+   - Names must start with alphanumeric character or underscore (prevents leading hyphens)
    - Resolved paths are checked to remain within project boundaries using `is_relative_to()`
    - Invalid names are logged and skipped to prevent directory traversal attacks
 3. **Name Sanitization**: Only alphanumeric characters, underscores, and hyphens allowed in module/plugin names
