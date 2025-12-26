@@ -527,18 +527,7 @@ class ProjectDetector:
         
         return plugin_files
     
-    def _is_safe_name(self, name: str) -> bool:
-        """
-        Validate that a name contains only safe characters.
-        
-        Args:
-            name: Module or plugin name to validate
-            
-        Returns:
-            True if name is safe, False otherwise
-        """
-        # Only allow alphanumeric, underscore, and hyphen
-        return bool(re.match(r'^[a-zA-Z0-9_-]+$', name))
+    # Note: _is_safe_name method shown in section 3 above
 ```
 
 #### 5. Enhanced Auto-Ingestion Integration
@@ -558,7 +547,7 @@ class AutoIngestion:
     
     def __init__(self, project_root: str, collection_name: Optional[str] = None):
         self.project_root = Path(project_root)
-        self.detector = ProjectDetector(str(project_root))
+        self.detector = ProjectDetector(self.project_root)
         
         # Detect .uproject file
         self.uproject_file = self.detector.find_uproject_file()
