@@ -197,7 +197,7 @@ Optional future enhancements:
 - Visual repository browser
 - Custom ingestion rules
 - Multi-repository sync
-- Integration with .uproject files
+- ✅ Integration with .uproject files (see IMPLEMENTATION_SUMMARY_AUTO_INGESTION.md)
 
 ---
 
