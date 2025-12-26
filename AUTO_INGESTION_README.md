@@ -363,7 +363,7 @@ Planned improvements:
 - [ ] Visual repository browser
 - [ ] Conflict resolution for updates
 - [ ] Custom ingestion rules per directory
-- [ ] Integration with Unreal Engine project files (.uproject)
+- [x] Integration with Unreal Engine project files (.uproject) - See IMPLEMENTATION_SUMMARY_AUTO_INGESTION.md
 - [ ] Automatic detection of plugin dependencies
 - [ ] Multi-repository synchronization
 
