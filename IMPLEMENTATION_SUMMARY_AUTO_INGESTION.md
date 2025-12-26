@@ -322,6 +322,12 @@ A `.uproject` file is a JSON descriptor located at the root of an Unreal Engine 
 Enhance `ProjectDetector` to find .uproject files:
 
 ```python
+from pathlib import Path
+from typing import Optional
+from logging_config import get_logger
+
+logger = get_logger(__name__)
+
 class ProjectDetector:
     """Detects project directories and relevant source files."""
     
@@ -344,7 +350,11 @@ Parse .uproject JSON to extract metadata:
 
 ```python
 import json
-from typing import Dict, List
+from pathlib import Path
+from typing import Dict, List, Any
+from logging_config import get_logger
+
+logger = get_logger(__name__)
 
 def parse_uproject(uproject_path: Path) -> Dict[str, Any]:
     """
@@ -355,20 +365,31 @@ def parse_uproject(uproject_path: Path) -> Dict[str, Any]:
         
     Returns:
         Dictionary with project metadata
+        
+    Raises:
+        FileNotFoundError: If .uproject file doesn't exist
+        json.JSONDecodeError: If .uproject file is invalid JSON
     """
-    with open(uproject_path, 'r', encoding='utf-8') as f:
-        data = json.load(f)
-    
-    return {
-        'project_name': uproject_path.stem,
-        'engine_version': data.get('EngineAssociation', 'Unknown'),
-        'file_version': data.get('FileVersion', 3),
-        'description': data.get('Description', ''),
-        'category': data.get('Category', ''),
-        'modules': [m['Name'] for m in data.get('Modules', [])],
-        'plugins': [p['Name'] for p in data.get('Plugins', []) 
-                    if p.get('Enabled', False)],
-    }
+    try:
+        with open(uproject_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        
+        return {
+            'project_name': uproject_path.stem,
+            'engine_version': data.get('EngineAssociation', 'Unknown'),
+            'file_version': data.get('FileVersion', 3),
+            'description': data.get('Description', ''),
+            'category': data.get('Category', ''),
+            'modules': [m['Name'] for m in data.get('Modules', [])],
+            'plugins': [p['Name'] for p in data.get('Plugins', []) 
+                        if p.get('Enabled', False)],
+        }
+    except FileNotFoundError:
+        logger.error(f"Project file not found: {uproject_path}")
+        raise
+    except json.JSONDecodeError as e:
+        logger.error(f"Invalid JSON in {uproject_path}: {e}")
+        raise
 ```
 
 #### 3. Module-Based Directory Detection
@@ -376,6 +397,12 @@ def parse_uproject(uproject_path: Path) -> Dict[str, Any]:
 Use module information to detect source directories:
 
 ```python
+from pathlib import Path
+from typing import List
+from logging_config import get_logger
+
+logger = get_logger(__name__)
+
 def detect_module_dirs(self, modules: List[str]) -> List[Path]:
     """
     Detect module source directories based on module names.
@@ -414,6 +441,12 @@ def detect_module_dirs(self, modules: List[str]) -> List[Path]:
 Track plugin dependencies for comprehensive ingestion:
 
 ```python
+from pathlib import Path
+from typing import List
+from logging_config import get_logger
+
+logger = get_logger(__name__)
+
 def collect_plugin_files(self, plugin_names: List[str]) -> List[Path]:
     """
     Collect .uplugin files for enabled plugins.
@@ -447,6 +480,12 @@ def collect_plugin_files(self, plugin_names: List[str]) -> List[Path]:
 Integrate .uproject parsing into `AutoIngestion`:
 
 ```python
+from pathlib import Path
+from typing import Optional
+from logging_config import get_logger
+
+logger = get_logger(__name__)
+
 class AutoIngestion:
     """Auto-ingestion with .uproject awareness."""
     
@@ -459,13 +498,16 @@ class AutoIngestion:
         self.project_metadata = None
         
         if self.uproject_file:
-            self.project_metadata = parse_uproject(self.uproject_file)
-            logger.info(f"Unreal Project: {self.project_metadata['project_name']}")
-            logger.info(f"Engine Version: {self.project_metadata['engine_version']}")
-            
-            # Use project name for collection if not specified
-            if not collection_name:
-                collection_name = self.project_metadata['project_name']
+            try:
+                self.project_metadata = parse_uproject(self.uproject_file)
+                logger.info(f"Unreal Project: {self.project_metadata['project_name']}")
+                logger.info(f"Engine Version: {self.project_metadata['engine_version']}")
+                
+                # Use project name for collection if not specified
+                if not collection_name:
+                    collection_name = self.project_metadata['project_name']
+            except (FileNotFoundError, json.JSONDecodeError) as e:
+                logger.warning(f"Failed to parse .uproject: {e}")
         
         # Initialize with enhanced detection
         self.ingestion_agent = DocumentIngestionAgent(
