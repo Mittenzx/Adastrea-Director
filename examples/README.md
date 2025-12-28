@@ -81,7 +81,7 @@ The following utility modules are available for use within Unreal Engine's Pytho
 - **batch_generate_lods**: Generate LODs for multiple meshes
 - **batch_optimize_textures**: Optimize multiple textures
 
-For complete documentation, see [PYTHON_RESEARCH_UE427.md](../PYTHON_RESEARCH_UE427.md)
+For complete documentation, see [PYTHON_RESEARCH_UE427.md](../Documentation/research/PYTHON_RESEARCH_UE427.md)
 
 ## Prerequisites
 

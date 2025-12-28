@@ -99,7 +99,7 @@ def check_internet_connectivity():
     except (socket.error, socket.timeout):
         print_warning("Cannot reach huggingface.co")
         print_warning("First-time ingestion requires internet access to download embedding model")
-        print_warning("Alternative: Use OpenAI embeddings (see GAME_REPO_INGESTION_GUIDE.md)")
+        print_warning("Alternative: Use OpenAI embeddings (see Documentation/guides/GAME_REPO_INGESTION_GUIDE.md)")
         return False
 
 def check_huggingface_cache():
@@ -234,15 +234,15 @@ def main():
         
         if not results['internet'] and not results['cache']:
             print_warning("\nNote: First ingestion requires internet access")
-            print_warning("See GAME_REPO_INGESTION_GUIDE.md for alternatives")
+            print_warning("See Documentation/guides/GAME_REPO_INGESTION_GUIDE.md for alternatives")
     else:
         print_error(f"Some critical checks failed ({passed}/{total} passed)")
         print_error("Fix the errors above before proceeding")
     
     print("")
     print("For detailed help, see:")
-    print("  - GAME_REPO_INGESTION_GUIDE.md (comprehensive guide)")
-    print("  - Plugins/AdastreaDirector/QUICK_INGESTION_GUIDE.md (quick reference)")
+    print("  - Documentation/guides/GAME_REPO_INGESTION_GUIDE.md (comprehensive guide)")
+    print("  - Plugins/AdastreaDirector/Documentation/guides/QUICK_INGESTION_GUIDE.md (quick reference)")
     print("")
     
     sys.exit(0 if passed >= 4 else 1)
