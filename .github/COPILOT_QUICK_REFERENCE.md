@@ -259,7 +259,7 @@ python ipc_server.py --port 5555
 
 ### Unreal Plugin
 - **[Plugins/AdastreaDirector/README.md](../Plugins/AdastreaDirector/README.md)** - Plugin documentation
-- **[Plugins/AdastreaDirector/SETUP_GUIDE.md](../Plugins/AdastreaDirector/SETUP_GUIDE.md)** - Plugin setup
+- **[Plugins/AdastreaDirector/SETUP_GUIDE.md](../Plugins/AdastreaDirector/Documentation/guides/SETUP_GUIDE.md)** - Plugin setup
 
 ---
 
