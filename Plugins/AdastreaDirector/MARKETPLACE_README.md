@@ -301,7 +301,7 @@ Unique hybrid architecture leveraging both external Python and UE's Python API.
    Query tab → Type question → Get answer!
    ```
 
-**Detailed Guide:** See [SETUP_GUIDE.md](SETUP_GUIDE.md)
+**Detailed Guide:** See [SETUP_GUIDE.md](Documentation/guides/SETUP_GUIDE.md)
 
 ### First Query Example
 
@@ -380,19 +380,19 @@ of Class" node in Blueprint...
 ### Included Documentation
 
 **Getting Started:**
-- [SETUP_GUIDE.md](SETUP_GUIDE.md) - Quick 5-minute setup
-- [FEATURES.md](FEATURES.md) - Complete feature list
-- [QUICK_REFERENCE.md](../../QUICK_REFERENCE.md) - Cheat sheet
+- [SETUP_GUIDE.md](Documentation/guides/SETUP_GUIDE.md) - Quick 5-minute setup
+- [FEATURES.md](Documentation/features/FEATURES.md) - Complete feature list
+- [QUICK_REFERENCE.md](../../Documentation/guides/QUICK_REFERENCE.md) - Cheat sheet
 
 **Advanced:**
-- [UE_PYTHON_API.md](UE_PYTHON_API.md) - Python API reference
+- [UE_PYTHON_API.md](Documentation/features/UE_PYTHON_API.md) - Python API reference
 - [BLUEPRINT_GUIDE.md](Content/Blueprints/BLUEPRINT_GUIDE.md) - Blueprint integration
-- [TROUBLESHOOTING.md](../../TROUBLESHOOTING.md) - Problem solving
+- [TROUBLESHOOTING.md](Documentation/guides/TROUBLESHOOTING.md) - Problem solving
 
 **Reference:**
 - [FAQ.md](../../FAQ.md) - 40+ common questions
 - [CHANGELOG.md](../../CHANGELOG.md) - Version history
-- [VISUAL_SHOWCASE.md](../../VISUAL_SHOWCASE.md) - UI mockups
+- [VISUAL_SHOWCASE.md](../../Documentation/architecture/VISUAL_SHOWCASE.md) - UI mockups
 
 ### Online Resources
 
@@ -461,7 +461,7 @@ of Class" node in Blueprint...
 
 ### Self-Help Resources
 
-1. Check [TROUBLESHOOTING.md](../../TROUBLESHOOTING.md)
+1. Check [TROUBLESHOOTING.md](Documentation/guides/TROUBLESHOOTING.md)
 2. Review [FAQ.md](../../FAQ.md)
 3. Check Dashboard status indicators
 4. Read relevant documentation
@@ -597,12 +597,15 @@ AdastreaDirector/
 │   ├── Blueprints/                    # Blueprint templates
 │   └── Documentation/                 # Additional docs
 ├── Documentation/
-│   ├── README.md                      # Main plugin guide
-│   ├── SETUP_GUIDE.md                 # Quick start (5 min)
-│   ├── FEATURES.md                    # Feature details
-│   ├── UE_PYTHON_API.md               # Python API reference
-│   ├── MARKETPLACE_README.md          # This file
-│   └── [20+ other guides...]          # Complete documentation
+│   ├── README.md                      # Documentation index
+│   ├── guides/                        # Setup and user guides
+│   │   ├── SETUP_GUIDE.md             # Quick start (5 min)
+│   │   └── TROUBLESHOOTING.md         # Problem solving
+│   ├── features/                      # Feature documentation
+│   │   ├── FEATURES.md                # Feature details
+│   │   └── UE_PYTHON_API.md           # Python API reference
+│   └── implementation/                # Implementation details
+├── MARKETPLACE_README.md              # This file
 └── AdastreaDirector.uplugin           # Plugin metadata
 ```
 
@@ -634,7 +637,7 @@ AdastreaDirector/
 
 **Questions?** Check [FAQ.md](../../FAQ.md) or open a GitHub Discussion.
 
-**Need Help?** See [TROUBLESHOOTING.md](../../TROUBLESHOOTING.md) or [SETUP_GUIDE.md](SETUP_GUIDE.md).
+**Need Help?** See [TROUBLESHOOTING.md](Documentation/guides/TROUBLESHOOTING.md) or [SETUP_GUIDE.md](Documentation/guides/SETUP_GUIDE.md).
 
 ---
 

@@ -141,9 +141,9 @@ python3 ingest_game_repo.py
 3. Click "Run workflow"
 
 📖 **Documentation:**
-- **Quick Status**: [INGESTION_STATUS.md](INGESTION_STATUS.md) - Current status and quick reference
-- **Complete Guide**: [GAME_REPO_INGESTION_GUIDE.md](GAME_REPO_INGESTION_GUIDE.md) - Detailed instructions and troubleshooting
-- **Quick Start**: [START_HERE_INGESTION.md](START_HERE_INGESTION.md) - 60-second setup guide
+- **Quick Status**: [INGESTION_STATUS.md](Documentation/development/INGESTION_STATUS.md) - Current status and quick reference
+- **Complete Guide**: [GAME_REPO_INGESTION_GUIDE.md](Documentation/guides/GAME_REPO_INGESTION_GUIDE.md) - Detailed instructions and troubleshooting
+- **Quick Start**: [START_HERE_INGESTION.md](Documentation/guides/START_HERE_INGESTION.md) - 60-second setup guide
 
 Once populated, all agents will have full context about your Adastrea game when providing assistance!
 
@@ -357,7 +357,7 @@ For game developers working in Unreal Engine, the plugin provides an integrated 
 
 **🚀 Quick Start:**
 
-👉 **[Plugin Setup Guide](Plugins/AdastreaDirector/SETUP_GUIDE.md)** - Get started in 5 minutes!
+👉 **[Plugin Setup Guide](Plugins/AdastreaDirector/Documentation/guides/SETUP_GUIDE.md)** - Get started in 5 minutes!
 
 **Installation (Quick):**
 1. Copy `Plugins/AdastreaDirector` to your UE project's `Plugins` folder
@@ -385,13 +385,13 @@ For game developers working in Unreal Engine, the plugin provides an integrated 
 - ✅ 25+ comprehensive tests (100% passing)
 
 **📖 Complete Plugin Documentation:**
-- **[Setup Guide](Plugins/AdastreaDirector/SETUP_GUIDE.md)** - 🌟 **Start here!** Quick setup and testing
+- **[Setup Guide](Plugins/AdastreaDirector/Documentation/guides/SETUP_GUIDE.md)** - 🌟 **Start here!** Quick setup and testing
 - [Plugin README](Plugins/AdastreaDirector/README.md) - Full plugin guide
-- [UE Python API Guide](Plugins/AdastreaDirector/UE_PYTHON_API.md) - **NEW!** UE Python integration
-- **[Python Research Document](PYTHON_RESEARCH_UE427.md)** - 📚 **NEW!** Complete UE Python API capabilities (UE 4.27-5.7)
-- [Installation Guide](Plugins/AdastreaDirector/INSTALLATION.md) - Detailed setup
-- [RAG Integration](Plugins/AdastreaDirector/RAG_INTEGRATION.md) - Using the RAG system
-- [Testing Quick Reference](Plugins/AdastreaDirector/TESTING_QUICK_REFERENCE.md) - Verify installation
+- [UE Python API Guide](Plugins/AdastreaDirector/Documentation/features/UE_PYTHON_API.md) - **NEW!** UE Python integration
+- **[Python Research Document](Documentation/research/PYTHON_RESEARCH_UE427.md)** - 📚 **NEW!** Complete UE Python API capabilities (UE 4.27-5.7)
+- [Installation Guide](Plugins/AdastreaDirector/Documentation/guides/INSTALLATION.md) - Detailed setup
+- [RAG Integration](Plugins/AdastreaDirector/Documentation/features/RAG_INTEGRATION.md) - Using the RAG system
+- [Testing Quick Reference](Plugins/AdastreaDirector/Documentation/guides/TESTING_QUICK_REFERENCE.md) - Verify installation
 
 **Coming Soon (Weeks 7-16):**
 - Planning agent integration (task breakdown in UE)
@@ -478,7 +478,12 @@ Adastrea-Director/
 ├── README.md                      # This file - Quick start guide
 ├── CONTRIBUTING.md                # Contribution guidelines
 ├── WIKI_MIGRATION.md              # Documentation migration manifest
-├── UE_LOG_USAGE_GUIDE.md          # Guide for UE log capture and analysis
+├── Documentation/                 # Organized documentation (UE standards)
+│   ├── guides/                    # User guides and tutorials
+│   ├── implementation/            # Implementation summaries
+│   ├── architecture/              # Architecture and design docs
+│   ├── research/                  # Research and exploration
+│   └── development/               # Development status docs
 ├── requirements.txt               # Python dependencies
 ├── ingest.py                      # Document ingestion script
 ├── ingest_game_repo.py            # Game repository ingestion
@@ -518,11 +523,11 @@ The wiki includes:
 ### 🤖 For GitHub Copilot and AI Agents
 
 If you're a GitHub Copilot agent or AI assistant working with Adastrea Director:
-- **[COPILOT_INSTRUCTIONS.md](COPILOT_INSTRUCTIONS.md)** - 📖 Complete guide for Copilot agents with connection methods, capabilities, and verification procedures
+- **[COPILOT_INSTRUCTIONS.md](Documentation/development/COPILOT_INSTRUCTIONS.md)** - 📖 Complete guide for Copilot agents with connection methods, capabilities, and verification procedures
 - **[.github/COPILOT_QUICK_REFERENCE.md](.github/COPILOT_QUICK_REFERENCE.md)** - 🚀 Quick reference card for common operations
 ### 🤖 GitHub Copilot Integration
 
-Want GitHub Copilot to help debug UE crashes and errors? See **[COPILOT_UE_LOGS_GUIDE.md](COPILOT_UE_LOGS_GUIDE.md)** for details on how Copilot can access Unreal Engine output logs for better assistance.
+Want GitHub Copilot to help debug UE crashes and errors? See **[COPILOT_UE_LOGS_GUIDE.md](Documentation/guides/COPILOT_UE_LOGS_GUIDE.md)** for details on how Copilot can access Unreal Engine output logs for better assistance.
 
 
 

@@ -57,10 +57,10 @@ def test_script_files_exist():
 def test_documentation_exists():
     """Check that documentation files exist."""
     docs = [
-        "GAME_REPO_INGESTION_GUIDE.md",
-        "START_HERE_INGESTION.md",
-        "INGESTION_STATUS.md",
-        "INGESTION_IMPLEMENTATION_SUMMARY.md"
+        "Documentation/guides/GAME_REPO_INGESTION_GUIDE.md",
+        "Documentation/guides/START_HERE_INGESTION.md",
+        "Documentation/development/INGESTION_STATUS.md",
+        "Documentation/implementation/INGESTION_IMPLEMENTATION_SUMMARY.md"
     ]
     
     missing_docs = []

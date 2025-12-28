@@ -8,7 +8,7 @@ Welcome! This directory contains documentation for GitHub Copilot agents and AI 
 
 | Document | Purpose | When to Use |
 |----------|---------|-------------|
-| **[COPILOT_INSTRUCTIONS.md](../COPILOT_INSTRUCTIONS.md)** | Comprehensive guide (1,750+ lines) | When you need detailed information about any aspect of the system |
+| **[COPILOT_INSTRUCTIONS.md](../Documentation/development/COPILOT_INSTRUCTIONS.md)** | Comprehensive guide (1,750+ lines) | When you need detailed information about any aspect of the system |
 | **[COPILOT_QUICK_REFERENCE.md](COPILOT_QUICK_REFERENCE.md)** | Quick reference card (290 lines) | When you need a quick lookup for common operations |
 
 ### What's Covered
@@ -153,7 +153,7 @@ Please let us know through GitHub Issues!
 ---
 
 **Quick Links:**
-- [COPILOT_INSTRUCTIONS.md](../COPILOT_INSTRUCTIONS.md) - Full guide
+- [COPILOT_INSTRUCTIONS.md](../Documentation/development/COPILOT_INSTRUCTIONS.md) - Full guide
 - [COPILOT_QUICK_REFERENCE.md](COPILOT_QUICK_REFERENCE.md) - Quick reference
 - [GitHub Repository](https://github.com/Mittenzx/Adastrea-Director)
 - [Project Wiki](https://github.com/Mittenzx/Adastrea-Director/wiki)

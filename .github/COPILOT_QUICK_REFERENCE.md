@@ -2,7 +2,7 @@
 
 Quick reference guide for GitHub Copilot agents working with Adastrea Director from VS Code.
 
-📖 **For comprehensive documentation, see:** [COPILOT_INSTRUCTIONS.md](../COPILOT_INSTRUCTIONS.md)
+📖 **For comprehensive documentation, see:** [COPILOT_INSTRUCTIONS.md](../Documentation/development/COPILOT_INSTRUCTIONS.md)
 
 ## 🚀 Quick Setup
 
@@ -248,7 +248,7 @@ python ipc_server.py --port 5555
 ## 📚 Additional Resources
 
 ### Documentation Files
-- **[COPILOT_INSTRUCTIONS.md](../COPILOT_INSTRUCTIONS.md)** - Complete guide for Copilot agents
+- **[COPILOT_INSTRUCTIONS.md](../Documentation/development/COPILOT_INSTRUCTIONS.md)** - Complete guide for Copilot agents
 - **[mcp_server/MCP_SERVER_GUIDE.md](../mcp_server/MCP_SERVER_GUIDE.md)** - MCP server documentation
 - **[wiki/Remote-Connection-Types-and-Actions.md](../wiki/Remote-Connection-Types-and-Actions.md)** - All connection types
 - **[README.md](../README.md)** - Main project documentation
@@ -259,7 +259,7 @@ python ipc_server.py --port 5555
 
 ### Unreal Plugin
 - **[Plugins/AdastreaDirector/README.md](../Plugins/AdastreaDirector/README.md)** - Plugin documentation
-- **[Plugins/AdastreaDirector/SETUP_GUIDE.md](../Plugins/AdastreaDirector/SETUP_GUIDE.md)** - Plugin setup
+- **[Plugins/AdastreaDirector/SETUP_GUIDE.md](../Plugins/AdastreaDirector/Documentation/guides/SETUP_GUIDE.md)** - Plugin setup
 
 ---
 
@@ -286,4 +286,4 @@ python ipc_server.py --port 5555
 
 **Version:** 1.0.0  
 **Last Updated:** December 2025  
-**For comprehensive documentation, see:** [COPILOT_INSTRUCTIONS.md](../COPILOT_INSTRUCTIONS.md)
+**For comprehensive documentation, see:** [COPILOT_INSTRUCTIONS.md](../Documentation/development/COPILOT_INSTRUCTIONS.md)

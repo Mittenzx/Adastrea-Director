@@ -8,7 +8,7 @@ An AI-powered development assistant plugin for Unreal Engine that provides intel
 
 **New to the plugin?** Start here:
 
-👉 **[SETUP_GUIDE.md](SETUP_GUIDE.md)** - Get started in 5 minutes!
+👉 **[SETUP_GUIDE.md](Documentation/guides/SETUP_GUIDE.md)** - Get started in 5 minutes!
 
 This quick guide covers:
 - ✅ Installation (3 steps)
@@ -98,7 +98,7 @@ The plugin currently provides:
 - ✅ 10-50x performance improvement over IPC calls
 - ✅ Full documentation and examples
 
-👉 **See [CPP_IMPLEMENTATION_GUIDE.md](CPP_IMPLEMENTATION_GUIDE.md)** for complete C++ API documentation
+👉 **See [CPP_IMPLEMENTATION_GUIDE.md](Documentation/guides/CPP_IMPLEMENTATION_GUIDE.md)** for complete C++ API documentation
 
 **Coming Soon:**
 - Planning agent integration
@@ -150,7 +150,7 @@ The plugin currently provides:
 - 🔴 Red = Error or not functional
 - ⚪ Gray = Unknown or checking
 
-**See [STATUS_INDICATORS.md](STATUS_INDICATORS.md) for complete troubleshooting guide.**
+**See [STATUS_INDICATORS.md](Documentation/features/STATUS_INDICATORS.md) for complete troubleshooting guide.**
 
 The Python backend starts automatically when the plugin loads!
 
@@ -231,7 +231,7 @@ The Ingestion tab allows you to populate the knowledge base:
 - Tab state is preserved when switching
 - Radio button style indicates active tab
 
-**Note**: For detailed technical information about the tabbed interface implementation, see [UI_ENHANCEMENT_TABBED_INTERFACE.md](UI_ENHANCEMENT_TABBED_INTERFACE.md).
+**Note**: For detailed technical information about the tabbed interface implementation, see [UI_ENHANCEMENT_TABBED_INTERFACE.md](Documentation/implementation/UI_ENHANCEMENT_TABBED_INTERFACE.md).
 
 ### Error Handling
 

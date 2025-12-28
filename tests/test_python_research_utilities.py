@@ -269,13 +269,13 @@ class TestResearchDocument(unittest.TestCase):
     
     def test_research_document_exists(self):
         """Test that research document file exists."""
-        doc_path = os.path.join(project_root, 'PYTHON_RESEARCH_UE427.md')
+        doc_path = os.path.join(project_root, 'Documentation/research/PYTHON_RESEARCH_UE427.md')
         self.assertTrue(os.path.exists(doc_path), 
                        f"Research document not found at {doc_path}")
     
     def test_research_document_content(self):
         """Test that research document has expected sections."""
-        doc_path = os.path.join(project_root, 'PYTHON_RESEARCH_UE427.md')
+        doc_path = os.path.join(project_root, 'Documentation/research/PYTHON_RESEARCH_UE427.md')
         
         with open(doc_path, 'r', encoding='utf-8') as f:
             content = f.read()
