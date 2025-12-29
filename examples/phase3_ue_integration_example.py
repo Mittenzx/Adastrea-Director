@@ -28,7 +28,6 @@ sys.path.insert(0, str(project_root / "Plugins" / "AdastreaDirector" / "Python")
 
 from Plugins.AdastreaDirector.Python.ipc_integration import IntegratedIPCServer
 from rich.console import Console
-from rich.panel import Panel
 from rich.table import Table
 from rich import box
 import json

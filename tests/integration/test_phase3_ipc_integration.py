@@ -7,7 +7,6 @@ Tests the IPC server integration with Phase 3 autonomous agents
 
 import pytest
 import sys
-import os
 import json
 from pathlib import Path
 
@@ -89,7 +88,7 @@ class TestPhase3IPCIntegration:
         perf_status = response['agents']['performance']
         assert 'running' in perf_status
         assert 'status' in perf_status
-        assert 'metrics' in perf_status
+        assert 'tasks_completed' in perf_status
     
     def test_collect_metrics_handler_manual(self, ipc_server):
         """Test collecting performance metrics via IPC handler (manual mode)."""

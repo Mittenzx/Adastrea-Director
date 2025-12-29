@@ -282,7 +282,7 @@ Or provide a log file path:
 #### Analyze Code
 ```json
 {
-  "command": "analyze_code",
+  "command": "analyze_code_quality",
   "data": {
     "file_path": "MyClass.py",
     "code_content": "def my_function():\n    x = 12345\n    return x"

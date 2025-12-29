@@ -159,7 +159,9 @@ class IntegratedIPCServer(IPCServer):
         
         try:
             # Import Phase 3 modules
-            sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
+            phase3_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..'))
+            if phase3_root not in sys.path:
+                sys.path.insert(0, phase3_root)
             from agents.phase3 import (
                 EventBus,
                 SharedContext,
@@ -249,7 +251,7 @@ class IntegratedIPCServer(IPCServer):
             self.register_handler('get_bugs', self._handle_get_bugs)
             
             # Code quality
-            self.register_handler('analyze_code', self._handle_analyze_code_quality)
+            self.register_handler('analyze_code_quality', self._handle_analyze_code_quality)
             self.register_handler('analyze_blueprint', self._handle_analyze_blueprint)
             self.register_handler('get_technical_debt', self._handle_get_technical_debt)
     
@@ -631,7 +633,15 @@ class IntegratedIPCServer(IPCServer):
                     'error': 'Performance agent not initialized'
                 }
             
-            params = json.loads(data) if data and isinstance(data, str) else {}
+            try:
+                params = json.loads(data) if data and isinstance(data, str) else {}
+            except json.JSONDecodeError as e:
+                logger.error(f"Invalid JSON in collect metrics data: {e}")
+                return {
+                    'status': 'error',
+                    'error': 'Invalid JSON in metrics data',
+                    'details': str(e)
+                }
             
             # If no params, try to collect from UE
             if not params:
@@ -670,7 +680,9 @@ class IntegratedIPCServer(IPCServer):
                         'frame_rate': metrics.frame_rate,
                         'memory_usage_mb': metrics.memory_usage_mb,
                         'cpu_usage_percent': metrics.cpu_usage_percent,
-                        'gpu_usage_percent': metrics.gpu_usage_percent
+                        'gpu_usage_percent': metrics.gpu_usage_percent,
+                        'draw_calls': metrics.draw_calls,
+                        'triangles': metrics.triangles
                     }
                 }
             
@@ -824,8 +836,16 @@ class IntegratedIPCServer(IPCServer):
             try:
                 params = json.loads(data) if isinstance(data, str) else data
                 if 'log_file' in params:
-                    # Read log file
-                    with open(params['log_file'], 'r') as f:
+                    # Read log file with path validation to prevent traversal
+                    log_file_path = os.path.abspath(str(params['log_file']))
+                    # Get the project root directory (3 levels up from this file)
+                    allowed_base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..'))
+                    if not log_file_path.startswith(allowed_base_dir):
+                        return {
+                            'status': 'error',
+                            'error': 'Invalid log file path - must be within project directory'
+                        }
+                    with open(log_file_path, 'r') as f:
                         log_content = f.read()
                 else:
                     log_content = params.get('log_content', data)
@@ -857,13 +877,21 @@ class IntegratedIPCServer(IPCServer):
     
     def _handle_run_tests(self, data: str) -> Dict[str, Any]:
         """
-        Run automated tests.
+        Record automated test results.
+        
+        Note: This handler records test results that were executed externally.
+        It does not run tests itself - it's for tracking/recording test execution
+        results from external test runners (e.g., pytest, UE automation tests).
         
         Args:
-            data: JSON string with test parameters
+            data: JSON string with test parameters including:
+                  - test_suite: Name of the test suite
+                  - test_count: Total number of tests
+                  - passed: Number of tests that passed
+                  - failed: Number of tests that failed
             
         Returns:
-            Test results
+            Test results summary
         """
         import json
         
@@ -971,8 +999,22 @@ class IntegratedIPCServer(IPCServer):
             # Read code content
             if 'code_content' in params:
                 code_content = params['code_content']
-            elif 'file_path' in params and os.path.exists(params['file_path']):
-                with open(params['file_path'], 'r') as f:
+            elif 'file_path' in params:
+                # Validate file path to prevent traversal attacks
+                code_file_path = os.path.abspath(str(params['file_path']))
+                # Get the project root directory (3 levels up from this file)
+                allowed_base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..'))
+                if not code_file_path.startswith(allowed_base_dir):
+                    return {
+                        'status': 'error',
+                        'error': 'Invalid file path - must be within project directory'
+                    }
+                if not os.path.exists(code_file_path):
+                    return {
+                        'status': 'error',
+                        'error': 'File path does not exist'
+                    }
+                with open(code_file_path, 'r') as f:
                     code_content = f.read()
             else:
                 return {
