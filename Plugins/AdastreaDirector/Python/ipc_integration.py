@@ -586,17 +586,17 @@ class IntegratedIPCServer(IPCServer):
                 'performance': {
                     'running': self.performance_agent.is_running() if self.performance_agent else False,
                     'status': self.performance_agent.get_status().value if self.performance_agent else 'unknown',
-                    'metrics': self.performance_agent.get_metrics() if self.performance_agent else {}
+                    'tasks_completed': self.performance_agent._metrics.tasks_completed if self.performance_agent and hasattr(self.performance_agent, '_metrics') else 0
                 } if self.performance_agent else {'available': False},
                 'bug_detection': {
                     'running': self.bug_detection_agent.is_running() if self.bug_detection_agent else False,
                     'status': self.bug_detection_agent.get_status().value if self.bug_detection_agent else 'unknown',
-                    'metrics': self.bug_detection_agent.get_metrics() if self.bug_detection_agent else {}
+                    'tasks_completed': self.bug_detection_agent._metrics.tasks_completed if self.bug_detection_agent and hasattr(self.bug_detection_agent, '_metrics') else 0
                 } if self.bug_detection_agent else {'available': False},
                 'code_quality': {
                     'running': self.code_quality_agent.is_running() if self.code_quality_agent else False,
                     'status': self.code_quality_agent.get_status().value if self.code_quality_agent else 'unknown',
-                    'metrics': self.code_quality_agent.get_metrics() if self.code_quality_agent else {}
+                    'tasks_completed': self.code_quality_agent._metrics.tasks_completed if self.code_quality_agent and hasattr(self.code_quality_agent, '_metrics') else 0
                 } if self.code_quality_agent else {'available': False}
             }
             
