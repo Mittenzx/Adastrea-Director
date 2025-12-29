@@ -28,6 +28,11 @@ from typing import Dict, Any, Optional, Tuple
 from collections import defaultdict
 from textwrap import dedent
 
+# Disable ChromaDB telemetry BEFORE any imports that might import chromadb
+# This prevents "capture() takes 1 positional argument but 3 were given" errors
+# ChromaDB checks for this variable and any truthy value disables telemetry
+os.environ["ANONYMIZED_TELEMETRY"] = "1"
+
 # Add parent directory to path to import main modules (for goal/task agents, llm_config, etc.)
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
 

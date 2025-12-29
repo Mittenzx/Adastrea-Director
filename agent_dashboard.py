@@ -6,11 +6,17 @@ Real-time terminal-based dashboard for monitoring Phase 3 autonomous agents.
 Displays agent status, events, and metrics in a live-updating interface.
 """
 
+import os
 import sys
 import time
 from datetime import datetime
 from threading import Event as ThreadEvent
 import argparse
+
+# Disable ChromaDB telemetry BEFORE any imports that might import chromadb
+# This prevents "capture() takes 1 positional argument but 3 were given" errors
+# ChromaDB checks for this variable and any truthy value disables telemetry
+os.environ["ANONYMIZED_TELEMETRY"] = "1"
 
 try:
     from rich.console import Console
