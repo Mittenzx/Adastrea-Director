@@ -1,6 +1,8 @@
-# Wiki Setup Guide
+# Wiki Setup Guide (Reference)
 
-This document explains how to publish the wiki content from the `wiki/` directory to the GitHub Wiki.
+> **✅ Wiki is Live!** This guide is now a reference document. The wiki has been published and is actively maintained at https://github.com/Mittenzx/Adastrea-Director/wiki
+
+This document explains how to publish wiki content from the `wiki/` directory to the GitHub Wiki.
 
 ## 📚 Overview
 

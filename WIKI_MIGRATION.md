@@ -1,6 +1,9 @@
-# Wiki Migration Manifest
+# Wiki Migration Manifest (Historical Reference)
+
+> **⚠️ Note:** This document is a historical reference from the wiki migration completed on 2025-11-22. The wiki is now live and actively maintained at https://github.com/Mittenzx/Adastrea-Director/wiki
 
 **Date:** 2025-11-22  
+**Status:** Migration Complete ✅  
 **Purpose:** Document the migration of all documentation from the main repository to the GitHub Wiki
 
 ## Overview

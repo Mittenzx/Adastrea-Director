@@ -1,6 +1,8 @@
-# Quick Wiki Publishing Guide
+# Quick Wiki Publishing Guide (Reference)
 
-This repository includes automated tools to easily publish the wiki content to GitHub Wiki.
+> **✅ Wiki is Published!** The wiki is live at https://github.com/Mittenzx/Adastrea-Director/wiki. This guide is maintained as a reference for future wiki updates.
+
+This repository includes automated tools to easily publish wiki content updates to GitHub Wiki.
 
 ## 🚀 Quick Start - Easiest Method
 
