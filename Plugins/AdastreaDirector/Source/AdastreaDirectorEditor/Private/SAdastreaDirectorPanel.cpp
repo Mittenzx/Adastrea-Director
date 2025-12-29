@@ -442,8 +442,8 @@ TSharedRef<SWidget> SAdastreaDirectorPanel::CreateIngestionTab()
 			.Padding(0.0f, 0.0f, 5.0f, 0.0f)
 			[
 				SAssignNew(DbPathBox, SEditableTextBox)
-				.HintText(LOCTEXT("DbPathHint", "Path to ChromaDB database..."))
-				.Text(FText::FromString(TEXT("C:\\Users\\David Henderson\\Documents\\Adastrea-Director\\chroma_db_adastrea")))
+				.HintText(LOCTEXT("DbPathHint", "Path to ChromaDB database (can select existing database)..."))
+				.Text(FText::FromString(FPaths::ProjectDir() / TEXT("chroma_db_adastrea")))
 			]
 
 			+ SHorizontalBox::Slot()
@@ -1070,9 +1070,27 @@ FReply SAdastreaDirectorPanel::OnRefreshDbStatusClicked()
 
 	auto PythonBridge = RuntimeModule->GetPythonBridge();
 
+	// Build request with database path if provided
+	FString DbPath = DbPathBox->GetText().ToString().TrimStartAndEnd();
+	FString RequestData = TEXT("{}");
+	
+	if (!DbPath.IsEmpty())
+	{
+		// Convert to full path
+		DbPath = FPaths::ConvertRelativePathToFull(DbPath);
+		
+		// Build JSON request with persist_directory
+		TSharedPtr<FJsonObject> RequestObject = MakeShared<FJsonObject>();
+		RequestObject->SetStringField(TEXT("persist_directory"), DbPath);
+		RequestObject->SetStringField(TEXT("collection_name"), TEXT("adastrea_game_docs"));
+		
+		TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&RequestData);
+		FJsonSerializer::Serialize(RequestObject.ToSharedRef(), Writer);
+	}
+
 	// Send database info request
 	FString Response;
-	bool bSuccess = PythonBridge->SendRequest(TEXT("db_info"), TEXT("{}"), Response);
+	bool bSuccess = PythonBridge->SendRequest(TEXT("db_info"), RequestData, Response);
 
 	if (bSuccess)
 	{
