@@ -15,7 +15,8 @@ sys.path.insert(0, SCRIPT_DIR)
 
 # Disable ChromaDB telemetry BEFORE any imports that might import chromadb
 # This prevents "capture() takes 1 positional argument but 3 were given" errors
-os.environ["ANONYMIZED_TELEMETRY"] = "False"
+# ChromaDB checks for this variable and disables telemetry when set to "1"
+os.environ["ANONYMIZED_TELEMETRY"] = "1"
 
 
 def test_get_ingested_documents():

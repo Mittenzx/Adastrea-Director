@@ -119,8 +119,8 @@ class TestChromaDBTelemetryConfiguration:
         # Import the module which should set the env var
         import ingest
         
-        # Check that the environment variable is set
-        assert os.environ.get("ANONYMIZED_TELEMETRY") == "False"
+        # Check that the environment variable is set (1 to disable telemetry)
+        assert os.environ.get("ANONYMIZED_TELEMETRY") == "1"
 
     @patch('langchain_community.embeddings.HuggingFaceEmbeddings')
     def test_agent_initialization_with_telemetry_disabled(self, mock_embeddings):
@@ -129,8 +129,8 @@ class TestChromaDBTelemetryConfiguration:
         
         mock_embeddings.return_value = Mock()
         
-        # Ensure telemetry is disabled before creating agent
-        assert os.environ.get("ANONYMIZED_TELEMETRY") == "False"
+        # Ensure telemetry is disabled before creating agent (1 to disable)
+        assert os.environ.get("ANONYMIZED_TELEMETRY") == "1"
         
         # Create agent
         agent = DocumentIngestionAgent()
