@@ -15,7 +15,7 @@ import os
 import sys
 
 # Skip all tests in this module if tkinter is not available
-tk = pytest.importorskip("tkinter", reason="tkinter is not installed")
+tkinter_module = pytest.importorskip("tkinter", reason="tkinter is not installed")
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
