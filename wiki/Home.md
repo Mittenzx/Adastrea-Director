@@ -79,7 +79,7 @@ Adastrea Director offers **two deployment modes** using the same Python backend:
 - Intelligent planning and task decomposition
 - Code generation assistance
 - **Autonomous agents for performance, bugs, and code quality**
-- 230+ comprehensive tests (100% passing)
+- 230+ comprehensive tests across P1–P3 (including 120+ Phase 3 autonomous agent tests), all 100% passing
 - **ROI: 300%+ return in 6 months**
 
 ### Future Potential (P4 + Plugin): ⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐ 10/10
