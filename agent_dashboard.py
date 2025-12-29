@@ -372,8 +372,221 @@ class AgentDashboard:
             style=border_style
         )
     
+    def generate_performance_metrics_panel(self) -> Panel:
+        """Generate performance metrics panel with real-time data."""
+        text = Text()
+        
+        if not self.agents.get('Performance'):
+            text.append("Performance agent not available", style="dim italic")
+        else:
+            agent = self.agents['Performance']
+            
+            # Get recent metrics
+            recent_metrics = agent.get_metrics_history(limit=1)
+            
+            if not recent_metrics:
+                text.append("No metrics collected yet", style="yellow italic")
+            else:
+                metrics = recent_metrics[-1]
+                
+                text.append("Performance Metrics:\n", style="bold cyan")
+                
+                # FPS with color coding
+                fps = metrics.frame_rate
+                if fps >= 55:
+                    fps_style = "green"
+                elif fps >= 30:
+                    fps_style = "yellow"
+                else:
+                    fps_style = "red"
+                text.append(f"\n📊 Frame Rate: ", style="dim")
+                text.append(f"{fps:.1f} FPS", style=f"bold {fps_style}")
+                
+                # Memory usage
+                mem = metrics.memory_usage_mb
+                mem_threshold = agent.memory_threshold_mb
+                if mem < mem_threshold * 0.7:
+                    mem_style = "green"
+                elif mem < mem_threshold:
+                    mem_style = "yellow"
+                else:
+                    mem_style = "red"
+                text.append(f"\n💾 Memory: ", style="dim")
+                text.append(f"{mem:.0f} MB", style=f"bold {mem_style}")
+                text.append(f" / {mem_threshold:.0f} MB", style="dim")
+                
+                # CPU usage
+                cpu = metrics.cpu_usage_percent
+                if cpu < 70:
+                    cpu_style = "green"
+                elif cpu < 90:
+                    cpu_style = "yellow"
+                else:
+                    cpu_style = "red"
+                text.append(f"\n🖥️  CPU: ", style="dim")
+                text.append(f"{cpu:.1f}%", style=f"bold {cpu_style}")
+                
+                # GPU usage
+                gpu = metrics.gpu_usage_percent
+                if gpu < 80:
+                    gpu_style = "green"
+                elif gpu < 95:
+                    gpu_style = "yellow"
+                else:
+                    gpu_style = "red"
+                text.append(f"\n🎮 GPU: ", style="dim")
+                text.append(f"{gpu:.1f}%", style=f"bold {gpu_style}")
+                
+                # Draw calls and triangles
+                if metrics.draw_calls > 0:
+                    text.append(f"\n📐 Draw Calls: ", style="dim")
+                    text.append(f"{metrics.draw_calls:,}", style="cyan")
+                if metrics.triangles > 0:
+                    text.append(f"\n🔺 Triangles: ", style="dim")
+                    text.append(f"{metrics.triangles:,}", style="cyan")
+                
+                # Average FPS
+                avg_fps = agent.get_average_fps(duration_seconds=60)
+                if avg_fps:
+                    text.append(f"\n\n📈 Avg FPS (60s): ", style="dim")
+                    text.append(f"{avg_fps:.1f}", style="cyan")
+        
+        return Panel(
+            text,
+            title="Performance Profiling",
+            box=box.ROUNDED,
+            style="magenta"
+        )
+    
+    def generate_bug_detection_panel(self) -> Panel:
+        """Generate bug detection status panel."""
+        text = Text()
+        
+        if not self.agents.get('Bug Detection'):
+            text.append("Bug detection agent not available", style="dim italic")
+        else:
+            agent = self.agents['Bug Detection']
+            
+            # Get bug statistics
+            bugs = agent.get_detected_bugs()
+            crashes = agent.get_crash_history()
+            test_history = agent.get_test_history()
+            
+            text.append("Bug Detection Status:\n", style="bold cyan")
+            
+            # Bug counts by severity
+            text.append(f"\n🐛 Total Bugs: ", style="dim")
+            if bugs:
+                critical_bugs = len([b for b in bugs if b.severity == 'critical'])
+                high_bugs = len([b for b in bugs if b.severity == 'high'])
+                medium_bugs = len([b for b in bugs if b.severity == 'medium'])
+                low_bugs = len([b for b in bugs if b.severity == 'low'])
+                
+                text.append(f"{len(bugs)}", style="bold yellow")
+                text.append(f"\n  Critical: ", style="dim")
+                text.append(f"{critical_bugs}", style="red bold" if critical_bugs > 0 else "dim")
+                text.append(f"\n  High: ", style="dim")
+                text.append(f"{high_bugs}", style="yellow bold" if high_bugs > 0 else "dim")
+                text.append(f"\n  Medium: ", style="dim")
+                text.append(f"{medium_bugs}", style="yellow" if medium_bugs > 0 else "dim")
+                text.append(f"\n  Low: ", style="dim")
+                text.append(f"{low_bugs}", style="cyan" if low_bugs > 0 else "dim")
+            else:
+                text.append(f"0", style="green bold")
+            
+            # Crashes
+            text.append(f"\n💥 Crashes: ", style="dim")
+            crash_style = "red bold" if len(crashes) > 0 else "green bold"
+            text.append(f"{len(crashes)}", style=crash_style)
+            
+            # Test results
+            if test_history:
+                latest_test = test_history[-1]
+                text.append(f"\n\n🧪 Latest Test Run:\n", style="dim")
+                text.append(f"  Passed: ", style="dim")
+                text.append(f"{latest_test.passed}/{latest_test.total_tests}", style="green")
+                text.append(f"\n  Failed: ", style="dim")
+                fail_style = "red" if latest_test.failed > 0 else "green"
+                text.append(f"{latest_test.failed}", style=fail_style)
+                text.append(f"\n  Success Rate: ", style="dim")
+                success_rate = latest_test.success_rate()
+                sr_style = "green" if success_rate >= 90 else "yellow" if success_rate >= 70 else "red"
+                text.append(f"{success_rate:.1f}%", style=sr_style)
+            else:
+                text.append(f"\n\n🧪 No test runs recorded", style="dim italic")
+        
+        return Panel(
+            text,
+            title="Bug Detection",
+            box=box.ROUNDED,
+            style="red"
+        )
+    
+    def generate_code_quality_panel(self) -> Panel:
+        """Generate code quality monitoring panel."""
+        text = Text()
+        
+        if not self.agents.get('Code Quality'):
+            text.append("Code quality agent not available", style="dim italic")
+        else:
+            agent = self.agents['Code Quality']
+            
+            # Get quality reports
+            reports = agent.get_quality_reports(limit=10)
+            
+            text.append("Code Quality Status:\n", style="bold cyan")
+            
+            if not reports:
+                text.append("\nNo code analyzed yet", style="yellow italic")
+            else:
+                # Overall quality score (average)
+                avg_score = sum(r.overall_score for r in reports) / len(reports)
+                score_style = "green" if avg_score >= 80 else "yellow" if avg_score >= 60 else "red"
+                text.append(f"\n📊 Average Quality Score: ", style="dim")
+                text.append(f"{avg_score:.1f}/100", style=f"bold {score_style}")
+                
+                # Total issues
+                total_smells = sum(len(r.code_smells) for r in reports)
+                total_violations = sum(len(r.violations) for r in reports)
+                
+                text.append(f"\n\n👃 Code Smells: ", style="dim")
+                smell_style = "red" if total_smells > 10 else "yellow" if total_smells > 5 else "green"
+                text.append(f"{total_smells}", style=smell_style)
+                
+                text.append(f"\n⚠️  Violations: ", style="dim")
+                viol_style = "red" if total_violations > 20 else "yellow" if total_violations > 10 else "green"
+                text.append(f"{total_violations}", style=viol_style)
+                
+                # Technical debt
+                debt = agent.calculate_technical_debt()
+                text.append(f"\n\n💸 Technical Debt:\n", style="dim")
+                text.append(f"  Hours: ", style="dim")
+                debt_style = "red" if debt.total_debt_hours > 40 else "yellow" if debt.total_debt_hours > 20 else "green"
+                text.append(f"{debt.total_debt_hours:.1f}h", style=debt_style)
+                text.append(f"\n  Ratio: ", style="dim")
+                text.append(f"{debt.debt_ratio:.2f}", style="cyan")
+                text.append(f"\n  High Priority: ", style="dim")
+                hp_style = "red" if debt.high_priority_items > 0 else "green"
+                text.append(f"{debt.high_priority_items}", style=hp_style)
+                
+                # Recent analysis
+                latest = reports[-1]
+                text.append(f"\n\n📄 Latest Analysis:\n", style="dim")
+                text.append(f"  File: ", style="dim")
+                file_name = latest.file_path.split('/')[-1] if '/' in latest.file_path else latest.file_path
+                text.append(f"{file_name}\n", style="cyan")
+                text.append(f"  Score: ", style="dim")
+                text.append(f"{latest.overall_score:.1f}/100", style=score_style)
+        
+        return Panel(
+            text,
+            title="Code Quality",
+            box=box.ROUNDED,
+            style="blue"
+        )
+    
     def generate_layout(self) -> Layout:
-        """Generate dashboard layout with error details and system health."""
+        """Generate enhanced dashboard layout with performance, bug detection, and code quality panels."""
         layout = Layout()
         
         # Split into header and body
@@ -382,35 +595,42 @@ class AgentDashboard:
             Layout(name="body")
         )
         
-        # Split body into left and right
+        # Split body into top and bottom sections
         layout["body"].split_row(
-            Layout(name="left"),
-            Layout(name="right")
+            Layout(name="left_column"),
+            Layout(name="middle_column"),
+            Layout(name="right_column")
         )
         
-        # Split left into system health, status and events
-        layout["left"].split_column(
+        # Left column: System health, agent status
+        layout["left_column"].split_column(
             Layout(name="system_health", size=10),
-            Layout(name="status"),
-            Layout(name="event_summary", size=12)
+            Layout(name="status")
         )
         
-        # Split right into recent events, error details and controls
-        # Adjust sizes based on whether there are errors
+        # Middle column: Performance metrics, bug detection, code quality
+        layout["middle_column"].split_column(
+            Layout(name="performance_metrics", size=18),
+            Layout(name="bug_detection", size=15),
+            Layout(name="code_quality", size=15)
+        )
+        
+        # Right column: Event summary, recent events, error details, controls
         error_size = 8 if self.agent_errors else 0
-        layout["right"].split_column(
+        layout["right_column"].split_column(
+            Layout(name="event_summary", size=12),
             Layout(name="recent_events"),
             Layout(name="error_details", size=error_size) if error_size > 0 else Layout(name="error_details", visible=False),
             Layout(name="controls", size=6)
         )
         
-        # Update system health periodically (not every frame to reduce overhead)
-        # We'll update it in the run loop
-        
         # Fill layouts
         layout["header"].update(self.generate_header())
         layout["system_health"].update(self.generate_system_health_panel())
         layout["status"].update(self.generate_agent_status_table())
+        layout["performance_metrics"].update(self.generate_performance_metrics_panel())
+        layout["bug_detection"].update(self.generate_bug_detection_panel())
+        layout["code_quality"].update(self.generate_code_quality_panel())
         layout["event_summary"].update(self.generate_event_summary_table())
         layout["recent_events"].update(self.generate_recent_events_panel())
         
