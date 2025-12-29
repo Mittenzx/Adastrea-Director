@@ -2425,12 +2425,23 @@ JSON Response:"""
             }
         except ValueError as e:
             # Specific error for empty database (raised by RAGQueryAgent)
-            logger.warning(f"Database validation error: {e}")
-            return {
-                'status': 'error',
-                'error': 'Database exists but is empty. Please ingest documents first.',
-                'details': str(e)
-            }
+            # Check if it's the expected empty database error
+            error_str = str(e)
+            if 'empty' in error_str.lower():
+                logger.warning(f"Database validation error: {e}")
+                return {
+                    'status': 'error',
+                    'error': 'Database exists but is empty. Please ingest documents first.',
+                    'details': error_str
+                }
+            else:
+                # Other ValueError - treat as general error
+                logger.error(f"Unexpected ValueError: {e}", exc_info=True)
+                return {
+                    'status': 'error',
+                    'error': 'Database validation failed.',
+                    'details': error_str
+                }
         except Exception as e:
             # Other errors during db info retrieval
             logger.error(f"Failed to get database info: {e}", exc_info=True)
