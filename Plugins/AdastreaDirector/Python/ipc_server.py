@@ -40,7 +40,7 @@ logger = logging.getLogger('AdastreaIPCServer')
 
 # Constants
 DEFAULT_CHROMA_DB_NAME = "chroma_db"
-DEFAULT_COLLECTION_NAME = "adastrea_docs"
+DEFAULT_COLLECTION_NAME = "adastrea_game_docs"
 
 
 class PerformanceMetrics:
@@ -173,6 +173,7 @@ class IPCServer:
         # RAG ingestion handler
         self.register_handler('ingest', self._handle_ingest)
         self.register_handler('clear_history', self._handle_clear_history)
+        self.register_handler('db_info', self._handle_db_info)
 
     def register_handler(self, request_type: str, handler_func):
         """
@@ -2185,7 +2186,7 @@ JSON Response:"""
             docs_dir = params.get('docs_dir', '')
             progress_file = params.get('progress_file', None)
             force_reingest = params.get('force_reingest', False)
-            collection_name = params.get('collection_name', 'adastrea_docs')
+            collection_name = params.get('collection_name', 'adastrea_game_docs')
             persist_dir = params.get('persist_dir', './chroma_db')
             
             # Validate required parameter
@@ -2325,7 +2326,7 @@ JSON Response:"""
             
             # Use default collection name consistent with ingest handler
             query_agent = RAGQueryAgent(
-                collection_name='adastrea_docs',
+                collection_name='adastrea_game_docs',
                 persist_directory=persist_directory
             )
             query_agent.clear_conversation_history()
@@ -2350,6 +2351,103 @@ JSON Response:"""
             return {
                 'status': 'error',
                 'error': 'Failed to clear conversation history.',
+                'details': str(e)
+            }
+    
+    def _handle_db_info(self, data: str) -> Dict[str, Any]:
+        """
+        Handle database info request.
+        
+        This retrieves information about the ChromaDB database if available.
+        
+        Args:
+            data: JSON string with optional parameters (can be empty)
+            
+        Returns:
+            Database information or error if database not found
+        """
+        logger.info("Database info request received")
+        
+        try:
+            # Try to parse data for collection_name and persist_dir (optional)
+            try:
+                params = json.loads(data) if data and isinstance(data, str) else {}
+            except json.JSONDecodeError:
+                params = {}
+            
+            collection_name = params.get('collection_name', 'adastrea_game_docs')
+            persist_directory = params.get('persist_directory', None)
+            
+            # If no persist directory provided, try to find it
+            if not persist_directory:
+                persist_directory = self._find_persist_directory()
+            
+            if not persist_directory:
+                logger.warning("No persist directory found for db_info")
+                return {
+                    'status': 'error',
+                    'error': 'RAG database not found. Please ingest documents first.'
+                }
+            
+            # Validate path safety for persist_directory
+            is_valid, error_msg = self._validate_path_safety(persist_directory, require_exists=True)
+            if not is_valid:
+                return {
+                    'status': 'error',
+                    'error': f'Invalid persist_directory: {error_msg}'
+                }
+            
+            # Import RAG query agent
+            from rag_query import RAGQueryAgent
+            
+            # Create query agent to get database info
+            query_agent = RAGQueryAgent(
+                collection_name=collection_name,
+                persist_directory=persist_directory
+            )
+            
+            # Get database information
+            info = query_agent.get_database_info()
+            
+            logger.info(f"Database info retrieved: {info}")
+            return {
+                'status': 'success',
+                'info': info
+            }
+            
+        except ImportError as e:
+            # RAG module not available
+            logger.warning(f"RAG query module not available for db_info: {e}")
+            return {
+                'status': 'error',
+                'error': 'RAG system is not available. Ensure all dependencies are installed.',
+                'details': str(e)
+            }
+        except ValueError as e:
+            # Specific error for empty database (raised by RAGQueryAgent)
+            # Check if it's the expected empty database error
+            error_str = str(e)
+            if 'empty' in error_str.lower():
+                logger.warning(f"Database validation error: {e}")
+                return {
+                    'status': 'error',
+                    'error': 'Database exists but is empty. Please ingest documents first.',
+                    'details': error_str
+                }
+            else:
+                # Other ValueError - treat as general error
+                logger.error(f"Unexpected ValueError: {e}", exc_info=True)
+                return {
+                    'status': 'error',
+                    'error': 'Database validation failed.',
+                    'details': error_str
+                }
+        except Exception as e:
+            # Other errors during db info retrieval
+            logger.error(f"Failed to get database info: {e}", exc_info=True)
+            return {
+                'status': 'error',
+                'error': 'Failed to retrieve database information.',
                 'details': str(e)
             }
 
