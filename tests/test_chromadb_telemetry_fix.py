@@ -60,18 +60,18 @@ class TestChromaDBTelemetryFix:
         
         # The env var should be set by the time we import
         # Since ingest.py sets it at the module level before any other imports
-        assert os.environ.get('ANONYMIZED_TELEMETRY') == 'False', (
-            "ANONYMIZED_TELEMETRY should be set to 'False' by ingest module"
+        assert os.environ.get('ANONYMIZED_TELEMETRY') == '1', (
+            "ANONYMIZED_TELEMETRY should be set to '1' by ingest module"
         )
     
     @pytest.mark.unit
     def test_chromadb_import_without_telemetry_errors(self):
         """Test that ChromaDB can be imported without telemetry errors."""
         # This test verifies that importing chromadb doesn't produce telemetry errors
-        # when ANONYMIZED_TELEMETRY is set to False
+        # when ANONYMIZED_TELEMETRY is set to a truthy value
         
-        # Set the environment variable
-        os.environ['ANONYMIZED_TELEMETRY'] = 'False'
+        # Set the environment variable (1 to disable telemetry)
+        os.environ['ANONYMIZED_TELEMETRY'] = '1'
         
         # Try to import chromadb and use it
         try:

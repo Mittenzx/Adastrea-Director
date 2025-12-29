@@ -66,7 +66,8 @@ from exceptions import (
 # Disable ChromaDB telemetry BEFORE any imports that might import chromadb
 # This prevents "capture() takes 1 positional argument but 3 were given" errors
 # Must be set before langchain_community imports which internally import chromadb
-os.environ["ANONYMIZED_TELEMETRY"] = "False"
+# ChromaDB checks for this variable and any truthy value disables telemetry
+os.environ["ANONYMIZED_TELEMETRY"] = "1"
 
 # Force UTF-8 encoding for stdout/stderr to handle Unicode characters (emojis)
 # This prevents encoding errors on Windows systems with cp1252 encoding

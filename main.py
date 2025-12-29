@@ -26,7 +26,8 @@ from logging_config import setup_logging, get_logger
 
 # Disable ChromaDB telemetry BEFORE any imports that might import chromadb
 # This prevents "capture() takes 1 positional argument but 3 were given" errors
-os.environ["ANONYMIZED_TELEMETRY"] = "False"
+# ChromaDB checks for this variable and any truthy value disables telemetry
+os.environ["ANONYMIZED_TELEMETRY"] = "1"
 
 # Force UTF-8 encoding for stdout/stderr to handle Unicode characters (emojis)
 # This prevents encoding errors on Windows systems with cp1252 encoding
