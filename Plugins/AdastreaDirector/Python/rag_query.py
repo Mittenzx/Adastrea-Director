@@ -23,7 +23,7 @@ from typing import List, Dict, Any
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
 
 # Disable ChromaDB telemetry
-# ChromaDB checks for this variable and any truthy value disables telemetry
+# ChromaDB checks for this variable and disables telemetry when set to "1"
 os.environ["ANONYMIZED_TELEMETRY"] = "1"
 
 # Force UTF-8 encoding for Windows

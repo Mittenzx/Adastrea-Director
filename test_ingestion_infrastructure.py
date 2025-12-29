@@ -116,7 +116,7 @@ def test_imports_work():
     """Check that key imports from the ingestion script work."""
     try:
         # Disable ChromaDB telemetry before import
-        # ChromaDB checks for this variable and any truthy value disables telemetry
+        # ChromaDB checks for this variable and disables telemetry when set to "1"
         os.environ["ANONYMIZED_TELEMETRY"] = "1"
         
         # Try importing the DocumentIngestionAgent

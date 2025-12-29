@@ -18,11 +18,11 @@ The `ANONYMIZED_TELEMETRY` environment variable was being set to the string valu
 ### Technical Details
 
 1. **Environment Variable Convention**: ChromaDB follows standard Unix environment variable conventions where:
-   - `"1"` = telemetry disabled (truthy)
-   - `"0"` = telemetry enabled (falsy)
+   - `"1"` = telemetry disabled
+   - `"0"` = telemetry enabled
    - This aligns with the `.env.example` documentation
 
-2. **Python String Truthiness**: While `"False"` is a truthy value in Python (non-empty string), ChromaDB's telemetry initialization code specifically checks for conventional numeric/boolean representations.
+2. **Specific Value Check**: ChromaDB specifically checks if the `ANONYMIZED_TELEMETRY` environment variable equals `"1"` to disable telemetry, not just any truthy value.
 
 3. **Subprocess Inheritance**: When `gui_director.py` spawns `ingest.py` as a subprocess, environment variables are inherited. However, the incorrect value was being passed down.
 

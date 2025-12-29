@@ -48,7 +48,7 @@ import sys
 # Disable ChromaDB telemetry BEFORE any imports that might import chromadb
 # This prevents "capture() takes 1 positional argument but 3 were given" errors
 # Must be set before importing the ingest module which imports langchain_community/chromadb
-# ChromaDB checks for this variable and any truthy value disables telemetry
+# ChromaDB checks for this variable and disables telemetry when set to "1"
 os.environ["ANONYMIZED_TELEMETRY"] = "1"
 
 import argparse

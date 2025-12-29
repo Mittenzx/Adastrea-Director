@@ -68,7 +68,7 @@ class TestChromaDBTelemetryFix:
     def test_chromadb_import_without_telemetry_errors(self):
         """Test that ChromaDB can be imported without telemetry errors."""
         # This test verifies that importing chromadb doesn't produce telemetry errors
-        # when ANONYMIZED_TELEMETRY is set to a truthy value
+        # when ANONYMIZED_TELEMETRY is set to "1"
         
         # Set the environment variable (1 to disable telemetry)
         os.environ['ANONYMIZED_TELEMETRY'] = '1'

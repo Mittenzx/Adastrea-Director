@@ -15,7 +15,7 @@ import argparse
 
 # Disable ChromaDB telemetry BEFORE any imports that might import chromadb
 # This prevents "capture() takes 1 positional argument but 3 were given" errors
-# ChromaDB checks for this variable and any truthy value disables telemetry
+# ChromaDB checks for this variable and disables telemetry when set to "1"
 os.environ["ANONYMIZED_TELEMETRY"] = "1"
 
 try:
