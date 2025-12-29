@@ -1072,21 +1072,26 @@ FReply SAdastreaDirectorPanel::OnRefreshDbStatusClicked()
 
 	// Build request with database path if provided
 	FString DbPath = DbPathBox->GetText().ToString().TrimStartAndEnd();
-	FString RequestData = TEXT("{}");
 	
+	// Always send a structured JSON object: collection_name is fixed,
+	// and persist_directory is only included when the user provides a path.
+	// When DbPath is empty (e.g., the user cleared the field), we omit
+	// persist_directory so the backend can auto-detect the default location.
+	TSharedPtr<FJsonObject> RequestObject = MakeShared<FJsonObject>();
+	RequestObject->SetStringField(TEXT("collection_name"), TEXT("adastrea_game_docs"));
+	
+	FString RequestData;
 	if (!DbPath.IsEmpty())
 	{
 		// Convert to full path
 		DbPath = FPaths::ConvertRelativePathToFull(DbPath);
 		
-		// Build JSON request with persist_directory
-		TSharedPtr<FJsonObject> RequestObject = MakeShared<FJsonObject>();
+		// Include persist_directory only when explicitly provided
 		RequestObject->SetStringField(TEXT("persist_directory"), DbPath);
-		RequestObject->SetStringField(TEXT("collection_name"), TEXT("adastrea_game_docs"));
-		
-		TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&RequestData);
-		FJsonSerializer::Serialize(RequestObject.ToSharedRef(), Writer);
 	}
+	
+	TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&RequestData);
+	FJsonSerializer::Serialize(RequestObject.ToSharedRef(), Writer);
 
 	// Send database info request
 	FString Response;

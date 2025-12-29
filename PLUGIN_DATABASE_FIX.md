@@ -86,11 +86,12 @@ Created and ran comprehensive tests to verify:
 
 1. ✅ `db_info` handler is properly registered
 2. ✅ Handler is callable and returns proper responses
-3. ✅ Handler accepts `persist_directory` parameter
+3. ✅ Handler accepts `persist_directory` parameter with path validation
 4. ✅ Collection name is consistent across all handlers
 5. ✅ Full request processing flow works correctly
-6. ✅ No security vulnerabilities introduced (CodeQL scan passed)
-7. ✅ Python syntax is valid
+6. ✅ Path traversal protection via `_validate_path_safety` validation
+7. ✅ Empty database detection with clear error messages
+8. ✅ Python syntax is valid
 
 ## User Impact
 
@@ -145,6 +146,16 @@ The handler gracefully handles:
 - Missing dependencies (returns installation instructions)
 - Invalid parameters (handles gracefully)
 - JSON parsing errors (accepts empty or malformed data)
+- Empty databases (specific error message via ValueError)
+- Path traversal attacks (validated via `_validate_path_safety`)
+
+### Security Measures
+
+The `_handle_db_info` method includes security protections:
+- **Path validation**: All user-provided paths are validated using `_validate_path_safety()`
+- **Path traversal prevention**: Paths containing ".." or other suspicious patterns are rejected
+- **Existence verification**: Paths must exist and be directories before use
+- **Consistent with ingestion**: Uses the same validation as `_handle_ingest` for security consistency
 
 ## Files Changed
 

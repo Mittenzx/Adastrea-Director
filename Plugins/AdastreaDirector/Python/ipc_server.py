@@ -2389,6 +2389,14 @@ JSON Response:"""
                     'error': 'RAG database not found. Please ingest documents first.'
                 }
             
+            # Validate path safety for persist_directory
+            is_valid, error_msg = self._validate_path_safety(persist_directory, require_exists=True)
+            if not is_valid:
+                return {
+                    'status': 'error',
+                    'error': f'Invalid persist_directory: {error_msg}'
+                }
+            
             # Import RAG query agent
             from rag_query import RAGQueryAgent
             
@@ -2413,6 +2421,14 @@ JSON Response:"""
             return {
                 'status': 'error',
                 'error': 'RAG system is not available. Ensure all dependencies are installed.',
+                'details': str(e)
+            }
+        except ValueError as e:
+            # Specific error for empty database (raised by RAGQueryAgent)
+            logger.warning(f"Database validation error: {e}")
+            return {
+                'status': 'error',
+                'error': 'Database exists but is empty. Please ingest documents first.',
                 'details': str(e)
             }
         except Exception as e:
