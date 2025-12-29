@@ -40,7 +40,7 @@ logger = logging.getLogger('AdastreaIPCServer')
 
 # Constants
 DEFAULT_CHROMA_DB_NAME = "chroma_db"
-DEFAULT_COLLECTION_NAME = "adastrea_docs"
+DEFAULT_COLLECTION_NAME = "adastrea_game_docs"
 
 
 class PerformanceMetrics:
@@ -2186,7 +2186,7 @@ JSON Response:"""
             docs_dir = params.get('docs_dir', '')
             progress_file = params.get('progress_file', None)
             force_reingest = params.get('force_reingest', False)
-            collection_name = params.get('collection_name', 'adastrea_docs')
+            collection_name = params.get('collection_name', 'adastrea_game_docs')
             persist_dir = params.get('persist_dir', './chroma_db')
             
             # Validate required parameter
@@ -2326,7 +2326,7 @@ JSON Response:"""
             
             # Use default collection name consistent with ingest handler
             query_agent = RAGQueryAgent(
-                collection_name='adastrea_docs',
+                collection_name='adastrea_game_docs',
                 persist_directory=persist_directory
             )
             query_agent.clear_conversation_history()
@@ -2375,7 +2375,7 @@ JSON Response:"""
             except json.JSONDecodeError:
                 params = {}
             
-            collection_name = params.get('collection_name', 'adastrea_docs')
+            collection_name = params.get('collection_name', 'adastrea_game_docs')
             persist_directory = params.get('persist_directory', None)
             
             # If no persist directory provided, try to find it
