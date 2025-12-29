@@ -92,9 +92,23 @@ def check_chromadb_compatibility(packages: Dict[str, str]) -> Tuple[bool, List[s
     
     chromadb_spec = packages.get('chromadb', '')
     
-    if '>=1.0' in chromadb_spec or '>=1.1' in chromadb_spec or '>=1.2' in chromadb_spec or '>=1.3' in chromadb_spec or '>=1.4' in chromadb_spec:
+    # Extract the version specified with a >= comparator, e.g. ">=1.4.0"
+    version_match = re.search(r'>=\s*([0-9]+(?:\.[0-9]+)*)', chromadb_spec)
+    major = minor = None
+    if version_match:
+        version_str = version_match.group(1)
+        parts = version_str.split('.')
+        try:
+            major = int(parts[0])
+            minor = int(parts[1]) if len(parts) > 1 else 0
+        except (ValueError, IndexError):
+            major = minor = None
+    
+    # Treat any 1.x or higher version as latest stable, and keep 0.5+/0.6+ as a
+    # backward-compatible "supports NumPy 2.0 integration" path.
+    if major is not None and major >= 1:
         issues.append("✓ ChromaDB 1.x+ specified (latest stable version)")
-    elif '>=0.5' in chromadb_spec or '>=0.6' in chromadb_spec:
+    elif major == 0 and minor is not None and minor >= 5:
         issues.append("✓ ChromaDB 0.5+ specified (supports NumPy 2.0 integration)")
     else:
         issues.append("⚠ ChromaDB should be >=1.4.0 for latest features and compatibility")
