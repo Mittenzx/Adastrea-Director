@@ -30,6 +30,7 @@ try:
         EventType,
         AgentStatus
     )
+    from system_health import SystemHealthChecker
 except ImportError as e:
     print(f"Error: Missing required dependencies")
     print(f"Details: {e}")
@@ -38,7 +39,6 @@ except ImportError as e:
     print(f"\nOr use the setup script:")
     print(f"  ./setup.sh")
     sys.exit(1)
-from system_health import SystemHealthChecker
 
 console = Console()
 
