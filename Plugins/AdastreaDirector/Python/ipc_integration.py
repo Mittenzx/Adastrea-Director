@@ -32,6 +32,7 @@ class IntegratedIPCServer(IPCServer):
         port: int = 5555,
         enable_rag: bool = False,
         enable_planning: bool = False,
+        enable_phase3_agents: bool = False,
         collection_name: str = 'adastrea_game_docs',
         persist_directory: str = 'C:\\Users\\David Henderson\\Documents\\Adastrea-Director\\chroma_db_adastrea'
     ):
@@ -43,6 +44,7 @@ class IntegratedIPCServer(IPCServer):
             port: Port to listen on
             enable_rag: Enable RAG system integration
             enable_planning: Enable planning agent integration
+            enable_phase3_agents: Enable Phase 3 autonomous agents (performance, bug detection, code quality)
             collection_name: ChromaDB collection name
             persist_directory: ChromaDB persistence directory
         """
@@ -50,9 +52,17 @@ class IntegratedIPCServer(IPCServer):
         
         self.enable_rag = enable_rag
         self.enable_planning = enable_planning
+        self.enable_phase3_agents = enable_phase3_agents
         self.query_agent = None
         self.goal_analysis_agent = None
         self.task_decomposition_agent = None
+        
+        # Phase 3 agents
+        self.event_bus = None
+        self.shared_context = None
+        self.performance_agent = None
+        self.bug_detection_agent = None
+        self.code_quality_agent = None
         
         # Initialize RAG system if enabled
         if enable_rag:
@@ -72,8 +82,17 @@ class IntegratedIPCServer(IPCServer):
                 logger.warning("Planning agents will not be available")
                 self.enable_planning = False
         
+        # Initialize Phase 3 agents if enabled
+        if enable_phase3_agents:
+            try:
+                self._initialize_phase3_agents()
+            except Exception as e:
+                logger.warning(f"Failed to initialize Phase 3 agents: {e}")
+                logger.warning("Phase 3 agents will not be available")
+                self.enable_phase3_agents = False
+        
         # Re-register handlers with integrated versions
-        if self.enable_rag or self.enable_planning:
+        if self.enable_rag or self.enable_planning or self.enable_phase3_agents:
             self._register_integrated_handlers()
     
     def _initialize_rag(self, collection_name: str, persist_directory: str):
@@ -134,6 +153,73 @@ class IntegratedIPCServer(IPCServer):
             logger.error(f"Unexpected error initializing planning: {e}")
             raise
     
+    def _initialize_phase3_agents(self):
+        """Initialize Phase 3 autonomous agents."""
+        logger.info("Initializing Phase 3 autonomous agents...")
+        
+        try:
+            # Import Phase 3 modules
+            sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
+            from agents.phase3 import (
+                EventBus,
+                SharedContext,
+                PerformanceProfilingAgent,
+                BugDetectionAgent,
+                CodeQualityAgent
+            )
+            from remote_control.client import UnrealRemoteControlClient
+            
+            # Initialize infrastructure
+            self.event_bus = EventBus()
+            self.shared_context = SharedContext()
+            logger.info("  ✓ Event Bus and Shared Context created")
+            
+            # Try to create Remote Control client for UE integration
+            ue_client = None
+            try:
+                ue_client = UnrealRemoteControlClient(host="localhost", port=30010)
+                if ue_client.health_check():
+                    logger.info("  ✓ Connected to Unreal Engine Remote Control")
+                else:
+                    logger.warning("  ⚠ Unreal Engine Remote Control not reachable")
+                    ue_client = None
+            except Exception as e:
+                logger.warning(f"  ⚠ Remote Control client not available: {e}")
+                ue_client = None
+            
+            # Initialize agents
+            self.performance_agent = PerformanceProfilingAgent(
+                event_bus=self.event_bus,
+                shared_context=self.shared_context,
+                target_fps=60.0,
+                memory_threshold_mb=4096.0,
+                remote_control_client=ue_client
+            )
+            logger.info("  ✓ Performance Profiling Agent created")
+            
+            self.bug_detection_agent = BugDetectionAgent(
+                event_bus=self.event_bus,
+                shared_context=self.shared_context,
+                remote_control_client=ue_client
+            )
+            logger.info("  ✓ Bug Detection Agent created")
+            
+            self.code_quality_agent = CodeQualityAgent(
+                event_bus=self.event_bus,
+                shared_context=self.shared_context,
+                remote_control_client=ue_client
+            )
+            logger.info("  ✓ Code Quality Agent created")
+            
+            logger.info("Phase 3 agents initialized successfully")
+            
+        except ImportError as e:
+            logger.error(f"Failed to import Phase 3 modules: {e}")
+            raise
+        except Exception as e:
+            logger.error(f"Unexpected error initializing Phase 3 agents: {e}")
+            raise
+    
     def _register_integrated_handlers(self):
         """Register integrated request handlers."""
         if self.enable_rag:
@@ -145,6 +231,27 @@ class IntegratedIPCServer(IPCServer):
         if self.enable_planning:
             self.register_handler('analyze', self._handle_analyze_integrated)
             self.register_handler('plan', self._handle_plan_integrated)
+        
+        if self.enable_phase3_agents:
+            # Agent lifecycle
+            self.register_handler('agent_start', self._handle_agent_start)
+            self.register_handler('agent_stop', self._handle_agent_stop)
+            self.register_handler('agent_status', self._handle_agent_status)
+            
+            # Performance profiling
+            self.register_handler('collect_metrics', self._handle_collect_metrics)
+            self.register_handler('analyze_performance', self._handle_analyze_performance)
+            self.register_handler('start_pie_profiling', self._handle_start_pie_profiling)
+            
+            # Bug detection
+            self.register_handler('analyze_logs', self._handle_analyze_logs)
+            self.register_handler('run_tests', self._handle_run_tests)
+            self.register_handler('get_bugs', self._handle_get_bugs)
+            
+            # Code quality
+            self.register_handler('analyze_code', self._handle_analyze_code_quality)
+            self.register_handler('analyze_blueprint', self._handle_analyze_blueprint)
+            self.register_handler('get_technical_debt', self._handle_get_technical_debt)
     
     def _handle_query_integrated(self, data: str) -> Dict[str, Any]:
         """
@@ -375,6 +482,617 @@ class IntegratedIPCServer(IPCServer):
                 'status': 'error',
                 'error': f"Planning failed: {str(e)}"
             }
+    
+    # ==================== Phase 3 Agent Handlers ====================
+    
+    def _handle_agent_start(self, data: str) -> Dict[str, Any]:
+        """
+        Start a Phase 3 agent.
+        
+        Args:
+            data: JSON string with agent_id
+            
+        Returns:
+            Status response
+        """
+        import json
+        
+        try:
+            params = json.loads(data) if isinstance(data, str) else data
+            agent_id = params.get('agent_id', 'all')
+            
+            if agent_id == 'all' or agent_id == 'performance':
+                if self.performance_agent and not self.performance_agent.is_running():
+                    self.performance_agent.start()
+                    logger.info("Performance agent started")
+            
+            if agent_id == 'all' or agent_id == 'bug_detection':
+                if self.bug_detection_agent and not self.bug_detection_agent.is_running():
+                    self.bug_detection_agent.start()
+                    logger.info("Bug detection agent started")
+            
+            if agent_id == 'all' or agent_id == 'code_quality':
+                if self.code_quality_agent and not self.code_quality_agent.is_running():
+                    self.code_quality_agent.start()
+                    logger.info("Code quality agent started")
+            
+            return {
+                'status': 'success',
+                'message': f"Agent(s) {agent_id} started"
+            }
+            
+        except Exception as e:
+            logger.error(f"Agent start error: {e}")
+            return {
+                'status': 'error',
+                'error': str(e)
+            }
+    
+    def _handle_agent_stop(self, data: str) -> Dict[str, Any]:
+        """
+        Stop a Phase 3 agent.
+        
+        Args:
+            data: JSON string with agent_id
+            
+        Returns:
+            Status response
+        """
+        import json
+        
+        try:
+            params = json.loads(data) if isinstance(data, str) else data
+            agent_id = params.get('agent_id', 'all')
+            
+            if agent_id == 'all' or agent_id == 'performance':
+                if self.performance_agent and self.performance_agent.is_running():
+                    self.performance_agent.stop()
+                    logger.info("Performance agent stopped")
+            
+            if agent_id == 'all' or agent_id == 'bug_detection':
+                if self.bug_detection_agent and self.bug_detection_agent.is_running():
+                    self.bug_detection_agent.stop()
+                    logger.info("Bug detection agent stopped")
+            
+            if agent_id == 'all' or agent_id == 'code_quality':
+                if self.code_quality_agent and self.code_quality_agent.is_running():
+                    self.code_quality_agent.stop()
+                    logger.info("Code quality agent stopped")
+            
+            return {
+                'status': 'success',
+                'message': f"Agent(s) {agent_id} stopped"
+            }
+            
+        except Exception as e:
+            logger.error(f"Agent stop error: {e}")
+            return {
+                'status': 'error',
+                'error': str(e)
+            }
+    
+    def _handle_agent_status(self, data: str) -> Dict[str, Any]:
+        """
+        Get status of Phase 3 agents.
+        
+        Args:
+            data: Ignored
+            
+        Returns:
+            Agent status information
+        """
+        try:
+            status = {
+                'performance': {
+                    'running': self.performance_agent.is_running() if self.performance_agent else False,
+                    'status': self.performance_agent.get_status().value if self.performance_agent else 'unknown',
+                    'metrics': self.performance_agent.get_metrics() if self.performance_agent else {}
+                } if self.performance_agent else {'available': False},
+                'bug_detection': {
+                    'running': self.bug_detection_agent.is_running() if self.bug_detection_agent else False,
+                    'status': self.bug_detection_agent.get_status().value if self.bug_detection_agent else 'unknown',
+                    'metrics': self.bug_detection_agent.get_metrics() if self.bug_detection_agent else {}
+                } if self.bug_detection_agent else {'available': False},
+                'code_quality': {
+                    'running': self.code_quality_agent.is_running() if self.code_quality_agent else False,
+                    'status': self.code_quality_agent.get_status().value if self.code_quality_agent else 'unknown',
+                    'metrics': self.code_quality_agent.get_metrics() if self.code_quality_agent else {}
+                } if self.code_quality_agent else {'available': False}
+            }
+            
+            return {
+                'status': 'success',
+                'agents': status
+            }
+            
+        except Exception as e:
+            logger.error(f"Agent status error: {e}")
+            return {
+                'status': 'error',
+                'error': str(e)
+            }
+    
+    def _handle_collect_metrics(self, data: str) -> Dict[str, Any]:
+        """
+        Collect performance metrics.
+        
+        Args:
+            data: JSON string with metrics (manual) or empty for UE collection
+            
+        Returns:
+            Collected metrics
+        """
+        import json
+        
+        try:
+            if not self.performance_agent:
+                return {
+                    'status': 'error',
+                    'error': 'Performance agent not initialized'
+                }
+            
+            params = json.loads(data) if data and isinstance(data, str) else {}
+            
+            # If no params, try to collect from UE
+            if not params:
+                metrics = self.performance_agent.collect_metrics_from_ue()
+                if metrics:
+                    return {
+                        'status': 'success',
+                        'metrics': {
+                            'frame_rate': metrics.frame_rate,
+                            'memory_usage_mb': metrics.memory_usage_mb,
+                            'cpu_usage_percent': metrics.cpu_usage_percent,
+                            'gpu_usage_percent': metrics.gpu_usage_percent,
+                            'draw_calls': metrics.draw_calls,
+                            'triangles': metrics.triangles
+                        }
+                    }
+                else:
+                    return {
+                        'status': 'error',
+                        'error': 'Failed to collect metrics from UE'
+                    }
+            else:
+                # Manual metrics
+                metrics = self.performance_agent.collect_metrics(
+                    frame_rate=params.get('frame_rate', 0),
+                    memory_usage_mb=params.get('memory_usage_mb', 0),
+                    cpu_usage_percent=params.get('cpu_usage_percent', 0),
+                    gpu_usage_percent=params.get('gpu_usage_percent', 0),
+                    draw_calls=params.get('draw_calls', 0),
+                    triangles=params.get('triangles', 0)
+                )
+                
+                return {
+                    'status': 'success',
+                    'metrics': {
+                        'frame_rate': metrics.frame_rate,
+                        'memory_usage_mb': metrics.memory_usage_mb,
+                        'cpu_usage_percent': metrics.cpu_usage_percent,
+                        'gpu_usage_percent': metrics.gpu_usage_percent
+                    }
+                }
+            
+        except Exception as e:
+            logger.error(f"Collect metrics error: {e}")
+            return {
+                'status': 'error',
+                'error': str(e)
+            }
+    
+    def _handle_analyze_performance(self, data: str) -> Dict[str, Any]:
+        """
+        Analyze performance metrics.
+        
+        Args:
+            data: JSON string with metrics to analyze
+            
+        Returns:
+            Performance analysis
+        """
+        import json
+        
+        try:
+            if not self.performance_agent:
+                return {
+                    'status': 'error',
+                    'error': 'Performance agent not initialized'
+                }
+            
+            # Collect current metrics first
+            metrics = self.performance_agent.collect_metrics_from_ue()
+            if not metrics:
+                return {
+                    'status': 'error',
+                    'error': 'No metrics available for analysis'
+                }
+            
+            # Analyze
+            analysis = self.performance_agent.analyze_performance(metrics)
+            
+            return {
+                'status': 'success',
+                'analysis': {
+                    'summary': analysis.summary,
+                    'bottlenecks': [
+                        {
+                            'type': b.bottleneck_type,
+                            'severity': b.severity,
+                            'description': b.description
+                        }
+                        for b in analysis.bottlenecks
+                    ],
+                    'recommendations': [
+                        {
+                            'title': r.title,
+                            'description': r.description,
+                            'priority': r.priority
+                        }
+                        for r in analysis.recommendations
+                    ]
+                }
+            }
+            
+        except Exception as e:
+            logger.error(f"Analyze performance error: {e}")
+            return {
+                'status': 'error',
+                'error': str(e)
+            }
+    
+    def _handle_start_pie_profiling(self, data: str) -> Dict[str, Any]:
+        """
+        Start PIE profiling session.
+        
+        Args:
+            data: JSON string with duration_seconds
+            
+        Returns:
+            Profiling results
+        """
+        import json
+        
+        try:
+            if not self.performance_agent:
+                return {
+                    'status': 'error',
+                    'error': 'Performance agent not initialized'
+                }
+            
+            params = json.loads(data) if data and isinstance(data, str) else {}
+            duration = params.get('duration_seconds', 60)
+            
+            analysis = self.performance_agent.start_pie_profiling(duration_seconds=duration)
+            
+            if analysis:
+                return {
+                    'status': 'success',
+                    'analysis': {
+                        'summary': analysis.summary,
+                        'bottlenecks': [
+                            {
+                                'type': b.bottleneck_type,
+                                'severity': b.severity,
+                                'description': b.description
+                            }
+                            for b in analysis.bottlenecks
+                        ],
+                        'recommendations': [
+                            {
+                                'title': r.title,
+                                'description': r.description,
+                                'priority': r.priority
+                            }
+                            for r in analysis.recommendations
+                        ]
+                    }
+                }
+            else:
+                return {
+                    'status': 'error',
+                    'error': 'PIE profiling failed'
+                }
+            
+        except Exception as e:
+            logger.error(f"PIE profiling error: {e}")
+            return {
+                'status': 'error',
+                'error': str(e)
+            }
+    
+    def _handle_analyze_logs(self, data: str) -> Dict[str, Any]:
+        """
+        Analyze log content for anomalies.
+        
+        Args:
+            data: Log content or JSON with log_file path
+            
+        Returns:
+            Detected anomalies
+        """
+        import json
+        
+        try:
+            if not self.bug_detection_agent:
+                return {
+                    'status': 'error',
+                    'error': 'Bug detection agent not initialized'
+                }
+            
+            # Parse data
+            try:
+                params = json.loads(data) if isinstance(data, str) else data
+                if 'log_file' in params:
+                    # Read log file
+                    with open(params['log_file'], 'r') as f:
+                        log_content = f.read()
+                else:
+                    log_content = params.get('log_content', data)
+            except (json.JSONDecodeError, KeyError):
+                # Treat as plain log content
+                log_content = data
+            
+            anomalies = self.bug_detection_agent.analyze_logs(log_content)
+            
+            return {
+                'status': 'success',
+                'anomalies': [
+                    {
+                        'type': a.anomaly_type,
+                        'severity': a.severity,
+                        'description': a.description,
+                        'location': a.location
+                    }
+                    for a in anomalies
+                ]
+            }
+            
+        except Exception as e:
+            logger.error(f"Analyze logs error: {e}")
+            return {
+                'status': 'error',
+                'error': str(e)
+            }
+    
+    def _handle_run_tests(self, data: str) -> Dict[str, Any]:
+        """
+        Run automated tests.
+        
+        Args:
+            data: JSON string with test parameters
+            
+        Returns:
+            Test results
+        """
+        import json
+        
+        try:
+            if not self.bug_detection_agent:
+                return {
+                    'status': 'error',
+                    'error': 'Bug detection agent not initialized'
+                }
+            
+            params = json.loads(data) if data and isinstance(data, str) else {}
+            test_suite = params.get('test_suite', 'default')
+            
+            results = self.bug_detection_agent.run_automated_tests(
+                test_suite=test_suite,
+                test_count=params.get('test_count', 10),
+                passed=params.get('passed', 10),
+                failed=params.get('failed', 0)
+            )
+            
+            return {
+                'status': 'success',
+                'results': {
+                    'test_run_id': results.test_run_id,
+                    'total_tests': results.total_tests,
+                    'passed': results.passed,
+                    'failed': results.failed,
+                    'success_rate': results.success_rate()
+                }
+            }
+            
+        except Exception as e:
+            logger.error(f"Run tests error: {e}")
+            return {
+                'status': 'error',
+                'error': str(e)
+            }
+    
+    def _handle_get_bugs(self, data: str) -> Dict[str, Any]:
+        """
+        Get detected bugs.
+        
+        Args:
+            data: JSON string with optional severity filter
+            
+        Returns:
+            List of bug reports
+        """
+        import json
+        
+        try:
+            if not self.bug_detection_agent:
+                return {
+                    'status': 'error',
+                    'error': 'Bug detection agent not initialized'
+                }
+            
+            params = json.loads(data) if data and isinstance(data, str) else {}
+            severity = params.get('severity', None)
+            
+            bugs = self.bug_detection_agent.get_detected_bugs(severity=severity)
+            
+            return {
+                'status': 'success',
+                'bugs': [
+                    {
+                        'bug_id': b.bug_id,
+                        'title': b.title,
+                        'severity': b.severity,
+                        'description': b.description
+                    }
+                    for b in bugs
+                ]
+            }
+            
+        except Exception as e:
+            logger.error(f"Get bugs error: {e}")
+            return {
+                'status': 'error',
+                'error': str(e)
+            }
+    
+    def _handle_analyze_code_quality(self, data: str) -> Dict[str, Any]:
+        """
+        Analyze code quality.
+        
+        Args:
+            data: JSON string with file_path and code_content
+            
+        Returns:
+            Quality report
+        """
+        import json
+        
+        try:
+            if not self.code_quality_agent:
+                return {
+                    'status': 'error',
+                    'error': 'Code quality agent not initialized'
+                }
+            
+            params = json.loads(data) if isinstance(data, str) else data
+            file_path = params.get('file_path', 'unknown')
+            
+            # Read code content
+            if 'code_content' in params:
+                code_content = params['code_content']
+            elif 'file_path' in params and os.path.exists(params['file_path']):
+                with open(params['file_path'], 'r') as f:
+                    code_content = f.read()
+            else:
+                return {
+                    'status': 'error',
+                    'error': 'No code_content or valid file_path provided'
+                }
+            
+            report = self.code_quality_agent.analyze_code(file_path, code_content)
+            
+            return {
+                'status': 'success',
+                'report': {
+                    'file_path': report.file_path,
+                    'lines_of_code': report.lines_of_code,
+                    'complexity_score': report.complexity_score,
+                    'overall_score': report.overall_score,
+                    'code_smells': len(report.code_smells),
+                    'violations': len(report.violations),
+                    'refactorings': len(report.refactorings)
+                }
+            }
+            
+        except Exception as e:
+            logger.error(f"Analyze code quality error: {e}")
+            return {
+                'status': 'error',
+                'error': str(e)
+            }
+    
+    def _handle_analyze_blueprint(self, data: str) -> Dict[str, Any]:
+        """
+        Analyze Blueprint complexity.
+        
+        Args:
+            data: JSON string with blueprint_path
+            
+        Returns:
+            Blueprint analysis
+        """
+        import json
+        
+        try:
+            if not self.code_quality_agent:
+                return {
+                    'status': 'error',
+                    'error': 'Code quality agent not initialized'
+                }
+            
+            params = json.loads(data) if isinstance(data, str) else data
+            blueprint_path = params.get('blueprint_path', '')
+            
+            if not blueprint_path:
+                return {
+                    'status': 'error',
+                    'error': 'blueprint_path is required'
+                }
+            
+            report = self.code_quality_agent.analyze_blueprint_complexity(blueprint_path)
+            
+            if report:
+                return {
+                    'status': 'success',
+                    'report': {
+                        'file_path': report.file_path,
+                        'complexity_score': report.complexity_score,
+                        'overall_score': report.overall_score,
+                        'code_smells': len(report.code_smells),
+                        'violations': len(report.violations)
+                    }
+                }
+            else:
+                return {
+                    'status': 'error',
+                    'error': 'Blueprint analysis failed'
+                }
+            
+        except Exception as e:
+            logger.error(f"Analyze blueprint error: {e}")
+            return {
+                'status': 'error',
+                'error': str(e)
+            }
+    
+    def _handle_get_technical_debt(self, data: str) -> Dict[str, Any]:
+        """
+        Calculate technical debt.
+        
+        Args:
+            data: Ignored
+            
+        Returns:
+            Technical debt metrics
+        """
+        try:
+            if not self.code_quality_agent:
+                return {
+                    'status': 'error',
+                    'error': 'Code quality agent not initialized'
+                }
+            
+            debt = self.code_quality_agent.calculate_technical_debt()
+            
+            return {
+                'status': 'success',
+                'debt': {
+                    'total_debt_hours': debt.total_debt_hours,
+                    'debt_ratio': debt.debt_ratio,
+                    'code_smells_count': debt.code_smells_count,
+                    'violations_count': debt.violations_count,
+                    'high_priority_items': debt.high_priority_items,
+                    'trend': debt.trend
+                }
+            }
+            
+        except Exception as e:
+            logger.error(f"Get technical debt error: {e}")
+            return {
+                'status': 'error',
+                'error': str(e)
+            }
 
 
 def main():
@@ -405,6 +1123,11 @@ def main():
         help='Enable planning agents integration'
     )
     parser.add_argument(
+        '--enable-phase3',
+        action='store_true',
+        help='Enable Phase 3 autonomous agents (performance, bug detection, code quality)'
+    )
+    parser.add_argument(
         '--collection-name',
         type=str,
         default='adastrea_docs',
@@ -433,6 +1156,7 @@ def main():
         port=args.port,
         enable_rag=args.enable_rag,
         enable_planning=args.enable_planning,
+        enable_phase3_agents=args.enable_phase3,
         collection_name=args.collection_name,
         persist_directory=args.persist_directory
     )
