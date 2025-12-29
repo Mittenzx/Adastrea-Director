@@ -2,7 +2,7 @@
 
 An intelligent assistant system designed to understand natural language commands and assist with the game development lifecycle in Unreal Engine.
 
-> 📚 **Documentation Update:** All detailed documentation has been moved to the [Adastrea Director Wiki](https://github.com/Mittenzx/Adastrea-Director/wiki) for better organization and accessibility. See [WIKI_MIGRATION.md](WIKI_MIGRATION.md) for details.
+> 📚 **Documentation Update:** All detailed documentation has been moved to the [Adastrea Director Wiki](https://github.com/Mittenzx/Adastrea-Director/wiki) for better organization and accessibility.
 
 ## Overview
 
@@ -490,7 +490,6 @@ The improved GUI provides:
 Adastrea-Director/
 ├── README.md                      # This file - Quick start guide
 ├── CONTRIBUTING.md                # Contribution guidelines
-├── WIKI_MIGRATION.md              # Documentation migration manifest
 ├── Documentation/                 # Organized documentation (UE standards)
 │   ├── guides/                    # User guides and tutorials
 │   ├── implementation/            # Implementation summaries

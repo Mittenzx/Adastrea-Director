@@ -31,7 +31,7 @@ For getting started, refer to these key documents in the project root:
 
 ## Wiki
 
-Detailed documentation is also available in the [Adastrea Director Wiki](https://github.com/Mittenzx/Adastrea-Director/wiki). See [WIKI_MIGRATION.md](../WIKI_MIGRATION.md) for information about the wiki structure.
+Detailed documentation is also available in the [Adastrea Director Wiki](https://github.com/Mittenzx/Adastrea-Director/wiki).
 
 ## Plugin Documentation
 
