@@ -1,7 +1,14 @@
+# Standard library imports
 import subprocess
 import threading
 import sys
 import os
+import json
+import socket
+import tempfile
+from datetime import datetime
+from pathlib import Path
+from collections import deque
 
 # Try to import tkinter (not available via pip - requires system package)
 try:
@@ -30,12 +37,6 @@ except ImportError as e:
     print("\n📚 For more help, see TROUBLESHOOTING.md (lines 483-492)")
     print("=" * 70)
     sys.exit(1)
-import json
-import socket
-import tempfile
-from datetime import datetime
-from pathlib import Path
-from collections import deque
 
 # Import UE log capture module
 from ue_log_capture import UELogCapture
