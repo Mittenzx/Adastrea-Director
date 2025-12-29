@@ -9,26 +9,36 @@ Displays agent status, events, and metrics in a live-updating interface.
 import sys
 import time
 from datetime import datetime
-from rich.console import Console
-from rich.table import Table
-from rich.panel import Panel
-from rich.layout import Layout
-from rich.live import Live
-from rich import box
-from rich.text import Text
 from threading import Event as ThreadEvent
 import argparse
 
-from agents.phase3 import (
-    EventBus,
-    SharedContext,
-    PerformanceProfilingAgent,
-    BugDetectionAgent,
-    CodeQualityAgent,
-    EventType,
-    AgentStatus
-)
-from system_health import SystemHealthChecker
+try:
+    from rich.console import Console
+    from rich.table import Table
+    from rich.panel import Panel
+    from rich.layout import Layout
+    from rich.live import Live
+    from rich import box
+    from rich.text import Text
+
+    from agents.phase3 import (
+        EventBus,
+        SharedContext,
+        PerformanceProfilingAgent,
+        BugDetectionAgent,
+        CodeQualityAgent,
+        EventType,
+        AgentStatus
+    )
+    from system_health import SystemHealthChecker
+except ImportError as e:
+    print(f"Error: Missing required dependencies")
+    print(f"Details: {e}")
+    print(f"\nTo install dependencies, run:")
+    print(f"  pip install -r requirements.txt")
+    print(f"\nOr use the setup script:")
+    print(f"  ./setup.sh")
+    sys.exit(1)
 
 console = Console()
 

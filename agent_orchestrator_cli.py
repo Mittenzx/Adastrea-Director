@@ -9,18 +9,28 @@ Allows starting, stopping, monitoring, and configuring multiple agents.
 import sys
 import argparse
 from typing import Any, Dict, List
-from rich.console import Console
-from rich.table import Table
-from rich import box
 
-from agents.phase3 import (
-    EventBus,
-    SharedContext,
-    PerformanceProfilingAgent,
-    BugDetectionAgent,
-    CodeQualityAgent,
-    ProjectInfo
-)
+try:
+    from rich.console import Console
+    from rich.table import Table
+    from rich import box
+
+    from agents.phase3 import (
+        EventBus,
+        SharedContext,
+        PerformanceProfilingAgent,
+        BugDetectionAgent,
+        CodeQualityAgent,
+        ProjectInfo
+    )
+except ImportError as e:
+    print(f"Error: Missing required dependencies")
+    print(f"Details: {e}")
+    print(f"\nTo install dependencies, run:")
+    print(f"  pip install -r requirements.txt")
+    print(f"\nOr use the setup script:")
+    print(f"  ./setup.sh")
+    sys.exit(1)
 
 console = Console()
 

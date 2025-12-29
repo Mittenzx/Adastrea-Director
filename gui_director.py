@@ -1,5 +1,4 @@
-import tkinter as tk
-from tkinter import scrolledtext, messagebox, Menu, font, filedialog, ttk
+# Standard library imports
 import subprocess
 import threading
 import sys
@@ -10,6 +9,34 @@ import tempfile
 from datetime import datetime
 from pathlib import Path
 from collections import deque
+
+# Try to import tkinter (not available via pip - requires system package)
+try:
+    import tkinter as tk
+    from tkinter import scrolledtext, messagebox, Menu, font, filedialog, ttk
+except ImportError as e:
+    print("=" * 70)
+    print("ERROR: tkinter module not found")
+    print("=" * 70)
+    print("\nThe GUI requires tkinter, which is not installed via pip.")
+    print("\nPlatform-specific installation instructions:")
+    print("\n📦 Ubuntu/Debian:")
+    print("  sudo apt-get install python3-tk")
+    print("\n📦 Fedora/RHEL:")
+    print("  sudo dnf install python3-tkinter")
+    print("\n📦 Arch Linux:")
+    print("  sudo pacman -S tk")
+    print("\n📦 macOS:")
+    print("  tkinter is included with Python from python.org")
+    print("  If using Homebrew: brew install python-tk")
+    print("\n📦 Windows:")
+    print("  tkinter is included with Python from python.org")
+    print("  Reinstall Python and ensure 'tcl/tk and IDLE' is checked")
+    print("\n💡 Alternative: Use the CLI interface instead:")
+    print("  python main.py")
+    print("\n📚 For more help, see TROUBLESHOOTING.md (lines 483-492)")
+    print("=" * 70)
+    sys.exit(1)
 
 # Import UE log capture module
 from ue_log_capture import UELogCapture
