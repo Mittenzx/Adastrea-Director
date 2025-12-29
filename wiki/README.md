@@ -154,27 +154,29 @@ A GitHub Action will automatically synchronize wiki content:
 - [x] Installation & Getting Started
 - [x] Quick Start Tutorial
 - [x] Context-Aware Assistant guide
+- [x] Planning System guide
+- [x] Autonomous Agents guide (updated with Phase 3 completion)
 - [x] System Architecture
 - [x] Phase 1 documentation
 
-### 🚧 In Progress
+### 🚧 Needs Update
 
-- [ ] Planning System guide (detailed)
-- [ ] Autonomous Agents guide (detailed)
-- [ ] All architecture pages
-- [ ] All phase documentation
-- [ ] Development guides
-- [ ] Design system
-- [ ] API reference
+- [ ] Agent Architecture page (should detail Phase 3 implementation)
+- [ ] Phase 2 documentation page (create dedicated page)
+- [ ] Phase 3 documentation page (create dedicated page with detailed info)
+- [ ] Development guides (testing, contributing)
+- [ ] Design system pages
+- [ ] API reference pages
 
 ### 📋 Planned
 
-- [ ] FAQ page
-- [ ] Troubleshooting guide (expanded)
+- [ ] FAQ page (comprehensive)
+- [ ] Troubleshooting guide (expanded for all phases)
 - [ ] Video tutorials
 - [ ] Migration guides
-- [ ] Best practices
+- [ ] Best practices guide
 - [ ] Performance optimization guide
+- [ ] Plugin integration guide
 
 ## 🤝 Contributing to the Wiki
 
@@ -215,10 +217,11 @@ We welcome contributions to improve the documentation!
 
 ## 📊 Wiki Metrics
 
-- **Total Pages:** 20+ (growing)
+- **Total Pages:** 20+ (with Phase 3 content updated)
 - **Total Words:** 50,000+ (growing)
 - **Categories:** 7 main sections
-- **Last Updated:** 2025-11-22
+- **Last Major Update:** 2025-12-29 (Phase 3 completion)
+- **Status:** Active and maintained
 
 ## 🔗 Quick Links
 

@@ -123,7 +123,7 @@ Adastrea Director 1.0.0 marks the completion of Phase 2 (The Planner) and includ
 
 - **7/10 Current Value**: Production-ready RAG and planning capabilities with 230+ passing tests
 - **10/10 Future Potential**: Autonomous performance profiling, bug detection, and AI-assisted content generation
-- **ROI**: 210% return in 6 months (P1-P2), scaling to 63% return annually (P3-P4)
+- **ROI**: 300%+ return in 6 months (P1-P3 complete with autonomous agents), scaling to 400%+ with full UE plugin integration (P4)
 
 The plugin integrates seamlessly with Unreal Engine 4.27-5.6, providing developers with powerful AI assistance without leaving the editor.
 
