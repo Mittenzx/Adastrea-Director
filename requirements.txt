@@ -37,7 +37,7 @@ openai>=1.57.0,<2.0.0
 #   - Apple Silicon Macs (M1/M2/M3/M4)
 #   - ARM Linux/Windows systems
 # See INSTALLATION.md for platform-specific solutions.
-chromadb>=0.5.23,<0.6.0
+chromadb>=1.4.0,<2.0.0
 
 # Document loading and processing
 pypdf>=5.1.0,<6.0.0

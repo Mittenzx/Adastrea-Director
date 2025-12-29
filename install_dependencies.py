@@ -134,7 +134,7 @@ def install_requirements():
             print("\n🍎 Apple Silicon specific solutions:")
             print("1. Install onnxruntime-silicon:")
             print("   pip install onnxruntime-silicon>=1.14.0")
-            print("   pip install chromadb>=0.5.23,<0.6.0")
+            print("   pip install chromadb>=1.4.0,<2.0.0")
             print("\n2. Use Rosetta 2 (see the Wiki (https://github.com/Mittenzx/Adastrea-Director/wiki))")
             print("\n3. Use Docker (see the Wiki (https://github.com/Mittenzx/Adastrea-Director/wiki))")
         elif is_linux_arm() or is_windows_arm():
