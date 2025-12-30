@@ -10,6 +10,7 @@ import pytest
 import os
 import sys
 import subprocess
+import re
 from pathlib import Path
 
 
@@ -183,9 +184,9 @@ class TestChromaDBTelemetryFix:
         system_health_file = Path(__file__).parent.parent / "system_health.py"
         content = system_health_file.read_text()
         
-        # Find all Settings() instantiations
-        import re
-        settings_pattern = r'Settings\s*\(\s*anonymized_telemetry\s*=\s*(True|False)\s*\)'
+        # Find all Settings() instantiations with anonymized_telemetry parameter
+        # This pattern is flexible enough to handle different formatting
+        settings_pattern = r'Settings\s*\([^)]*anonymized_telemetry\s*=\s*(True|False)[^)]*\)'
         matches = list(re.finditer(settings_pattern, content))
         
         assert len(matches) > 0, "No Settings(anonymized_telemetry=...) found in system_health.py"
@@ -193,8 +194,9 @@ class TestChromaDBTelemetryFix:
         # Verify all settings have anonymized_telemetry=True (telemetry disabled)
         for match in matches:
             telemetry_value = match.group(1)
+            line_num = content[:match.start()].count('\n') + 1
             assert telemetry_value == "True", (
-                f"Found Settings(anonymized_telemetry={telemetry_value}) at position {match.start()}. "
+                f"Found Settings(anonymized_telemetry={telemetry_value}) at line {line_num}. "
                 f"ChromaDB telemetry should be disabled with anonymized_telemetry=True"
             )
 
