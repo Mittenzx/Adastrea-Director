@@ -28,14 +28,26 @@ class TestChromaDBTelemetryFix:
         telemetry_pos = content.find('os.environ["ANONYMIZED_TELEMETRY"]')
         assert telemetry_pos > 0, "ANONYMIZED_TELEMETRY setting not found in ingest.py"
         
-        # Find the position of langchain_community import
-        langchain_import_pos = content.find('from langchain_community')
-        assert langchain_import_pos > 0, "langchain_community import not found"
+        # Check both old and new import styles
+        # Find the position of langchain_community import (may still exist for other modules)
+        langchain_community_pos = content.find('from langchain_community')
+        # Find the position of langchain_chroma import (new style)
+        langchain_chroma_pos = content.find('from langchain_chroma')
         
-        # Verify telemetry is set BEFORE the import
-        assert telemetry_pos < langchain_import_pos, (
-            "ANONYMIZED_TELEMETRY must be set BEFORE importing langchain_community"
+        # At least one of these should exist
+        assert langchain_community_pos > 0 or langchain_chroma_pos > 0, (
+            "Neither langchain_community nor langchain_chroma import found"
         )
+        
+        # Verify telemetry is set BEFORE any langchain imports that use chromadb
+        if langchain_community_pos > 0:
+            assert telemetry_pos < langchain_community_pos, (
+                "ANONYMIZED_TELEMETRY must be set BEFORE importing langchain_community"
+            )
+        if langchain_chroma_pos > 0:
+            assert telemetry_pos < langchain_chroma_pos, (
+                "ANONYMIZED_TELEMETRY must be set BEFORE importing langchain_chroma"
+            )
     
     @pytest.mark.unit
     def test_main_py_sets_telemetry_env_before_import(self):
@@ -46,12 +58,24 @@ class TestChromaDBTelemetryFix:
         telemetry_pos = content.find('os.environ["ANONYMIZED_TELEMETRY"]')
         assert telemetry_pos > 0, "ANONYMIZED_TELEMETRY setting not found in main.py"
         
-        langchain_import_pos = content.find('from langchain_community')
-        assert langchain_import_pos > 0, "langchain_community import not found"
+        # Check both old and new import styles
+        langchain_community_pos = content.find('from langchain_community')
+        langchain_chroma_pos = content.find('from langchain_chroma')
         
-        assert telemetry_pos < langchain_import_pos, (
-            "ANONYMIZED_TELEMETRY must be set BEFORE importing langchain_community"
+        # At least one of these should exist
+        assert langchain_community_pos > 0 or langchain_chroma_pos > 0, (
+            "Neither langchain_community nor langchain_chroma import found"
         )
+        
+        # Verify telemetry is set BEFORE any langchain imports that use chromadb
+        if langchain_community_pos > 0:
+            assert telemetry_pos < langchain_community_pos, (
+                "ANONYMIZED_TELEMETRY must be set BEFORE importing langchain_community"
+            )
+        if langchain_chroma_pos > 0:
+            assert telemetry_pos < langchain_chroma_pos, (
+                "ANONYMIZED_TELEMETRY must be set BEFORE importing langchain_chroma"
+            )
     
     @pytest.mark.unit
     def test_telemetry_env_var_is_set(self):
