@@ -175,6 +175,28 @@ class TestChromaDBTelemetryFix:
         assert not ("posthog" in stderr_lower and "failed to send telemetry" in stderr_lower), (
             f"Posthog telemetry error found in stderr:\n{result.stderr}"
         )
+    
+    @pytest.mark.unit
+    def test_system_health_disables_telemetry(self):
+        """Test that system_health.py properly disables ChromaDB telemetry."""
+        # Read the system_health.py file
+        system_health_file = Path(__file__).parent.parent / "system_health.py"
+        content = system_health_file.read_text()
+        
+        # Find all Settings() instantiations
+        import re
+        settings_pattern = r'Settings\s*\(\s*anonymized_telemetry\s*=\s*(True|False)\s*\)'
+        matches = list(re.finditer(settings_pattern, content))
+        
+        assert len(matches) > 0, "No Settings(anonymized_telemetry=...) found in system_health.py"
+        
+        # Verify all settings have anonymized_telemetry=True (telemetry disabled)
+        for match in matches:
+            telemetry_value = match.group(1)
+            assert telemetry_value == "True", (
+                f"Found Settings(anonymized_telemetry={telemetry_value}) at position {match.start()}. "
+                f"ChromaDB telemetry should be disabled with anonymized_telemetry=True"
+            )
 
 
 if __name__ == "__main__":
