@@ -135,7 +135,7 @@ class SystemHealthChecker:
             # Try to connect to database
             client = chromadb.PersistentClient(
                 path=persist_directory,
-                settings=Settings(anonymized_telemetry=False)
+                settings=Settings(anonymized_telemetry=True)
             )
             
             # Try to get collection
