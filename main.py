@@ -41,7 +41,7 @@ try:
     # Load environment variables immediately after import
     load_dotenv()
     
-    from langchain_community.vectorstores import Chroma
+    from langchain_chroma import Chroma
     from langchain.chains import ConversationalRetrievalChain
     from langchain.memory import ConversationBufferMemory
     from langchain.prompts import PromptTemplate

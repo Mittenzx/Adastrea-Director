@@ -95,8 +95,8 @@ print(f"  ✓ langchain {langchain.__version__}")
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 print("  ✓ langchain_openai")
 
-from langchain_community.vectorstores import Chroma
-print("  ✓ langchain_community")
+from langchain_chroma import Chroma
+print("  ✓ langchain_chroma")
 
 # Test chromadb
 import chromadb

@@ -26,7 +26,7 @@ def test_get_ingested_documents():
     # Mock the method by importing necessary components
     try:
         from langchain_openai import OpenAIEmbeddings
-        from langchain_community.vectorstores import Chroma
+        from langchain_chroma import Chroma
         
         persist_directory = os.path.join(SCRIPT_DIR, "chroma_db")
         
