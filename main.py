@@ -378,8 +378,6 @@ class AdastreaDirectorCLI:
 ║              🤖 ADASTREA DIRECTOR                         ║
 ║          AI Game Development Assistant                    ║
 ║                                                           ║
-║              Phase 1: Context-Aware Assistant             ║
-║                                                           ║
 ╚═══════════════════════════════════════════════════════════╝
         """
         console.print(banner, style="bold cyan")

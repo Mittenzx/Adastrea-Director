@@ -2,7 +2,7 @@
 """
 DEPRECATED: This module is deprecated. Please use agents.models instead.
 
-Data models for Phase 2 Planning Agents
+Data models for Planning Agents
 
 This module now re-exports all models from agents.models for backward compatibility.
 All new code should import directly from agents.models.

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Goal Analysis Agent for Phase 2 Planning
+Goal Analysis Agent
 
 This agent is responsible for parsing and understanding high-level development goals.
 It extracts key objectives, identifies constraints, classifies goal types, and 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Planning CLI for Phase 2 - Goal Decomposition
+Planning CLI - Goal Decomposition
 
 Command-line interface for goal analysis and task decomposition.
 Allows users to input development goals and receive actionable task plans.
@@ -47,7 +47,7 @@ class PlanningCLI:
 ╔═══════════════════════════════════════════════════════════╗
 ║                                                           ║
 ║              🎯 ADASTREA DIRECTOR                         ║
-║          Phase 2: Goal Decomposition System               ║
+║              Goal Decomposition System                    ║
 ║                                                           ║
 ║         Break down goals into actionable tasks            ║
 ║                                                           ║
@@ -283,7 +283,7 @@ class PlanningCLI:
 def main():
     """Main entry point for the planning CLI."""
     parser = argparse.ArgumentParser(
-        description="Adastrea Director - Goal Decomposition System (Phase 2)"
+        description="Adastrea Director - Goal Decomposition System"
     )
     parser.add_argument(
         "--goal",

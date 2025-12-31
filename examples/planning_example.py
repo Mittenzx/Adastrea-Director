@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """
-Phase 2 Example: Goal Decomposition System Demo
+Planning Example: Goal Decomposition System Demo
 
-This example demonstrates how to use the Phase 2 planning agents
+This example demonstrates how to use the planning agents
 to decompose development goals into actionable tasks.
 
 Usage:
-    python examples/phase2_example.py
+    python examples/planning_example.py
 """
 
 import sys
@@ -38,7 +38,7 @@ def print_header():
     header = """
 ╔═══════════════════════════════════════════════════════════╗
 ║                                                           ║
-║         Phase 2 Example: Goal Decomposition               ║
+║            Planning Example: Goal Decomposition           ║
 ║                                                           ║
 ╚═══════════════════════════════════════════════════════════╝
     """
@@ -261,7 +261,7 @@ def main():
     except Exception as e:
         console.print(f"\n[red]Error: {e}[/red]\n")
         console.print("[yellow]Make sure you have:[/yellow]")
-        console.print("  1. Set OPENAI_API_KEY environment variable")
+        console.print("  1. Set GEMINI_KEY environment variable (or LLM_PROVIDER=openai with OPENAI_API_KEY)")
         console.print("  2. Installed all requirements (pip install -r requirements.txt)")
         console.print("  3. Internet connection for API calls\n")
         raise

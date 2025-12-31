@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Tests for Phase 2 Planning System
+Tests for Planning System
 
 Tests goal analysis, task decomposition, and planning functionality.
 """
@@ -322,8 +322,8 @@ Priority: high"""
 
 
 @pytest.mark.integration
-class TestPhase2Integration:
-    """Integration tests for Phase 2 system."""
+class TestPlanningIntegration:
+    """Integration tests for planning system."""
     
     def test_model_integration(self):
         """Test integration between data models."""

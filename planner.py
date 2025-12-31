@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Adastrea Director - Planning System (Phase 2)
+Adastrea Director - Planning System
 
 Main interface for the planning system that coordinates goal analysis,
 task decomposition, and code generation agents.
@@ -44,7 +44,7 @@ logger = get_logger(__name__)
 
 class PlanningSystem:
     """
-    Main planning system that coordinates all Phase 2 agents.
+    Main planning system that coordinates planning agents.
     
     This system takes high-level goals and produces actionable implementation
     plans with code suggestions.
@@ -323,7 +323,7 @@ class PlanningSystem:
 def main():
     """Main entry point for the planning CLI."""
     parser = argparse.ArgumentParser(
-        description="Adastrea Director - Planning System (Phase 2)"
+        description="Adastrea Director - Planning System"
     )
     parser.add_argument(
         "--debug",

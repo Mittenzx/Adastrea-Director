@@ -159,7 +159,7 @@ class IPCServer:
         self.register_handler('plan', self._handle_plan)
         self.register_handler('analyze', self._handle_analyze)
         self.register_handler('run_tests', self._handle_run_tests)
-        # Phase 2 handlers
+        # Planning system handlers
         self.register_handler('generate_code', self._handle_generate_code)
         self.register_handler('apply_feedback', self._handle_apply_feedback)
         self.register_handler('get_confidence', self._handle_get_confidence)
