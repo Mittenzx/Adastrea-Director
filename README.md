@@ -325,7 +325,7 @@ python planning_cli.py --goal "Implement user authentication system" --output ac
 python examples/planning_example.py
 ```
 
-**📋 Want to learn more?** See the [Phase 2 Guide](https://github.com/Mittenzx/Adastrea-Director/wiki) in the Wiki for comprehensive documentation with examples.
+**📋 Want to learn more?** See the [Planning Guide](https://github.com/Mittenzx/Adastrea-Director/wiki) in the Wiki for comprehensive documentation with examples.
 
 #### P3: Autonomous Agents (Complete! ✅)
 

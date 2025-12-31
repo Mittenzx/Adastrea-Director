@@ -261,7 +261,7 @@ def main():
     except Exception as e:
         console.print(f"\n[red]Error: {e}[/red]\n")
         console.print("[yellow]Make sure you have:[/yellow]")
-        console.print("  1. Set OPENAI_API_KEY environment variable")
+        console.print("  1. Set GEMINI_KEY environment variable (or LLM_PROVIDER=openai with OPENAI_API_KEY)")
         console.print("  2. Installed all requirements (pip install -r requirements.txt)")
         console.print("  3. Internet connection for API calls\n")
         raise
