@@ -80,35 +80,93 @@ uvicorn>=0.24.0
 
 ### Step 3: Implement Server
 
+**⚠️ SECURITY WARNING:**
+
+The REST API endpoints expose **highly privileged operations** including:
+- Arbitrary Python code execution in Unreal Editor
+- Full console command access
+- Direct UE Editor control
+
+**Required Security Measures:**
+1. **CORS**: Restrict to trusted origins only (NOT `origins: "*"`)
+2. **Network**: Bind to localhost only (127.0.0.1)
+3. **Authentication**: Consider adding API key/token authentication
+4. **Validation**: Always validate and sanitize inputs
+5. **Firewall**: Ensure firewall blocks external access to port 3001
+
+**Never expose these endpoints to untrusted networks or origins!**
+
+---
+
 **rest_api/server.py** (Flask example):
 ```python
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from mcp_server import UnrealMCPServer
 import logging
+import threading
 
 app = Flask(__name__)
-CORS(app)
 
-# Initialize MCP server
-mcp_server = UnrealMCPServer()
-mcp_server.start()
+# Security: Restrict CORS to trusted local origins only
+# IMPORTANT: These endpoints execute arbitrary code in UE - protect them!
+ALLOWED_ORIGINS = [
+    "http://localhost:3000",  # Example: local MCP UI
+    # Add other trusted origins as needed
+]
+CORS(app, resources={r"/api/*": {"origins": ALLOWED_ORIGINS}})
+
+# Lazily initialize MCP server on first use
+mcp_server = None
+mcp_lock = threading.Lock()
+
+def get_mcp_server():
+    """
+    Ensure the UnrealMCPServer is started and connected.
+    Returns the server instance, or None if it could not be started.
+    """
+    global mcp_server
+    # Fast path without lock
+    if mcp_server is not None and mcp_server.is_connected():
+        return mcp_server
+
+    with mcp_lock:
+        # Re-check state after acquiring the lock
+        if mcp_server is not None and mcp_server.is_connected():
+            return mcp_server
+
+        server = UnrealMCPServer()
+        try:
+            started = server.start()
+        except Exception:
+            logging.exception("Failed to start UnrealMCPServer")
+            return None
+
+        if not started:
+            logging.error("UnrealMCPServer.start() returned False; server not started")
+            return None
+
+        mcp_server = server
+        return mcp_server
 
 @app.route('/health', methods=['GET'])
 def health():
+    server = get_mcp_server()
+    editor_connected = bool(server and server.is_connected())
     return jsonify({
-        'editorConnected': mcp_server.is_connected(),
+        'editorConnected': editor_connected,
         'version': '1.0.0',
         'capabilities': ['console', 'python', 'assets']
     })
 
 @app.route('/api/editor/state', methods=['GET'])
 def editor_state():
-    if not mcp_server.is_connected():
+    server = get_mcp_server()
+    if not server or not server.is_connected():
         return jsonify({'error': 'Not connected'}), 503
     
     # Get current level using existing MCP tools
-    result = mcp_server.handle_tool_call('editor_get_map_info', {})
+    result = server.handle_tool_call('editor_get_map_info', {})
     return jsonify({
         'isRunning': True,
         'currentLevel': result.get('name', 'Unknown'),
@@ -117,15 +175,27 @@ def editor_state():
 
 @app.route('/api/project/info', methods=['GET'])
 def project_info():
-    result = mcp_server.handle_tool_call('editor_project_info', {})
+    server = get_mcp_server()
+    if not server or not server.is_connected():
+        return jsonify({'error': 'Not connected'}), 503
+    
+    result = server.handle_tool_call('editor_project_info', {})
     return jsonify(result)
 
 @app.route('/api/console/execute', methods=['POST'])
 def console_execute():
-    data = request.json
+    # Safely parse JSON body; returns None on invalid/missing JSON
+    data = request.get_json(silent=True) or {}
     command = data.get('command')
     
-    result = mcp_server.handle_tool_call('editor_console_command', {
+    if command is None:
+        return jsonify({'error': 'Missing required field: command'}), 400
+    
+    server = get_mcp_server()
+    if not server or not server.is_connected():
+        return jsonify({'error': 'Not connected'}), 503
+    
+    result = server.handle_tool_call('editor_console_command', {
         'command': command
     })
     
@@ -137,26 +207,38 @@ def console_execute():
 
 @app.route('/api/python/execute', methods=['POST'])
 def python_execute():
-    data = request.json
+    # Safely parse JSON body; returns None on invalid/missing JSON
+    data = request.get_json(silent=True) or {}
     code = data.get('code')
     
-    result = mcp_server.handle_tool_call('editor_run_python', {
+    if code is None:
+        return jsonify({'error': 'Missing required field: code'}), 400
+    
+    server = get_mcp_server()
+    if not server or not server.is_connected():
+        return jsonify({'error': 'Not connected'}), 503
+    
+    result = server.handle_tool_call('editor_run_python', {
         'code': code
     })
     
     return jsonify({
         'code': code,
-        'output': result.get('content', [{}])[0].get('text', ''),
+        'output': result.get('content', [{}])[0].get('text', '') if not result.get('isError', False) else '',
         'success': not result.get('isError', False),
-        'error': result.get('content', [{}])[0].get('text', '') if result.get('isError') else None
+        'error': result.get('content', [{}])[0].get('text', '') if result.get('isError', False) else None
     })
 
 @app.route('/api/assets/list', methods=['POST'])
 def list_assets():
-    data = request.json or {}
+    data = request.get_json(silent=True) or {}
     asset_filter = data.get('filter')
     
-    result = mcp_server.handle_tool_call('editor_list_assets', {})
+    server = get_mcp_server()
+    if not server or not server.is_connected():
+        return jsonify({'error': 'Not connected'}), 503
+    
+    result = server.handle_tool_call('editor_list_assets', {})
     
     # Parse and filter assets if needed
     assets = result.get('content', [{}])[0].get('text', '').split('\n')
@@ -296,14 +378,30 @@ echo $DIRECTOR_URL
 
 ### Problem: CORS errors
 
-**Solution**:
+**⚠️ SECURITY WARNING:** Never use `origins: "*"` with these endpoints!
+
+**Secure Solution**:
 ```python
 # In rest_api/server.py
 from flask_cors import CORS
 
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "*"}})
+
+# Restrict CORS to trusted local origins only
+# These endpoints execute arbitrary code - protect them!
+ALLOWED_ORIGINS = [
+    "http://localhost:3000",  # Example: local MCP UI
+    # Add other trusted origins as needed
+]
+
+CORS(app, resources={r"/api/*": {"origins": ALLOWED_ORIGINS}})
 ```
+
+**Why this matters:**
+- These endpoints execute arbitrary Python code and console commands
+- With `origins: "*"`, any website could attack your local dev environment
+- Always restrict to specific trusted origins
+- Consider adding authentication for additional security
 
 ---
 

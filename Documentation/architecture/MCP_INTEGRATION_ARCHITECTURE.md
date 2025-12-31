@@ -541,8 +541,8 @@ Adastrea-MCP
 
 ## Related Documentation
 
-- **[MCP_READINESS_PLAN.md](./MCP_READINESS_PLAN.md)** - Complete integration strategy
-- **[MCP_INTEGRATION_QUICKSTART.md](./MCP_INTEGRATION_QUICKSTART.md)** - Quick implementation guide
+- **[MCP_READINESS_PLAN.md](../development/MCP_READINESS_PLAN.md)** - Complete integration strategy
+- **[MCP_INTEGRATION_QUICKSTART.md](../development/MCP_INTEGRATION_QUICKSTART.md)** - Quick implementation guide
 - **[MCP_SERVER_GUIDE.md](../../mcp_server/MCP_SERVER_GUIDE.md)** - Adastrea-Director MCP usage
 - **Adastrea-MCP Docs** - In separate repository
 

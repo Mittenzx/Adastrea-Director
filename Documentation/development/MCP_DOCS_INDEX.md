@@ -315,9 +315,9 @@ Use this to track which documents you've reviewed:
 |----------|-------|------|--------------|
 | MCP_RESEARCH_SUMMARY.md | ~500 | 11KB | 10-15 min |
 | MCP_INTEGRATION_QUICKSTART.md | ~400 | 9KB | 15-20 min |
-| MCP_READINESS_PLAN.md | ~750 | 17KB | 30-45 min |
+| MCP_READINESS_PLAN.md | ~600 | 17KB | 30-45 min |
 | MCP_INTEGRATION_ARCHITECTURE.md | ~650 | 15KB | 25-35 min |
-| **Total** | ~2,300 | 52KB | 80-115 min |
+| **Total** | ~2,150 | 52KB | 80-115 min |
 
 **Complete reading time:** ~1.5 to 2 hours for full understanding
 
