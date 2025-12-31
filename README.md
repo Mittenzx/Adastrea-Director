@@ -438,6 +438,8 @@ python unreal_mcp_cli.py run-python "import unreal; print(unreal.SystemLibrary.g
 
 **📖 Documentation:** [MCP Server Guide](mcp_server/MCP_SERVER_GUIDE.md)
 
+**🔗 Related Project:** [Adastrea-MCP](https://github.com/Mittenzx/Adastrea-MCP) - Complementary MCP server providing static analysis, code generation, and UE5.6+ knowledge (37 tools). Can integrate with Adastrea-Director for comprehensive UE development assistance. See [MCP Integration Architecture](Documentation/architecture/MCP_INTEGRATION_ARCHITECTURE.md) for details.
+
 #### Graphical User Interface (GUI - Standalone)
 
 For a more user-friendly experience, you can use the enhanced GUI application:
