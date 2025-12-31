@@ -1,0 +1,204 @@
+name: Ingest Adastrea Game Repository
+
+# This workflow automates the ingestion of the Mittenzx/Adastrea game repository
+# documentation into a ChromaDB vector database for RAG-based querying.
+#
+# The generated database is uploaded as a workflow artifact that can be downloaded
+# and used by developers without needing to run ingestion locally.
+#
+# Trigger options:
+# - Manual: Click "Run workflow" in GitHub Actions tab
+# - Scheduled: Weekly on Sunday at midnight UTC (configurable)
+# - On-demand: Can be triggered via API or workflow_dispatch
+
+on:
+  # Allow manual trigger from Actions tab
+  workflow_dispatch:
+    inputs:
+      force_reingest:
+        description: 'Force full re-ingestion (ignore cached data)'
+        required: false
+        type: boolean
+        default: false
+      
+  # Scheduled weekly ingestion (every Sunday at 00:00 UTC)
+  # Adjust schedule as needed using cron syntax
+  schedule:
+    - cron: '0 0 * * 0'  # Weekly on Sunday at midnight UTC
+    # Examples:
+    # - cron: '0 0 * * *'   # Daily at midnight
+    # - cron: '0 */6 * * *' # Every 6 hours
+    # - cron: '0 0 1 * *'   # Monthly on the 1st
+
+jobs:
+  ingest:
+    name: Ingest Adastrea Documentation
+    runs-on: ubuntu-latest
+    timeout-minutes: 30  # Prevent runaway processes
+    
+    steps:
+      # Step 1: Checkout the Adastrea Director repository
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1  # Shallow clone for speed
+      
+      # Step 2: Set up Python environment
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'  # Cache pip dependencies for speed
+      
+      # Step 3: Install dependencies
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      # Step 4: Verify installation
+      - name: Verify dependencies
+        run: |
+          python --version
+          pip list | grep -E "(langchain|chromadb|sentence-transformers)"
+      
+      # Step 5: Run ingestion
+      # Uses HuggingFace embeddings (free, no API key required)
+      # The GITHUB_TOKEN is automatically provided by GitHub Actions
+      - name: Run Adastrea game repository ingestion
+        env:
+          GITHUB_TOKEN: ${{ secrets.GAME_REPO_TOKEN || secrets.GITHUB_TOKEN }}
+          EMBEDDING_PROVIDER: huggingface  # Use free HuggingFace embeddings
+          HUGGINGFACE_MODEL_NAME: all-MiniLM-L6-v2  # Fast, good quality
+        run: |
+          echo "Starting ingestion of Adastrea game repository..."
+          
+          # Set force flag if requested
+          if [ "${{ inputs.force_reingest }}" = "true" ]; then
+            FORCE_FLAG="--force"
+          else
+            FORCE_FLAG=""
+          fi
+          
+          # Run ingestion with timeout protection
+          python ingest_game_repo.py $FORCE_FLAG
+          
+          echo "Ingestion completed successfully!"
+      
+      # Step 6: Generate statistics
+      - name: Generate database statistics
+        run: |
+          echo "Generating database statistics..."
+          python ingest_game_repo.py --stats
+      
+      # Step 7: Upload database as artifact
+      # The database can be downloaded from the Actions tab
+      # Retention: 30 days (adjust as needed)
+      - name: Upload database artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: adastrea-game-database
+          path: chroma_db_adastrea/
+          retention-days: 30
+          compression-level: 9  # Maximum compression to save bandwidth
+          if-no-files-found: error
+      
+      # Step 8: Upload ingestion log
+      - name: Upload ingestion log
+        if: always()  # Upload even if ingestion failed
+        uses: actions/upload-artifact@v4
+        with:
+          name: ingestion-log
+          path: logs/*.log
+          retention-days: 7
+          if-no-files-found: warn
+      
+      # Step 9: Create summary report
+      - name: Create workflow summary
+        if: always()
+        run: |
+          echo "## Ingestion Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ -f "chroma_db_adastrea/chroma.sqlite3" ]; then
+            echo "✅ **Status:** Ingestion completed successfully" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            
+            # Database statistics
+            DB_SIZE=$(du -sh chroma_db_adastrea/ | cut -f1)
+            echo "📊 **Database Size:** $DB_SIZE" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            
+            # Ingestion details
+            if [ -f ".adastrea_ingestion_tracking.json" ]; then
+              echo "📝 **Ingestion Details:**" >> $GITHUB_STEP_SUMMARY
+              python -c "
+          import json
+          from pathlib import Path
+          tracking = json.loads(Path('.adastrea_ingestion_tracking.json').read_text())
+          print(f\"- Last commit: {tracking.get('last_commit', 'N/A')[:8]}\")
+          print(f\"- Last ingestion: {tracking.get('last_ingestion', 'N/A')}\")
+          print(f\"- Documents: {tracking.get('document_count', 'N/A')}\")
+          print(f\"- Chunks: {tracking.get('chunk_count', 'N/A')}\")
+              " >> $GITHUB_STEP_SUMMARY
+            fi
+            
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Download Instructions" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "1. Go to the [Actions tab](/${{ github.repository }}/actions)" >> $GITHUB_STEP_SUMMARY
+            echo "2. Click on this workflow run" >> $GITHUB_STEP_SUMMARY
+            echo "3. Download the \`adastrea-game-database\` artifact" >> $GITHUB_STEP_SUMMARY
+            echo "4. Extract to \`./chroma_db_adastrea/\` in your local repository" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Plugin Configuration" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "- **Database Path:** \`./chroma_db_adastrea\`" >> $GITHUB_STEP_SUMMARY
+            echo "- **Collection Name:** \`adastrea_game_docs\`" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Status:** Ingestion failed" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Check the logs artifact for details." >> $GITHUB_STEP_SUMMARY
+          fi
+      
+      # Step 10: Notify on failure (optional)
+      # Uncomment to enable email notifications on failure
+      # - name: Notify on failure
+      #   if: failure()
+      #   uses: dawidd6/action-send-mail@v3
+      #   with:
+      #     server_address: smtp.gmail.com
+      #     server_port: 465
+      #     username: ${{ secrets.NOTIFICATION_EMAIL }}
+      #     password: ${{ secrets.NOTIFICATION_PASSWORD }}
+      #     subject: Adastrea Ingestion Failed
+      #     body: The Adastrea game repository ingestion workflow failed. Check the logs.
+      #     to: your-email@example.com
+
+# Notes:
+# 1. GAME_REPO_TOKEN secret: Required if Mittenzx/Adastrea is private
+#    - Create at: https://github.com/settings/tokens
+#    - Scope: 'repo' (full control of private repositories)
+#    - Add to: Repository Settings → Secrets → Actions
+#
+# 2. Artifact retention: Set to 30 days (configurable)
+#    - Adjust 'retention-days' as needed
+#    - Maximum: 90 days for free plan
+#
+# 3. Schedule: Currently weekly (Sunday midnight)
+#    - Adjust 'cron' schedule as needed
+#    - Use https://crontab.guru/ for cron syntax help
+#
+# 4. Manual trigger: Always available via workflow_dispatch
+#    - Go to Actions tab → Select workflow → Run workflow
+#
+# 5. Force re-ingestion: Option available in manual trigger
+#    - Ignores cached data and re-processes all files
+#
+# 6. Costs: GitHub Actions free tier
+#    - Public repos: Unlimited minutes
+#    - Private repos: 2,000 minutes/month (this uses ~5-15 min/run)
+#
+# 7. Artifact storage: Counts against repository storage
+#    - Database size: ~50-200MB per artifact
+#    - 30-day retention with weekly builds = ~4-8 artifacts = ~200MB-1.6GB
