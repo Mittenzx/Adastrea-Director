@@ -320,9 +320,9 @@ python planning_cli.py --interactive
 python planning_cli.py --goal "Implement user authentication system" --output action_plan.md
 ```
 
-3. **Run the P2 example:**
+3. **Run the planning example:**
 ```bash
-python examples/phase2_example.py
+python examples/planning_example.py
 ```
 
 **📋 Want to learn more?** See the [Phase 2 Guide](https://github.com/Mittenzx/Adastrea-Director/wiki) in the Wiki for comprehensive documentation with examples.

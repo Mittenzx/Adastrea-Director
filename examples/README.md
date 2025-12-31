@@ -19,8 +19,8 @@ This directory contains example scripts demonstrating various features of Adastr
   - Usage: `python examples/blueprint_graph_demo.py`
   - Note: Full graph manipulation requires C++ plugin - see `BLUEPRINT_GRAPHS_IMPLEMENTATION.md`
 
-### Phase 2 Examples
-- **`phase2_example.py`** - Planning and goal decomposition features
+### Planning Examples
+- **`planning_example.py`** - Planning and goal decomposition features
 - **`cost_tracking_example.py`** - Cost tracking and monitoring
 
 ### Phase 3 Examples

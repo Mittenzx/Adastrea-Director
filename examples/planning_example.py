@@ -6,7 +6,7 @@ This example demonstrates how to use the planning agents
 to decompose development goals into actionable tasks.
 
 Usage:
-    python examples/phase2_example.py
+    python examples/planning_example.py
 """
 
 import sys

@@ -322,7 +322,7 @@ Priority: high"""
 
 
 @pytest.mark.integration
-class TestPhase2Integration:
+class TestPlanningIntegration:
     """Integration tests for planning system."""
     
     def test_model_integration(self):
