@@ -52,7 +52,7 @@ class RAGQueryAgent:
     def __init__(
         self,
         collection_name: str = "adastrea_game_docs",
-        persist_directory: str = "C:\\Users\\David Henderson\\Documents\\Adastrea-Director\\chroma_db_adastrea",
+        persist_directory: str = "./chroma_db_adastrea",
         model_name: str = "gpt-3.5-turbo",
         temperature: float = 0.7,
         search_type: str = "mmr",

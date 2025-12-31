@@ -34,7 +34,7 @@ class IntegratedIPCServer(IPCServer):
         enable_planning: bool = False,
         enable_phase3_agents: bool = False,
         collection_name: str = 'adastrea_game_docs',
-        persist_directory: str = 'C:\\Users\\David Henderson\\Documents\\Adastrea-Director\\chroma_db_adastrea'
+        persist_directory: str = './chroma_db_adastrea'
     ):
         """
         Initialize integrated IPC server.
@@ -105,6 +105,10 @@ class IntegratedIPCServer(IPCServer):
         """
         logger.info("Initializing RAG system...")
         
+        # Convert to absolute path for clarity
+        persist_directory = os.path.abspath(persist_directory)
+        logger.info(f"  Database path: {persist_directory}")
+        
         # Import RAG query module (plugin version)
         try:
             from rag_query import RAGQueryAgent
@@ -112,7 +116,16 @@ class IntegratedIPCServer(IPCServer):
             # Check if database exists
             if not os.path.exists(persist_directory):
                 logger.warning(f"Database directory not found: {persist_directory}")
-                logger.warning("Query functionality will be limited")
+                logger.warning("Query functionality will be limited until database is created.")
+                logger.warning("Use the 'ingest' command to populate the database.")
+                return
+            
+            # Check if database has content
+            db_file = os.path.join(persist_directory, "chroma.sqlite3")
+            if not os.path.exists(db_file):
+                logger.warning(f"Database not initialized: {persist_directory}")
+                logger.warning("The directory exists but contains no database.")
+                logger.warning("Use the 'ingest' command to populate the database.")
                 return
             
             # Initialize query agent
