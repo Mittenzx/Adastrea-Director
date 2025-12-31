@@ -48,6 +48,14 @@ from ue_data_collector import UEDataCollector
 # Import logging configuration
 from logging_config import setup_logging, get_logger
 
+# Import new UI components
+try:
+    from gui_agent_panel import create_agent_dashboard_tab
+    AGENT_PANEL_AVAILABLE = True
+except ImportError:
+    AGENT_PANEL_AVAILABLE = False
+    # Note: Agent panel module not available - will skip creating agent dashboard tab
+
 # Try to import psutil for system health monitoring (optional dependency)
 try:
     import psutil
@@ -491,6 +499,10 @@ class AdastreaDirectorApp:
         
         # --- Analytics Dashboard Tab ---
         self.create_analytics_dashboard_tab()
+        
+        # --- Agent Dashboard Tab (New!) ---
+        if AGENT_PANEL_AVAILABLE:
+            self.create_agent_dashboard_tab()
         
         # --- Servers Tab ---
         self.create_servers_tab()
@@ -5980,6 +5992,24 @@ GitHub: Mittenzx/Adastrea-Director
         
         # Destroy the window
         self.root.destroy()
+    
+    def create_agent_dashboard_tab(self):
+        """Create the Agent Dashboard tab with Phase 3 agent monitoring"""
+        if not AGENT_PANEL_AVAILABLE:
+            return
+        
+        try:
+            agent_tab, self.agent_panel = create_agent_dashboard_tab(
+                self.notebook,
+                bg_color=self.bg_color
+            )
+            self.notebook.add(agent_tab, text="🤖 Agents")
+            
+            # Trigger initial refresh
+            if hasattr(self.agent_panel, 'refresh_agents'):
+                self.root.after(1000, self.agent_panel.refresh_agents)
+        except Exception as e:
+            self.logger.error(f"Failed to create agent dashboard tab: {e}")
 
 def main():
     root = tk.Tk()
