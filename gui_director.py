@@ -2042,7 +2042,7 @@ class AdastreaDirectorApp:
                 from langchain_openai import OpenAIEmbeddings
             except ImportError:
                 pass  # Will be handled by the ingestion script
-            from langchain_community.vectorstores import Chroma
+            from langchain_chroma import Chroma
             
             persist_directory = os.path.join(SCRIPT_DIR, "chroma_db")
             

@@ -92,7 +92,7 @@ try:
         RecursiveCharacterTextSplitter,
         Language,
     )
-    from langchain_community.vectorstores import Chroma
+    from langchain_chroma import Chroma
     from rich.console import Console
     from rich.progress import Progress, SpinnerColumn, TextColumn
     from rich import print as rprint
