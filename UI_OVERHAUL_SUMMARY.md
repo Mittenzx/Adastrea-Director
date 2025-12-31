@@ -6,7 +6,7 @@ This PR implements a comprehensive UI/UX overhaul for the Adastrea Director GUI,
 
 ## New Files Created
 
-### 1. `gui_widgets.py` (354 lines)
+### 1. `gui_widgets.py` (386 lines)
 A comprehensive library of modern, reusable UI components:
 
 - **StatusBadge**: Color-coded status indicators (success/error/warning/info/neutral)
@@ -17,7 +17,7 @@ A comprehensive library of modern, reusable UI components:
 - **MetricsPanel**: Grid-based panel for displaying multiple metrics
 - **TabBar**: Modern tab navigation system with radio-style buttons
 
-### 2. `gui_agent_panel.py` (310 lines)
+### 2. `gui_agent_panel.py` (321 lines)
 Phase 3 agent monitoring dashboard:
 
 - **AgentMonitorPanel**: Real-time monitoring widget for autonomous agents
@@ -27,7 +27,7 @@ Phase 3 agent monitoring dashboard:
   - Bug Detection Agent (issues by severity)
   - Code Quality Agent (tech debt scores)
 
-### 3. `test_ui_components.py` (310 lines)
+### 3. `test_ui_components.py` (309 lines)
 Comprehensive test script for all new UI components:
 
 - Standalone test window with tabbed interface

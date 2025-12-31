@@ -11,10 +11,9 @@ from tkinter import ttk
 # Import new widgets
 try:
     from gui_widgets import (
-        StatusBadge, CollapsibleFrame, InfoCard, ActionButton,
-        ProgressIndicator, MetricsPanel, TabBar
+        StatusBadge, CollapsibleFrame, InfoCard, ActionButton, MetricsPanel
     )
-    from gui_agent_panel import AgentMonitorPanel, create_agent_dashboard_tab
+    from gui_agent_panel import create_agent_dashboard_tab
     WIDGETS_AVAILABLE = True
 except ImportError as e:
     print(f"Error importing widgets: {e}")
@@ -298,7 +297,7 @@ def main():
     print("=" * 60)
     
     root = tk.Tk()
-    app = UITestWindow(root)
+    _app = UITestWindow(root)
     root.mainloop()
     
     print("\n✅ UI component test completed successfully!")

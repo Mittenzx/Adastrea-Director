@@ -54,7 +54,7 @@ try:
     AGENT_PANEL_AVAILABLE = True
 except ImportError:
     AGENT_PANEL_AVAILABLE = False
-    print("Warning: Agent panel module not available")
+    # Note: Agent panel module not available - will skip creating agent dashboard tab
 
 # Try to import psutil for system health monitoring (optional dependency)
 try:

@@ -6,20 +6,24 @@ Provides real-time monitoring of Phase 3 autonomous agents.
 import tkinter as tk
 from tkinter import ttk
 from gui_widgets import InfoCard, StatusBadge, CollapsibleFrame
+from gui_colors import (
+    BG_PRIMARY, BG_SECONDARY, BG_TERTIARY,
+    FG_PRIMARY, BORDER_COLOR, ACCENT_BLUE, FONT_FAMILY
+)
 
 
 class AgentMonitorPanel(tk.Frame):
     """Panel for monitoring Phase 3 agents"""
     
-    def __init__(self, parent, bg_color="#20232b", **kwargs):
+    def __init__(self, parent, bg_color=BG_PRIMARY, **kwargs):
         super().__init__(parent, bg=bg_color, **kwargs)
         
         self.bg_color = bg_color
-        self.bg_secondary = "#252526"
-        self.bg_tertiary = "#2d2d30"
-        self.fg_color = "#e3e4e8"
-        self.border_color = "#3e3e42"
-        self.accent_color = "#40a9ff"
+        self.bg_secondary = BG_SECONDARY
+        self.bg_tertiary = BG_TERTIARY
+        self.fg_color = FG_PRIMARY
+        self.border_color = BORDER_COLOR
+        self.accent_color = ACCENT_BLUE
         
         # Agent data
         self.agents = {
@@ -54,7 +58,7 @@ class AgentMonitorPanel(tk.Frame):
         tk.Label(
             header_frame,
             text="🤖 Autonomous Agents",
-            font=("Segoe UI", 13, "bold"),
+            font=(FONT_FAMILY, 13, "bold"),
             bg=self.bg_color,
             fg=self.fg_color
         ).pack(side=tk.LEFT)
@@ -64,7 +68,7 @@ class AgentMonitorPanel(tk.Frame):
             header_frame,
             text="🔄",
             command=self.refresh_agents,
-            font=("Segoe UI", 10),
+            font=(FONT_FAMILY, 10),
             bg="#343843",
             fg=self.fg_color,
             activebackground="#4a4e5a",
@@ -110,7 +114,7 @@ class AgentMonitorPanel(tk.Frame):
         tk.Label(
             status_row,
             text="Status:",
-            font=("Segoe UI", 9, "bold"),
+            font=(FONT_FAMILY, 9, "bold"),
             bg=self.bg_tertiary,
             fg="#858585"
         ).pack(side=tk.LEFT, padx=(0, 10))
@@ -205,7 +209,7 @@ class AgentMonitorPanel(tk.Frame):
                 tk.Label(
                     inner,
                     text=key,
-                    font=("Segoe UI", 8),
+                    font=(FONT_FAMILY, 8),
                     bg=self.bg_secondary,
                     fg="#858585",
                     anchor=tk.W
@@ -214,7 +218,7 @@ class AgentMonitorPanel(tk.Frame):
                 tk.Label(
                     inner,
                     text=value,
-                    font=("Segoe UI", 12, "bold"),
+                    font=(FONT_FAMILY, 12, "bold"),
                     bg=self.bg_secondary,
                     fg=self.fg_color,
                     anchor=tk.W
@@ -241,7 +245,7 @@ def create_agent_dashboard_tab(parent, bg_color="#20232b"):
     tk.Label(
         title_frame,
         text="📊 Agent Dashboard",
-        font=("Segoe UI", 16, "bold"),
+        font=(FONT_FAMILY, 16, "bold"),
         bg=bg_color,
         fg="#e3e4e8"
     ).pack(side=tk.LEFT)
@@ -250,7 +254,7 @@ def create_agent_dashboard_tab(parent, bg_color="#20232b"):
     tk.Label(
         title_frame,
         text="Monitor Phase 3 autonomous agents in real-time",
-        font=("Segoe UI", 10),
+        font=(FONT_FAMILY, 10),
         bg=bg_color,
         fg="#858585"
     ).pack(side=tk.LEFT, padx=(20, 0))
@@ -282,7 +286,7 @@ def create_agent_dashboard_tab(parent, bg_color="#20232b"):
     tk.Label(
         overview_frame,
         text="System Overview",
-        font=("Segoe UI", 11, "bold"),
+        font=(FONT_FAMILY, 11, "bold"),
         bg=bg_color,
         fg="#e3e4e8"
     ).pack(anchor=tk.W, pady=(0, 10))
