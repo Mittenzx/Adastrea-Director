@@ -1,13 +1,13 @@
 """
 Adastrea Director - Agent System
 
-This package contains the agent implementations for the Adastrea Director
-system, organized by development phase.
+This package contains the agent implementations for the Adastrea Director system.
 
-Phase 1: Foundation Agents (Document Ingestion, Query)
-Phase 2: Planning Agents (Goal Analysis, Task Decomposition, Code Generation)
-Phase 3: Autonomous Agents (Performance, Bug Detection, Code Quality)
-Phase 4: Creative Agents (Narrative, Asset, Game Design)
+Includes:
+- Goal Analysis: Parse and understand development goals
+- Task Decomposition: Break down goals into actionable tasks
+- Code Generation: Generate implementation approaches
+- Autonomous Agents: Performance profiling, bug detection, and code quality monitoring
 """
 
 from agents.models import (

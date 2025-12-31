@@ -5182,13 +5182,15 @@ Navigation:
         about_text = """Adastrea Director
 AI Game Development Assistant
 
-Version: 1.0.0 (Phase 1)
+Version: 1.0.0 (MVP)
 An intelligent assistant system for game development in Unreal Engine.
 
 Features:
 • Context-aware Q&A using RAG
 • Document ingestion and processing
 • Natural language interface
+• Goal analysis and task decomposition
+• Autonomous performance profiling and bug detection
 
 GitHub: Mittenzx/Adastrea-Director
 """

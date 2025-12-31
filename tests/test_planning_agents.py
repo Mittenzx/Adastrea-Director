@@ -1,5 +1,5 @@
 """
-Tests for Phase 2 planning agents.
+Tests for planning agents.
 """
 
 import pytest

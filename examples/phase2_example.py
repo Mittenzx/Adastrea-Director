@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Phase 2 Example: Goal Decomposition System Demo
+Planning Example: Goal Decomposition System Demo
 
-This example demonstrates how to use the Phase 2 planning agents
+This example demonstrates how to use the planning agents
 to decompose development goals into actionable tasks.
 
 Usage:
@@ -38,7 +38,7 @@ def print_header():
     header = """
 ╔═══════════════════════════════════════════════════════════╗
 ║                                                           ║
-║         Phase 2 Example: Goal Decomposition               ║
+║            Planning Example: Goal Decomposition           ║
 ║                                                           ║
 ╚═══════════════════════════════════════════════════════════╝
     """

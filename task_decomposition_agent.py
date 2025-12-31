@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Task Decomposition Agent for Phase 2 Planning
+Task Decomposition Agent
 
 This agent is responsible for breaking down goals into actionable tasks.
 It generates task hierarchies, estimates effort, identifies dependencies,
