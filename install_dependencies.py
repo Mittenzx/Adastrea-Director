@@ -10,13 +10,10 @@ import subprocess
 from typing import Tuple
 
 # Windows-specific imports
-try:
-    import ctypes
+import ctypes
+import os
 
-    MB_ICONERROR = 0x10  # MessageBox icon constant
-except ImportError:
-    ctypes = None
-    MB_ICONERROR = None
+MB_ICONERROR = 0x10  # MessageBox icon constant
 
 
 def check_console_available() -> bool:
@@ -24,22 +21,22 @@ def check_console_available() -> bool:
     Check if console/stdin/stdout is available.
     Returns False if running with pythonw.exe or no console attached.
     """
+    # First check for Windows pythonw.exe (cheapest check)
+    if platform.system() == "Windows":
+        executable = sys.executable.lower()
+        if "pythonw.exe" in executable:
+            return False
+
     # Check if stdin/stdout exist
     if not sys.stdin or not sys.stdout:
         return False
 
-    # Try to actually use stdin/stdout
+    # Try to actually use stdout
     try:
         # Test if we can write to stdout
         sys.stdout.flush()
     except (AttributeError, OSError, ValueError):
         return False
-
-    # Additional check for Windows: detect pythonw.exe
-    if platform.system() == "Windows":
-        executable = sys.executable.lower()
-        if "pythonw.exe" in executable:
-            return False
 
     return True
 
@@ -290,26 +287,46 @@ If you're double-clicking this script and seeing this error:
 
 For more help, see: https://github.com/Mittenzx/Adastrea-Director/wiki
 """
+        # Get absolute path for log file
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        log_path = os.path.join(script_dir, "install_dependencies_error.log")
+
         try:
             # Try to write error to a log file
-            with open("install_dependencies_error.log", "w") as f:
+            with open(log_path, "w", encoding="utf-8") as f:
                 f.write(error_msg)
             # Try to display a message box on Windows
-            if platform.system() == "Windows" and ctypes:
+            if platform.system() == "Windows":
                 try:
                     ctypes.windll.user32.MessageBoxW(
                         0,
-                        "This installer must be run from Command Prompt or PowerShell, not by double-clicking.\n\n"
-                        "Please open Command Prompt and run:\n"
-                        "python install_dependencies.py\n\n"
-                        "See install_dependencies_error.log for details.",
+                        f"This installer must be run from Command Prompt or PowerShell, not by double-clicking.\n\n"
+                        f"Please open Command Prompt and run:\n"
+                        f"python install_dependencies.py\n\n"
+                        f"See error log for details:\n{log_path}",
                         "Adastrea Director - Installation Error",
                         MB_ICONERROR,
                     )
-                except Exception:
-                    pass
-        except Exception:
-            pass
+                except Exception as e:
+                    # Best-effort logging if the message box fails
+                    try:
+                        with open(log_path, "a", encoding="utf-8") as f:
+                            f.write(f"\nFailed to show message box: {e}\n")
+                    except Exception:
+                        # Final fallback: try stderr
+                        try:
+                            sys.stderr.write(f"\nFailed to show message box: {e}\n")
+                        except Exception:
+                            pass
+        except Exception as e:
+            # Best-effort logging if writing the error log fails
+            try:
+                sys.stderr.write(
+                    f"\nFailed to write installation error log to {log_path}: {e}\n"
+                )
+            except Exception:
+                # Final fallback: swallow any logging errors
+                pass
         return 1
 
     # Check Python version
