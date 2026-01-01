@@ -9,11 +9,14 @@ import platform
 import subprocess
 from typing import Tuple
 
-# Windows-specific imports (no-op on other platforms)
+# Windows-specific imports
 try:
     import ctypes
+
+    MB_ICONERROR = 0x10  # MessageBox icon constant
 except ImportError:
-    ctypes = None  # Not available on this platform
+    ctypes = None
+    MB_ICONERROR = None
 
 
 def check_console_available() -> bool:
@@ -301,7 +304,7 @@ For more help, see: https://github.com/Mittenzx/Adastrea-Director/wiki
                         "python install_dependencies.py\n\n"
                         "See install_dependencies_error.log for details.",
                         "Adastrea Director - Installation Error",
-                        0x10,  # MB_ICONERROR
+                        MB_ICONERROR,
                     )
                 except Exception:
                     pass
