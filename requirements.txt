@@ -15,7 +15,7 @@ numpy>=2.0.0,<3.0.0
 pandas>=2.2.0,<3.0.0
 
 # LangChain for LLM orchestration and RAG - Updated to support numpy 2.0
-langchain>=0.3.19,<0.4.0
+langchain>=0.3.27,<0.4.0
 langchain-community>=0.3.27,<0.4.0
 
 # Google Gemini API - Primary LLM provider (default)
