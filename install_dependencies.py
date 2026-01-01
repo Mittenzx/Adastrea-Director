@@ -9,25 +9,26 @@ import platform
 import subprocess
 from typing import Tuple
 
+# Windows-specific imports (no-op on other platforms)
+try:
+    import ctypes
+except ImportError:
+    ctypes = None  # Not available on this platform
+
 
 def check_console_available() -> bool:
     """
     Check if console/stdin/stdout is available.
     Returns False if running with pythonw.exe or no console attached.
     """
-    # Check if stdin is connected to a console
+    # Check if stdin/stdout exist
     if not sys.stdin or not sys.stdout:
         return False
 
-    # Check if we can actually use stdin (not closed/None)
+    # Try to actually use stdin/stdout
     try:
-        # On Windows with pythonw.exe, stdin/stdout exist but are not usable
-        if hasattr(sys.stdin, "isatty"):
-            # If isatty check fails, we likely don't have a console
-            pass
-        # Try to check if stdout is writable
-        if sys.stdout and hasattr(sys.stdout, "write"):
-            pass
+        # Test if we can write to stdout
+        sys.stdout.flush()
     except (AttributeError, OSError, ValueError):
         return False
 
@@ -211,7 +212,7 @@ def install_requirements():
             )
 
         print(
-            f"\nFor complete platform-specific guide, see: the Wiki (https://github.com/Mittenzx/Adastrea-Director/wiki)"
+            "\nFor complete platform-specific guide, see: the Wiki (https://github.com/Mittenzx/Adastrea-Director/wiki)"
         )
         return False
 
@@ -291,10 +292,8 @@ For more help, see: https://github.com/Mittenzx/Adastrea-Director/wiki
             with open("install_dependencies_error.log", "w") as f:
                 f.write(error_msg)
             # Try to display a message box on Windows
-            if platform.system() == "Windows":
+            if platform.system() == "Windows" and ctypes:
                 try:
-                    import ctypes
-
                     ctypes.windll.user32.MessageBoxW(
                         0,
                         "This installer must be run from Command Prompt or PowerShell, not by double-clicking.\n\n"
