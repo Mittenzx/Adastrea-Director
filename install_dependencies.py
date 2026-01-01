@@ -4,14 +4,14 @@ Smart dependency installer for Adastrea Director.
 Detects platform and provides guidance for installing dependencies.
 """
 
+import os
 import sys
 import platform
 import subprocess
-from typing import Tuple
+from typing import Tuple, Optional
 
 # Windows-specific imports
 import ctypes
-import os
 
 MB_ICONERROR = 0x10  # MessageBox icon constant
 
@@ -263,7 +263,7 @@ def verify_installation():
     return all_success
 
 
-def _log_error_safely(log_path, message):
+def _log_error_safely(log_path: Optional[str], message: str) -> None:
     """
     Helper function to log errors with fallback handling.
     Tries to write to log file, then stderr, silently failing if both fail.
@@ -307,7 +307,7 @@ If you're double-clicking this script and seeing this error:
 
 For more help, see: https://github.com/Mittenzx/Adastrea-Director/wiki
 """
-        # Get absolute path for log file
+        # Get absolute path for log file (define early to avoid NameError)
         script_dir = os.path.dirname(os.path.abspath(__file__))
         log_path = os.path.join(script_dir, "install_dependencies_error.log")
 
@@ -332,6 +332,7 @@ For more help, see: https://github.com/Mittenzx/Adastrea-Director/wiki
                     _log_error_safely(log_path, f"Failed to show message box: {e}")
         except Exception as e:
             # Best-effort logging if writing the error log fails
+            # log_path is defined before try block, so it's safe to reference
             _log_error_safely(
                 None, f"Failed to write installation error log to {log_path}: {e}"
             )
