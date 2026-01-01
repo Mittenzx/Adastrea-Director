@@ -263,6 +263,26 @@ def verify_installation():
     return all_success
 
 
+def _log_error_safely(log_path, message):
+    """
+    Helper function to log errors with fallback handling.
+    Tries to write to log file, then stderr, silently failing if both fail.
+    """
+    if log_path:
+        try:
+            with open(log_path, "a", encoding="utf-8") as f:
+                f.write(f"\n{message}\n")
+            return
+        except Exception:
+            pass
+    # Fallback to stderr
+    try:
+        sys.stderr.write(f"\n{message}\n")
+    except Exception:
+        # Final fallback: swallow any logging errors
+        pass
+
+
 def main():
     """Main installation flow."""
     # First, check if we have a console available
@@ -300,33 +320,21 @@ For more help, see: https://github.com/Mittenzx/Adastrea-Director/wiki
                 try:
                     ctypes.windll.user32.MessageBoxW(
                         0,
-                        f"This installer must be run from Command Prompt or PowerShell, not by double-clicking.\n\n"
-                        f"Please open Command Prompt and run:\n"
-                        f"python install_dependencies.py\n\n"
+                        "This installer must be run from Command Prompt or PowerShell, not by double-clicking.\n\n"
+                        "Please open Command Prompt and run:\n"
+                        "python install_dependencies.py\n\n"
                         f"See error log for details:\n{log_path}",
                         "Adastrea Director - Installation Error",
                         MB_ICONERROR,
                     )
                 except Exception as e:
                     # Best-effort logging if the message box fails
-                    try:
-                        with open(log_path, "a", encoding="utf-8") as f:
-                            f.write(f"\nFailed to show message box: {e}\n")
-                    except Exception:
-                        # Final fallback: try stderr
-                        try:
-                            sys.stderr.write(f"\nFailed to show message box: {e}\n")
-                        except Exception:
-                            pass
+                    _log_error_safely(log_path, f"Failed to show message box: {e}")
         except Exception as e:
             # Best-effort logging if writing the error log fails
-            try:
-                sys.stderr.write(
-                    f"\nFailed to write installation error log to {log_path}: {e}\n"
-                )
-            except Exception:
-                # Final fallback: swallow any logging errors
-                pass
+            _log_error_safely(
+                None, f"Failed to write installation error log to {log_path}: {e}"
+            )
         return 1
 
     # Check Python version
