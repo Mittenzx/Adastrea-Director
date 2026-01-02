@@ -1468,7 +1468,7 @@ void SAdastreaDirectorPanel::AppendIngestionDebugLog(const FString& Entry)
 		if (TargetLength > 0)
 		{
 			// Find the last newline before the target length
-			int32 LastNewlinePos = CurrentIngestionDebugLog.Find(TEXT("\n"), ESearchCase::IgnoreCase, ESearchDir::FromEnd, TargetLength);
+			int32 LastNewlinePos = CurrentIngestionDebugLog.Find(TEXT("\n"), ESearchCase::CaseSensitive, ESearchDir::FromEnd, TargetLength);
 			if (LastNewlinePos != INDEX_NONE && LastNewlinePos > 0)
 			{
 				CurrentIngestionDebugLog = CurrentIngestionDebugLog.Left(LastNewlinePos + 1);
@@ -1486,8 +1486,10 @@ void SAdastreaDirectorPanel::AppendIngestionDebugLog(const FString& Entry)
 		}
 	}
 	
-	// Prepend new entry to existing logs (newest first)
-	CurrentIngestionDebugLog = NewEntry + CurrentIngestionDebugLog;
+	// Prepend new entry to existing logs (newest first) using Append for better performance
+	FString TempLog = MoveTemp(NewEntry);
+	TempLog.Append(CurrentIngestionDebugLog);
+	CurrentIngestionDebugLog = MoveTemp(TempLog);
 	
 	// Update cached FText version
 	CachedIngestionDebugLogText = FText::FromString(CurrentIngestionDebugLog);

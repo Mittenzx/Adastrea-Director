@@ -64,6 +64,10 @@ except ImportError as e:
 class ProgressWriter:
     """Helper class to write progress updates to a file for UI integration."""
     
+    # Constants for debug message management
+    MAX_DEBUG_MESSAGES = 50  # Maximum number of debug messages to store
+    MAX_DEBUG_MESSAGES_IN_PROGRESS = 10  # Number of debug messages to include in progress updates
+    
     def __init__(self, progress_file: Optional[str] = None):
         """
         Initialize the progress writer.
@@ -93,9 +97,9 @@ class ProgressWriter:
             # Add debug message if provided
             if debug_msg:
                 self.debug_messages.append(debug_msg)
-                # Keep only last 50 debug messages to prevent file bloat
-                if len(self.debug_messages) > 50:
-                    self.debug_messages = self.debug_messages[-50:]
+                # Keep only last MAX_DEBUG_MESSAGES to prevent file bloat
+                if len(self.debug_messages) > self.MAX_DEBUG_MESSAGES:
+                    self.debug_messages = self.debug_messages[-self.MAX_DEBUG_MESSAGES:]
             
             progress_data = {
                 'percent': min(100, max(0, percent)),
@@ -103,7 +107,7 @@ class ProgressWriter:
                 'details': details,
                 'status': status,
                 'timestamp': time.time(),
-                'debug_messages': self.debug_messages[-10:] if self.debug_messages else []  # Include last 10 debug messages
+                'debug_messages': self.debug_messages[-self.MAX_DEBUG_MESSAGES_IN_PROGRESS:] if self.debug_messages else []  # Include last N debug messages
             }
             with open(self.progress_file, 'w') as f:
                 json.dump(progress_data, f)
