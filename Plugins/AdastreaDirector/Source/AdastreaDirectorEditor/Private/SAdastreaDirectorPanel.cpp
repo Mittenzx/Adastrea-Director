@@ -1328,7 +1328,8 @@ void SAdastreaDirectorPanel::UpdateIngestionProgress()
 		float OldProgress = IngestionProgress;
 		IngestionProgress = static_cast<float>(Percent / 100.0);
 		
-		// Only log significant progress changes (every 5%)
+		// Only log significant progress changes (every 5% - calculated as 100/20 = 5)
+		// This prevents flooding the debug log with excessive updates
 		if (FMath::FloorToInt(OldProgress * 20.0f) != FMath::FloorToInt(IngestionProgress * 20.0f))
 		{
 			AppendIngestionDebugLog(FString::Printf(TEXT("📊 Progress: %.0f%%\n"), Percent));
@@ -1464,10 +1465,12 @@ void SAdastreaDirectorPanel::AppendIngestionDebugLog(const FString& Entry)
 	if (CurrentIngestionDebugLog.Len() + NewEntry.Len() > MaxIngestionDebugLogCharacters)
 	{
 		// Truncate at newline boundary to preserve message integrity
+		// Note: Log is displayed in reverse chronological order (newest first)
+		// so we truncate from the end (oldest messages)
 		int32 TargetLength = MaxIngestionDebugLogCharacters - NewEntry.Len();
 		if (TargetLength > 0)
 		{
-			// Find the last newline within the truncated portion
+			// Find the last newline within the truncated portion to preserve newest messages
 			int32 LastNewlinePos = CurrentIngestionDebugLog.Left(TargetLength).Find(TEXT("\n"), ESearchCase::CaseSensitive, ESearchDir::FromEnd);
 			if (LastNewlinePos != INDEX_NONE && LastNewlinePos > 0)
 			{
@@ -1486,7 +1489,8 @@ void SAdastreaDirectorPanel::AppendIngestionDebugLog(const FString& Entry)
 		}
 	}
 	
-	// Prepend new entry to existing logs (newest first)
+	// Prepend new entry to existing logs (newest first, like a console log viewer)
+	// This allows users to see the most recent updates without scrolling down
 	CurrentIngestionDebugLog = NewEntry + CurrentIngestionDebugLog;
 	
 	// Update cached FText version
