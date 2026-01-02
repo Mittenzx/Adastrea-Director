@@ -1296,12 +1296,10 @@ void SAdastreaDirectorPanel::UpdateIngestionProgress()
 	// Read progress file
 	if (!FPaths::FileExists(ProgressFilePath))
 	{
-		// Only log once to avoid spam
-		static bool bLoggedMissingFile = false;
-		if (!bLoggedMissingFile)
+		// Log once per ingestion session to avoid spam
+		if (IngestionProgress == 0.0f)
 		{
 			AppendIngestionDebugLog(TEXT("⏳ Waiting for progress file to be created...\n"));
-			bLoggedMissingFile = true;
 		}
 		return;
 	}
@@ -1460,13 +1458,36 @@ void SAdastreaDirectorPanel::AppendIngestionDebugLog(const FString& Entry)
 {
 	// Prepend new entry with timestamp
 	FString Timestamp = FDateTime::Now().ToString(TEXT("[%H:%M:%S] "));
-	CurrentIngestionDebugLog = Timestamp + Entry + CurrentIngestionDebugLog;
+	FString NewEntry = Timestamp + Entry;
 	
 	// Keep only last MaxIngestionDebugLogCharacters characters to prevent unbounded growth
-	if (CurrentIngestionDebugLog.Len() > MaxIngestionDebugLogCharacters)
+	if (CurrentIngestionDebugLog.Len() + NewEntry.Len() > MaxIngestionDebugLogCharacters)
 	{
-		CurrentIngestionDebugLog = CurrentIngestionDebugLog.Left(MaxIngestionDebugLogCharacters);
+		// Truncate at newline boundary to preserve message integrity
+		int32 TargetLength = MaxIngestionDebugLogCharacters - NewEntry.Len();
+		if (TargetLength > 0)
+		{
+			// Find the last newline before the target length
+			int32 LastNewlinePos = CurrentIngestionDebugLog.Find(TEXT("\n"), ESearchCase::IgnoreCase, ESearchDir::FromEnd, TargetLength);
+			if (LastNewlinePos != INDEX_NONE && LastNewlinePos > 0)
+			{
+				CurrentIngestionDebugLog = CurrentIngestionDebugLog.Left(LastNewlinePos + 1);
+			}
+			else
+			{
+				// If no newline found, just truncate to target length
+				CurrentIngestionDebugLog = CurrentIngestionDebugLog.Left(TargetLength);
+			}
+		}
+		else
+		{
+			// New entry alone exceeds max, clear the log
+			CurrentIngestionDebugLog = TEXT("");
+		}
 	}
+	
+	// Prepend new entry to existing logs (newest first)
+	CurrentIngestionDebugLog = NewEntry + CurrentIngestionDebugLog;
 	
 	// Update cached FText version
 	CachedIngestionDebugLogText = FText::FromString(CurrentIngestionDebugLog);
