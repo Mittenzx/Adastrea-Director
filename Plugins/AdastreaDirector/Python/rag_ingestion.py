@@ -378,6 +378,8 @@ class RAGIngestionAgent:
             self.progress_writer.write(0, "Error", f"Directory not found: {directory}", "error")
             return stats
         
+        self.progress_writer.write(0, "Initializing", "Scanning for files...", "processing")
+        
         # Get file list
         file_list = self._get_file_list(directory)
         stats["total_files"] = len(file_list)
@@ -391,6 +393,11 @@ class RAGIngestionAgent:
         # Check if database exists once before loop
         db_exists = Path(self.persist_directory).exists()
         vectorstore = None
+        
+        if db_exists:
+            self.progress_writer.write(1, "Database Check", "Existing database found", "processing")
+        else:
+            self.progress_writer.write(1, "Database Check", "Creating new database", "processing")
         
         for idx, file_path in enumerate(file_list):
             try:
@@ -408,6 +415,12 @@ class RAGIngestionAgent:
                 
                 if not has_changed:
                     stats["skipped"] += 1
+                    self.progress_writer.write(
+                        base_percent + (0.9 / len(file_list)) * 100,
+                        f"Processing {idx + 1}/{len(file_list)}",
+                        f"Skipped (unchanged): {Path(file_path).name}",
+                        "processing"
+                    )
                     continue
                 
                 # Load file
@@ -421,6 +434,12 @@ class RAGIngestionAgent:
                 
                 if not documents:
                     stats["errors"] += 1
+                    self.progress_writer.write(
+                        base_percent + (0.5 / len(file_list)) * 100,
+                        f"Processing {idx + 1}/{len(file_list)}",
+                        f"Error loading: {Path(file_path).name}",
+                        "processing"
+                    )
                     continue
                 
                 # Chunk documents
@@ -434,14 +453,22 @@ class RAGIngestionAgent:
                 
                 if not chunks:
                     stats["errors"] += 1
+                    self.progress_writer.write(
+                        base_percent + (0.7 / len(file_list)) * 100,
+                        f"Processing {idx + 1}/{len(file_list)}",
+                        f"Error chunking: {Path(file_path).name}",
+                        "processing"
+                    )
                     continue
                 
                 # Delete old chunks if updating
                 if old_hash is not None:
                     self._delete_document_by_source(file_path)
                     stats["updated"] += 1
+                    action = "Updated"
                 else:
                     stats["added"] += 1
+                    action = "Added"
                 
                 # Ingest chunks
                 self.progress_writer.write(
@@ -471,6 +498,12 @@ class RAGIngestionAgent:
                 # Persist every 10 files for better performance
                 if (idx + 1) % 10 == 0 or (idx + 1) == len(file_list):
                     vectorstore.persist()
+                    self.progress_writer.write(
+                        int((idx + 1) / len(file_list) * 100),
+                        f"Processing {idx + 1}/{len(file_list)}",
+                        "Saving to database...",
+                        "processing"
+                    )
                 
                 if delay_between_files > 0:
                     time.sleep(delay_between_files)
@@ -488,10 +521,11 @@ class RAGIngestionAgent:
                 )
         
         # Final progress update
+        final_details = f"Processed {stats['added'] + stats['updated']} files (Added: {stats['added']}, Updated: {stats['updated']}, Skipped: {stats['skipped']}, Errors: {stats['errors']})"
         self.progress_writer.write(
             100,
             "Ingestion Complete",
-            f"Processed {stats['added'] + stats['updated']} files (Added: {stats['added']}, Updated: {stats['updated']}, Skipped: {stats['skipped']}, Errors: {stats['errors']})",
+            final_details,
             "complete"
         )
         

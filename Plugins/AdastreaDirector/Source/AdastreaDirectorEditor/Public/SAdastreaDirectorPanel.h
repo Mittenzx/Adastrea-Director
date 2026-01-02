@@ -81,6 +81,18 @@ private:
 	/** Database status text */
 	TSharedPtr<STextBlock> DatabaseStatusText;
 
+	/** Ingestion debug log display */
+	TSharedPtr<SMultiLineEditableTextBox> IngestionDebugLogDisplay;
+
+	/** Current ingestion debug log content */
+	FString CurrentIngestionDebugLog;
+
+	/** Cached FText version of ingestion debug log for display */
+	FText CachedIngestionDebugLogText;
+
+	/** Maximum ingestion debug log size in characters */
+	static constexpr int32 MaxIngestionDebugLogCharacters = 5000;
+
 	/** Is ingestion currently running */
 	bool bIsIngesting;
 
@@ -167,6 +179,9 @@ private:
 
 	/** Helper to send ingestion request to Python backend */
 	void StartIngestion(const FString& DocsPath, const FString& DbPath);
+
+	/** Append entry to ingestion debug log with truncation */
+	void AppendIngestionDebugLog(const FString& Entry);
 
 	// Dashboard tab widgets
 	/** Connection status text */
