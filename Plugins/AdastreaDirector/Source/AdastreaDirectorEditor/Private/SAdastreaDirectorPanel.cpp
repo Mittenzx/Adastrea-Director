@@ -1041,21 +1041,13 @@ FReply SAdastreaDirectorPanel::OnStartIngestionClicked()
 	FString DocsPath = DocsPathBox->GetText().ToString().TrimStartAndEnd();
 	FString DbPath = DbPathBox->GetText().ToString().TrimStartAndEnd();
 
-	// Clear debug log and add initial message
-	CurrentIngestionDebugLog = TEXT("");
-	CachedIngestionDebugLogText = FText::FromString(CurrentIngestionDebugLog);
-	AppendIngestionDebugLog(TEXT("🚀 Ingestion started\n"));
-
-	// Validate paths
+	// Validate paths before clearing the log to preserve context on error
 	if (DocsPath.IsEmpty() || DbPath.IsEmpty())
 	{
 		IngestionStatusMessage = LOCTEXT("IngestionErrorPathsEmpty", "Error: Please specify both paths");
 		AppendIngestionDebugLog(TEXT("❌ Error: Both documentation path and database path must be specified\n"));
 		return FReply::Handled();
 	}
-
-	AppendIngestionDebugLog(FString::Printf(TEXT("📁 Documentation path: %s\n"), *DocsPath));
-	AppendIngestionDebugLog(FString::Printf(TEXT("💾 Database path: %s\n"), *DbPath));
 
 	// Validate docs directory exists
 	if (!FPaths::DirectoryExists(DocsPath))
@@ -1064,6 +1056,14 @@ FReply SAdastreaDirectorPanel::OnStartIngestionClicked()
 		AppendIngestionDebugLog(TEXT("❌ Error: Documentation folder does not exist\n"));
 		return FReply::Handled();
 	}
+
+	// Clear debug log and add initial message after validation passes
+	CurrentIngestionDebugLog = TEXT("");
+	CachedIngestionDebugLogText = FText::FromString(CurrentIngestionDebugLog);
+	AppendIngestionDebugLog(TEXT("🚀 Ingestion started\n"));
+
+	AppendIngestionDebugLog(FString::Printf(TEXT("📁 Documentation path: %s\n"), *DocsPath));
+	AppendIngestionDebugLog(FString::Printf(TEXT("💾 Database path: %s\n"), *DbPath));
 
 	AppendIngestionDebugLog(TEXT("✅ Documentation folder exists\n"));
 
@@ -1464,13 +1464,15 @@ void SAdastreaDirectorPanel::AppendIngestionDebugLog(const FString& Entry)
 	// Keep only last MaxIngestionDebugLogCharacters characters to prevent unbounded growth
 	if (CurrentIngestionDebugLog.Len() + NewEntry.Len() > MaxIngestionDebugLogCharacters)
 	{
-		// Truncate at newline boundary to preserve message integrity
-		// Note: Log is displayed in reverse chronological order (newest first)
-		// so we truncate from the end (oldest messages)
+		// Truncate at a newline boundary to preserve message integrity.
+		// The log buffer is stored in reverse chronological order: newest entries are at the beginning,
+		// and the oldest entries are at the end of CurrentIngestionDebugLog. To preserve the newest
+		// messages, we discard characters from the end (removing the oldest messages).
 		int32 TargetLength = MaxIngestionDebugLogCharacters - NewEntry.Len();
 		if (TargetLength > 0)
 		{
-			// Find the last newline within the truncated portion to preserve newest messages
+			// Within the portion we keep (up to TargetLength), find the last newline so we keep
+			// only complete messages while preserving the newest entries at the beginning.
 			int32 LastNewlinePos = CurrentIngestionDebugLog.Left(TargetLength).Find(TEXT("\n"), ESearchCase::CaseSensitive, ESearchDir::FromEnd);
 			if (LastNewlinePos != INDEX_NONE && LastNewlinePos > 0)
 			{
