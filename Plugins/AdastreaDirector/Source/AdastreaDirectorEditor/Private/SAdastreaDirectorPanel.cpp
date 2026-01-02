@@ -92,6 +92,10 @@ void SAdastreaDirectorPanel::Construct(const FArguments& InArgs)
 	CachedConnectionStatus = FText::FromString(TEXT("⚠️ Not connected - Python backend not ready"));
 	LastStatusLightsUpdateTime = 0.0;
 	
+	// Initialize ingestion debug log
+	CurrentIngestionDebugLog = TEXT("📋 Ingestion Debug Log\n\nDebug messages will appear here when you start ingestion.\nThis shows exactly what's happening during the ingestion process.\n");
+	CachedIngestionDebugLogText = FText::FromString(CurrentIngestionDebugLog);
+	
 	// Initialize Tests tab state
 	bIsTestRunning = false;
 	TestProgress = 0.0f;
@@ -550,6 +554,44 @@ TSharedRef<SWidget> SAdastreaDirectorPanel::CreateIngestionTab()
 			SAssignNew(IngestionDetailsText, STextBlock)
 			.Text_Lambda([this]() { return IngestionDetailsMessage; })
 			.AutoWrapText(true)
+		]
+
+		+ SVerticalBox::Slot()
+		.AutoHeight()
+		.Padding(10.0f, 10.0f, 10.0f, 5.0f)
+		[
+			SNew(SSeparator)
+			.Orientation(Orient_Horizontal)
+		]
+
+		// Debug Log Section
+		+ SVerticalBox::Slot()
+		.AutoHeight()
+		.Padding(10.0f, 5.0f, 10.0f, 5.0f)
+		[
+			SNew(STextBlock)
+			.Text(LOCTEXT("IngestionDebugLogLabel", "Debug Log:"))
+			.Font(FCoreStyle::GetDefaultFontStyle("Bold", 10))
+		]
+
+		+ SVerticalBox::Slot()
+		.FillHeight(1.0f)
+		.Padding(10.0f, 0.0f, 10.0f, 10.0f)
+		[
+			SNew(SBox)
+			.MinDesiredHeight(150.0f)
+			[
+				SNew(SScrollBox)
+				.Orientation(Orient_Vertical)
+				
+				+ SScrollBox::Slot()
+				[
+					SAssignNew(IngestionDebugLogDisplay, SMultiLineEditableTextBox)
+					.Text_Lambda([this]() { return CachedIngestionDebugLogText; })
+					.IsReadOnly(true)
+					.AutoWrapText(true)
+				]
+			]
 		];
 }
 
@@ -999,35 +1041,56 @@ FReply SAdastreaDirectorPanel::OnStartIngestionClicked()
 	FString DocsPath = DocsPathBox->GetText().ToString().TrimStartAndEnd();
 	FString DbPath = DbPathBox->GetText().ToString().TrimStartAndEnd();
 
+	// Clear debug log and add initial message
+	CurrentIngestionDebugLog = TEXT("");
+	CachedIngestionDebugLogText = FText::FromString(CurrentIngestionDebugLog);
+	AppendIngestionDebugLog(TEXT("🚀 Ingestion started\n"));
+
 	// Validate paths
 	if (DocsPath.IsEmpty() || DbPath.IsEmpty())
 	{
 		IngestionStatusMessage = LOCTEXT("IngestionErrorPathsEmpty", "Error: Please specify both paths");
+		AppendIngestionDebugLog(TEXT("❌ Error: Both documentation path and database path must be specified\n"));
 		return FReply::Handled();
 	}
+
+	AppendIngestionDebugLog(FString::Printf(TEXT("📁 Documentation path: %s\n"), *DocsPath));
+	AppendIngestionDebugLog(FString::Printf(TEXT("💾 Database path: %s\n"), *DbPath));
 
 	// Validate docs directory exists
 	if (!FPaths::DirectoryExists(DocsPath))
 	{
 		IngestionStatusMessage = LOCTEXT("IngestionErrorDocsNotFound", "Error: Documentation folder does not exist");
+		AppendIngestionDebugLog(TEXT("❌ Error: Documentation folder does not exist\n"));
 		return FReply::Handled();
 	}
+
+	AppendIngestionDebugLog(TEXT("✅ Documentation folder exists\n"));
 
 	// Sanitize paths (resolve to absolute paths)
 	DocsPath = FPaths::ConvertRelativePathToFull(DocsPath);
 	DbPath = FPaths::ConvertRelativePathToFull(DbPath);
+
+	AppendIngestionDebugLog(TEXT("🔄 Converting paths to absolute format\n"));
+	AppendIngestionDebugLog(FString::Printf(TEXT("  → Docs: %s\n"), *DocsPath));
+	AppendIngestionDebugLog(FString::Printf(TEXT("  → DB: %s\n"), *DbPath));
 
 	// Create progress file directory if it doesn't exist
 	FString ProgressDir = FPaths::GetPath(ProgressFilePath);
 	if (!FPaths::DirectoryExists(ProgressDir))
 	{
 		IFileManager::Get().MakeDirectory(*ProgressDir, true);
+		AppendIngestionDebugLog(FString::Printf(TEXT("📂 Created progress directory: %s\n"), *ProgressDir));
 	}
+
+	AppendIngestionDebugLog(FString::Printf(TEXT("📝 Progress file: %s\n"), *ProgressFilePath));
 
 	bIsIngesting = true;
 	IngestionProgress = 0.0f;
 	IngestionStatusMessage = LOCTEXT("IngestionStarting", "Starting ingestion...");
 	IngestionDetailsMessage = FText::GetEmpty();
+
+	AppendIngestionDebugLog(TEXT("🔌 Connecting to Python backend...\n"));
 
 	// Start ingestion
 	StartIngestion(DocsPath, DbPath);
@@ -1156,18 +1219,33 @@ void SAdastreaDirectorPanel::StartIngestion(const FString& DocsPath, const FStri
 	if (!RuntimeModule)
 	{
 		IngestionStatusMessage = LOCTEXT("IngestionErrorModuleNotAvailable", "Error: Runtime module not available");
+		AppendIngestionDebugLog(TEXT("❌ Error: AdastreaDirector runtime module not available\n"));
 		bIsIngesting = false;
 		return;
 	}
+
+	AppendIngestionDebugLog(TEXT("✅ Runtime module found\n"));
 
 	FPythonBridge* PythonBridge = RuntimeModule->GetPythonBridge();
 	
 	if (!PythonBridge || !PythonBridge->IsReady())
 	{
 		IngestionStatusMessage = LOCTEXT("IngestionErrorBackendNotReady", "Error: Python backend not ready");
+		AppendIngestionDebugLog(TEXT("❌ Error: Python backend not ready\n"));
+		if (PythonBridge)
+		{
+			FString Status = PythonBridge->GetStatus();
+			AppendIngestionDebugLog(FString::Printf(TEXT("  → Backend status: %s\n"), *Status));
+		}
+		else
+		{
+			AppendIngestionDebugLog(TEXT("  → Python bridge is null\n"));
+		}
 		bIsIngesting = false;
 		return;
 	}
+
+	AppendIngestionDebugLog(TEXT("✅ Python backend ready\n"));
 
 	// Build JSON request
 	TSharedPtr<FJsonObject> RequestData = MakeShared<FJsonObject>();
@@ -1181,6 +1259,10 @@ void SAdastreaDirectorPanel::StartIngestion(const FString& DocsPath, const FStri
 	TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&RequestDataString);
 	FJsonSerializer::Serialize(RequestData.ToSharedRef(), Writer);
 
+	AppendIngestionDebugLog(TEXT("📤 Sending ingestion request to Python backend...\n"));
+	AppendIngestionDebugLog(FString::Printf(TEXT("  → Collection: adastrea_game_docs\n")));
+	AppendIngestionDebugLog(FString::Printf(TEXT("  → Force reingest: No\n")));
+
 	// Send ingestion request
 	FString Response;
 	bool bSuccess = PythonBridge->SendRequest(TEXT("ingest"), RequestDataString, Response);
@@ -1188,10 +1270,18 @@ void SAdastreaDirectorPanel::StartIngestion(const FString& DocsPath, const FStri
 	if (bSuccess)
 	{
 		IngestionStatusMessage = LOCTEXT("IngestionInProgress", "Ingestion in progress...");
+		AppendIngestionDebugLog(TEXT("✅ Ingestion request sent successfully\n"));
+		AppendIngestionDebugLog(TEXT("⏳ Waiting for Python backend to process files...\n"));
+		AppendIngestionDebugLog(TEXT("📊 Progress updates will appear below:\n"));
 	}
 	else
 	{
 		IngestionStatusMessage = LOCTEXT("IngestionErrorFailedToStart", "Error: Failed to start ingestion");
+		AppendIngestionDebugLog(TEXT("❌ Error: Failed to send ingestion request\n"));
+		if (!Response.IsEmpty())
+		{
+			AppendIngestionDebugLog(FString::Printf(TEXT("  → Response: %s\n"), *Response));
+		}
 		bIsIngesting = false;
 	}
 }
@@ -1206,12 +1296,20 @@ void SAdastreaDirectorPanel::UpdateIngestionProgress()
 	// Read progress file
 	if (!FPaths::FileExists(ProgressFilePath))
 	{
+		// Only log once to avoid spam
+		static bool bLoggedMissingFile = false;
+		if (!bLoggedMissingFile)
+		{
+			AppendIngestionDebugLog(TEXT("⏳ Waiting for progress file to be created...\n"));
+			bLoggedMissingFile = true;
+		}
 		return;
 	}
 
 	FString JsonString;
 	if (!FFileHelper::LoadFileToString(JsonString, *ProgressFilePath))
 	{
+		AppendIngestionDebugLog(TEXT("⚠️ Warning: Could not read progress file\n"));
 		return;
 	}
 
@@ -1221,6 +1319,7 @@ void SAdastreaDirectorPanel::UpdateIngestionProgress()
 	
 	if (!FJsonSerializer::Deserialize(Reader, JsonObject) || !JsonObject.IsValid())
 	{
+		AppendIngestionDebugLog(TEXT("⚠️ Warning: Could not parse progress JSON\n"));
 		return;
 	}
 
@@ -1228,19 +1327,36 @@ void SAdastreaDirectorPanel::UpdateIngestionProgress()
 	double Percent = 0.0;
 	if (JsonObject->TryGetNumberField(TEXT("percent"), Percent))
 	{
+		float OldProgress = IngestionProgress;
 		IngestionProgress = static_cast<float>(Percent / 100.0);
+		
+		// Only log significant progress changes (every 5%)
+		if (FMath::FloorToInt(OldProgress * 20.0f) != FMath::FloorToInt(IngestionProgress * 20.0f))
+		{
+			AppendIngestionDebugLog(FString::Printf(TEXT("📊 Progress: %.0f%%\n"), Percent));
+		}
 	}
 
 	FString Label;
 	if (JsonObject->TryGetStringField(TEXT("label"), Label))
 	{
-		IngestionStatusMessage = FText::FromString(Label);
+		// Only update if changed to avoid spam
+		if (IngestionStatusMessage.ToString() != Label)
+		{
+			IngestionStatusMessage = FText::FromString(Label);
+			AppendIngestionDebugLog(FString::Printf(TEXT("📝 Status: %s\n"), *Label));
+		}
 	}
 
 	FString Details;
 	if (JsonObject->TryGetStringField(TEXT("details"), Details))
 	{
-		IngestionDetailsMessage = FText::FromString(Details);
+		// Only update if changed to avoid spam
+		if (IngestionDetailsMessage.ToString() != Details && !Details.IsEmpty())
+		{
+			IngestionDetailsMessage = FText::FromString(Details);
+			AppendIngestionDebugLog(FString::Printf(TEXT("  → %s\n"), *Details));
+		}
 	}
 
 	FString Status;
@@ -1250,10 +1366,23 @@ void SAdastreaDirectorPanel::UpdateIngestionProgress()
 		{
 			bIsIngesting = false;
 			IngestionProgress = 1.0f;
+			AppendIngestionDebugLog(TEXT("✅ Ingestion completed successfully!\n"));
+			
+			// Log final stats if available
+			FString FinalDetails = IngestionDetailsMessage.ToString();
+			if (!FinalDetails.IsEmpty())
+			{
+				AppendIngestionDebugLog(FString::Printf(TEXT("  → Final stats: %s\n"), *FinalDetails));
+			}
 		}
 		else if (Status == TEXT("error"))
 		{
 			bIsIngesting = false;
+			AppendIngestionDebugLog(TEXT("❌ Ingestion failed with error\n"));
+			if (!Details.IsEmpty())
+			{
+				AppendIngestionDebugLog(FString::Printf(TEXT("  → Error details: %s\n"), *Details));
+			}
 		}
 	}
 }
@@ -1325,6 +1454,22 @@ void SAdastreaDirectorPanel::AppendLogEntry(const FString& Entry)
 	
 	// Update cached FText version
 	CachedLogContentText = FText::FromString(CurrentLogContent);
+}
+
+void SAdastreaDirectorPanel::AppendIngestionDebugLog(const FString& Entry)
+{
+	// Prepend new entry with timestamp
+	FString Timestamp = FDateTime::Now().ToString(TEXT("[%H:%M:%S] "));
+	CurrentIngestionDebugLog = Timestamp + Entry + CurrentIngestionDebugLog;
+	
+	// Keep only last MaxIngestionDebugLogCharacters characters to prevent unbounded growth
+	if (CurrentIngestionDebugLog.Len() > MaxIngestionDebugLogCharacters)
+	{
+		CurrentIngestionDebugLog = CurrentIngestionDebugLog.Left(MaxIngestionDebugLogCharacters);
+	}
+	
+	// Update cached FText version
+	CachedIngestionDebugLogText = FText::FromString(CurrentIngestionDebugLog);
 }
 
 void SAdastreaDirectorPanel::UpdateConnectionStatus()

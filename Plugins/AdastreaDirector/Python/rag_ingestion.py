@@ -73,8 +73,9 @@ class ProgressWriter:
         """
         self.progress_file = progress_file
         self.enabled = progress_file is not None
+        self.debug_messages = []  # Store debug messages
     
-    def write(self, percent: float, label: str = "", details: str = "", status: str = "processing"):
+    def write(self, percent: float, label: str = "", details: str = "", status: str = "processing", debug_msg: str = ""):
         """
         Write progress update to file.
         
@@ -83,17 +84,26 @@ class ProgressWriter:
             label: Main progress label
             details: Detailed progress information
             status: Status string (processing, complete, error)
+            debug_msg: Optional debug message for troubleshooting
         """
         if not self.enabled:
             return
         
         try:
+            # Add debug message if provided
+            if debug_msg:
+                self.debug_messages.append(debug_msg)
+                # Keep only last 50 debug messages to prevent file bloat
+                if len(self.debug_messages) > 50:
+                    self.debug_messages = self.debug_messages[-50:]
+            
             progress_data = {
                 'percent': min(100, max(0, percent)),
                 'label': label,
                 'details': details,
                 'status': status,
-                'timestamp': time.time()
+                'timestamp': time.time(),
+                'debug_messages': self.debug_messages[-10:] if self.debug_messages else []  # Include last 10 debug messages
             }
             with open(self.progress_file, 'w') as f:
                 json.dump(progress_data, f)
@@ -375,22 +385,35 @@ class RAGIngestionAgent:
         
         directory_path = Path(directory)
         if not directory_path.exists():
-            self.progress_writer.write(0, "Error", f"Directory not found: {directory}", "error")
+            self.progress_writer.write(0, "Error", f"Directory not found: {directory}", "error", 
+                                      debug_msg=f"Directory does not exist: {directory}")
             return stats
+        
+        self.progress_writer.write(0, "Initializing", "Scanning for files...", "processing",
+                                  debug_msg=f"Scanning directory: {directory}")
         
         # Get file list
         file_list = self._get_file_list(directory)
         stats["total_files"] = len(file_list)
         
         if not file_list:
-            self.progress_writer.write(100, "Complete", "No supported files found", "complete")
+            self.progress_writer.write(100, "Complete", "No supported files found", "complete",
+                                      debug_msg="No supported files found in directory")
             return stats
         
-        self.progress_writer.write(0, "Starting", f"Found {len(file_list)} files", "processing")
+        self.progress_writer.write(0, "Starting", f"Found {len(file_list)} files", "processing",
+                                  debug_msg=f"Found {len(file_list)} files to process")
         
         # Check if database exists once before loop
         db_exists = Path(self.persist_directory).exists()
         vectorstore = None
+        
+        if db_exists:
+            self.progress_writer.write(1, "Database Check", "Existing database found", "processing",
+                                      debug_msg=f"Using existing database at: {self.persist_directory}")
+        else:
+            self.progress_writer.write(1, "Database Check", "Creating new database", "processing",
+                                      debug_msg=f"Creating new database at: {self.persist_directory}")
         
         for idx, file_path in enumerate(file_list):
             try:
@@ -401,13 +424,21 @@ class RAGIngestionAgent:
                     base_percent,
                     f"Processing {idx + 1}/{len(file_list)}",
                     f"Checking: {Path(file_path).name}",
-                    "processing"
+                    "processing",
+                    debug_msg=f"Checking file {idx + 1}/{len(file_list)}: {Path(file_path).name}"
                 )
                 
                 has_changed, old_hash, current_hash = self._check_file_changed(file_path, force_reingest)
                 
                 if not has_changed:
                     stats["skipped"] += 1
+                    self.progress_writer.write(
+                        base_percent + (0.9 / len(file_list)) * 100,
+                        f"Processing {idx + 1}/{len(file_list)}",
+                        f"Skipped (unchanged): {Path(file_path).name}",
+                        "processing",
+                        debug_msg=f"Skipped unchanged file: {Path(file_path).name}"
+                    )
                     continue
                 
                 # Load file
@@ -415,12 +446,20 @@ class RAGIngestionAgent:
                     base_percent + (0.3 / len(file_list)) * 100,
                     f"Processing {idx + 1}/{len(file_list)}",
                     f"Loading: {Path(file_path).name}",
-                    "processing"
+                    "processing",
+                    debug_msg=f"Loading file: {Path(file_path).name}"
                 )
                 documents = self.load_single_file(file_path)
                 
                 if not documents:
                     stats["errors"] += 1
+                    self.progress_writer.write(
+                        base_percent + (0.5 / len(file_list)) * 100,
+                        f"Processing {idx + 1}/{len(file_list)}",
+                        f"Error loading: {Path(file_path).name}",
+                        "processing",
+                        debug_msg=f"Failed to load file: {Path(file_path).name}"
+                    )
                     continue
                 
                 # Chunk documents
@@ -428,27 +467,38 @@ class RAGIngestionAgent:
                     base_percent + (0.6 / len(file_list)) * 100,
                     f"Processing {idx + 1}/{len(file_list)}",
                     f"Chunking: {Path(file_path).name}",
-                    "processing"
+                    "processing",
+                    debug_msg=f"Chunking {len(documents)} document(s) from {Path(file_path).name}"
                 )
                 chunks = self.chunk_documents(documents)
                 
                 if not chunks:
                     stats["errors"] += 1
+                    self.progress_writer.write(
+                        base_percent + (0.7 / len(file_list)) * 100,
+                        f"Processing {idx + 1}/{len(file_list)}",
+                        f"Error chunking: {Path(file_path).name}",
+                        "processing",
+                        debug_msg=f"Failed to chunk file: {Path(file_path).name}"
+                    )
                     continue
                 
                 # Delete old chunks if updating
                 if old_hash is not None:
                     self._delete_document_by_source(file_path)
                     stats["updated"] += 1
+                    action = "Updated"
                 else:
                     stats["added"] += 1
+                    action = "Added"
                 
                 # Ingest chunks
                 self.progress_writer.write(
                     base_percent + (0.9 / len(file_list)) * 100,
                     f"Processing {idx + 1}/{len(file_list)}",
                     f"Ingesting: {Path(file_path).name} ({len(chunks)} chunks)",
-                    "processing"
+                    "processing",
+                    debug_msg=f"{action} {len(chunks)} chunks from {Path(file_path).name}"
                 )
                 
                 if not db_exists:
@@ -471,6 +521,13 @@ class RAGIngestionAgent:
                 # Persist every 10 files for better performance
                 if (idx + 1) % 10 == 0 or (idx + 1) == len(file_list):
                     vectorstore.persist()
+                    self.progress_writer.write(
+                        int((idx + 1) / len(file_list) * 100),
+                        f"Processing {idx + 1}/{len(file_list)}",
+                        "Saving to database...",
+                        "processing",
+                        debug_msg=f"Persisted database (processed {idx + 1}/{len(file_list)} files)"
+                    )
                 
                 if delay_between_files > 0:
                     time.sleep(delay_between_files)
@@ -484,15 +541,18 @@ class RAGIngestionAgent:
                     int((idx + 1) / len(file_list) * 100),
                     "Error",
                     error_msg,
-                    "error"
+                    "error",
+                    debug_msg=f"Exception: {type(e).__name__} - {str(e)}"
                 )
         
         # Final progress update
+        final_details = f"Processed {stats['added'] + stats['updated']} files (Added: {stats['added']}, Updated: {stats['updated']}, Skipped: {stats['skipped']}, Errors: {stats['errors']})"
         self.progress_writer.write(
             100,
             "Ingestion Complete",
-            f"Processed {stats['added'] + stats['updated']} files (Added: {stats['added']}, Updated: {stats['updated']}, Skipped: {stats['skipped']}, Errors: {stats['errors']})",
-            "complete"
+            final_details,
+            "complete",
+            debug_msg=f"Ingestion finished. Total: {stats['total_files']}, Added: {stats['added']}, Updated: {stats['updated']}, Skipped: {stats['skipped']}, Errors: {stats['errors']}"
         )
         
         return stats
