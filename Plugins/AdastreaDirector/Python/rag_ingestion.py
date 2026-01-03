@@ -88,6 +88,10 @@ class ProgressWriter:
             return
         
         try:
+            # Ensure parent directory exists
+            progress_path = Path(self.progress_file)
+            progress_path.parent.mkdir(parents=True, exist_ok=True)
+            
             progress_data = {
                 'percent': min(100, max(0, percent)),
                 'label': label,
@@ -98,7 +102,9 @@ class ProgressWriter:
             with open(self.progress_file, 'w') as f:
                 json.dump(progress_data, f)
         except Exception as e:
-            print(f"[ProgressWriter] Failed to write progress: {e}", file=sys.stderr)
+            import logging
+            logging.error(f"[ProgressWriter] Failed to write progress to {self.progress_file}: {e}")
+            print(f"[ProgressWriter] Failed to write progress to {self.progress_file}: {e}", file=sys.stderr)
 
 
 class RAGIngestionAgent:
@@ -552,7 +558,14 @@ def ingest_documents(
     Returns:
         Dictionary with ingestion statistics
     """
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.info(f"Starting document ingestion: docs_dir={docs_dir}, collection={collection_name}, progress_file={progress_file}")
+    
     progress_writer = ProgressWriter(progress_file)
+    
+    # Write initial progress immediately to signal ingestion has started
+    progress_writer.write(0, "Initializing", "Starting document ingestion...", "processing")
     
     agent = RAGIngestionAgent(
         collection_name=collection_name,
