@@ -10,11 +10,13 @@
 #   (must be 3.9-3.12, NOT 3.13+). See INSTALLATION.md for solutions.
 # - If you get onnxruntime errors: See INSTALLATION.md for solutions
 
-# Data processing - Updated for numpy 2.0 compatibility
-numpy>=2.0.0,<3.0.0
+# Data processing
+# NOTE: NumPy 2.0 is not yet fully supported by langchain-chroma 0.1.x
+# For NumPy 2.0 support, wait for langchain-chroma 0.2+ or langchain 0.4+
+numpy>=1.26.2,<2.0.0
 pandas>=2.2.0,<3.0.0
 
-# LangChain for LLM orchestration and RAG - Updated to support numpy 2.0
+# LangChain for LLM orchestration and RAG
 langchain>=0.3.27,<0.4.0
 langchain-community>=0.3.27,<0.4.0
 
@@ -31,14 +33,16 @@ langchain-google-genai>=2.0.5,<3.0.0
 langchain-openai>=0.3.0,<0.4.0
 openai>=1.57.0,<2.0.0
 
-# Vector database for document storage and retrieval - Updated for numpy 2.0 compatibility
+# Vector database for document storage and retrieval
 # NOTE: chromadb requires onnxruntime, which may not be available on:
 #   - Python 3.13+ (any platform - not supported yet)
 #   - Apple Silicon Macs (M1/M2/M3/M4)
 #   - ARM Linux/Windows systems
 # See INSTALLATION.md for platform-specific solutions.
-chromadb>=1.4.0,<2.0.0
-langchain-chroma>=1.0.0,<2.0.0  # New Chroma integration package (replaces deprecated langchain_community.vectorstores.Chroma)
+chromadb>=0.5.0,<1.0.0
+# langchain-chroma 0.1.4 is compatible with langchain 0.3.x and numpy <2.0
+# For langchain-chroma 1.x, you need langchain-core >=1.0.0 (langchain 0.4+)
+langchain-chroma>=0.1.4,<0.2.0
 
 # Document loading and processing
 pypdf>=5.1.0,<6.0.0
@@ -47,7 +51,7 @@ markdown>=3.7,<4.0.0
 beautifulsoup4>=4.12.3,<5.0.0
 unstructured>=0.10.0,<0.19.0  # For enhanced markdown and document parsing
 
-# Text processing and embeddings - Updated for numpy 2.0 and Python 3.12 compatibility
+# Text processing and embeddings
 sentence-transformers>=3.3.0,<4.0.0
 tiktoken>=0.8.0,<1.0.0
 
