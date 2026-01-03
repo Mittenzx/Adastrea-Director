@@ -300,8 +300,7 @@ class RAGIngestionAgent:
             documents = loader.load()
             return self._enrich_metadata(documents, file_path)
         except Exception as e:
-            import logging
-            logging.error(f"Error loading {file_path} (type: {type(e).__name__}): {e}")
+            logger.error(f"Error loading {file_path} (type: {type(e).__name__}): {e}")
             return []
     
     def _enrich_metadata(self, documents: List[Any], file_path: str) -> List[Any]:
@@ -520,8 +519,7 @@ class RAGIngestionAgent:
             except Exception as e:
                 stats["errors"] += 1
                 error_msg = f"Error processing {Path(file_path).name}: {str(e)}"
-                import logging
-                logging.error(error_msg)
+                logger.error(error_msg)
                 self.progress_writer.write(
                     int((idx + 1) / len(file_list) * 100),
                     "Error",
