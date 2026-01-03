@@ -23,8 +23,10 @@ from unittest.mock import Mock, patch, MagicMock
 import pytest
 
 # Add parent directory and plugin Python directory to path for imports
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'Plugins', 'AdastreaDirector', 'Python'))
+repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+plugin_python_dir = os.path.join(repo_root, 'Plugins', 'AdastreaDirector', 'Python')
+sys.path.insert(0, repo_root)
+sys.path.insert(0, plugin_python_dir)
 
 # Import the modules we're testing
 from Plugins.AdastreaDirector.Python.rag_ingestion import (
@@ -33,6 +35,11 @@ from Plugins.AdastreaDirector.Python.rag_ingestion import (
     ingest_documents,
 )
 from Plugins.AdastreaDirector.Python.progress_utils import write_progress_file
+
+
+# Test constants
+MOCK_EMBEDDING_DIM = 384  # Dimension of mock embeddings for testing
+LONG_CONTENT_REPEAT_COUNT = 100  # Number of repetitions for creating long test content
 
 
 class TestRAGIngestionSimulation:
@@ -107,8 +114,8 @@ class TestRAGIngestionSimulation:
         """Create mock embeddings to avoid requiring API keys."""
         mock_embed = Mock()
         # Mock the embed_documents method to return fake embeddings
-        mock_embed.embed_documents.return_value = [[0.1] * 384] * 10  # 384-dim embeddings
-        mock_embed.embed_query.return_value = [0.1] * 384
+        mock_embed.embed_documents.return_value = [[0.1] * MOCK_EMBEDDING_DIM] * 10
+        mock_embed.embed_query.return_value = [0.1] * MOCK_EMBEDDING_DIM
         return mock_embed
 
     def test_progress_writer_basic(self, temp_progress_file):
@@ -246,7 +253,7 @@ class TestRAGIngestionSimulation:
         
         # Create a document with enough content to be chunked
         test_file = Path(temp_docs_dir) / "long_doc.txt"
-        test_file.write_text("This is a test. " * 100)  # Long enough to chunk
+        test_file.write_text("This is a test. " * LONG_CONTENT_REPEAT_COUNT)
         
         documents = agent.load_single_file(str(test_file))
         chunks = agent.chunk_documents(documents)
