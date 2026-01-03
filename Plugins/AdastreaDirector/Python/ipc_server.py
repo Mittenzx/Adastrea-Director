@@ -2231,6 +2231,30 @@ JSON Response:"""
                 from rag_ingestion import ingest_documents
             except ImportError as e:
                 logger.error(f"Failed to import rag_ingestion module: {e}")
+                
+                # Write error to progress file if provided so UI can show the error
+                if progress_file:
+                    try:
+                        import json
+                        from pathlib import Path
+                        
+                        # Ensure directory exists
+                        progress_path = Path(progress_file)
+                        progress_path.parent.mkdir(parents=True, exist_ok=True)
+                        
+                        # Write error progress
+                        error_data = {
+                            'percent': 0,
+                            'label': 'Error: Dependencies Missing',
+                            'details': 'Python dependencies are not installed. Run: pip install -r requirements.txt',
+                            'status': 'error',
+                            'timestamp': time.time()
+                        }
+                        with open(progress_file, 'w') as f:
+                            json.dump(error_data, f)
+                    except Exception as write_error:
+                        logger.error(f"Failed to write error to progress file: {write_error}")
+                
                 return {
                     'status': 'error',
                     'error': (
