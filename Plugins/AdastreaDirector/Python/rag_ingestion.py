@@ -22,6 +22,9 @@ import logging
 from pathlib import Path
 from typing import List, Dict, Any, Optional, Tuple
 
+# Import progress utility (standard library only, no external deps)
+from progress_utils import write_progress_file
+
 # Configure logging
 logger = logging.getLogger(__name__)
 
@@ -92,19 +95,7 @@ class ProgressWriter:
             return
         
         try:
-            # Ensure parent directory exists
-            progress_path = Path(self.progress_file)
-            progress_path.parent.mkdir(parents=True, exist_ok=True)
-            
-            progress_data = {
-                'percent': min(100, max(0, percent)),
-                'label': label,
-                'details': details,
-                'status': status,
-                'timestamp': time.time()
-            }
-            with open(self.progress_file, 'w') as f:
-                json.dump(progress_data, f)
+            write_progress_file(self.progress_file, percent, label, details, status)
         except Exception as e:
             logger.error(f"[ProgressWriter] Failed to write progress to {self.progress_file}: {e}")
             print(f"[ProgressWriter] Failed to write progress to {self.progress_file}: {e}", file=sys.stderr)

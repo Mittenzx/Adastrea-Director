@@ -29,6 +29,30 @@ from typing import Dict, Any, Optional, Tuple
 from collections import defaultdict
 from textwrap import dedent
 
+# Import progress utility (standard library only, no external deps)
+# This must be imported before other local modules to ensure it's available
+# even when dependencies are missing
+try:
+    from progress_utils import write_progress_file
+except ImportError:
+    # Fallback if progress_utils is not available - define inline
+    def write_progress_file(progress_file_path, percent, label="", details="", status="processing"):
+        """Fallback progress writer if utility module is not available."""
+        from pathlib import Path
+        import json
+        import time
+        progress_path = Path(progress_file_path)
+        progress_path.parent.mkdir(parents=True, exist_ok=True)
+        progress_data = {
+            'percent': min(100, max(0, percent)),
+            'label': label,
+            'details': details,
+            'status': status,
+            'timestamp': time.time()
+        }
+        with open(progress_file_path, 'w') as f:
+            json.dump(progress_data, f)
+
 # Disable ChromaDB telemetry BEFORE any imports that might import chromadb
 # This prevents "capture() takes 1 positional argument but 3 were given" errors
 # ChromaDB checks for this variable and disables telemetry when set to "1"
@@ -2236,20 +2260,13 @@ JSON Response:"""
                 # Write error to progress file if provided so UI can show the error
                 if progress_file:
                     try:
-                        # Ensure directory exists
-                        progress_path = Path(progress_file)
-                        progress_path.parent.mkdir(parents=True, exist_ok=True)
-                        
-                        # Write error progress
-                        error_data = {
-                            'percent': 0,
-                            'label': 'Error: Dependencies Missing',
-                            'details': 'Python dependencies are not installed. Run: pip install -r requirements.txt',
-                            'status': 'error',
-                            'timestamp': time.time()
-                        }
-                        with open(progress_file, 'w') as f:
-                            json.dump(error_data, f)
+                        write_progress_file(
+                            progress_file,
+                            percent=0,
+                            label='Error: Dependencies Missing',
+                            details='Python dependencies are not installed. Run: pip install -r requirements.txt',
+                            status='error'
+                        )
                     except Exception as write_error:
                         logger.error(f"Failed to write error to progress file: {write_error}")
                 
