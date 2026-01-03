@@ -18,8 +18,12 @@ import sys
 import json
 import hashlib
 import time
+import logging
 from pathlib import Path
 from typing import List, Dict, Any, Optional, Tuple
+
+# Configure logging
+logger = logging.getLogger(__name__)
 
 # Add parent directory to path to import main modules
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
@@ -102,8 +106,7 @@ class ProgressWriter:
             with open(self.progress_file, 'w') as f:
                 json.dump(progress_data, f)
         except Exception as e:
-            import logging
-            logging.error(f"[ProgressWriter] Failed to write progress to {self.progress_file}: {e}")
+            logger.error(f"[ProgressWriter] Failed to write progress to {self.progress_file}: {e}")
             print(f"[ProgressWriter] Failed to write progress to {self.progress_file}: {e}", file=sys.stderr)
 
 
@@ -558,8 +561,6 @@ def ingest_documents(
     Returns:
         Dictionary with ingestion statistics
     """
-    import logging
-    logger = logging.getLogger(__name__)
     logger.info(f"Starting document ingestion: docs_dir={docs_dir}, collection={collection_name}, progress_file={progress_file}")
     
     progress_writer = ProgressWriter(progress_file)
