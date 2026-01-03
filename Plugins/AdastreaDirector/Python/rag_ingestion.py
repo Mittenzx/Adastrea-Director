@@ -18,8 +18,15 @@ import sys
 import json
 import hashlib
 import time
+import logging
 from pathlib import Path
 from typing import List, Dict, Any, Optional, Tuple
+
+# Import progress utility (standard library only, no external deps)
+from progress_utils import write_progress_file
+
+# Configure logging
+logger = logging.getLogger(__name__)
 
 # Add parent directory to path to import main modules
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
@@ -88,17 +95,10 @@ class ProgressWriter:
             return
         
         try:
-            progress_data = {
-                'percent': min(100, max(0, percent)),
-                'label': label,
-                'details': details,
-                'status': status,
-                'timestamp': time.time()
-            }
-            with open(self.progress_file, 'w') as f:
-                json.dump(progress_data, f)
+            write_progress_file(self.progress_file, percent, label, details, status)
         except Exception as e:
-            print(f"[ProgressWriter] Failed to write progress: {e}", file=sys.stderr)
+            logger.error(f"[ProgressWriter] Failed to write progress to {self.progress_file}: {e}")
+            print(f"[ProgressWriter] Failed to write progress to {self.progress_file}: {e}", file=sys.stderr)
 
 
 class RAGIngestionAgent:
@@ -291,8 +291,7 @@ class RAGIngestionAgent:
             documents = loader.load()
             return self._enrich_metadata(documents, file_path)
         except Exception as e:
-            import logging
-            logging.error(f"Error loading {file_path} (type: {type(e).__name__}): {e}")
+            logger.error(f"Error loading {file_path} (type: {type(e).__name__}): {e}")
             return []
     
     def _enrich_metadata(self, documents: List[Any], file_path: str) -> List[Any]:
@@ -511,8 +510,7 @@ class RAGIngestionAgent:
             except Exception as e:
                 stats["errors"] += 1
                 error_msg = f"Error processing {Path(file_path).name}: {str(e)}"
-                import logging
-                logging.error(error_msg)
+                logger.error(error_msg)
                 self.progress_writer.write(
                     int((idx + 1) / len(file_list) * 100),
                     "Error",
@@ -552,7 +550,12 @@ def ingest_documents(
     Returns:
         Dictionary with ingestion statistics
     """
+    logger.info(f"Starting document ingestion: docs_dir={docs_dir}, collection={collection_name}, progress_file={progress_file}")
+    
     progress_writer = ProgressWriter(progress_file)
+    
+    # Write initial progress immediately to signal ingestion has started
+    progress_writer.write(0, "Initializing", "Starting document ingestion...", "processing")
     
     agent = RAGIngestionAgent(
         collection_name=collection_name,

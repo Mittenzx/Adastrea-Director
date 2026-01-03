@@ -24,9 +24,27 @@ import argparse
 import logging
 import threading
 import time
+from pathlib import Path
 from typing import Dict, Any, Optional, Tuple
 from collections import defaultdict
 from textwrap import dedent
+
+# Import progress utility (standard library only, no external deps)
+# This must be imported before other local modules to ensure it's available
+# even when dependencies are missing
+try:
+    from progress_utils import write_progress_file
+except ImportError:
+    # Minimal fallback if progress_utils is not available
+    # This should never happen in normal operation, but provides safety
+    from pathlib import Path as _FallbackPath
+    
+    def write_progress_file(progress_file_path, percent, label="", details="", status="processing"):
+        """Minimal fallback progress writer - uses already-imported json and time."""
+        _FallbackPath(progress_file_path).parent.mkdir(parents=True, exist_ok=True)
+        with open(progress_file_path, 'w') as f:
+            json.dump({'percent': min(100, max(0, percent)), 'label': label, 'details': details, 
+                      'status': status, 'timestamp': time.time()}, f)
 
 # Disable ChromaDB telemetry BEFORE any imports that might import chromadb
 # This prevents "capture() takes 1 positional argument but 3 were given" errors
@@ -2231,6 +2249,20 @@ JSON Response:"""
                 from rag_ingestion import ingest_documents
             except ImportError as e:
                 logger.error(f"Failed to import rag_ingestion module: {e}")
+                
+                # Write error to progress file if provided so UI can show the error
+                if progress_file:
+                    try:
+                        write_progress_file(
+                            progress_file,
+                            percent=0,
+                            label='Error: Dependencies Missing',
+                            details='Python dependencies are not installed. Run: pip install -r requirements.txt',
+                            status='error'
+                        )
+                    except Exception as write_error:
+                        logger.error(f"Failed to write error to progress file: {write_error}")
+                
                 return {
                     'status': 'error',
                     'error': (
