@@ -24,6 +24,7 @@ import argparse
 import logging
 import threading
 import time
+from pathlib import Path
 from typing import Dict, Any, Optional, Tuple
 from collections import defaultdict
 from textwrap import dedent
@@ -2235,9 +2236,6 @@ JSON Response:"""
                 # Write error to progress file if provided so UI can show the error
                 if progress_file:
                     try:
-                        import json
-                        from pathlib import Path
-                        
                         # Ensure directory exists
                         progress_path = Path(progress_file)
                         progress_path.parent.mkdir(parents=True, exist_ok=True)
