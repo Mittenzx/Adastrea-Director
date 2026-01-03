@@ -43,7 +43,7 @@ except ImportError:
         """Minimal fallback progress writer - uses already-imported json and time."""
         _FallbackPath(progress_file_path).parent.mkdir(parents=True, exist_ok=True)
         with open(progress_file_path, 'w') as f:
-            json.dump({'percent': percent, 'label': label, 'details': details, 
+            json.dump({'percent': min(100, max(0, percent)), 'label': label, 'details': details, 
                       'status': status, 'timestamp': time.time()}, f)
 
 # Disable ChromaDB telemetry BEFORE any imports that might import chromadb
