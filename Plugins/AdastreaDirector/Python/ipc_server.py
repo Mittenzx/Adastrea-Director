@@ -35,23 +35,18 @@ from textwrap import dedent
 try:
     from progress_utils import write_progress_file
 except ImportError:
-    # Fallback if progress_utils is not available - define inline
+    # Minimal fallback if progress_utils is not available
+    # This should never happen in normal operation, but provides safety
+    import json
+    import time
+    from pathlib import Path as _FallbackPath
+    
     def write_progress_file(progress_file_path, percent, label="", details="", status="processing"):
-        """Fallback progress writer if utility module is not available."""
-        from pathlib import Path
-        import json
-        import time
-        progress_path = Path(progress_file_path)
-        progress_path.parent.mkdir(parents=True, exist_ok=True)
-        progress_data = {
-            'percent': min(100, max(0, percent)),
-            'label': label,
-            'details': details,
-            'status': status,
-            'timestamp': time.time()
-        }
+        """Minimal fallback progress writer."""
+        _FallbackPath(progress_file_path).parent.mkdir(parents=True, exist_ok=True)
         with open(progress_file_path, 'w') as f:
-            json.dump(progress_data, f)
+            json.dump({'percent': percent, 'label': label, 'details': details, 
+                      'status': status, 'timestamp': time.time()}, f)
 
 # Disable ChromaDB telemetry BEFORE any imports that might import chromadb
 # This prevents "capture() takes 1 positional argument but 3 were given" errors
