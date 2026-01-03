@@ -37,12 +37,10 @@ try:
 except ImportError:
     # Minimal fallback if progress_utils is not available
     # This should never happen in normal operation, but provides safety
-    import json
-    import time
     from pathlib import Path as _FallbackPath
     
     def write_progress_file(progress_file_path, percent, label="", details="", status="processing"):
-        """Minimal fallback progress writer."""
+        """Minimal fallback progress writer - uses already-imported json and time."""
         _FallbackPath(progress_file_path).parent.mkdir(parents=True, exist_ok=True)
         with open(progress_file_path, 'w') as f:
             json.dump({'percent': percent, 'label': label, 'details': details, 
