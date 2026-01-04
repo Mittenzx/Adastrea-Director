@@ -29,14 +29,13 @@
    - ✅ test_ingest_tab_logging
    - ✅ test_ingestion_status_updates
 
-5. **UI State Management (2 tests)**
+5. **UI State Management (1 test)**
    - ✅ test_concurrent_ingestion_prevention
-   - ✅ test_progress_bar_updates
 
 6. **Error Handling (4 tests)**
    - ✅ test_invalid_folder_path
    - ✅ test_empty_folder
-   - ✅ test_file_permission_error
+   - ✅ test_file_permission_error_message_format
    - ✅ test_progress_file_missing
 
 7. **Integration (1 test)**

@@ -19,7 +19,7 @@ import tempfile
 import json
 import time
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 import pytest
 
 # Add parent directory and plugin Python directory to path for imports
@@ -244,7 +244,7 @@ class TestRAGIngestionSimulation:
         assert metadata['extension'] == ".md"
 
     def test_chunk_documents(self, temp_docs_dir, mock_embeddings):
-        """Test that documents are properly chunked."""
+        """Test that documents are properly chunked into multiple parts."""
         agent = RAGIngestionAgent(
             embeddings=mock_embeddings,
             chunk_size=100,
@@ -252,14 +252,19 @@ class TestRAGIngestionSimulation:
         )
         
         # Create a document with enough content to be chunked
+        # "This is a test. " = 16 chars * 100 = 1600 chars total
+        # With chunk_size=100, should create ~16 chunks
         test_file = Path(temp_docs_dir) / "long_doc.txt"
         test_file.write_text("This is a test. " * LONG_CONTENT_REPEAT_COUNT)
         
         documents = agent.load_single_file(str(test_file))
         chunks = agent.chunk_documents(documents)
         
-        # Should produce multiple chunks
-        assert len(chunks) >= 1
+        # Should produce multiple chunks (not just 1)
+        assert len(chunks) > 1, f"Expected multiple chunks, got {len(chunks)}"
+        
+        # With 1600 chars and chunk_size=100, expect at least 10 chunks
+        assert len(chunks) >= 10, f"Expected at least 10 chunks for 1600 char document, got {len(chunks)}"
         
         # Each chunk should have metadata
         for chunk in chunks:

@@ -16,6 +16,7 @@ set -e
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
 YELLOW='\033[1;33m'
+RED='\033[0;31m'
 NC='\033[0m' # No Color
 
 echo -e "${BLUE}======================================${NC}"
@@ -28,8 +29,13 @@ TEST_SUITE="${1:-all}"
 
 # Check if pytest is installed
 if ! python3 -m pytest --version &> /dev/null; then
-    echo -e "${YELLOW}Installing pytest...${NC}"
-    pip install pytest pytest-mock --quiet
+    echo -e "${YELLOW}pytest not found. Installing pytest...${NC}"
+    if ! pip install pytest pytest-mock --quiet; then
+        echo -e "${RED}Error: Failed to install pytest. Please install manually with:${NC}"
+        echo -e "${RED}  pip install pytest pytest-mock${NC}"
+        exit 1
+    fi
+    echo -e "${GREEN}pytest installed successfully${NC}"
 fi
 
 case "$TEST_SUITE" in
@@ -55,20 +61,29 @@ case "$TEST_SUITE" in
     "all")
         echo -e "${GREEN}Running GUI Director Tests (17 tests)${NC}"
         echo ""
-        python3 -m pytest tests/test_gui_director_ingestion.py -v --override-ini="addopts=" --tb=short
+        
+        # Run GUI tests and capture exit code
+        GUI_EXIT_CODE=0
+        python3 -m pytest tests/test_gui_director_ingestion.py -v --override-ini="addopts=" --tb=short || GUI_EXIT_CODE=$?
         
         echo ""
         echo -e "${BLUE}--------------------------------------${NC}"
         echo ""
         
         # Try to run RAG tests if dependencies are available
+        RAG_EXIT_CODE=0
         if python3 -c "import langchain" &> /dev/null; then
             echo -e "${GREEN}Running RAG Ingestion Tests (22 tests)${NC}"
             echo ""
-            python3 -m pytest tests/test_simulate_rag_ingestion.py -v --override-ini="addopts=" --tb=short
+            python3 -m pytest tests/test_simulate_rag_ingestion.py -v --override-ini="addopts=" --tb=short || RAG_EXIT_CODE=$?
         else
             echo -e "${YELLOW}Skipping RAG tests - dependencies not installed${NC}"
             echo -e "${YELLOW}Install with: pip install -r requirements.txt${NC}"
+        fi
+        
+        # Exit with non-zero if either test suite failed
+        if [ $GUI_EXIT_CODE -ne 0 ] || [ $RAG_EXIT_CODE -ne 0 ]; then
+            exit 1
         fi
         ;;
     

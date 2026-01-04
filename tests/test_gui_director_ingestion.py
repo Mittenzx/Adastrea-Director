@@ -20,7 +20,7 @@ import tempfile
 import json
 import subprocess
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock, call
+from unittest.mock import Mock, patch, call
 import pytest
 
 # Add parent directory to path for imports
@@ -29,7 +29,7 @@ sys.path.insert(0, repo_root)
 
 # Test constants
 MOCK_EMBEDDING_DIM = 384
-PROGRESS_POLL_INTERVAL = 100  # Faster polling for tests
+TEST_TIMESTAMP = "2024-01-01 12:00:00"  # Generic test timestamp
 
 
 class TestGUIDirectorIngestion:
@@ -239,7 +239,7 @@ class TestGUIDirectorIngestion:
         ]
         
         # Execute command (as GUI would)
-        process = subprocess.Popen(
+        subprocess.Popen(
             command,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -361,12 +361,12 @@ class TestGUIDirectorIngestion:
 
     def test_error_message_display(self, temp_progress_file):
         """
-        Test error message display in GUI during ingestion failure.
+        Test error message display and truncation in GUI during ingestion failure.
         
-        Simulates how errors are shown to users.
+        Simulates how errors are shown to users and verifies truncation logic.
         """
-        # Simulate an error scenario
-        error_message = "Failed to connect to database: Connection timeout"
+        # Create a long error message that exceeds the 200 character limit
+        error_message = "Failed to connect to database: Connection timeout. " * 10  # ~520 characters
         
         error_data = {
             "percent": 35,
@@ -384,13 +384,15 @@ class TestGUIDirectorIngestion:
         
         # Verify error is properly detected
         assert data['status'] == "error"
-        assert len(data['details']) <= 200  # GUI truncates long errors
         
-        # Simulate error display
+        # Simulate GUI truncation logic (MAX_ERROR_LOG_LENGTH = 200)
         display_message = data['details']
         if len(display_message) > 200:
             display_message = display_message[:197] + "..."
         
+        # Verify truncation occurred
+        assert len(display_message) == 200
+        assert display_message.endswith("...")
         assert "Failed to connect" in display_message
 
     @patch('subprocess.Popen')
@@ -431,7 +433,7 @@ class TestGUIDirectorIngestion:
         
         # Start subprocess
         command = [sys.executable, 'ingest.py', '--docs-dir', temp_docs_dir]
-        process = subprocess.Popen(
+        subprocess.Popen(
             command,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -467,7 +469,7 @@ class TestGUIDirectorIngestion:
             log_entries.append({
                 "message": message,
                 "level": level,
-                "timestamp": "2026-01-03 22:00:00"
+                "timestamp": TEST_TIMESTAMP
             })
         
         # Simulate ingestion workflow logging
@@ -542,14 +544,20 @@ class TestGUIIngestionErrorHandling:
             
             assert len(supported_files) == 0, "Empty folder should have no files"
 
-    def test_file_permission_error(self):
-        """Test handling of file permission errors."""
-        # Simulate permission error scenario
+    def test_file_permission_error_message_format(self):
+        """
+        Test that permission error messages have the expected format.
+        
+        This validates error message formatting rather than actual permission handling,
+        which is tested in integration tests.
+        """
+        # Simulate permission error message formatting
         error_message = "Permission denied: /restricted/file.txt"
         
-        # Verify error is handled gracefully
+        # Verify error message format is correct
         assert "Permission denied" in error_message
-        assert error_message  # Error message exists
+        assert "/" in error_message  # Contains path
+        assert len(error_message) > 0
 
     def test_progress_file_missing(self, temp_progress_file):
         """Test handling when progress file is deleted unexpectedly."""
