@@ -112,6 +112,153 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand('director.provideFeedback', provideFeedback)
     );
 
+    // Register Remote Control commands
+    context.subscriptions.push(
+        vscode.commands.registerCommand('director.unreal.checkConnection', checkUnrealConnection)
+    );
+
+    context.subscriptions.push(
+        vscode.commands.registerCommand('director.unreal.executeCommand', executeUnrealCommand)
+    );
+
+    context.subscriptions.push(
+        vscode.commands.registerCommand('director.unreal.getProperty', getUnrealProperty)
+    );
+
+    context.subscriptions.push(
+        vscode.commands.registerCommand('director.unreal.setProperty', setUnrealProperty)
+    );
+
+    // Register Unreal Engine Quick Commands
+    context.subscriptions.push(
+        vscode.commands.registerCommand('director.unreal.quickCommand', executeQuickCommand)
+    );
+
+    // Performance/Stats Commands
+    context.subscriptions.push(
+        vscode.commands.registerCommand('director.unreal.statFPS', () => executePresetCommand('stat fps'))
+    );
+    context.subscriptions.push(
+        vscode.commands.registerCommand('director.unreal.statUnit', () => executePresetCommand('stat unit'))
+    );
+    context.subscriptions.push(
+        vscode.commands.registerCommand('director.unreal.statGPU', () => executePresetCommand('stat gpu'))
+    );
+    context.subscriptions.push(
+        vscode.commands.registerCommand('director.unreal.statMemory', () => executePresetCommand('stat memory'))
+    );
+    context.subscriptions.push(
+        vscode.commands.registerCommand('director.unreal.statStreaming', () => executePresetCommand('stat streaming'))
+    );
+    context.subscriptions.push(
+        vscode.commands.registerCommand('director.unreal.statEngine', () => executePresetCommand('stat engine'))
+    );
+    context.subscriptions.push(
+        vscode.commands.registerCommand('director.unreal.statGame', () => executePresetCommand('stat game'))
+    );
+    context.subscriptions.push(
+        vscode.commands.registerCommand('director.unreal.statSceneRendering', () => executePresetCommand('stat scenerendering'))
+    );
+    context.subscriptions.push(
+        vscode.commands.registerCommand('director.unreal.statRHI', () => executePresetCommand('stat rhi'))
+    );
+    context.subscriptions.push(
+        vscode.commands.registerCommand('director.unreal.statLevels', () => executePresetCommand('stat levels'))
+    );
+    context.subscriptions.push(
+        vscode.commands.registerCommand('director.unreal.statParticles', () => executePresetCommand('stat particles'))
+    );
+    context.subscriptions.push(
+        vscode.commands.registerCommand('director.unreal.statPhysics', () => executePresetCommand('stat physics'))
+    );
+    context.subscriptions.push(
+        vscode.commands.registerCommand('director.unreal.statAI', () => executePresetCommand('stat ai'))
+    );
+    context.subscriptions.push(
+        vscode.commands.registerCommand('director.unreal.statAnim', () => executePresetCommand('stat anim'))
+    );
+
+    // Debug/Profiling Commands
+    context.subscriptions.push(
+        vscode.commands.registerCommand('director.unreal.profileGPU', () => executePresetCommand('profilegpu'))
+    );
+    context.subscriptions.push(
+        vscode.commands.registerCommand('director.unreal.memReport', () => executePresetCommand('memreport'))
+    );
+    context.subscriptions.push(
+        vscode.commands.registerCommand('director.unreal.objList', () => executePresetCommand('obj list'))
+    );
+    context.subscriptions.push(
+        vscode.commands.registerCommand('director.unreal.objClasses', () => executePresetCommand('obj classes'))
+    );
+    context.subscriptions.push(
+        vscode.commands.registerCommand('director.unreal.showDebug', () => executePresetCommand('showdebug'))
+    );
+    context.subscriptions.push(
+        vscode.commands.registerCommand('director.unreal.showLog', () => executePresetCommand('showlog'))
+    );
+
+    // Rendering Commands
+    context.subscriptions.push(
+        vscode.commands.registerCommand('director.unreal.setScreenPercentage', setScreenPercentage)
+    );
+    context.subscriptions.push(
+        vscode.commands.registerCommand('director.unreal.toggleVSync', toggleVSync)
+    );
+    context.subscriptions.push(
+        vscode.commands.registerCommand('director.unreal.visualizeTexture', () => executePresetCommand('r.VisualizeTexture'))
+    );
+
+    // Gameplay Commands
+    context.subscriptions.push(
+        vscode.commands.registerCommand('director.unreal.pause', () => executePresetCommand('pause'))
+    );
+    context.subscriptions.push(
+        vscode.commands.registerCommand('director.unreal.slomo', setSlomo)
+    );
+    context.subscriptions.push(
+        vscode.commands.registerCommand('director.unreal.screenshot', () => executePresetCommand('screenshot'))
+    );
+    context.subscriptions.push(
+        vscode.commands.registerCommand('director.unreal.highResShot', () => executePresetCommand('highresshot'))
+    );
+    context.subscriptions.push(
+        vscode.commands.registerCommand('director.unreal.showCollision', () => executePresetCommand('show collision'))
+    );
+    context.subscriptions.push(
+        vscode.commands.registerCommand('director.unreal.showBounds', () => executePresetCommand('show bounds'))
+    );
+
+    // Asset/Content Commands
+    context.subscriptions.push(
+        vscode.commands.registerCommand('director.unreal.listTextures', () => executePresetCommand('listtextures'))
+    );
+    context.subscriptions.push(
+        vscode.commands.registerCommand('director.unreal.listParticleSystems', () => executePresetCommand('listparticlesystems'))
+    );
+    context.subscriptions.push(
+        vscode.commands.registerCommand('director.unreal.listSkeletalMeshes', () => executePresetCommand('listskeletalmeshes'))
+    );
+    context.subscriptions.push(
+        vscode.commands.registerCommand('director.unreal.listStaticMeshes', () => executePresetCommand('liststaticmeshes'))
+    );
+
+    // Networking Commands
+    context.subscriptions.push(
+        vscode.commands.registerCommand('director.unreal.netStat', () => executePresetCommand('net stat'))
+    );
+
+    // Console Management Commands
+    context.subscriptions.push(
+        vscode.commands.registerCommand('director.unreal.listCommands', () => executePresetCommand('listcmds'))
+    );
+    context.subscriptions.push(
+        vscode.commands.registerCommand('director.unreal.listCVars', () => executePresetCommand('listcvars'))
+    );
+    context.subscriptions.push(
+        vscode.commands.registerCommand('director.unreal.dumpConsoleCommands', () => executePresetCommand('dumpconsolecommands'))
+    );
+
     // Register Copilot integration commands
     context.subscriptions.push(
         vscode.commands.registerCommand('director.askAboutSelection', askAboutSelection)
@@ -878,6 +1025,490 @@ async function provideFeedback() {
     }
 
     await feedbackService.requestUserFeedback(goal, 'Manual Feedback');
+}
+
+/**
+ * ============================================================
+ * Remote Control API Commands
+ * ============================================================
+ */
+
+/**
+ * Check Unreal Engine Remote Control connection
+ */
+async function checkUnrealConnection() {
+    if (!client || !client.isConnected()) {
+        vscode.window.showWarningMessage('Not connected to Director IPC server');
+        return;
+    }
+
+    const config = vscode.workspace.getConfiguration('director');
+    const host = config.get<string>('remoteControl.host', 'localhost');
+    const port = config.get<number>('remoteControl.port', 30010);
+
+    outputChannel.appendLine('\nChecking Unreal Engine Remote Control connection...');
+    outputChannel.show(true);
+
+    try {
+        const response = await client.sendRequest({
+            type: 'remote_control_health_check',
+            data: JSON.stringify({
+                host: host,
+                port: port
+            })
+        });
+
+        if (response.status === 'success' && response.healthy) {
+            outputChannel.appendLine(`✓ ${response.message}`);
+            vscode.window.showInformationMessage('✓ Connected to Unreal Engine');
+        } else if (response.status === 'success' && !response.healthy) {
+            outputChannel.appendLine(`✗ ${response.message}`);
+            vscode.window.showWarningMessage('✗ Cannot connect to Unreal Engine. Make sure UE is running with Remote Control enabled.');
+        } else {
+            const error = response.error || 'Unknown error';
+            outputChannel.appendLine(`✗ Error: ${error}`);
+            vscode.window.showErrorMessage(`Connection check failed: ${error}`);
+        }
+    } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        outputChannel.appendLine(`✗ Error: ${errorMsg}`);
+        vscode.window.showErrorMessage(`Connection check failed: ${errorMsg}`);
+    }
+}
+
+/**
+ * Execute Unreal Engine console command
+ */
+async function executeUnrealCommand() {
+    if (!client || !client.isConnected()) {
+        vscode.window.showWarningMessage('Not connected to Director IPC server');
+        return;
+    }
+
+    const config = vscode.workspace.getConfiguration('director');
+    const host = config.get<string>('remoteControl.host', 'localhost');
+    const port = config.get<number>('remoteControl.port', 30010);
+
+    const command = await vscode.window.showInputBox({
+        prompt: 'Enter Unreal Engine console command',
+        placeHolder: 'stat fps',
+        value: 'stat fps'
+    });
+
+    if (!command) {
+        return;
+    }
+
+    outputChannel.appendLine(`\nExecuting UE command: ${command}`);
+    outputChannel.show(true);
+
+    try {
+        const response = await client.sendRequest({
+            type: 'remote_control_execute_command',
+            data: JSON.stringify({
+                command: command,
+                host: host,
+                port: port
+            })
+        });
+
+        if (response.status === 'success') {
+            outputChannel.appendLine(`✓ Command executed: ${command}`);
+            if (response.result) {
+                outputChannel.appendLine(`Result: ${JSON.stringify(response.result, null, 2)}`);
+            } else {
+                outputChannel.appendLine('(No output - check UE viewport/console)');
+            }
+            vscode.window.showInformationMessage(`✓ Executed: ${command}`);
+        } else {
+            const error = response.error || 'Unknown error';
+            outputChannel.appendLine(`✗ Error: ${error}`);
+            vscode.window.showErrorMessage(`Command failed: ${error}`);
+        }
+    } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        outputChannel.appendLine(`✗ Error: ${errorMsg}`);
+        vscode.window.showErrorMessage(`Command execution failed: ${errorMsg}`);
+    }
+}
+
+/**
+ * Get property from Unreal Engine object
+ */
+async function getUnrealProperty() {
+    if (!client || !client.isConnected()) {
+        vscode.window.showWarningMessage('Not connected to Director IPC server');
+        return;
+    }
+
+    const config = vscode.workspace.getConfiguration('director');
+    const host = config.get<string>('remoteControl.host', 'localhost');
+    const port = config.get<number>('remoteControl.port', 30010);
+
+    const objectPath = await vscode.window.showInputBox({
+        prompt: 'Enter object path',
+        placeHolder: '/Game/MyBlueprint.MyBlueprint_C'
+    });
+
+    if (!objectPath) {
+        return;
+    }
+
+    const propertyName = await vscode.window.showInputBox({
+        prompt: 'Enter property name',
+        placeHolder: 'Health'
+    });
+
+    if (!propertyName) {
+        return;
+    }
+
+    outputChannel.appendLine(`\nGetting property: ${propertyName} from ${objectPath}`);
+    outputChannel.show(true);
+
+    try {
+        const response = await client.sendRequest({
+            type: 'remote_control_get_property',
+            data: JSON.stringify({
+                object_path: objectPath,
+                property_name: propertyName,
+                host: host,
+                port: port
+            })
+        });
+
+        if (response.status === 'success') {
+            outputChannel.appendLine(`✓ Property value: ${JSON.stringify(response.value, null, 2)}`);
+            vscode.window.showInformationMessage(`${propertyName} = ${JSON.stringify(response.value)}`);
+        } else {
+            const error = response.error || 'Unknown error';
+            outputChannel.appendLine(`✗ Error: ${error}`);
+            vscode.window.showErrorMessage(`Get property failed: ${error}`);
+        }
+    } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        outputChannel.appendLine(`✗ Error: ${errorMsg}`);
+        vscode.window.showErrorMessage(`Get property failed: ${errorMsg}`);
+    }
+}
+
+/**
+ * Set property on Unreal Engine object
+ */
+async function setUnrealProperty() {
+    if (!client || !client.isConnected()) {
+        vscode.window.showWarningMessage('Not connected to Director IPC server');
+        return;
+    }
+
+    const config = vscode.workspace.getConfiguration('director');
+    const host = config.get<string>('remoteControl.host', 'localhost');
+    const port = config.get<number>('remoteControl.port', 30010);
+
+    const objectPath = await vscode.window.showInputBox({
+        prompt: 'Enter object path',
+        placeHolder: '/Game/MyBlueprint.MyBlueprint_C'
+    });
+
+    if (!objectPath) {
+        return;
+    }
+
+    const propertyName = await vscode.window.showInputBox({
+        prompt: 'Enter property name',
+        placeHolder: 'Speed'
+    });
+
+    if (!propertyName) {
+        return;
+    }
+
+    const valueStr = await vscode.window.showInputBox({
+        prompt: 'Enter property value (JSON format)',
+        placeHolder: '100.0'
+    });
+
+    if (valueStr === undefined) {
+        return;
+    }
+
+    // Try to parse as JSON, fallback to string
+    let value: any;
+    try {
+        value = JSON.parse(valueStr);
+    } catch {
+        value = valueStr;
+    }
+
+    outputChannel.appendLine(`\nSetting property: ${propertyName} on ${objectPath} = ${value}`);
+    outputChannel.show(true);
+
+    try {
+        const response = await client.sendRequest({
+            type: 'remote_control_set_property',
+            data: JSON.stringify({
+                object_path: objectPath,
+                property_name: propertyName,
+                value: value,
+                host: host,
+                port: port
+            })
+        });
+
+        if (response.status === 'success') {
+            outputChannel.appendLine(`✓ Property set successfully`);
+            vscode.window.showInformationMessage(`✓ Set ${propertyName} = ${value}`);
+        } else {
+            const error = response.error || 'Unknown error';
+            outputChannel.appendLine(`✗ Error: ${error}`);
+            vscode.window.showErrorMessage(`Set property failed: ${error}`);
+        }
+    } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        outputChannel.appendLine(`✗ Error: ${errorMsg}`);
+        vscode.window.showErrorMessage(`Set property failed: ${errorMsg}`);
+    }
+}
+
+/**
+ * Execute a preset Unreal Engine command
+ */
+async function executePresetCommand(command: string) {
+    if (!client || !client.isConnected()) {
+        vscode.window.showWarningMessage('Not connected to Director IPC server');
+        return;
+    }
+
+    const config = vscode.workspace.getConfiguration('director');
+    const host = config.get<string>('remoteControl.host', 'localhost');
+    const port = config.get<number>('remoteControl.port', 30010);
+
+    outputChannel.appendLine(`\nExecuting UE command: ${command}`);
+    outputChannel.show(true);
+
+    try {
+        const response = await client.sendRequest({
+            type: 'remote_control_execute_command',
+            data: JSON.stringify({
+                command: command,
+                host: host,
+                port: port
+            })
+        });
+
+        if (response.status === 'success') {
+            outputChannel.appendLine(`✓ Command executed: ${command}`);
+            if (response.result) {
+                outputChannel.appendLine(`Result: ${JSON.stringify(response.result, null, 2)}`);
+            } else {
+                outputChannel.appendLine('(No output - check UE viewport/console)');
+            }
+            vscode.window.showInformationMessage(`✓ Executed: ${command}`);
+        } else {
+            const error = response.error || 'Unknown error';
+            outputChannel.appendLine(`✗ Error: ${error}`);
+            vscode.window.showErrorMessage(`Command failed: ${error}`);
+        }
+    } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        outputChannel.appendLine(`✗ Error: ${errorMsg}`);
+        vscode.window.showErrorMessage(`Command execution failed: ${errorMsg}`);
+    }
+}
+
+/**
+ * Execute quick command with picker
+ */
+async function executeQuickCommand() {
+    if (!client || !client.isConnected()) {
+        vscode.window.showWarningMessage('Not connected to Director IPC server');
+        return;
+    }
+
+    // Define categories and commands
+    const commandCategories = {
+        'Performance Stats': [
+            { label: '$(graph) stat fps', description: 'Show FPS stats', command: 'stat fps' },
+            { label: '$(graph) stat unit', description: 'Show unit stats (frame time breakdown)', command: 'stat unit' },
+            { label: '$(graph) stat gpu', description: 'Show GPU stats', command: 'stat gpu' },
+            { label: '$(graph) stat memory', description: 'Show memory usage', command: 'stat memory' },
+            { label: '$(graph) stat streaming', description: 'Show streaming stats', command: 'stat streaming' },
+            { label: '$(graph) stat engine', description: 'Show engine stats', command: 'stat engine' },
+            { label: '$(graph) stat game', description: 'Show game stats', command: 'stat game' },
+            { label: '$(graph) stat scenerendering', description: 'Show scene rendering stats', command: 'stat scenerendering' },
+            { label: '$(graph) stat initviews', description: 'Show view initialization stats', command: 'stat initviews' },
+            { label: '$(graph) stat rhi', description: 'Show RHI (Rendering Hardware Interface) stats', command: 'stat rhi' },
+            { label: '$(graph) stat slate', description: 'Show Slate UI stats', command: 'stat slate' },
+            { label: '$(graph) stat levels', description: 'Show level streaming stats', command: 'stat levels' },
+            { label: '$(graph) stat particles', description: 'Show particle stats', command: 'stat particles' },
+            { label: '$(graph) stat physics', description: 'Show physics stats', command: 'stat physics' },
+            { label: '$(graph) stat ai', description: 'Show AI stats', command: 'stat ai' },
+            { label: '$(graph) stat anim', description: 'Show animation stats', command: 'stat anim' }
+        ],
+        'Debug & Profiling': [
+            { label: '$(debug) profilegpu', description: 'Profile GPU performance', command: 'profilegpu' },
+            { label: '$(debug) dumpticks', description: 'Dump tick information', command: 'dumpticks' },
+            { label: '$(debug) dumpparticlemem', description: 'Dump particle memory usage', command: 'dumpparticlemem' },
+            { label: '$(debug) memreport', description: 'Generate memory report', command: 'memreport' },
+            { label: '$(debug) obj list', description: 'List all objects', command: 'obj list' },
+            { label: '$(debug) obj dump', description: 'Dump object information', command: 'obj dump' },
+            { label: '$(debug) obj classes', description: 'List all classes', command: 'obj classes' },
+            { label: '$(debug) showdebug', description: 'Show debug overlay', command: 'showdebug' },
+            { label: '$(debug) showlog', description: 'Show log window', command: 'showlog' },
+            { label: '$(debug) toggledebugcamera', description: 'Toggle debug camera', command: 'toggledebugcamera' }
+        ],
+        'Rendering': [
+            { label: '$(paintcan) r.ScreenPercentage 100', description: 'Set screen percentage to 100%', command: 'r.ScreenPercentage 100' },
+            { label: '$(paintcan) r.ScreenPercentage 75', description: 'Set screen percentage to 75%', command: 'r.ScreenPercentage 75' },
+            { label: '$(paintcan) r.ScreenPercentage 50', description: 'Set screen percentage to 50%', command: 'r.ScreenPercentage 50' },
+            { label: '$(paintcan) r.VSync 0', description: 'Disable VSync', command: 'r.VSync 0' },
+            { label: '$(paintcan) r.VSync 1', description: 'Enable VSync', command: 'r.VSync 1' },
+            { label: '$(paintcan) r.MaxFPS 60', description: 'Set max FPS to 60', command: 'r.MaxFPS 60' },
+            { label: '$(paintcan) r.MaxFPS 120', description: 'Set max FPS to 120', command: 'r.MaxFPS 120' },
+            { label: '$(paintcan) r.MaxFPS 0', description: 'Unlimited FPS', command: 'r.MaxFPS 0' },
+            { label: '$(paintcan) r.SetRes 1920x1080', description: 'Set resolution to 1080p', command: 'r.SetRes 1920x1080' },
+            { label: '$(paintcan) r.SetRes 2560x1440', description: 'Set resolution to 1440p', command: 'r.SetRes 2560x1440' },
+            { label: '$(paintcan) r.DisplayInternals 1', description: 'Display internal rendering info', command: 'r.DisplayInternals 1' },
+            { label: '$(paintcan) r.VisualizeTexture', description: 'Visualize textures', command: 'r.VisualizeTexture' },
+            { label: '$(paintcan) viewmode wireframe', description: 'Switch to wireframe view', command: 'viewmode wireframe' },
+            { label: '$(paintcan) viewmode lit', description: 'Switch to lit view', command: 'viewmode lit' },
+            { label: '$(paintcan) viewmode unlit', description: 'Switch to unlit view', command: 'viewmode unlit' }
+        ],
+        'Gameplay': [
+            { label: '$(debug-pause) pause', description: 'Pause game', command: 'pause' },
+            { label: '$(debug-continue) slomo 1', description: 'Normal game speed', command: 'slomo 1' },
+            { label: '$(debug-step-over) slomo 0.5', description: 'Half speed', command: 'slomo 0.5' },
+            { label: '$(zap) slomo 2', description: 'Double speed', command: 'slomo 2' },
+            { label: '$(camera) screenshot', description: 'Take screenshot', command: 'screenshot' },
+            { label: '$(camera) highresshot', description: 'Take high-res screenshot', command: 'highresshot' },
+            { label: '$(symbol-misc) show collision', description: 'Show collision', command: 'show collision' },
+            { label: '$(symbol-misc) show bounds', description: 'Show bounds', command: 'show bounds' },
+            { label: '$(symbol-misc) show navigation', description: 'Show navigation', command: 'show navigation' },
+            { label: '$(symbol-misc) togglefullscreen', description: 'Toggle fullscreen', command: 'togglefullscreen' }
+        ],
+        'Assets & Content': [
+            { label: '$(file-media) listtextures', description: 'List all textures', command: 'listtextures' },
+            { label: '$(file-media) listparticlesystems', description: 'List particle systems', command: 'listparticlesystems' },
+            { label: '$(file-media) listskeletalmeshes', description: 'List skeletal meshes', command: 'listskeletalmeshes' },
+            { label: '$(file-media) liststaticmeshes', description: 'List static meshes', command: 'liststaticmeshes' },
+            { label: '$(file-media) listanimsequences', description: 'List animation sequences', command: 'listanimsequences' },
+            { label: '$(file-media) listmaterials', description: 'List materials', command: 'listmaterials' }
+        ],
+        'Networking': [
+            { label: '$(globe) net stat', description: 'Show network stats', command: 'net stat' },
+            { label: '$(globe) net pktlag 100', description: 'Simulate 100ms packet lag', command: 'net pktlag 100' },
+            { label: '$(globe) net pktloss 5', description: 'Simulate 5% packet loss', command: 'net pktloss 5' },
+            { label: '$(globe) netprofile', description: 'Start network profiling', command: 'netprofile' }
+        ],
+        'Audio': [
+            { label: '$(unmute) au.debug 1', description: 'Enable audio debug', command: 'au.debug 1' },
+            { label: '$(unmute) au.stats', description: 'Show audio stats', command: 'au.stats' }
+        ],
+        'Build & Compile': [
+            { label: '$(tools) recompile', description: 'Recompile code', command: 'recompile' },
+            { label: '$(tools) recompileshaders', description: 'Recompile shaders', command: 'recompileshaders' },
+            { label: '$(tools) profileshaders', description: 'Profile shaders', command: 'profileshaders' }
+        ],
+        'Console': [
+            { label: '$(question) help', description: 'Show help', command: 'help' },
+            { label: '$(list-unordered) listcmds', description: 'List all commands', command: 'listcmds' },
+            { label: '$(list-unordered) listcvars', description: 'List all console variables', command: 'listcvars' },
+            { label: '$(list-unordered) dumpconsolecommands', description: 'Dump console commands', command: 'dumpconsolecommands' }
+        ]
+    };
+
+    // Create flat list with categories
+    const allCommands: Array<{ label: string; description: string; command: string; category: string }> = [];
+    for (const [category, commands] of Object.entries(commandCategories)) {
+        for (const cmd of commands) {
+            allCommands.push({ ...cmd, category });
+        }
+    }
+
+    // Show quick pick
+    const selected = await vscode.window.showQuickPick(
+        allCommands.map(cmd => ({
+            label: cmd.label,
+            description: `${cmd.category} - ${cmd.description}`,
+            detail: `Command: ${cmd.command}`,
+            command: cmd.command
+        })),
+        {
+            placeHolder: 'Select a command to execute',
+            matchOnDescription: true,
+            matchOnDetail: true
+        }
+    );
+
+    if (!selected) {
+        return;
+    }
+
+    // Execute the selected command
+    await executePresetCommand(selected.command);
+}
+
+/**
+ * Set screen percentage with input
+ */
+async function setScreenPercentage() {
+    const percentage = await vscode.window.showInputBox({
+        prompt: 'Enter screen percentage (50-200)',
+        placeHolder: '100',
+        value: '100',
+        validateInput: (value) => {
+            const num = parseInt(value);
+            if (isNaN(num) || num < 50 || num > 200) {
+                return 'Please enter a number between 50 and 200';
+            }
+            return null;
+        }
+    });
+
+    if (percentage) {
+        await executePresetCommand(`r.ScreenPercentage ${percentage}`);
+    }
+}
+
+/**
+ * Set slow motion with input
+ */
+async function setSlomo() {
+    const speed = await vscode.window.showInputBox({
+        prompt: 'Enter game speed (0.1-10.0)',
+        placeHolder: '1.0',
+        value: '1.0',
+        validateInput: (value) => {
+            const num = parseFloat(value);
+            if (isNaN(num) || num < 0.1 || num > 10.0) {
+                return 'Please enter a number between 0.1 and 10.0';
+            }
+            return null;
+        }
+    });
+
+    if (speed) {
+        await executePresetCommand(`slomo ${speed}`);
+    }
+}
+
+/**
+ * Toggle VSync with interactive selection
+ */
+async function toggleVSync() {
+    const choice = await vscode.window.showQuickPick(
+        [
+            { label: 'Enable VSync', description: 'Synchronize frame rate with monitor refresh', value: '1' },
+            { label: 'Disable VSync', description: 'Uncapped frame rate', value: '0' }
+        ],
+        {
+            placeHolder: 'Select VSync state'
+        }
+    );
+
+    if (choice) {
+        await executePresetCommand(`r.VSync ${choice.value}`);
+    }
 }
 
 /**

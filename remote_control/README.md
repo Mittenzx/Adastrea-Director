@@ -2,6 +2,15 @@
 
 Python client for interacting with Unreal Engine projects via the Remote Control API.
 
+## ⚠️ Integration Status
+
+**Q: Is this integrated with gui_director or the VSCode extension?**
+
+**A: VSCode: ✅ YES (210+ commands). gui_director: ❌ Not yet.** This is a standalone, production-ready module. For integration status and details:
+- See **[REMOTE_CONTROL_INTEGRATION_STATUS.md](../REMOTE_CONTROL_INTEGRATION_STATUS.md)** for complete details
+- See **[VSCODE_COMMANDS_REFERENCE.md](../VSCODE_COMMANDS_REFERENCE.md)** for VSCode command list
+- TL;DR: VSCode integration is complete with 210+ commands. gui_director integration is estimated at 2–4 hours.
+
 ## Overview
 
 This module provides a comprehensive interface to Unreal Engine's Remote Control API, enabling:

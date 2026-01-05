@@ -107,6 +107,216 @@
       {
         "command": "director.provideFeedback",
         "title": "Director: Provide Feedback"
+      },
+      {
+        "command": "director.unreal.checkConnection",
+        "title": "Adastrea: Check Unreal Connection",
+        "category": "Adastrea Director"
+      },
+      {
+        "command": "director.unreal.executeCommand",
+        "title": "Adastrea: Execute Unreal Command",
+        "category": "Adastrea Director"
+      },
+      {
+        "command": "director.unreal.quickCommand",
+        "title": "Adastrea: Quick Command Picker",
+        "category": "Adastrea Director"
+      },
+      {
+        "command": "director.unreal.getProperty",
+        "title": "Adastrea: Get Unreal Property",
+        "category": "Adastrea Director"
+      },
+      {
+        "command": "director.unreal.setProperty",
+        "title": "Adastrea: Set Unreal Property",
+        "category": "Adastrea Director"
+      },
+      {
+        "command": "director.unreal.statFPS",
+        "title": "Adastrea: Show FPS Stats",
+        "category": "Adastrea UE Stats"
+      },
+      {
+        "command": "director.unreal.statUnit",
+        "title": "Adastrea: Show Unit Stats",
+        "category": "Adastrea UE Stats"
+      },
+      {
+        "command": "director.unreal.statGPU",
+        "title": "Adastrea: Show GPU Stats",
+        "category": "Adastrea UE Stats"
+      },
+      {
+        "command": "director.unreal.statMemory",
+        "title": "Adastrea: Show Memory Stats",
+        "category": "Adastrea UE Stats"
+      },
+      {
+        "command": "director.unreal.statStreaming",
+        "title": "Adastrea: Show Streaming Stats",
+        "category": "Adastrea UE Stats"
+      },
+      {
+        "command": "director.unreal.statEngine",
+        "title": "Adastrea: Show Engine Stats",
+        "category": "Adastrea UE Stats"
+      },
+      {
+        "command": "director.unreal.statGame",
+        "title": "Adastrea: Show Game Stats",
+        "category": "Adastrea UE Stats"
+      },
+      {
+        "command": "director.unreal.statSceneRendering",
+        "title": "Adastrea: Show Scene Rendering Stats",
+        "category": "Adastrea UE Stats"
+      },
+      {
+        "command": "director.unreal.statRHI",
+        "title": "Adastrea: Show RHI Stats",
+        "category": "Adastrea UE Stats"
+      },
+      {
+        "command": "director.unreal.statLevels",
+        "title": "Adastrea: Show Level Stats",
+        "category": "Adastrea UE Stats"
+      },
+      {
+        "command": "director.unreal.statParticles",
+        "title": "Adastrea: Show Particle Stats",
+        "category": "Adastrea UE Stats"
+      },
+      {
+        "command": "director.unreal.statPhysics",
+        "title": "Adastrea: Show Physics Stats",
+        "category": "Adastrea UE Stats"
+      },
+      {
+        "command": "director.unreal.statAI",
+        "title": "Adastrea: Show AI Stats",
+        "category": "Adastrea UE Stats"
+      },
+      {
+        "command": "director.unreal.statAnim",
+        "title": "Adastrea: Show Animation Stats",
+        "category": "Adastrea UE Stats"
+      },
+      {
+        "command": "director.unreal.profileGPU",
+        "title": "Adastrea: Profile GPU",
+        "category": "Adastrea UE Debug"
+      },
+      {
+        "command": "director.unreal.memReport",
+        "title": "Adastrea: Memory Report",
+        "category": "Adastrea UE Debug"
+      },
+      {
+        "command": "director.unreal.objList",
+        "title": "Adastrea: List Objects",
+        "category": "Adastrea UE Debug"
+      },
+      {
+        "command": "director.unreal.objClasses",
+        "title": "Adastrea: List Classes",
+        "category": "Adastrea UE Debug"
+      },
+      {
+        "command": "director.unreal.showDebug",
+        "title": "Adastrea: Show Debug Overlay",
+        "category": "Adastrea UE Debug"
+      },
+      {
+        "command": "director.unreal.showLog",
+        "title": "Adastrea: Show Log Window",
+        "category": "Adastrea UE Debug"
+      },
+      {
+        "command": "director.unreal.setScreenPercentage",
+        "title": "Adastrea: Set Screen Percentage",
+        "category": "Adastrea UE Rendering"
+      },
+      {
+        "command": "director.unreal.toggleVSync",
+        "title": "Adastrea: Toggle VSync",
+        "category": "Adastrea UE Rendering"
+      },
+      {
+        "command": "director.unreal.visualizeTexture",
+        "title": "Adastrea: Visualize Texture",
+        "category": "Adastrea UE Rendering"
+      },
+      {
+        "command": "director.unreal.pause",
+        "title": "Adastrea: Pause Game",
+        "category": "Adastrea UE Gameplay"
+      },
+      {
+        "command": "director.unreal.slomo",
+        "title": "Adastrea: Set Game Speed",
+        "category": "Adastrea UE Gameplay"
+      },
+      {
+        "command": "director.unreal.screenshot",
+        "title": "Adastrea: Take Screenshot",
+        "category": "Adastrea UE Gameplay"
+      },
+      {
+        "command": "director.unreal.highResShot",
+        "title": "Adastrea: Take High-Res Screenshot",
+        "category": "Adastrea UE Gameplay"
+      },
+      {
+        "command": "director.unreal.showCollision",
+        "title": "Adastrea: Show Collision",
+        "category": "Adastrea UE Gameplay"
+      },
+      {
+        "command": "director.unreal.showBounds",
+        "title": "Adastrea: Show Bounds",
+        "category": "Adastrea UE Gameplay"
+      },
+      {
+        "command": "director.unreal.listTextures",
+        "title": "Adastrea: List Textures",
+        "category": "Adastrea UE Assets"
+      },
+      {
+        "command": "director.unreal.listParticleSystems",
+        "title": "Adastrea: List Particle Systems",
+        "category": "Adastrea UE Assets"
+      },
+      {
+        "command": "director.unreal.listSkeletalMeshes",
+        "title": "Adastrea: List Skeletal Meshes",
+        "category": "Adastrea UE Assets"
+      },
+      {
+        "command": "director.unreal.listStaticMeshes",
+        "title": "Adastrea: List Static Meshes",
+        "category": "Adastrea UE Assets"
+      },
+      {
+        "command": "director.unreal.netStat",
+        "title": "Adastrea: Network Stats",
+        "category": "Adastrea UE Network"
+      },
+      {
+        "command": "director.unreal.listCommands",
+        "title": "Adastrea: List Console Commands",
+        "category": "Adastrea UE Console"
+      },
+      {
+        "command": "director.unreal.listCVars",
+        "title": "Adastrea: List Console Variables",
+        "category": "Adastrea UE Console"
+      },
+      {
+        "command": "director.unreal.dumpConsoleCommands",
+        "title": "Adastrea: Dump Console Commands",
+        "category": "Adastrea UE Console"
       }
     ],
     "configuration": {
@@ -178,6 +388,16 @@
           "type": "boolean",
           "default": true,
           "description": "Enable Director code actions (Ask Director, Get Context)"
+        },
+        "director.remoteControl.host": {
+          "type": "string",
+          "default": "localhost",
+          "description": "Host address for Unreal Engine Remote Control API"
+        },
+        "director.remoteControl.port": {
+          "type": "number",
+          "default": 30010,
+          "description": "Port for Unreal Engine Remote Control API"
         }
       }
     }
