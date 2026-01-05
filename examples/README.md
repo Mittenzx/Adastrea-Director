@@ -4,11 +4,12 @@ This directory contains example scripts demonstrating various features of Adastr
 
 ## 📝 Integration Status Note
 
-The `remote_control_demo.py` example demonstrates the **Remote Control API client**, which is a **standalone module** that is **not yet integrated** with gui_director.py or the VSCode extension.
+The `remote_control_demo.py` example demonstrates the **Remote Control API client**, which is a **standalone module** that is now **fully integrated** with the VSCode extension (210+ commands) but **not yet integrated** with gui_director.py.
 
-For integration status and how to integrate, see:
+For integration status and how to integrate with gui_director, see:
 - **[REMOTE_CONTROL_INTEGRATION_STATUS.md](../REMOTE_CONTROL_INTEGRATION_STATUS.md)** - Complete integration status
-- **[REMOTE_CONTROL_QUICK_INTEGRATION.md](../REMOTE_CONTROL_QUICK_INTEGRATION.md)** - 5-minute integration guide
+- **[VSCODE_COMMANDS_REFERENCE.md](../VSCODE_COMMANDS_REFERENCE.md)** - VSCode command reference
+- **[REMOTE_CONTROL_QUICK_INTEGRATION.md](../REMOTE_CONTROL_QUICK_INTEGRATION.md)** - 5-minute GUI integration guide
 
 ## Available Examples
 

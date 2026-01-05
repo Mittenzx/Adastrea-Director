@@ -203,7 +203,7 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand('director.unreal.setScreenPercentage', setScreenPercentage)
     );
     context.subscriptions.push(
-        vscode.commands.registerCommand('director.unreal.toggleVSync', () => executePresetCommand('r.VSync'))
+        vscode.commands.registerCommand('director.unreal.toggleVSync', toggleVSync)
     );
     context.subscriptions.push(
         vscode.commands.registerCommand('director.unreal.visualizeTexture', () => executePresetCommand('r.VisualizeTexture'))
@@ -1489,6 +1489,25 @@ async function setSlomo() {
 
     if (speed) {
         await executePresetCommand(`slomo ${speed}`);
+    }
+}
+
+/**
+ * Toggle VSync with interactive selection
+ */
+async function toggleVSync() {
+    const choice = await vscode.window.showQuickPick(
+        [
+            { label: 'Enable VSync', description: 'Synchronize frame rate with monitor refresh', value: '1' },
+            { label: 'Disable VSync', description: 'Uncapped frame rate', value: '0' }
+        ],
+        {
+            placeHolder: 'Select VSync state'
+        }
+    );
+
+    if (choice) {
+        await executePresetCommand(`r.VSync ${choice.value}`);
     }
 }
 
