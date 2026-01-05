@@ -112,6 +112,23 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand('director.provideFeedback', provideFeedback)
     );
 
+    // Register Remote Control commands
+    context.subscriptions.push(
+        vscode.commands.registerCommand('director.unreal.checkConnection', checkUnrealConnection)
+    );
+
+    context.subscriptions.push(
+        vscode.commands.registerCommand('director.unreal.executeCommand', executeUnrealCommand)
+    );
+
+    context.subscriptions.push(
+        vscode.commands.registerCommand('director.unreal.getProperty', getUnrealProperty)
+    );
+
+    context.subscriptions.push(
+        vscode.commands.registerCommand('director.unreal.setProperty', setUnrealProperty)
+    );
+
     // Register Copilot integration commands
     context.subscriptions.push(
         vscode.commands.registerCommand('director.askAboutSelection', askAboutSelection)
@@ -878,6 +895,249 @@ async function provideFeedback() {
     }
 
     await feedbackService.requestUserFeedback(goal, 'Manual Feedback');
+}
+
+/**
+ * ============================================================
+ * Remote Control API Commands
+ * ============================================================
+ */
+
+/**
+ * Check Unreal Engine Remote Control connection
+ */
+async function checkUnrealConnection() {
+    if (!client || !client.isConnected()) {
+        vscode.window.showWarningMessage('Not connected to Director IPC server');
+        return;
+    }
+
+    const config = vscode.workspace.getConfiguration('director');
+    const host = config.get<string>('remoteControl.host', 'localhost');
+    const port = config.get<number>('remoteControl.port', 30010);
+
+    outputChannel.appendLine('\nChecking Unreal Engine Remote Control connection...');
+    outputChannel.show(true);
+
+    try {
+        const response = await client.sendRequest({
+            type: 'remote_control_health_check',
+            data: JSON.stringify({
+                host: host,
+                port: port
+            })
+        });
+
+        if (response.status === 'success' && response.healthy) {
+            outputChannel.appendLine(`✓ ${response.message}`);
+            vscode.window.showInformationMessage('✓ Connected to Unreal Engine');
+        } else if (response.status === 'success' && !response.healthy) {
+            outputChannel.appendLine(`✗ ${response.message}`);
+            vscode.window.showWarningMessage('✗ Cannot connect to Unreal Engine. Make sure UE is running with Remote Control enabled.');
+        } else {
+            const error = response.error || 'Unknown error';
+            outputChannel.appendLine(`✗ Error: ${error}`);
+            vscode.window.showErrorMessage(`Connection check failed: ${error}`);
+        }
+    } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        outputChannel.appendLine(`✗ Error: ${errorMsg}`);
+        vscode.window.showErrorMessage(`Connection check failed: ${errorMsg}`);
+    }
+}
+
+/**
+ * Execute Unreal Engine console command
+ */
+async function executeUnrealCommand() {
+    if (!client || !client.isConnected()) {
+        vscode.window.showWarningMessage('Not connected to Director IPC server');
+        return;
+    }
+
+    const config = vscode.workspace.getConfiguration('director');
+    const host = config.get<string>('remoteControl.host', 'localhost');
+    const port = config.get<number>('remoteControl.port', 30010);
+
+    const command = await vscode.window.showInputBox({
+        prompt: 'Enter Unreal Engine console command',
+        placeHolder: 'stat fps',
+        value: 'stat fps'
+    });
+
+    if (!command) {
+        return;
+    }
+
+    outputChannel.appendLine(`\nExecuting UE command: ${command}`);
+    outputChannel.show(true);
+
+    try {
+        const response = await client.sendRequest({
+            type: 'remote_control_execute_command',
+            data: JSON.stringify({
+                command: command,
+                host: host,
+                port: port
+            })
+        });
+
+        if (response.status === 'success') {
+            outputChannel.appendLine(`✓ Command executed: ${command}`);
+            if (response.result) {
+                outputChannel.appendLine(`Result: ${JSON.stringify(response.result, null, 2)}`);
+            } else {
+                outputChannel.appendLine('(No output - check UE viewport/console)');
+            }
+            vscode.window.showInformationMessage(`✓ Executed: ${command}`);
+        } else {
+            const error = response.error || 'Unknown error';
+            outputChannel.appendLine(`✗ Error: ${error}`);
+            vscode.window.showErrorMessage(`Command failed: ${error}`);
+        }
+    } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        outputChannel.appendLine(`✗ Error: ${errorMsg}`);
+        vscode.window.showErrorMessage(`Command execution failed: ${errorMsg}`);
+    }
+}
+
+/**
+ * Get property from Unreal Engine object
+ */
+async function getUnrealProperty() {
+    if (!client || !client.isConnected()) {
+        vscode.window.showWarningMessage('Not connected to Director IPC server');
+        return;
+    }
+
+    const config = vscode.workspace.getConfiguration('director');
+    const host = config.get<string>('remoteControl.host', 'localhost');
+    const port = config.get<number>('remoteControl.port', 30010);
+
+    const objectPath = await vscode.window.showInputBox({
+        prompt: 'Enter object path',
+        placeHolder: '/Game/MyBlueprint.MyBlueprint_C'
+    });
+
+    if (!objectPath) {
+        return;
+    }
+
+    const propertyName = await vscode.window.showInputBox({
+        prompt: 'Enter property name',
+        placeHolder: 'Health'
+    });
+
+    if (!propertyName) {
+        return;
+    }
+
+    outputChannel.appendLine(`\nGetting property: ${propertyName} from ${objectPath}`);
+    outputChannel.show(true);
+
+    try {
+        const response = await client.sendRequest({
+            type: 'remote_control_get_property',
+            data: JSON.stringify({
+                object_path: objectPath,
+                property_name: propertyName,
+                host: host,
+                port: port
+            })
+        });
+
+        if (response.status === 'success') {
+            outputChannel.appendLine(`✓ Property value: ${JSON.stringify(response.value, null, 2)}`);
+            vscode.window.showInformationMessage(`${propertyName} = ${JSON.stringify(response.value)}`);
+        } else {
+            const error = response.error || 'Unknown error';
+            outputChannel.appendLine(`✗ Error: ${error}`);
+            vscode.window.showErrorMessage(`Get property failed: ${error}`);
+        }
+    } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        outputChannel.appendLine(`✗ Error: ${errorMsg}`);
+        vscode.window.showErrorMessage(`Get property failed: ${errorMsg}`);
+    }
+}
+
+/**
+ * Set property on Unreal Engine object
+ */
+async function setUnrealProperty() {
+    if (!client || !client.isConnected()) {
+        vscode.window.showWarningMessage('Not connected to Director IPC server');
+        return;
+    }
+
+    const config = vscode.workspace.getConfiguration('director');
+    const host = config.get<string>('remoteControl.host', 'localhost');
+    const port = config.get<number>('remoteControl.port', 30010);
+
+    const objectPath = await vscode.window.showInputBox({
+        prompt: 'Enter object path',
+        placeHolder: '/Game/MyBlueprint.MyBlueprint_C'
+    });
+
+    if (!objectPath) {
+        return;
+    }
+
+    const propertyName = await vscode.window.showInputBox({
+        prompt: 'Enter property name',
+        placeHolder: 'Speed'
+    });
+
+    if (!propertyName) {
+        return;
+    }
+
+    const valueStr = await vscode.window.showInputBox({
+        prompt: 'Enter property value (JSON format)',
+        placeHolder: '100.0'
+    });
+
+    if (valueStr === undefined) {
+        return;
+    }
+
+    // Try to parse as JSON, fallback to string
+    let value: any;
+    try {
+        value = JSON.parse(valueStr);
+    } catch {
+        value = valueStr;
+    }
+
+    outputChannel.appendLine(`\nSetting property: ${propertyName} on ${objectPath} = ${value}`);
+    outputChannel.show(true);
+
+    try {
+        const response = await client.sendRequest({
+            type: 'remote_control_set_property',
+            data: JSON.stringify({
+                object_path: objectPath,
+                property_name: propertyName,
+                value: value,
+                host: host,
+                port: port
+            })
+        });
+
+        if (response.status === 'success') {
+            outputChannel.appendLine(`✓ Property set successfully`);
+            vscode.window.showInformationMessage(`✓ Set ${propertyName} = ${value}`);
+        } else {
+            const error = response.error || 'Unknown error';
+            outputChannel.appendLine(`✗ Error: ${error}`);
+            vscode.window.showErrorMessage(`Set property failed: ${error}`);
+        }
+    } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        outputChannel.appendLine(`✗ Error: ${errorMsg}`);
+        vscode.window.showErrorMessage(`Set property failed: ${errorMsg}`);
+    }
 }
 
 /**

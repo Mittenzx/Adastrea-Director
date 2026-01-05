@@ -197,6 +197,12 @@ class IPCServer:
         self.register_handler('ingest', self._handle_ingest)
         self.register_handler('clear_history', self._handle_clear_history)
         self.register_handler('db_info', self._handle_db_info)
+        # Remote Control API handlers
+        self.register_handler('remote_control_health_check', self._handle_remote_control_health_check)
+        self.register_handler('remote_control_execute_command', self._handle_remote_control_execute_command)
+        self.register_handler('remote_control_get_property', self._handle_remote_control_get_property)
+        self.register_handler('remote_control_set_property', self._handle_remote_control_set_property)
+        self.register_handler('remote_control_call_function', self._handle_remote_control_call_function)
 
     def register_handler(self, request_type: str, handler_func):
         """
@@ -2485,6 +2491,367 @@ JSON Response:"""
             return {
                 'status': 'error',
                 'error': 'Failed to retrieve database information.',
+                'details': str(e)
+            }
+    
+    # Remote Control API handlers
+    
+    def _handle_remote_control_health_check(self, data: str) -> Dict[str, Any]:
+        """
+        Check connection to Unreal Engine Remote Control API.
+        
+        Args:
+            data: JSON string with optional 'host' and 'port' parameters
+            
+        Returns:
+            Dict with health check status
+        """
+        logger.info("Remote Control health check request received")
+        
+        try:
+            # Parse parameters
+            try:
+                params = json.loads(data) if data and isinstance(data, str) else {}
+            except json.JSONDecodeError:
+                params = {}
+            
+            host = params.get('host', 'localhost')
+            port = params.get('port', 30010)
+            
+            # Import Remote Control client
+            try:
+                from remote_control import UnrealRemoteControlClient
+            except ImportError as e:
+                logger.error(f"Failed to import Remote Control client: {e}")
+                return {
+                    'status': 'error',
+                    'error': 'Remote Control module not available',
+                    'details': str(e)
+                }
+            
+            # Create client and check health
+            client = UnrealRemoteControlClient(host=host, port=port)
+            is_healthy = client.health_check()
+            client.close()
+            
+            if is_healthy:
+                logger.info(f"Remote Control health check passed (UE at {host}:{port})")
+                return {
+                    'status': 'success',
+                    'healthy': True,
+                    'message': f'Connected to Unreal Engine at {host}:{port}'
+                }
+            else:
+                logger.warning(f"Remote Control health check failed (UE at {host}:{port})")
+                return {
+                    'status': 'success',
+                    'healthy': False,
+                    'message': f'Cannot connect to Unreal Engine at {host}:{port}'
+                }
+                
+        except Exception as e:
+            logger.error(f"Remote Control health check error: {e}", exc_info=True)
+            return {
+                'status': 'error',
+                'error': 'Health check failed',
+                'details': str(e)
+            }
+    
+    def _handle_remote_control_execute_command(self, data: str) -> Dict[str, Any]:
+        """
+        Execute a console command in Unreal Engine via Remote Control API.
+        
+        Args:
+            data: JSON string with 'command' field and optional 'host' and 'port'
+            
+        Returns:
+            Dict with command execution result
+        """
+        logger.info("Remote Control execute command request received")
+        
+        try:
+            # Parse parameters
+            try:
+                params = json.loads(data) if data and isinstance(data, str) else {}
+            except json.JSONDecodeError:
+                return {
+                    'status': 'error',
+                    'error': 'Invalid JSON in request data'
+                }
+            
+            command = params.get('command')
+            if not command:
+                return {
+                    'status': 'error',
+                    'error': 'Missing required parameter: command'
+                }
+            
+            host = params.get('host', 'localhost')
+            port = params.get('port', 30010)
+            
+            # Import Remote Control client
+            try:
+                from remote_control import UnrealRemoteControlClient
+            except ImportError as e:
+                logger.error(f"Failed to import Remote Control client: {e}")
+                return {
+                    'status': 'error',
+                    'error': 'Remote Control module not available',
+                    'details': str(e)
+                }
+            
+            # Create client and execute command
+            with UnrealRemoteControlClient(host=host, port=port) as client:
+                response = client.execute_command(command)
+                
+                if response.success:
+                    logger.info(f"Command executed successfully: {command}")
+                    return {
+                        'status': 'success',
+                        'command': command,
+                        'result': response.data,
+                        'timestamp': response.timestamp.isoformat() if response.timestamp else None
+                    }
+                else:
+                    logger.warning(f"Command execution failed: {command}")
+                    return {
+                        'status': 'error',
+                        'error': response.error or 'Command execution failed',
+                        'command': command
+                    }
+                    
+        except Exception as e:
+            logger.error(f"Remote Control execute command error: {e}", exc_info=True)
+            return {
+                'status': 'error',
+                'error': 'Command execution failed',
+                'details': str(e)
+            }
+    
+    def _handle_remote_control_get_property(self, data: str) -> Dict[str, Any]:
+        """
+        Get a property value from Unreal Engine via Remote Control API.
+        
+        Args:
+            data: JSON string with 'object_path' and 'property_name' fields
+            
+        Returns:
+            Dict with property value
+        """
+        logger.info("Remote Control get property request received")
+        
+        try:
+            # Parse parameters
+            try:
+                params = json.loads(data) if data and isinstance(data, str) else {}
+            except json.JSONDecodeError:
+                return {
+                    'status': 'error',
+                    'error': 'Invalid JSON in request data'
+                }
+            
+            object_path = params.get('object_path')
+            property_name = params.get('property_name')
+            
+            if not object_path or not property_name:
+                return {
+                    'status': 'error',
+                    'error': 'Missing required parameters: object_path and property_name'
+                }
+            
+            host = params.get('host', 'localhost')
+            port = params.get('port', 30010)
+            
+            # Import Remote Control client
+            try:
+                from remote_control import UnrealRemoteControlClient
+            except ImportError as e:
+                logger.error(f"Failed to import Remote Control client: {e}")
+                return {
+                    'status': 'error',
+                    'error': 'Remote Control module not available',
+                    'details': str(e)
+                }
+            
+            # Create client and get property
+            with UnrealRemoteControlClient(host=host, port=port) as client:
+                response = client.get_property(object_path, property_name)
+                
+                if response.success:
+                    logger.info(f"Property retrieved: {property_name} from {object_path}")
+                    return {
+                        'status': 'success',
+                        'object_path': object_path,
+                        'property_name': property_name,
+                        'value': response.data,
+                        'timestamp': response.timestamp.isoformat() if response.timestamp else None
+                    }
+                else:
+                    logger.warning(f"Get property failed: {property_name} from {object_path}")
+                    return {
+                        'status': 'error',
+                        'error': response.error or 'Failed to get property',
+                        'object_path': object_path,
+                        'property_name': property_name
+                    }
+                    
+        except Exception as e:
+            logger.error(f"Remote Control get property error: {e}", exc_info=True)
+            return {
+                'status': 'error',
+                'error': 'Get property failed',
+                'details': str(e)
+            }
+    
+    def _handle_remote_control_set_property(self, data: str) -> Dict[str, Any]:
+        """
+        Set a property value in Unreal Engine via Remote Control API.
+        
+        Args:
+            data: JSON string with 'object_path', 'property_name', and 'value' fields
+            
+        Returns:
+            Dict with operation result
+        """
+        logger.info("Remote Control set property request received")
+        
+        try:
+            # Parse parameters
+            try:
+                params = json.loads(data) if data and isinstance(data, str) else {}
+            except json.JSONDecodeError:
+                return {
+                    'status': 'error',
+                    'error': 'Invalid JSON in request data'
+                }
+            
+            object_path = params.get('object_path')
+            property_name = params.get('property_name')
+            value = params.get('value')
+            
+            if not object_path or not property_name or value is None:
+                return {
+                    'status': 'error',
+                    'error': 'Missing required parameters: object_path, property_name, and value'
+                }
+            
+            host = params.get('host', 'localhost')
+            port = params.get('port', 30010)
+            
+            # Import Remote Control client
+            try:
+                from remote_control import UnrealRemoteControlClient
+            except ImportError as e:
+                logger.error(f"Failed to import Remote Control client: {e}")
+                return {
+                    'status': 'error',
+                    'error': 'Remote Control module not available',
+                    'details': str(e)
+                }
+            
+            # Create client and set property
+            with UnrealRemoteControlClient(host=host, port=port) as client:
+                response = client.set_property(object_path, property_name, value)
+                
+                if response.success:
+                    logger.info(f"Property set: {property_name} on {object_path} = {value}")
+                    return {
+                        'status': 'success',
+                        'object_path': object_path,
+                        'property_name': property_name,
+                        'value': value,
+                        'timestamp': response.timestamp.isoformat() if response.timestamp else None
+                    }
+                else:
+                    logger.warning(f"Set property failed: {property_name} on {object_path}")
+                    return {
+                        'status': 'error',
+                        'error': response.error or 'Failed to set property',
+                        'object_path': object_path,
+                        'property_name': property_name
+                    }
+                    
+        except Exception as e:
+            logger.error(f"Remote Control set property error: {e}", exc_info=True)
+            return {
+                'status': 'error',
+                'error': 'Set property failed',
+                'details': str(e)
+            }
+    
+    def _handle_remote_control_call_function(self, data: str) -> Dict[str, Any]:
+        """
+        Call a function on an Unreal Engine object via Remote Control API.
+        
+        Args:
+            data: JSON string with 'object_path', 'function_name', and optional 'parameters'
+            
+        Returns:
+            Dict with function call result
+        """
+        logger.info("Remote Control call function request received")
+        
+        try:
+            # Parse parameters
+            try:
+                params = json.loads(data) if data and isinstance(data, str) else {}
+            except json.JSONDecodeError:
+                return {
+                    'status': 'error',
+                    'error': 'Invalid JSON in request data'
+                }
+            
+            object_path = params.get('object_path')
+            function_name = params.get('function_name')
+            
+            if not object_path or not function_name:
+                return {
+                    'status': 'error',
+                    'error': 'Missing required parameters: object_path and function_name'
+                }
+            
+            function_params = params.get('parameters', {})
+            host = params.get('host', 'localhost')
+            port = params.get('port', 30010)
+            
+            # Import Remote Control client
+            try:
+                from remote_control import UnrealRemoteControlClient
+            except ImportError as e:
+                logger.error(f"Failed to import Remote Control client: {e}")
+                return {
+                    'status': 'error',
+                    'error': 'Remote Control module not available',
+                    'details': str(e)
+                }
+            
+            # Create client and call function
+            with UnrealRemoteControlClient(host=host, port=port) as client:
+                response = client.call_function(object_path, function_name, function_params)
+                
+                if response.success:
+                    logger.info(f"Function called: {function_name} on {object_path}")
+                    return {
+                        'status': 'success',
+                        'object_path': object_path,
+                        'function_name': function_name,
+                        'result': response.data,
+                        'timestamp': response.timestamp.isoformat() if response.timestamp else None
+                    }
+                else:
+                    logger.warning(f"Function call failed: {function_name} on {object_path}")
+                    return {
+                        'status': 'error',
+                        'error': response.error or 'Function call failed',
+                        'object_path': object_path,
+                        'function_name': function_name
+                    }
+                    
+        except Exception as e:
+            logger.error(f"Remote Control call function error: {e}", exc_info=True)
+            return {
+                'status': 'error',
+                'error': 'Function call failed',
                 'details': str(e)
             }
 

@@ -107,6 +107,26 @@
       {
         "command": "director.provideFeedback",
         "title": "Director: Provide Feedback"
+      },
+      {
+        "command": "director.unreal.checkConnection",
+        "title": "Adastrea: Check Unreal Connection",
+        "category": "Adastrea Director"
+      },
+      {
+        "command": "director.unreal.executeCommand",
+        "title": "Adastrea: Execute Unreal Command",
+        "category": "Adastrea Director"
+      },
+      {
+        "command": "director.unreal.getProperty",
+        "title": "Adastrea: Get Unreal Property",
+        "category": "Adastrea Director"
+      },
+      {
+        "command": "director.unreal.setProperty",
+        "title": "Adastrea: Set Unreal Property",
+        "category": "Adastrea Director"
       }
     ],
     "configuration": {
@@ -178,6 +198,16 @@
           "type": "boolean",
           "default": true,
           "description": "Enable Director code actions (Ask Director, Get Context)"
+        },
+        "director.remoteControl.host": {
+          "type": "string",
+          "default": "localhost",
+          "description": "Host address for Unreal Engine Remote Control API"
+        },
+        "director.remoteControl.port": {
+          "type": "number",
+          "default": 30010,
+          "description": "Port for Unreal Engine Remote Control API"
         }
       }
     }
