@@ -2,6 +2,14 @@
 
 This directory contains example scripts demonstrating various features of Adastrea Director.
 
+## 📝 Integration Status Note
+
+The `remote_control_demo.py` example demonstrates the **Remote Control API client**, which is a **standalone module** that is **not yet integrated** with gui_director.py or the VSCode extension.
+
+For integration status and how to integrate, see:
+- **[REMOTE_CONTROL_INTEGRATION_STATUS.md](../REMOTE_CONTROL_INTEGRATION_STATUS.md)** - Complete integration status
+- **[REMOTE_CONTROL_QUICK_INTEGRATION.md](../REMOTE_CONTROL_QUICK_INTEGRATION.md)** - 5-minute integration guide
+
 ## Available Examples
 
 ### Blueprint Creation
