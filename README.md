@@ -541,8 +541,28 @@ The wiki includes:
 If you're a GitHub Copilot agent or AI assistant working with Adastrea Director:
 - **[COPILOT_INSTRUCTIONS.md](Documentation/development/COPILOT_INSTRUCTIONS.md)** - 📖 Complete guide for Copilot agents with connection methods, capabilities, and verification procedures
 - **[.github/COPILOT_QUICK_REFERENCE.md](.github/COPILOT_QUICK_REFERENCE.md)** - 🚀 Quick reference card for common operations
+
 ### 🤖 GitHub Copilot Integration
 
+**NEW: MCP Server Integration** ✨
+
+GitHub Copilot in VS Code can now directly use Adastrea Director's MCP (Model Context Protocol) server to interact with Unreal Engine! The repository includes pre-configured VS Code settings in `.vscode/settings.json` that enable Copilot to:
+
+- Execute Python code directly in Unreal Engine Editor
+- Query project information and list assets
+- Create and manipulate actors in the level
+- Access Director's RAG knowledge base
+- Get context-aware assistance for UE development
+
+**Quick Setup:**
+1. Open this repository in VS Code
+2. Ensure GitHub Copilot extension is installed
+3. Start Unreal Engine with Python Editor Script Plugin enabled
+4. Ask Copilot: "Use the adastrea-unreal server to get project information"
+
+See **[.vscode/README.md](.vscode/README.md)** for complete setup instructions and troubleshooting.
+
+**Debugging UE Logs:**
 Want GitHub Copilot to help debug UE crashes and errors? See **[COPILOT_UE_LOGS_GUIDE.md](Documentation/guides/COPILOT_UE_LOGS_GUIDE.md)** for details on how Copilot can access Unreal Engine output logs for better assistance.
 
 

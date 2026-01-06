@@ -50,9 +50,9 @@ Both documents cover:
 
 ## 🚀 Quick Start
 
-### 1. Add MCP Server to VS Code
+### 1. MCP Server Configuration (Pre-configured! ✅)
 
-Edit `.vscode/settings.json`:
+The repository now includes a pre-configured `.vscode/settings.json` file that enables GitHub Copilot to use the Adastrea Director MCP server:
 
 ```json
 {
@@ -60,11 +60,15 @@ Edit `.vscode/settings.json`:
     "adastrea-unreal": {
       "command": "python",
       "args": ["-m", "mcp_server.server"],
-      "cwd": "/path/to/Adastrea-Director"
+      "cwd": "${workspaceFolder}"
     }
   }
 }
 ```
+
+✨ **No manual configuration needed!** Just open the repository in VS Code.
+
+If you need to customize the path, see **[.vscode/README.md](../.vscode/README.md)** for instructions.
 
 ### 2. Verify Prerequisites
 
