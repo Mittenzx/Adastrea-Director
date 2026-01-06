@@ -1050,13 +1050,10 @@ async function checkUnrealConnection() {
     outputChannel.show(true);
 
     try {
-        const response = await client.sendRequest({
-            type: 'remote_control_health_check',
-            data: JSON.stringify({
-                host: host,
-                port: port
-            })
-        });
+        const response = await client.request('remote_control_health_check', JSON.stringify({
+            host: host,
+            port: port
+        }));
 
         if (response.status === 'success' && response.healthy) {
             outputChannel.appendLine(`✓ ${response.message}`);
@@ -1103,14 +1100,11 @@ async function executeUnrealCommand() {
     outputChannel.show(true);
 
     try {
-        const response = await client.sendRequest({
-            type: 'remote_control_execute_command',
-            data: JSON.stringify({
-                command: command,
-                host: host,
-                port: port
-            })
-        });
+        const response = await client.request('remote_control_execute_command', JSON.stringify({
+            command: command,
+            host: host,
+            port: port
+        }));
 
         if (response.status === 'success') {
             outputChannel.appendLine(`✓ Command executed: ${command}`);
@@ -1167,15 +1161,12 @@ async function getUnrealProperty() {
     outputChannel.show(true);
 
     try {
-        const response = await client.sendRequest({
-            type: 'remote_control_get_property',
-            data: JSON.stringify({
-                object_path: objectPath,
-                property_name: propertyName,
-                host: host,
-                port: port
-            })
-        });
+        const response = await client.request('remote_control_get_property', JSON.stringify({
+            object_path: objectPath,
+            property_name: propertyName,
+            host: host,
+            port: port
+        }));
 
         if (response.status === 'success') {
             outputChannel.appendLine(`✓ Property value: ${JSON.stringify(response.value, null, 2)}`);
@@ -1244,16 +1235,13 @@ async function setUnrealProperty() {
     outputChannel.show(true);
 
     try {
-        const response = await client.sendRequest({
-            type: 'remote_control_set_property',
-            data: JSON.stringify({
-                object_path: objectPath,
-                property_name: propertyName,
-                value: value,
-                host: host,
-                port: port
-            })
-        });
+        const response = await client.request('remote_control_set_property', JSON.stringify({
+            object_path: objectPath,
+            property_name: propertyName,
+            value: value,
+            host: host,
+            port: port
+        }));
 
         if (response.status === 'success') {
             outputChannel.appendLine(`✓ Property set successfully`);
@@ -1287,14 +1275,11 @@ async function executePresetCommand(command: string) {
     outputChannel.show(true);
 
     try {
-        const response = await client.sendRequest({
-            type: 'remote_control_execute_command',
-            data: JSON.stringify({
-                command: command,
-                host: host,
-                port: port
-            })
-        });
+        const response = await client.request('remote_control_execute_command', JSON.stringify({
+            command: command,
+            host: host,
+            port: port
+        }));
 
         if (response.status === 'success') {
             outputChannel.appendLine(`✓ Command executed: ${command}`);

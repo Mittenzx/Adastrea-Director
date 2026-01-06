@@ -1,6 +1,8 @@
 out
 node_modules
-.vscode-test/
+.vscode-test
 *.vsix
+*.vsix.*/
 .DS_Store
 *.log
+LICENSE

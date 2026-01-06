@@ -94,6 +94,19 @@ The repository includes a `.copilotignore` configuration that allows GitHub Copi
 
 ## Installation
 
+### From VSIX (Recommended for End Users)
+
+1. Download the latest `adastrea-director-x.x.x.vsix` file from the [releases page](https://github.com/Mittenzx/Adastrea-Director/releases) or build it yourself (see "Building VSIX Package" below)
+
+2. Install in VS Code:
+   - **Option A**: Open VS Code → Extensions → ⋯ (More Actions) → Install from VSIX... → Select the .vsix file
+   - **Option B**: Run from command line:
+     ```bash
+     code --install-extension adastrea-director-0.3.0.vsix
+     ```
+
+3. Reload VS Code to activate the extension
+
 ### From Source (Development)
 
 1. Clone the Adastrea Director repository:
@@ -400,12 +413,29 @@ npm test
 npm run watch
 ```
 
-### Packaging
+### Building VSIX Package
 
-```bash
-npm run vscode:prepublish
-npx @vscode/vsce package
-```
+To create a VSIX package that can be shared and installed:
+
+1. Install dependencies and compile:
+   ```bash
+   npm install
+   npm run compile
+   ```
+
+2. Package the extension:
+   ```bash
+   npm run package
+   ```
+   
+   This will create `adastrea-director-0.3.0.vsix` in the current directory.
+
+3. The VSIX file can now be:
+   - Shared with other users for installation
+   - Published to the VS Code Marketplace
+   - Installed locally using `code --install-extension adastrea-director-0.3.0.vsix`
+
+**Note:** The package includes all necessary files as specified in `.vscodeignore`.
 
 ## Architecture
 
