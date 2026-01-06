@@ -9,8 +9,7 @@ The `settings.json` file configures GitHub Copilot to connect to the Adastrea Di
 - Execute Python code directly in Unreal Engine Editor
 - Query project information and assets
 - Create and manipulate actors in the level
-- Access Director's RAG (Retrieval-Augmented Generation) system for context-aware assistance based on ingested documentation
-- Get context-aware assistance for Unreal Engine development
+- Access Director's RAG (Retrieval-Augmented Generation) system for context-aware Unreal Engine assistance based on ingested documentation
 
 ### Prerequisites
 
