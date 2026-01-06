@@ -1,0 +1,11 @@
+{
+  "github.copilot.chat.experimental.mcpServers": {
+    "adastrea-unreal": {
+      "comment": "This enables GitHub Copilot to use the Adastrea Director MCP server for Unreal Engine integration",
+      "command": "python",
+      "args": ["-m", "mcp_server.server"],
+      "cwd": "/absolute/path/to/Adastrea-Director",
+      "info": "Replace /absolute/path/to/Adastrea-Director with your actual path, or use ${workspaceFolder} if this is your workspace root"
+    }
+  }
+}
