@@ -1,0 +1,9 @@
+{
+  "github.copilot.chat.experimental.mcpServers": {
+    "adastrea-unreal": {
+      "command": "python",
+      "args": ["-m", "mcp_server.server"],
+      "cwd": "${workspaceFolder}"
+    }
+  }
+}
