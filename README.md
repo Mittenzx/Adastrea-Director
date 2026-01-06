@@ -558,7 +558,7 @@ GitHub Copilot in VS Code can now directly use Adastrea Director's MCP (Model Co
 1. Open this repository in VS Code
 2. Ensure GitHub Copilot extension is installed
 3. Start Unreal Engine with Python Editor Script Plugin enabled
-4. Ask Copilot: "Use the adastrea-unreal server to get project information"
+4. Ask Copilot: `Use the adastrea-unreal server to get project information`
 
 See **[.vscode/README.md](.vscode/README.md)** for complete setup instructions and troubleshooting.
 

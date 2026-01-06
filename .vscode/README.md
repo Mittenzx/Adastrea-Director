@@ -9,7 +9,7 @@ The `settings.json` file configures GitHub Copilot to connect to the Adastrea Di
 - Execute Python code directly in Unreal Engine Editor
 - Query project information and assets
 - Create and manipulate actors in the level
-- Access Director's RAG (Retrieval-Augmented Generation) system
+- Access Director's RAG (Retrieval-Augmented Generation) system for context-aware assistance based on ingested documentation
 - Get context-aware assistance for Unreal Engine development
 
 ### Prerequisites
@@ -62,6 +62,10 @@ If Copilot cannot connect to the MCP server:
 5. **Test MCP server manually**:
    ```bash
    cd /path/to/Adastrea-Director
+   python -m mcp_server.server
+   ```
+   Or use the interactive CLI:
+   ```bash
    python unreal_mcp_cli.py
    ```
 
