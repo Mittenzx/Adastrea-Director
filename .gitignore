@@ -73,3 +73,4 @@ coverage.xml
 # Cost tracking data
 api_costs.json
 cost_report.json
+verify_endpoint_fix.py
