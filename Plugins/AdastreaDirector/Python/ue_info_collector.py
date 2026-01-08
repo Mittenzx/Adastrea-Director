@@ -277,8 +277,9 @@ class UEInfoCollector:
                                 elif 'Anim' in parent_name:
                                     info["animation_blueprints"] += 1
                 
-                except Exception:
-                    # Skip blueprints that fail to load
+                except (RuntimeError, AttributeError) as e:
+                    # Skip blueprints that fail to load or have missing attributes
+                    # This is expected for some blueprint types
                     pass
             
             info["by_parent_class"] = dict(sorted(parent_class_counts.items(), key=lambda x: x[1], reverse=True))
@@ -928,8 +929,64 @@ def save_to_markdown(info: Dict[str, Any], filename: str = "ue_project_info.md")
                         f.write(f"- {asset_type}: {count}\n")
                     f.write("\n")
             
-            # More sections...
-            # (Add similar sections for blueprints, levels, materials, etc.)
+            # Blueprints
+            if "blueprints" in info:
+                f.write("## Blueprints\n\n")
+                bp = info["blueprints"]
+                f.write(f"- **Total Blueprints:** {bp.get('total_blueprints', 0)}\n")
+                f.write(f"- **Actor Blueprints:** {bp.get('actor_blueprints', 0)}\n")
+                f.write(f"- **Widget Blueprints:** {bp.get('widget_blueprints', 0)}\n")
+                f.write(f"- **Animation Blueprints:** {bp.get('animation_blueprints', 0)}\n")
+                f.write("\n")
+            
+            # Levels
+            if "levels" in info and "actors" in info["levels"]:
+                f.write("## Level Content\n\n")
+                actors = info["levels"]["actors"]
+                f.write(f"- **Total Actors:** {actors.get('total', 0)}\n\n")
+                if "by_type" in actors and actors["by_type"]:
+                    f.write("### Actor Types\n\n")
+                    for actor_type, count in list(actors["by_type"].items())[:10]:
+                        f.write(f"- {actor_type}: {count}\n")
+                    f.write("\n")
+            
+            # Materials
+            if "materials" in info:
+                f.write("## Materials & Textures\n\n")
+                mats = info["materials"]
+                if "materials" in mats:
+                    f.write(f"- **Materials:** {mats['materials'].get('total', 0)}\n")
+                    f.write(f"- **Material Instances:** {mats['materials'].get('instances', 0)}\n")
+                if "textures" in mats:
+                    f.write(f"- **Textures:** {mats['textures'].get('total', 0)}\n")
+                f.write("\n")
+            
+            # Animation
+            if "animation" in info:
+                f.write("## Animation\n\n")
+                anim = info["animation"]
+                f.write(f"- **Skeletal Meshes:** {anim.get('skeletal_meshes', 0)}\n")
+                f.write(f"- **Animations:** {anim.get('animations', 0)}\n")
+                f.write(f"- **Animation Blueprints:** {anim.get('animation_blueprints', 0)}\n")
+                f.write("\n")
+            
+            # Audio
+            if "audio" in info:
+                f.write("## Audio\n\n")
+                audio = info["audio"]
+                f.write(f"- **Sound Waves:** {audio.get('sound_waves', 0)}\n")
+                f.write(f"- **Sound Cues:** {audio.get('sound_cues', 0)}\n")
+                f.write("\n")
+            
+            # Source Code
+            if "source" in info:
+                f.write("## Source Code\n\n")
+                source = info["source"]
+                f.write(f"- **Has C++ Source:** {source.get('has_source', False)}\n")
+                if source.get('has_source'):
+                    f.write(f"- **Modules:** {', '.join(source.get('modules', []))}\n")
+                    f.write(f"- **Total Source Files:** {source.get('total_source_files', 0)}\n")
+                f.write("\n")
         
         print(f"✓ Information saved to: {filepath}")
         return filepath

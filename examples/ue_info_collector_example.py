@@ -275,13 +275,29 @@ def run_all_examples():
         # Run examples
         example_basic_usage()
         
-        input("\nPress Enter to continue to next example...")
+        # Check if running interactively
+        try:
+            if sys.stdin.isatty():
+                input("\nPress Enter to continue to next example...")
+        except:
+            pass  # Non-interactive mode, continue
+        
         example_selective_collection()
         
-        input("\nPress Enter to continue to next example...")
+        try:
+            if sys.stdin.isatty():
+                input("\nPress Enter to continue to next example...")
+        except:
+            pass
+        
         example_analysis()
         
-        input("\nPress Enter to continue to next example...")
+        try:
+            if sys.stdin.isatty():
+                input("\nPress Enter to continue to next example...")
+        except:
+            pass
+        
         example_project_health_check()
         
         print("\n" + "="*60)
