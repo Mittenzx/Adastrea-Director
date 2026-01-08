@@ -191,6 +191,58 @@ Standard Python library only:
 
 No external dependencies required for basic IPC functionality.
 
+### ue_info_collector.py
+
+**NEW:** Comprehensive project information collector that gathers extensive data about your UE project from inside the editor.
+
+**Features:**
+- Collects 10 categories of project information
+- Project metadata and configuration
+- Asset counts and organization analysis
+- Blueprint complexity and structure
+- Level content and actors
+- Material and texture information
+- Plugin enumeration
+- Source code analysis
+- Animation and audio assets
+- Performance monitoring setup
+
+**Usage:**
+```python
+# In UE Python Console
+execfile("Plugins/AdastreaDirector/Python/ue_info_collector.py")
+
+# Or programmatically
+import ue_info_collector
+info = ue_info_collector.collect_all_info()
+ue_info_collector.print_report(info)
+ue_info_collector.save_to_json(info, "project_info.json")
+```
+
+**Documentation:**
+- See [UE_INFO_COLLECTOR_README.md](UE_INFO_COLLECTOR_README.md) for detailed usage
+- See [examples/ue_info_collector_example.py](../../../examples/ue_info_collector_example.py) for examples
+
+**Use Cases:**
+- Provide context to AI agents about project structure
+- Analyze naming conventions and organization
+- Track project growth and complexity
+- Detect potential issues and optimization opportunities
+- Generate reports for documentation
+
+### ue_python_api.py
+
+Python API bridge for interacting with Unreal Engine from within the editor.
+
+**Features:**
+- Asset management and queries
+- Actor spawning and manipulation
+- Console command execution
+- Editor scripting utilities
+- Performance profiling helpers
+
+**See also:** [examples/ue_python_api_demo.py](../../../examples/ue_python_api_demo.py)
+
 ## Additional Documentation
 
 📖 **[Remote Connection Types & Actions](../../../wiki/Remote-Connection-Types-and-Actions.md)** - Comprehensive guide covering all connection types including this IPC Server, with detailed action listings, comparisons, and best practices.
