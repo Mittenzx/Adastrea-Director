@@ -186,8 +186,8 @@ Specialized agent for automated testing:
    ```
 
 3. **Verify connection**:
-   - Open browser to `http://localhost:30010/remote/control/api`
-   - Should see API documentation
+   - Open browser to `http://localhost:30010/remote/info`
+   - Should see API route information
 
 ### Python Dependencies
 
@@ -337,7 +337,7 @@ except RemoteControlError as e:
 2. Check Remote Control plugins are enabled
 3. Verify launch flags are set
 4. Check port 30010 is not blocked
-5. Try browser test: `http://localhost:30010/remote/control/api`
+5. Try browser test: `http://localhost:30010/remote/info`
 
 ### Command Not Working
 

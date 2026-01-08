@@ -96,7 +96,7 @@ class UnrealRemoteControlClient:
         """
         try:
             response = self.session.get(
-                f"http://{self.host}:{self.port}/remote/control/api",
+                f"http://{self.host}:{self.port}/remote/info",
                 timeout=self.timeout,
                 verify=self.verify_ssl,
             )

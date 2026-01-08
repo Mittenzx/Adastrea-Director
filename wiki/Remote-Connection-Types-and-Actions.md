@@ -1545,7 +1545,7 @@ with PerformanceMonitorAgent(
 - ✓ Verify UE is running
 - ✓ Check Remote Control plugins are enabled
 - ✓ Verify launch flags: `-RCWebControlEnable -RCWebInterfaceEnable`
-- ✓ Test in browser: `http://localhost:30010/remote/control/api`
+- ✓ Test in browser: `http://localhost:30010/remote/info`
 
 **Problem**: Command not working
 - ✓ Verify command is valid in UE console

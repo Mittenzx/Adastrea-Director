@@ -400,7 +400,7 @@ security:
 
 3. **Verify Connection:**
    ```bash
-   curl http://localhost:30010/remote/control/api
+   curl http://localhost:30010/remote/info
    ```
 
 ---
