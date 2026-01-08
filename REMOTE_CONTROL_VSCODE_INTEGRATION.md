@@ -305,7 +305,7 @@ This implementation follows the **Option 2: VSCode via Python Proxy** approach f
 1. Verify UE is running: Check Task Manager/Activity Monitor
 2. Verify Remote Control flags: `-RCWebControlEnable -RCWebInterfaceEnable`
 3. Check port: Default is 30010, verify in UE logs
-4. Test in browser: `http://localhost:30010/remote/control/api`
+4. Test in browser: `http://localhost:30010/remote/info`
 
 ### "Remote Control module not available"
 **Solutions:**

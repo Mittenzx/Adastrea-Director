@@ -335,7 +335,7 @@ Add to `vscode-extension/package.json` under `contributes.commands`:
 - Ensure UE is running
 - Check Remote Control plugins are enabled (Project Settings → Plugins)
 - Verify launch flags: `-RCWebControlEnable -RCWebInterfaceEnable`
-- Test in browser: `http://localhost:30010/remote/control/api`
+- Test in browser: `http://localhost:30010/remote/info`
 
 ### "Command returns no output"
 - Some commands don't return text (e.g., `stat fps` just shows in viewport)

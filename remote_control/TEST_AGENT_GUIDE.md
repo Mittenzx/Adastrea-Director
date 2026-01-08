@@ -47,8 +47,8 @@ The **TestAgent** is a specialized agent that enables automated testing of Unrea
    ```
 
 3. **Verify Connection**:
-   - Open browser to `http://localhost:30010/remote/control/api`
-   - Should see API documentation
+   - Open browser to `http://localhost:30010/remote/info`
+   - Should see API route information
 
 ### Python Dependencies
 
@@ -499,7 +499,7 @@ with TestAgent() as agent:
 1. Verify UE is running
 2. Check Remote Control plugins are enabled
 3. Verify launch flags: `-RCWebControlEnable -RCWebInterfaceEnable`
-4. Test in browser: `http://localhost:30010/remote/control/api`
+4. Test in browser: `http://localhost:30010/remote/info`
 5. Check firewall settings
 
 ### Property Not Found

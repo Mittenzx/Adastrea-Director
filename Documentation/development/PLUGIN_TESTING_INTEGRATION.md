@@ -112,8 +112,8 @@ Enable Remote Control in your project:
    ```
 
 3. **Verify Connection**:
-   - Open browser to `http://localhost:30010/remote/control/api`
-   - Should see API documentation page
+   - Open browser to `http://localhost:30010/remote/info`
+   - Should see API route information
 
 ### 2. Python Environment
 
@@ -380,7 +380,7 @@ See complete working examples in:
 1. Verify UE is running
 2. Check Remote Control plugins are enabled
 3. Verify launch flags include `-RCWebControlEnable -RCWebInterfaceEnable`
-4. Test in browser: `http://localhost:30010/remote/control/api`
+4. Test in browser: `http://localhost:30010/remote/info`
 5. Check firewall settings
 
 ### Property Not Found

@@ -130,8 +130,8 @@ When integrated, you can:
 
 **Test Connection:**
 ```bash
-curl http://localhost:30010/remote/control/api
-# Should return API documentation
+curl http://localhost:30010/remote/info
+# Should return API route information
 ```
 
 ---
