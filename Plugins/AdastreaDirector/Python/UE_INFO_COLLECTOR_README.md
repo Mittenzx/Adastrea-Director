@@ -30,6 +30,19 @@ The script collects information across 10 major categories:
 - Function Libraries
 - Widget Blueprints
 - Animation Blueprints
+- **NEW: Detailed Blueprint Analysis**
+  - Variables per blueprint (names, types, counts)
+  - Functions per blueprint (names, counts)
+  - Components per blueprint (types, counts)
+  - Event graphs and function graphs
+  - Complexity scoring
+  - Most complex blueprints identification
+- **NEW: Deep Blueprint Analysis**
+  - Per-blueprint variable analysis
+  - Per-blueprint function analysis
+  - Per-blueprint component analysis
+  - Graph structure analysis
+  - Complexity metrics
 
 ### 4. Level & Actor Information
 - Current level details
@@ -261,6 +274,72 @@ project_info = await collector.collect_project_info()
 
 ### Performance is slow
 **Solution**: The script analyzes many assets. For large projects (1000+ assets), expect 30-60 seconds.
+
+## Blueprint Screenshot Capabilities
+
+### Can We Screenshot Blueprint Graphs?
+
+**Direct Python API**: ❌ **NO** - The Unreal Python API does not expose blueprint graph screenshot functionality.
+
+### What We CAN Analyze
+
+✅ **Via Python API:**
+- Blueprint variables (names, types, counts)
+- Blueprint functions (names, counts)
+- Blueprint components (types, counts)
+- Blueprint graphs (names, types, counts)
+- Parent classes and hierarchy
+- Complexity metrics (calculated scores)
+- Blueprint metadata
+
+### Screenshot Alternatives
+
+While direct Python screenshots aren't possible, here are the alternatives:
+
+#### 1. **Blueprint Screenshot Tool Plugin** (Recommended)
+- **GitHub**: https://github.com/Gradess2019/BlueprintScreenshotTool
+- **Features**:
+  - Full graph capture regardless of size
+  - Toolbar button in Blueprint editor
+  - Hotkeys (Ctrl+F7 for screenshot, Ctrl+F8 to open directory)
+  - Configurable export settings
+  - Supports Blueprints, Materials, and other graph editors
+
+#### 2. **Manual Editor Screenshot**
+- Use `HighResShot` console command
+- Limited to visible viewport area
+- Good for quick captures
+
+#### 3. **Copy Blueprint as Text**
+- Copy nodes and paste as text
+- Use online tools like BlueprintUE to visualize
+- Good for sharing logic, not visual screenshots
+
+#### 4. **Custom C++ Solution**
+- Requires C++ plugin development
+- High complexity
+- Full control over rendering
+
+### Recommended Workflow
+
+For comprehensive blueprint understanding:
+1. **Use this Python script** for data analysis (variables, functions, complexity)
+2. **Use Blueprint Screenshot Tool plugin** for visual documentation
+3. **Combine both** for complete blueprint understanding
+
+Example:
+```python
+import ue_info_collector
+
+collector = ue_info_collector.UEInfoCollector()
+
+# Get detailed analysis
+analysis = collector.analyze_blueprint_detailed("/Game/Blueprints/BP_MyActor")
+
+# See what we can and cannot do
+screenshot_info = collector.get_blueprint_screenshot_info()
+print(screenshot_info["recommendation"])
+```
 
 ## Advanced Usage
 

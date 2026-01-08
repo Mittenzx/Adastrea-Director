@@ -259,6 +259,97 @@ def example_project_health_check():
     print("\n" + "-" * 60)
 
 
+def example_deep_blueprint_analysis():
+    """Example 5: Deep analysis of a specific blueprint."""
+    print("\n" + "="*60)
+    print("Example 5: Deep Blueprint Analysis")
+    print("="*60 + "\n")
+    
+    collector = ue_info_collector.UEInfoCollector()
+    
+    if not collector.available:
+        print("✗ Collector not available")
+        return
+    
+    # First, get list of blueprints
+    print("Finding blueprints in project...\n")
+    bp_info = collector.collect_blueprint_info()
+    
+    if bp_info.get("total_blueprints", 0) == 0:
+        print("⚠ No blueprints found in project")
+        return
+    
+    # Show most complex blueprints
+    if "largest_blueprints" in bp_info and bp_info["largest_blueprints"]:
+        print("Most Complex Blueprints:")
+        print("-" * 60)
+        for i, bp in enumerate(bp_info["largest_blueprints"][:5], 1):
+            name = bp.get("name", "Unknown")
+            path = bp.get("path", "")
+            vars_count = bp.get("variables", 0)
+            funcs = bp.get("functions", 0)
+            comps = bp.get("components", 0)
+            print(f"{i}. {name}")
+            print(f"   Variables: {vars_count}, Functions: {funcs}, Components: {comps}")
+            print(f"   Path: {path}")
+            print()
+        
+        # Analyze the most complex blueprint in detail
+        if bp_info["largest_blueprints"]:
+            most_complex = bp_info["largest_blueprints"][0]
+            bp_path = most_complex.get("path", "")
+            
+            print(f"\nPerforming deep analysis on: {most_complex.get('name', 'Unknown')}")
+            print("-" * 60)
+            
+            detailed = collector.analyze_blueprint_detailed(bp_path)
+            
+            if "error" not in detailed:
+                print(f"\nParent Class: {detailed.get('parent_class', 'Unknown')}")
+                print(f"Complexity Score: {detailed.get('complexity_score', 0)}")
+                
+                if detailed.get("variables"):
+                    print(f"\nVariables ({len(detailed['variables'])}):")
+                    for var in detailed["variables"][:10]:  # Show first 10
+                        print(f"  - {var.get('name', 'unknown')}: {var.get('type', 'unknown')}")
+                    if len(detailed["variables"]) > 10:
+                        print(f"  ... and {len(detailed['variables']) - 10} more")
+                
+                if detailed.get("functions"):
+                    print(f"\nFunctions ({len(detailed['functions'])}):")
+                    for func in detailed["functions"][:10]:  # Show first 10
+                        print(f"  - {func}")
+                    if len(detailed["functions"]) > 10:
+                        print(f"  ... and {len(detailed['functions']) - 10} more")
+                
+                if detailed.get("components"):
+                    print(f"\nComponents ({len(detailed['components'])}):")
+                    for comp in detailed["components"]:
+                        print(f"  - {comp}")
+                
+                if detailed.get("graphs"):
+                    print(f"\nGraphs ({len(detailed['graphs'])}):")
+                    for graph in detailed["graphs"]:
+                        print(f"  - {graph.get('name', 'unknown')} ({graph.get('type', 'unknown')})")
+            else:
+                print(f"\n✗ Error: {detailed.get('error', 'Unknown error')}")
+    else:
+        print("⚠ No detailed blueprint information available")
+    
+    # Show screenshot capabilities
+    print("\n\nBlueprint Screenshot Capabilities:")
+    print("-" * 60)
+    screenshot_info = collector.get_blueprint_screenshot_info()
+    print(f"Direct screenshot via Python: {screenshot_info.get('direct_screenshot_available', False)}")
+    print(f"\nRecommendation: {screenshot_info.get('recommendation', 'N/A')}")
+    
+    if "alternatives" in screenshot_info:
+        print("\nAlternative Methods:")
+        for alt in screenshot_info["alternatives"][:2]:  # Show first 2
+            print(f"\n  Method: {alt.get('method', 'Unknown')}")
+            print(f"  Description: {alt.get('description', 'N/A')}")
+
+
 def run_all_examples():
     """Run all examples."""
     print("\n" + "="*60)
@@ -299,6 +390,14 @@ def run_all_examples():
             pass
         
         example_project_health_check()
+        
+        try:
+            if sys.stdin.isatty():
+                input("\nPress Enter to continue to final example...")
+        except:
+            pass
+        
+        example_deep_blueprint_analysis()
         
         print("\n" + "="*60)
         print("All Examples Complete!")

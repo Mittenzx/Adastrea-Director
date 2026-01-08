@@ -234,7 +234,14 @@ class UEInfoCollector:
             "function_libraries": 0,
             "widget_blueprints": 0,
             "animation_blueprints": 0,
-            "largest_blueprints": []
+            "largest_blueprints": [],
+            "detailed_analysis": {
+                "total_variables": 0,
+                "total_functions": 0,
+                "total_components": 0,
+                "avg_variables_per_bp": 0,
+                "avg_functions_per_bp": 0
+            }
         }
         
         try:
@@ -247,14 +254,29 @@ class UEInfoCollector:
             info["total_blueprints"] = len(blueprints)
             
             parent_class_counts = defaultdict(int)
+            bp_details = []
+            total_vars = 0
+            total_funcs = 0
+            total_comps = 0
+            analyzed_count = 0
             
             for bp_data in blueprints:
                 bp_path = str(bp_data.package_name)
+                bp_name = str(bp_data.asset_name)
                 
                 try:
                     # Try to load and analyze blueprint
                     bp = unreal.load_asset(bp_path)
                     if bp:
+                        bp_detail = {
+                            "name": bp_name,
+                            "path": bp_path,
+                            "variables": 0,
+                            "functions": 0,
+                            "components": 0,
+                            "graphs": 0
+                        }
+                        
                         # Get parent class
                         bp_class = bp.get_class()
                         if bp_class:
@@ -262,6 +284,7 @@ class UEInfoCollector:
                             if parent:
                                 parent_name = parent.get_name()
                                 parent_class_counts[parent_name] += 1
+                                bp_detail["parent_class"] = parent_name
                                 
                                 # Categorize by type
                                 if 'Actor' in parent_name:
@@ -276,6 +299,54 @@ class UEInfoCollector:
                                     info["widget_blueprints"] += 1
                                 elif 'Anim' in parent_name:
                                     info["animation_blueprints"] += 1
+                        
+                        # Try to get blueprint-specific details
+                        try:
+                            # Get variables (member variables)
+                            if hasattr(bp, 'get_editor_property'):
+                                try:
+                                    vars_prop = bp.get_editor_property('new_variables')
+                                    if vars_prop:
+                                        bp_detail["variables"] = len(vars_prop)
+                                        total_vars += len(vars_prop)
+                                except:
+                                    pass
+                                
+                                # Try to get function graphs
+                                try:
+                                    func_graphs = bp.get_editor_property('function_graphs')
+                                    if func_graphs:
+                                        bp_detail["functions"] = len(func_graphs)
+                                        total_funcs += len(func_graphs)
+                                except:
+                                    pass
+                                
+                                # Try to get event graphs
+                                try:
+                                    uber_graphs = bp.get_editor_property('ubergraph_pages')
+                                    if uber_graphs:
+                                        bp_detail["graphs"] = len(uber_graphs)
+                                except:
+                                    pass
+                                
+                                # Try to get components (for Actor blueprints)
+                                try:
+                                    components = bp.get_editor_property('simple_construction_script')
+                                    if components:
+                                        # Get all nodes in construction script
+                                        nodes = components.get_editor_property('all_nodes')
+                                        if nodes:
+                                            bp_detail["components"] = len(nodes)
+                                            total_comps += len(nodes)
+                                except:
+                                    pass
+                            
+                            analyzed_count += 1
+                            bp_details.append(bp_detail)
+                            
+                        except Exception as e:
+                            # Could not get detailed info for this blueprint
+                            pass
                 
                 except (RuntimeError, AttributeError) as e:
                     # Skip blueprints that fail to load or have missing attributes
@@ -284,13 +355,224 @@ class UEInfoCollector:
             
             info["by_parent_class"] = dict(sorted(parent_class_counts.items(), key=lambda x: x[1], reverse=True))
             
-            print(f"✓ Collected info on {info['total_blueprints']} blueprints")
+            # Calculate averages
+            if analyzed_count > 0:
+                info["detailed_analysis"]["total_variables"] = total_vars
+                info["detailed_analysis"]["total_functions"] = total_funcs
+                info["detailed_analysis"]["total_components"] = total_comps
+                info["detailed_analysis"]["avg_variables_per_bp"] = round(total_vars / analyzed_count, 2)
+                info["detailed_analysis"]["avg_functions_per_bp"] = round(total_funcs / analyzed_count, 2)
+                info["detailed_analysis"]["analyzed_blueprints"] = analyzed_count
+            
+            # Sort and get largest blueprints (by total complexity)
+            bp_details_sorted = sorted(
+                bp_details,
+                key=lambda x: x.get("variables", 0) + x.get("functions", 0) * 2 + x.get("components", 0),
+                reverse=True
+            )
+            info["largest_blueprints"] = bp_details_sorted[:10]  # Top 10 most complex
+            
+            print(f"✓ Collected info on {info['total_blueprints']} blueprints ({analyzed_count} analyzed in detail)")
             
         except Exception as e:
             print(f"✗ Error collecting blueprint info: {e}")
             info["error"] = str(e)
         
         return info
+    
+    # ============================================================================
+    # Deep Blueprint Analysis
+    # ============================================================================
+    
+    def analyze_blueprint_detailed(self, blueprint_path: str) -> Dict[str, Any]:
+        """
+        Perform deep analysis on a specific blueprint.
+        
+        Args:
+            blueprint_path: Full path to the blueprint asset
+            
+        Returns:
+            Detailed analysis including variables, functions, components, and complexity metrics
+        """
+        if not self.available:
+            return {"error": "UE not available"}
+        
+        analysis = {
+            "path": blueprint_path,
+            "name": "",
+            "parent_class": "",
+            "variables": [],
+            "functions": [],
+            "components": [],
+            "graphs": [],
+            "complexity_score": 0,
+            "metadata": {}
+        }
+        
+        try:
+            bp = unreal.load_asset(blueprint_path)
+            if not bp:
+                analysis["error"] = "Failed to load blueprint"
+                return analysis
+            
+            analysis["name"] = bp.get_name()
+            
+            # Get parent class
+            try:
+                bp_class = bp.get_class()
+                if bp_class:
+                    parent = bp_class.get_super_class()
+                    if parent:
+                        analysis["parent_class"] = parent.get_name()
+            except Exception as e:
+                analysis["metadata"]["parent_class_error"] = str(e)
+            
+            # Analyze variables
+            try:
+                if hasattr(bp, 'get_editor_property'):
+                    vars_prop = bp.get_editor_property('new_variables')
+                    if vars_prop:
+                        for var in vars_prop:
+                            var_info = {
+                                "name": str(var.get_editor_property('var_name')) if hasattr(var, 'get_editor_property') else "unknown",
+                                "type": str(var.get_editor_property('var_type')) if hasattr(var, 'get_editor_property') else "unknown"
+                            }
+                            analysis["variables"].append(var_info)
+            except Exception as e:
+                analysis["metadata"]["variables_error"] = str(e)
+            
+            # Analyze functions
+            try:
+                if hasattr(bp, 'get_editor_property'):
+                    func_graphs = bp.get_editor_property('function_graphs')
+                    if func_graphs:
+                        for func in func_graphs:
+                            func_name = func.get_name() if hasattr(func, 'get_name') else "unknown"
+                            analysis["functions"].append(func_name)
+            except Exception as e:
+                analysis["metadata"]["functions_error"] = str(e)
+            
+            # Analyze components
+            try:
+                if hasattr(bp, 'get_editor_property'):
+                    scs = bp.get_editor_property('simple_construction_script')
+                    if scs:
+                        nodes = scs.get_editor_property('all_nodes')
+                        if nodes:
+                            for node in nodes:
+                                comp_class = node.get_editor_property('component_class')
+                                if comp_class:
+                                    analysis["components"].append(comp_class.get_name())
+            except Exception as e:
+                analysis["metadata"]["components_error"] = str(e)
+            
+            # Analyze graphs
+            try:
+                if hasattr(bp, 'get_editor_property'):
+                    # Event graphs
+                    uber_graphs = bp.get_editor_property('ubergraph_pages')
+                    if uber_graphs:
+                        for graph in uber_graphs:
+                            graph_info = {
+                                "name": graph.get_name() if hasattr(graph, 'get_name') else "unknown",
+                                "type": "event"
+                            }
+                            analysis["graphs"].append(graph_info)
+                    
+                    # Function graphs
+                    func_graphs = bp.get_editor_property('function_graphs')
+                    if func_graphs:
+                        for graph in func_graphs:
+                            graph_info = {
+                                "name": graph.get_name() if hasattr(graph, 'get_name') else "unknown",
+                                "type": "function"
+                            }
+                            analysis["graphs"].append(graph_info)
+            except Exception as e:
+                analysis["metadata"]["graphs_error"] = str(e)
+            
+            # Calculate complexity score
+            # Variables: 1 point each
+            # Functions: 3 points each (more complex)
+            # Components: 2 points each
+            # Graphs: 2 points each
+            analysis["complexity_score"] = (
+                len(analysis["variables"]) +
+                len(analysis["functions"]) * 3 +
+                len(analysis["components"]) * 2 +
+                len(analysis["graphs"]) * 2
+            )
+            
+            print(f"✓ Deep analysis completed for {analysis['name']}")
+            print(f"  Variables: {len(analysis['variables'])}, Functions: {len(analysis['functions'])}")
+            print(f"  Components: {len(analysis['components'])}, Graphs: {len(analysis['graphs'])}")
+            print(f"  Complexity Score: {analysis['complexity_score']}")
+            
+        except Exception as e:
+            print(f"✗ Error analyzing blueprint: {e}")
+            analysis["error"] = str(e)
+        
+        return analysis
+    
+    # ============================================================================
+    # Blueprint Screenshot (Documentation)
+    # ============================================================================
+    
+    def get_blueprint_screenshot_info(self) -> Dict[str, Any]:
+        """
+        Get information about blueprint screenshot capabilities.
+        
+        Note: Direct blueprint graph screenshots are NOT available via Python API.
+        This function returns information about alternative methods.
+        
+        Returns:
+            Dictionary with screenshot capability information and recommendations
+        """
+        return {
+            "direct_screenshot_available": False,
+            "python_api_limitation": "UE Python API does not expose blueprint graph screenshot functionality",
+            "alternatives": [
+                {
+                    "method": "Blueprint Screenshot Tool Plugin",
+                    "description": "Third-party plugin that adds screenshot buttons to Blueprint editor",
+                    "url": "https://github.com/Gradess2019/BlueprintScreenshotTool",
+                    "features": [
+                        "Full graph capture regardless of size",
+                        "Hotkeys (Ctrl+F7 for screenshot)",
+                        "Configurable export settings",
+                        "Automatic directory opening"
+                    ]
+                },
+                {
+                    "method": "Manual Editor Screenshot",
+                    "description": "Use UE Editor's built-in screenshot functionality",
+                    "command": "HighResShot 2x",
+                    "limitation": "Only captures visible portion of editor"
+                },
+                {
+                    "method": "Copy Blueprint as Text",
+                    "description": "Export blueprint logic as text for analysis",
+                    "tools": ["BlueprintUE online visualizer"],
+                    "limitation": "Not a visual screenshot, but good for logic analysis"
+                },
+                {
+                    "method": "Custom C++ Solution",
+                    "description": "Implement graph rendering in C++ plugin",
+                    "complexity": "High",
+                    "requires": ["C++ development", "UE graph rendering knowledge"]
+                }
+            ],
+            "what_we_can_analyze": [
+                "Blueprint variables (names, types, count)",
+                "Blueprint functions (names, count)",
+                "Blueprint components (types, count)",
+                "Blueprint graphs (names, types, count)",
+                "Parent classes and hierarchy",
+                "Complexity metrics (calculated from above)",
+                "Blueprint metadata"
+            ],
+            "recommendation": "Use the Blueprint Screenshot Tool plugin for visual captures, and use this Python script for detailed data analysis"
+        }
     
     # ============================================================================
     # Level and Actor Information
@@ -711,6 +993,9 @@ def collect_all_info() -> Dict[str, Any]:
     print("\nCollecting blueprint information...")
     all_info["blueprints"] = collector.collect_blueprint_info()
     
+    print("\nCollecting blueprint screenshot capabilities...")
+    all_info["blueprint_screenshots"] = collector.get_blueprint_screenshot_info()
+    
     print("\nCollecting level information...")
     all_info["levels"] = collector.collect_level_info()
     
@@ -788,6 +1073,24 @@ def print_report(info: Dict[str, Any], detailed: bool = False):
         print(f"  Actor Blueprints: {bp.get('actor_blueprints', 0)}")
         print(f"  Widget Blueprints: {bp.get('widget_blueprints', 0)}")
         print(f"  Animation Blueprints: {bp.get('animation_blueprints', 0)}")
+        
+        if "detailed_analysis" in bp:
+            details = bp["detailed_analysis"]
+            print(f"\n  Detailed Analysis:")
+            print(f"    Total Variables: {details.get('total_variables', 0)}")
+            print(f"    Total Functions: {details.get('total_functions', 0)}")
+            print(f"    Total Components: {details.get('total_components', 0)}")
+            print(f"    Avg Variables/BP: {details.get('avg_variables_per_bp', 0)}")
+            print(f"    Avg Functions/BP: {details.get('avg_functions_per_bp', 0)}")
+        
+        if "largest_blueprints" in bp and bp["largest_blueprints"]:
+            print(f"\n  Most Complex Blueprints:")
+            for i, large_bp in enumerate(bp["largest_blueprints"][:5], 1):
+                name = large_bp.get("name", "Unknown")
+                vars_count = large_bp.get("variables", 0)
+                funcs = large_bp.get("functions", 0)
+                comps = large_bp.get("components", 0)
+                print(f"    {i}. {name}: {vars_count} vars, {funcs} funcs, {comps} comps")
         print()
     
     # Levels
