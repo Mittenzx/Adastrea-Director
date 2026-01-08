@@ -27,11 +27,16 @@ if os.path.exists(plugin_python_dir):
 
 try:
     import ue_info_collector
-    import unreal
 except ImportError as e:
     print(f"Error: Failed to import required modules: {e}")
     print("Make sure you're running this inside Unreal Engine")
     sys.exit(1)
+
+# unreal module is only needed for checking environment, not directly used
+try:
+    import unreal  # noqa: F401
+except ImportError:
+    pass  # unreal may not be available, ue_info_collector will handle it
 
 
 def example_basic_usage():
@@ -370,15 +375,17 @@ def run_all_examples():
         try:
             if sys.stdin.isatty():
                 input("\nPress Enter to continue to next example...")
-        except:
-            pass  # Non-interactive mode, continue
+        except (EOFError, OSError):
+            # Non-interactive mode or input not available
+            pass
         
         example_selective_collection()
         
         try:
             if sys.stdin.isatty():
                 input("\nPress Enter to continue to next example...")
-        except:
+        except (EOFError, OSError):
+            # Non-interactive mode or input not available
             pass
         
         example_analysis()
@@ -386,7 +393,8 @@ def run_all_examples():
         try:
             if sys.stdin.isatty():
                 input("\nPress Enter to continue to next example...")
-        except:
+        except (EOFError, OSError):
+            # Non-interactive mode or input not available
             pass
         
         example_project_health_check()
@@ -394,7 +402,8 @@ def run_all_examples():
         try:
             if sys.stdin.isatty():
                 input("\nPress Enter to continue to final example...")
-        except:
+        except (EOFError, OSError):
+            # Non-interactive mode or input not available
             pass
         
         example_deep_blueprint_analysis()

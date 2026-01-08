@@ -29,10 +29,9 @@ USAGE:
     ue_info_collector.save_to_json(info, "ue_project_info.json")
 """
 
-import sys
 import os
 import json
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List
 from datetime import datetime
 from collections import defaultdict
 
@@ -182,7 +181,17 @@ class UEInfoCollector:
         return info
     
     def _analyze_naming_conventions(self, assets: List[Dict]) -> Dict[str, Any]:
-        """Analyze asset naming conventions."""
+        """
+        Analyze asset naming conventions.
+        
+        Uses standard Unreal Engine naming conventions:
+        - Prefixes: BP_ (Blueprint), M_ (Material), MI_ (Material Instance), 
+          T_ (Texture), SM_ (Static Mesh), SK_ (Skeletal Mesh), A_ (Animation),
+          S_ (Sound), P_ (Particle), E_ (Enum), W_ (Widget)
+        - Suffixes: _C (Compiled), _Inst (Instance), _Mat (Material), _Tex (Texture)
+        
+        These can be customized by modifying the lists below.
+        """
         conventions = {
             "prefixes": defaultdict(int),
             "suffixes": defaultdict(int),
@@ -190,6 +199,7 @@ class UEInfoCollector:
             "has_suffix": 0
         }
         
+        # Standard UE naming conventions - modify these for custom conventions
         common_prefixes = ['BP_', 'M_', 'MI_', 'T_', 'SM_', 'SK_', 'A_', 'S_', 'P_', 'E_', 'W_']
         common_suffixes = ['_C', '_Inst', '_Mat', '_Tex']
         
@@ -309,7 +319,8 @@ class UEInfoCollector:
                                     if vars_prop:
                                         bp_detail["variables"] = len(vars_prop)
                                         total_vars += len(vars_prop)
-                                except:
+                                except (AttributeError, RuntimeError):
+                                    # Property may not exist for all blueprint types
                                     pass
                                 
                                 # Try to get function graphs
@@ -318,7 +329,8 @@ class UEInfoCollector:
                                     if func_graphs:
                                         bp_detail["functions"] = len(func_graphs)
                                         total_funcs += len(func_graphs)
-                                except:
+                                except (AttributeError, RuntimeError):
+                                    # Property may not exist for all blueprint types
                                     pass
                                 
                                 # Try to get event graphs
@@ -326,7 +338,8 @@ class UEInfoCollector:
                                     uber_graphs = bp.get_editor_property('ubergraph_pages')
                                     if uber_graphs:
                                         bp_detail["graphs"] = len(uber_graphs)
-                                except:
+                                except (AttributeError, RuntimeError):
+                                    # Property may not exist for all blueprint types
                                     pass
                                 
                                 # Try to get components (for Actor blueprints)
@@ -338,7 +351,8 @@ class UEInfoCollector:
                                         if nodes:
                                             bp_detail["components"] = len(nodes)
                                             total_comps += len(nodes)
-                                except:
+                                except (AttributeError, RuntimeError):
+                                    # Only Actor blueprints have construction scripts
                                     pass
                             
                             analyzed_count += 1
@@ -732,11 +746,8 @@ class UEInfoCollector:
         }
         
         try:
-            # Get plugin manager
-            plugin_manager = unreal.PluginBlueprintLibrary
-            
-            # Get all plugins (this is a simplified version)
-            # In a real implementation, you'd parse .uplugin files
+            # Note: Full plugin enumeration requires file system access
+            # PluginBlueprintLibrary exists but has limited Python exposure
             info["note"] = "Plugin enumeration requires file system access"
             
             # Try to get some plugin info from project directory
@@ -1169,9 +1180,15 @@ def save_to_json(info: Dict[str, Any], filename: str = "ue_project_info.json"):
     
     Args:
         info: Information dictionary from collect_all_info()
-        filename: Output filename
+        filename: Output filename (must not contain path separators)
     """
     try:
+        # Validate filename to prevent path traversal
+        if os.path.sep in filename or (os.path.altsep and os.path.altsep in filename):
+            raise ValueError(f"Filename must not contain path separators: {filename}")
+        if filename.startswith('.'):
+            raise ValueError(f"Filename must not start with '.': {filename}")
+        
         # Get project saved directory
         if UNREAL_AVAILABLE:
             saved_dir = unreal.SystemLibrary.get_project_saved_directory()
@@ -1196,9 +1213,15 @@ def save_to_markdown(info: Dict[str, Any], filename: str = "ue_project_info.md")
     
     Args:
         info: Information dictionary from collect_all_info()
-        filename: Output filename
+        filename: Output filename (must not contain path separators)
     """
     try:
+        # Validate filename to prevent path traversal
+        if os.path.sep in filename or (os.path.altsep and os.path.altsep in filename):
+            raise ValueError(f"Filename must not contain path separators: {filename}")
+        if filename.startswith('.'):
+            raise ValueError(f"Filename must not start with '.': {filename}")
+        
         # Get project saved directory
         if UNREAL_AVAILABLE:
             saved_dir = unreal.SystemLibrary.get_project_saved_directory()
