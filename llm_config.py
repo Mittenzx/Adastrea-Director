@@ -36,6 +36,9 @@ def get_llm(model_name: Optional[str] = None, temperature: float = 0.7):
     Returns:
         LLM instance (ChatGoogleGenerativeAI or ChatOpenAI)
     
+    Raises:
+        ImportError: If required LangChain dependencies are not installed
+    
     Environment Variables:
         LLM_PROVIDER: Which provider to use (gemini or openai). Default: gemini
         GEMINI_KEY: API key for Google Gemini
@@ -52,7 +55,19 @@ def get_llm(model_name: Optional[str] = None, temperature: float = 0.7):
     
     if provider == "openai":
         # Legacy OpenAI support
-        from langchain_openai import ChatOpenAI
+        try:
+            from langchain_openai import ChatOpenAI
+        except ImportError as e:
+            raise ImportError(
+                f"Missing required dependencies for OpenAI LLM provider.\n"
+                f"Error: {e}\n\n"
+                f"To fix this, please install the required dependencies:\n"
+                f"  pip install -r requirements.txt\n\n"
+                f"Or install the specific package:\n"
+                f"  pip install langchain-openai>=0.3.0\n\n"
+                f"If you're running from Unreal Engine, ensure dependencies are installed "
+                f"in the Python environment used by the plugin."
+            ) from e
         
         model = model_name or os.environ.get("OPENAI_MODEL", "gpt-3.5-turbo")
         
@@ -73,7 +88,23 @@ def get_llm(model_name: Optional[str] = None, temperature: float = 0.7):
         return ChatOpenAI(**kwargs)
     else:
         # Default to Google Gemini (recommended provider)
-        from langchain_google_genai import ChatGoogleGenerativeAI
+        try:
+            from langchain_google_genai import ChatGoogleGenerativeAI
+        except ImportError as e:
+            raise ImportError(
+                f"Missing required dependencies for Gemini LLM provider.\n"
+                f"Error: {e}\n\n"
+                f"To fix this, please install the required dependencies:\n"
+                f"  pip install -r requirements.txt\n\n"
+                f"Or install the specific package:\n"
+                f"  pip install langchain-google-genai>=2.0.5\n\n"
+                f"If you're running from Unreal Engine, ensure dependencies are installed "
+                f"in the Python environment used by the plugin.\n\n"
+                f"Quick setup:\n"
+                f"  1. Navigate to the repository root directory\n"
+                f"  2. Run: pip install -r requirements.txt\n"
+                f"  3. Restart Unreal Engine Editor"
+            ) from e
         
         # Use gemini-1.5-flash for best value (73% cheaper than GPT-3.5, excellent quality)
         # Use gemini-1.5-pro for complex planning tasks
@@ -91,6 +122,55 @@ def get_llm(model_name: Optional[str] = None, temperature: float = 0.7):
             temperature=temperature,
             google_api_key=api_key
         )
+
+
+def check_dependencies_available() -> tuple[bool, Optional[str]]:
+    """
+    Check if required LLM dependencies are available.
+    
+    Returns:
+        Tuple of (available: bool, error_message: Optional[str])
+        If available is True, error_message is None.
+        If available is False, error_message contains helpful installation instructions.
+    """
+    provider = os.environ.get("LLM_PROVIDER", "gemini").lower()
+    
+    try:
+        if provider == "openai":
+            import langchain_openai
+            return (True, None)
+        else:
+            import langchain_google_genai
+            return (True, None)
+    except ImportError as e:
+        error_msg = (
+            f"Missing required dependencies for {provider.upper()} LLM provider.\n"
+            f"Error: {e}\n\n"
+            f"To fix this, please install the required dependencies:\n"
+            f"  pip install -r requirements.txt\n\n"
+        )
+        
+        if provider == "openai":
+            error_msg += (
+                f"Or install the specific package:\n"
+                f"  pip install langchain-openai>=0.3.0\n"
+            )
+        else:
+            error_msg += (
+                f"Or install the specific package:\n"
+                f"  pip install langchain-google-genai>=2.0.5\n"
+            )
+        
+        error_msg += (
+            f"\nIf you're running from Unreal Engine, ensure dependencies are installed "
+            f"in the Python environment used by the plugin.\n\n"
+            f"Quick setup:\n"
+            f"  1. Navigate to the repository root directory\n"
+            f"  2. Run: pip install -r requirements.txt\n"
+            f"  3. Restart Unreal Engine Editor"
+        )
+        
+        return (False, error_msg)
 
 
 def get_provider_name() -> str:

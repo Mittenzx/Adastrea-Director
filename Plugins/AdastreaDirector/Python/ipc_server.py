@@ -740,6 +740,7 @@ class IPCServer:
         Test LLM connection and API key validity.
         
         Returns detailed status about:
+        - LLM dependencies availability
         - API key configuration
         - API key validity
         - Connection to LLM provider
@@ -751,6 +752,37 @@ class IPCServer:
             'component': 'llm',
             'tests': []
         }
+        
+        # Test 0: Check if LLM dependencies are available
+        try:
+            from llm_config import check_dependencies_available
+            deps_available, error_msg = check_dependencies_available()
+            
+            if deps_available:
+                result['tests'].append({
+                    'name': 'LLM Dependencies',
+                    'status': 'pass',
+                    'message': 'All required LLM dependencies are installed'
+                })
+            else:
+                result['tests'].append({
+                    'name': 'LLM Dependencies',
+                    'status': 'fail',
+                    'message': 'Required LLM dependencies are missing',
+                    'solution': 'Run: pip install -r requirements.txt'
+                })
+                result['overall_status'] = 'fail'
+                result['error_details'] = error_msg
+                return result
+        except Exception as e:
+            result['tests'].append({
+                'name': 'LLM Dependencies',
+                'status': 'error',
+                'message': f'Error checking dependencies: {str(e)}',
+                'solution': 'Run: pip install -r requirements.txt'
+            })
+            result['overall_status'] = 'error'
+            return result
         
         # Test 1: Check if API key is configured
         api_key_configured = False
@@ -1103,6 +1135,34 @@ Answer:"""
                 'result': result_text,
                 'sources': [],
                 'note': 'Response generated without RAG context. For context-aware answers, please ingest documents first.'
+            }
+        
+        except ImportError as e:
+            # Handle missing dependencies with clear instructions
+            logger.error(f"LLM import error: {e}")
+            error_text = dedent(f"""
+                I received your query: "{data}"
+                
+                However, I cannot process it because required dependencies are not installed.
+                
+                ❌ Missing Dependencies:
+                {str(e)}
+                
+                📝 To fix this issue:
+                1. Navigate to the repository root directory
+                2. Run: pip install -r requirements.txt
+                3. Restart Unreal Engine Editor
+                
+                💡 TIP: If you're using a virtual environment, make sure it's activated before installing dependencies.
+                
+                For more help, see TROUBLESHOOTING.md in the repository.
+            """).strip()
+            
+            return {
+                'status': 'error',
+                'result': error_text,
+                'sources': [],
+                'error_type': 'missing_dependencies'
             }
             
         except Exception as e:
