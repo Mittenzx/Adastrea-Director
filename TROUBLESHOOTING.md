@@ -186,6 +186,63 @@ curl -H "Content-Type: application/json" \
    - Check Settings → LLM Provider matches your key type
    - Gemini key won't work with OpenAI provider setting
 
+### Missing LLM Dependencies
+
+**Symptoms:**
+- "LLM fails each time" errors in UE logs
+- "ModuleNotFoundError: No module named 'langchain_google_genai'" errors
+- "Missing required dependencies for Gemini/OpenAI LLM provider" messages
+- LLM queries fail immediately without processing
+
+**Diagnosis:**
+```bash
+# Check if dependencies are installed
+python -c "from llm_config import check_dependencies_available; available, msg = check_dependencies_available(); print('Available:', available); print(msg if not available else 'All dependencies OK')"
+
+# Check specific packages
+pip list | grep -E "(langchain|google-genai|openai)"
+```
+
+**Solutions:**
+
+1. **Install All Dependencies (Recommended)**
+   ```bash
+   # Navigate to repository root
+   cd /path/to/Adastrea-Director
+   
+   # Install all requirements
+   pip install -r requirements.txt
+   
+   # Restart Unreal Engine Editor
+   ```
+
+2. **Install Specific LLM Provider Package**
+   ```bash
+   # For Gemini (default)
+   pip install langchain-google-genai>=2.0.5
+   
+   # For OpenAI (if using LLM_PROVIDER=openai)
+   pip install langchain-openai>=0.3.0
+   ```
+
+3. **Virtual Environment Issues**
+   ```bash
+   # If using a virtual environment, ensure it's activated
+   source venv/bin/activate  # Linux/Mac
+   venv\Scripts\activate     # Windows
+   
+   # Then install dependencies
+   pip install -r requirements.txt
+   ```
+
+4. **Python Environment Mismatch**
+   - Ensure UE is using the same Python environment where dependencies are installed
+   - Check Python path in plugin settings
+   - If using system Python, install dependencies system-wide
+   - If using a virtual environment, configure UE to use that environment's Python
+
+**Note:** After installing dependencies, always restart Unreal Engine Editor for changes to take effect.
+
 ## 🟡 Warning Issues
 
 ### Knowledge Base Empty or Not Loading
