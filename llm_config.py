@@ -15,12 +15,50 @@ Environment Variables:
 """
 
 import os
-from typing import Optional
+from typing import Optional, Tuple
 try:
     from config_manager import get_api_key as get_stored_api_key
     CONFIG_MANAGER_AVAILABLE = True
 except ImportError:
     CONFIG_MANAGER_AVAILABLE = False
+
+
+def _build_dependency_error_message(provider: str, error: ImportError) -> str:
+    """
+    Build a detailed error message for missing LLM dependencies.
+    
+    Args:
+        provider: The LLM provider name ('openai' or 'gemini')
+        error: The ImportError that was raised
+    
+    Returns:
+        Formatted error message with installation instructions
+    """
+    provider_display = provider.upper()
+    
+    error_msg = (
+        f"Missing required dependencies for {provider_display} LLM provider.\n"
+        f"Error: {error}\n\n"
+        f"To fix this, please install the required dependencies:\n"
+        f"  pip install -r requirements.txt\n\n"
+        f"Or install the specific package:\n"
+    )
+    
+    if provider == "openai":
+        error_msg += f"  pip install langchain-openai>=0.3.0\n"
+    else:  # gemini
+        error_msg += f"  pip install langchain-google-genai>=2.0.5\n"
+    
+    error_msg += (
+        f"\nIf you're running from Unreal Engine, ensure dependencies are installed "
+        f"in the Python environment used by the plugin.\n\n"
+        f"Quick setup:\n"
+        f"  1. Navigate to the repository root directory\n"
+        f"  2. Run: pip install -r requirements.txt\n"
+        f"  3. Restart Unreal Engine Editor"
+    )
+    
+    return error_msg
 
 
 def get_llm(model_name: Optional[str] = None, temperature: float = 0.7):
@@ -58,16 +96,7 @@ def get_llm(model_name: Optional[str] = None, temperature: float = 0.7):
         try:
             from langchain_openai import ChatOpenAI
         except ImportError as e:
-            raise ImportError(
-                f"Missing required dependencies for OpenAI LLM provider.\n"
-                f"Error: {e}\n\n"
-                f"To fix this, please install the required dependencies:\n"
-                f"  pip install -r requirements.txt\n\n"
-                f"Or install the specific package:\n"
-                f"  pip install langchain-openai>=0.3.0\n\n"
-                f"If you're running from Unreal Engine, ensure dependencies are installed "
-                f"in the Python environment used by the plugin."
-            ) from e
+            raise ImportError(_build_dependency_error_message("openai", e)) from e
         
         model = model_name or os.environ.get("OPENAI_MODEL", "gpt-3.5-turbo")
         
@@ -91,20 +120,7 @@ def get_llm(model_name: Optional[str] = None, temperature: float = 0.7):
         try:
             from langchain_google_genai import ChatGoogleGenerativeAI
         except ImportError as e:
-            raise ImportError(
-                f"Missing required dependencies for Gemini LLM provider.\n"
-                f"Error: {e}\n\n"
-                f"To fix this, please install the required dependencies:\n"
-                f"  pip install -r requirements.txt\n\n"
-                f"Or install the specific package:\n"
-                f"  pip install langchain-google-genai>=2.0.5\n\n"
-                f"If you're running from Unreal Engine, ensure dependencies are installed "
-                f"in the Python environment used by the plugin.\n\n"
-                f"Quick setup:\n"
-                f"  1. Navigate to the repository root directory\n"
-                f"  2. Run: pip install -r requirements.txt\n"
-                f"  3. Restart Unreal Engine Editor"
-            ) from e
+            raise ImportError(_build_dependency_error_message("gemini", e)) from e
         
         # Use gemini-1.5-flash for best value (73% cheaper than GPT-3.5, excellent quality)
         # Use gemini-1.5-pro for complex planning tasks
@@ -124,7 +140,7 @@ def get_llm(model_name: Optional[str] = None, temperature: float = 0.7):
         )
 
 
-def check_dependencies_available() -> tuple[bool, Optional[str]]:
+def check_dependencies_available() -> Tuple[bool, Optional[str]]:
     """
     Check if required LLM dependencies are available.
     
@@ -143,34 +159,7 @@ def check_dependencies_available() -> tuple[bool, Optional[str]]:
             import langchain_google_genai
             return (True, None)
     except ImportError as e:
-        error_msg = (
-            f"Missing required dependencies for {provider.upper()} LLM provider.\n"
-            f"Error: {e}\n\n"
-            f"To fix this, please install the required dependencies:\n"
-            f"  pip install -r requirements.txt\n\n"
-        )
-        
-        if provider == "openai":
-            error_msg += (
-                f"Or install the specific package:\n"
-                f"  pip install langchain-openai>=0.3.0\n"
-            )
-        else:
-            error_msg += (
-                f"Or install the specific package:\n"
-                f"  pip install langchain-google-genai>=2.0.5\n"
-            )
-        
-        error_msg += (
-            f"\nIf you're running from Unreal Engine, ensure dependencies are installed "
-            f"in the Python environment used by the plugin.\n\n"
-            f"Quick setup:\n"
-            f"  1. Navigate to the repository root directory\n"
-            f"  2. Run: pip install -r requirements.txt\n"
-            f"  3. Restart Unreal Engine Editor"
-        )
-        
-        return (False, error_msg)
+        return (False, _build_dependency_error_message(provider, e))
 
 
 def get_provider_name() -> str:
