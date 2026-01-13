@@ -72,6 +72,19 @@ struct FAdastreaScriptResult
 
 /**
  * Service for executing Python code in Unreal Engine using IPythonScriptPlugin
+ * 
+ * ⚠️ SECURITY WARNING:
+ * This service executes arbitrary Python code directly in the Unreal Editor process.
+ * Never execute untrusted code, including LLM-generated code, without human review.
+ * 
+ * Recommended safety measures:
+ * 1. Require explicit user confirmation before executing any LLM-generated Python
+ * 2. Implement a whitelist of allowed operations/modules
+ * 3. Display the code to the user for review before execution
+ * 4. Consider sandboxing or running in a restricted environment
+ * 5. Validate and sanitize all inputs
+ * 
+ * See "Security Considerations" section below for detailed mitigation strategies.
  */
 class ADASTREADIRECTOR_API FAdastreaScriptService
 {
@@ -109,7 +122,8 @@ public:
 private:
     static FAdastreaScriptResult ConvertResult(
         const FPythonCommandEx& CommandEx,
-        float ExecutionTimeMs
+        float ExecutionTimeMs,
+        bool bExecutionSuccess
     );
 };
 ```
@@ -150,7 +164,7 @@ FAdastreaScriptResult FAdastreaScriptService::ExecuteCode(
     bool bSuccess = PythonPlugin->ExecPythonCommandEx(Command);
     double ExecutionTimeMs = (FPlatformTime::Seconds() - StartTime) * 1000.0;
 
-    return ConvertResult(Command, ExecutionTimeMs);
+    return ConvertResult(Command, ExecutionTimeMs, bSuccess);
 }
 
 FAdastreaScriptResult FAdastreaScriptService::EvaluateExpression(const FString& Expression)
@@ -173,7 +187,7 @@ FAdastreaScriptResult FAdastreaScriptService::EvaluateExpression(const FString& 
     bool bSuccess = PythonPlugin->ExecPythonCommandEx(Command);
     double ExecutionTimeMs = (FPlatformTime::Seconds() - StartTime) * 1000.0;
 
-    return ConvertResult(Command, ExecutionTimeMs);
+    return ConvertResult(Command, ExecutionTimeMs, bSuccess);
 }
 
 bool FAdastreaScriptService::IsPythonAvailable()
@@ -207,30 +221,161 @@ FString FAdastreaScriptService::GetPythonInfo()
 
 FAdastreaScriptResult FAdastreaScriptService::ConvertResult(
     const FPythonCommandEx& CommandEx,
-    float ExecutionTimeMs)
+    float ExecutionTimeMs,
+    bool bExecutionSuccess)
 {
     FAdastreaScriptResult Result;
-    // Success if there are no errors and we have a result
-    Result.bSuccess = (CommandEx.LogOutput.Num() == 0) && !CommandEx.CommandResult.IsEmpty();
     Result.Output = CommandEx.CommandResult;
     Result.ExecutionTimeMs = ExecutionTimeMs;
 
-    // Extract error messages
+    // Extract error messages and detect error entries
+    bool bHasError = false;
     for (const FPythonLogOutputEntry& Entry : CommandEx.LogOutput)
     {
-        if (Entry.Type == EPythonLogOutputType::Error || Entry.Type == EPythonLogOutputType::Warning)
+        if (Entry.Type == EPythonLogOutputType::Error)
         {
-            Result.bSuccess = false;
+            bHasError = true;
             Result.ErrorMessage += Entry.Output + TEXT("\n");
         }
     }
 
     Result.ErrorMessage.TrimEndInline();
+
+    // Success if the Python command executed successfully and there are no error log entries,
+    // regardless of whether any output was produced.
+    Result.bSuccess = bExecutionSuccess && !bHasError;
+
     return Result;
 }
 ```
 
-### Step 4: Test Python Execution
+### Step 5: Security Considerations for Python Execution
+
+**⚠️ CRITICAL SECURITY WARNING**
+
+Executing arbitrary Python code (especially LLM-generated code) poses significant security risks:
+
+**Risks:**
+- Arbitrary code execution in the Unreal Editor process
+- Access to local files, environment variables, and network
+- Ability to modify or delete project assets
+- Potential for lateral movement on developer machine
+
+**Mitigation Strategies:**
+
+1. **Never Auto-Execute LLM-Generated Code**
+   ```cpp
+   // ❌ DANGEROUS - Don't do this
+   FString LLMCode = GetCodeFromLLM();
+   FAdastreaScriptService::ExecuteCode(LLMCode);
+   
+   // ✅ SAFE - Require human confirmation
+   FString LLMCode = GetCodeFromLLM();
+   if (ShowCodeReviewDialog(LLMCode) == EUserChoice::Approve)
+   {
+       FAdastreaScriptService::ExecuteCode(LLMCode);
+   }
+   ```
+
+2. **Implement Whitelist System**
+   ```cpp
+   class FPythonWhitelist
+   {
+   public:
+       static bool IsOperationAllowed(const FString& Code)
+       {
+           // Only allow specific safe operations
+           static const TArray<FString> AllowedModules = {
+               TEXT("unreal"),
+               TEXT("math"),
+               TEXT("json")
+           };
+           
+           // Block dangerous operations
+           static const TArray<FString> BlockedPatterns = {
+               TEXT("os.system"),
+               TEXT("subprocess"),
+               TEXT("open("),
+               TEXT("__import__"),
+               TEXT("eval("),
+               TEXT("exec(")
+           };
+           
+           for (const FString& Blocked : BlockedPatterns)
+           {
+               if (Code.Contains(Blocked))
+               {
+                   return false;
+               }
+           }
+           
+           return true;
+       }
+   };
+   ```
+
+3. **Constrained API Surface**
+   ```cpp
+   // Instead of free-form Python, provide parameterized operations
+   class FSafeAssetOperations
+   {
+   public:
+       static TArray<FString> GetAssetNames(const FString& ClassFilter);
+       static bool RenameAsset(const FString& OldPath, const FString& NewPath);
+       // ... other safe, validated operations
+   };
+   ```
+
+4. **Display Code Before Execution**
+   - Show the Python code in a UI dialog
+   - Highlight potentially dangerous operations
+   - Require explicit user approval
+   - Log all executed code for audit
+
+5. **Sandboxing (Advanced)**
+   - Consider running Python in a restricted environment
+   - Limit file system access
+   - Restrict network operations
+   - Use Python's `RestrictedPython` module
+
+**Recommended Implementation:**
+```cpp
+FAdastreaScriptResult SafeExecuteCode(const FString& Code, bool bRequireApproval = true)
+{
+    // 1. Validate code
+    if (!FPythonWhitelist::IsOperationAllowed(Code))
+    {
+        FAdastreaScriptResult Result;
+        Result.bSuccess = false;
+        Result.ErrorMessage = TEXT("Code contains blocked operations");
+        return Result;
+    }
+    
+    // 2. Get user approval if required
+    if (bRequireApproval)
+    {
+        if (!ShowPythonExecutionDialog(Code))
+        {
+            FAdastreaScriptResult Result;
+            Result.bSuccess = false;
+            Result.ErrorMessage = TEXT("User rejected code execution");
+            return Result;
+        }
+    }
+    
+    // 3. Log execution for audit
+    UE_LOG(LogAdastreaDirector, Warning, TEXT("Executing Python code: %s"), *Code);
+    
+    // 4. Execute
+    return FAdastreaScriptService::ExecuteCode(Code);
+}
+```
+
+**Best Practice:** Design your system to use parameterized operations instead of free-form code execution wherever possible.
+
+---
+
+## 2. Direct C++ LLM Client
 
 **File:** `Plugins/AdastreaDirector/Source/AdastreaDirector/Private/AdastreaScriptService.cpp` (add test command)
 
@@ -363,8 +508,11 @@ enum class ELLMProvider : uint8
 
 /**
  * Direct C++ client for LLM APIs (Gemini, OpenAI)
+ * 
+ * Note: This class should inherit from TSharedFromThis<FAdastreaLLMClient>
+ * to safely use weak pointers in async callbacks.
  */
-class ADASTREADIRECTOR_API FAdastreaLLMClient
+class ADASTREADIRECTOR_API FAdastreaLLMClient : public TSharedFromThis<FAdastreaLLMClient>
 {
 public:
     FAdastreaLLMClient();
@@ -583,22 +731,36 @@ void FAdastreaLLMClient::SendGeminiRequest(
     
     Request->SetContentAsString(JsonString);
 
-    // Setup callbacks
+    // Setup callbacks with weak pointer to prevent dangling pointer if object is destroyed
+    TWeakPtr<FAdastreaLLMClient> WeakThis = AsShared();
+    
     if (OnStreamChunk.IsBound())
     {
         // Streaming mode
         Request->OnRequestProgress().BindLambda(
-            [this, OnStreamChunk](FHttpRequestPtr Req, int32 BytesSent, int32 BytesReceived)
+            [WeakThis, OnStreamChunk](FHttpRequestPtr Req, int32 BytesSent, int32 BytesReceived)
             {
-                OnStreamDataReceived(Req, BytesSent, BytesReceived, OnStreamChunk);
+                TSharedPtr<FAdastreaLLMClient> Pinned = WeakThis.Pin();
+                if (!Pinned.IsValid())
+                {
+                    return;
+                }
+                
+                Pinned->OnStreamDataReceived(Req, BytesSent, BytesReceived, OnStreamChunk);
             }
         );
     }
 
     Request->OnProcessRequestComplete().BindLambda(
-        [this, OnComplete](FHttpRequestPtr Req, FHttpResponsePtr Response, bool bWasSuccessful)
+        [WeakThis, OnComplete](FHttpRequestPtr Req, FHttpResponsePtr Response, bool bWasSuccessful)
         {
-            OnResponseReceived(Req, Response, bWasSuccessful, OnComplete);
+            TSharedPtr<FAdastreaLLMClient> Pinned = WeakThis.Pin();
+            if (!Pinned.IsValid())
+            {
+                return;
+            }
+            
+            Pinned->OnResponseReceived(Req, Response, bWasSuccessful, OnComplete);
         }
     );
 
@@ -658,7 +820,20 @@ void FAdastreaLLMClient::OnResponseReceived(
     if (JsonResponse->TryGetArrayField(TEXT("candidates"), Candidates) && Candidates->Num() > 0)
     {
         TSharedPtr<FJsonObject> Candidate = (*Candidates)[0]->AsObject();
-        TSharedPtr<FJsonObject> ContentObj = Candidate->GetObjectField(TEXT("content"));
+        if (!Candidate.IsValid())
+        {
+            UE_LOG(LogAdastreaDirector, Warning, TEXT("Invalid candidate object in response"));
+            OnComplete.ExecuteIfBound(false, TEXT("Invalid candidate format"), TArray<FToolCall>());
+            return;
+        }
+        
+        TSharedPtr<FJsonObject> ContentObj;
+        if (!Candidate->TryGetObjectField(TEXT("content"), ContentObj) || !ContentObj.IsValid())
+        {
+            UE_LOG(LogAdastreaDirector, Warning, TEXT("No content field in candidate"));
+            OnComplete.ExecuteIfBound(false, TEXT("No content in response"), TArray<FToolCall>());
+            return;
+        }
         
         const TArray<TSharedPtr<FJsonValue>>* Parts;
         if (ContentObj->TryGetArrayField(TEXT("parts"), Parts))
@@ -666,6 +841,10 @@ void FAdastreaLLMClient::OnResponseReceived(
             for (const TSharedPtr<FJsonValue>& PartValue : *Parts)
             {
                 TSharedPtr<FJsonObject> Part = PartValue->AsObject();
+                if (!Part.IsValid())
+                {
+                    continue;
+                }
                 
                 // Text part
                 FString Text;
@@ -681,7 +860,18 @@ void FAdastreaLLMClient::OnResponseReceived(
                     FToolCall ToolCall;
                     ToolCall.Id = FGuid::NewGuid().ToString();
                     FunctionCall->TryGetStringField(TEXT("name"), ToolCall.ToolName);
-                    ToolCall.Arguments = FunctionCall->GetObjectField(TEXT("args"));
+                    
+                    // Safely get args object
+                    TSharedPtr<FJsonObject> ArgsObject;
+                    if (FunctionCall->TryGetObjectField(TEXT("args"), ArgsObject))
+                    {
+                        ToolCall.Arguments = ArgsObject;
+                    }
+                    else
+                    {
+                        ToolCall.Arguments = nullptr;
+                    }
+                    
                     ToolCalls.Add(ToolCall);
                 }
             }
@@ -700,8 +890,22 @@ void FAdastreaLLMClient::OnStreamDataReceived(
     int32 BytesReceived,
     FOnStreamChunk OnStreamChunk)
 {
+    // Ensure the request and response are valid before accessing content
+    if (!Request.IsValid())
+    {
+        UE_LOG(LogAdastreaDirector, Warning, TEXT("OnStreamDataReceived called with invalid Request"));
+        return;
+    }
+
+    FHttpResponsePtr Response = Request->GetResponse();
+    if (!Response.IsValid())
+    {
+        UE_LOG(LogAdastreaDirector, Warning, TEXT("OnStreamDataReceived: Request has no valid response yet"));
+        return;
+    }
+
     // Get current response content
-    FString ResponseSoFar = Request->GetResponse()->GetContentAsString();
+    FString ResponseSoFar = Response->GetContentAsString();
     
     // Process only new data since last call (incremental parsing)
     if (ResponseSoFar.Len() > StreamBuffer.Len())
@@ -951,7 +1155,8 @@ TArray<FAssetInfo> FAdastreaAssetService::SearchAssets(
     
     if (!ClassName.IsEmpty())
     {
-        Filter.ClassPaths.Add(FTopLevelAssetPath(FName(*ClassName)));
+        // Use full class path string for FTopLevelAssetPath
+        Filter.ClassPaths.Add(FTopLevelAssetPath(*ClassName));
     }
 
     // Search all game content

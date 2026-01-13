@@ -174,14 +174,20 @@ This document provides an in-depth analysis of the VibeUE plugin (https://github
        
        // 2. Build JSON payload
        TSharedPtr<FJsonObject> JsonPayload = MakeShared<FJsonObject>();
-       JsonPayload->SetStringField("model", ModelId);
+       JsonPayload->SetStringField("model", ModelName);
        // ... add messages, tools, etc.
        
        // 3. Send request with callback
+       // Note: BindRaw is safe when object lifetime is guaranteed (e.g., owned by manager)
+       // For standalone objects, use BindLambda with weak pointer (see implementation guide)
        Request->OnProcessRequestComplete().BindRaw(this, &FChatSession::OnResponseReceived);
        Request->ProcessRequest();
    }
    ```
+
+   **Important - Callback Lifetime Safety:**
+   - **BindRaw**: Used in VibeUE when object lifetime is guaranteed (FChatSession owned by window)
+   - **BindLambda with TWeakPtr**: Required for standalone objects that can be destroyed before callback (see implementation guide for pattern)
 
 4. **Streaming Support**
    - Uses Server-Sent Events (SSE) for streaming responses
