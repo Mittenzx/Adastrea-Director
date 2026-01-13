@@ -40,6 +40,7 @@ public class AdastreaDirector : ModuleRules
 				"Json",              // For JSON parsing
 				"JsonUtilities",     // For JSON utilities
 				"PythonScriptPlugin", // For built-in Python execution
+				"HTTPServer",        // For MCP server
 				// ... add other public dependencies that you statically link with here ...
 			}
 		);
