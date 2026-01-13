@@ -36,6 +36,10 @@ public class AdastreaDirector : ModuleRules
 				"ImageWrapper",      // For PNG encoding
 				"RenderCore",        // For rendering thread operations
 				"RHI",               // For viewport pixel reading
+				"HTTP",              // For LLM API calls
+				"Json",              // For JSON parsing
+				"JsonUtilities",     // For JSON utilities
+				"PythonScriptPlugin", // For built-in Python execution
 				// ... add other public dependencies that you statically link with here ...
 			}
 		);
@@ -45,8 +49,6 @@ public class AdastreaDirector : ModuleRules
 			new string[]
 			{
 				"Projects",
-				"Json",
-				"JsonUtilities",
 				"AssetTools",        // For asset import and creation
 				"AssetRegistry",     // For asset queries
 				"EditorScriptingUtilities", // For EditorAssetLibrary
