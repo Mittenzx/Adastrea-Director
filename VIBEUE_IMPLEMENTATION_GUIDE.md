@@ -210,7 +210,8 @@ FAdastreaScriptResult FAdastreaScriptService::ConvertResult(
     float ExecutionTimeMs)
 {
     FAdastreaScriptResult Result;
-    Result.bSuccess = CommandEx.LogOutput.Num() > 0 ? false : CommandEx.CommandResult.IsEmpty() == false;
+    // Success if there are no errors and we have a result
+    Result.bSuccess = (CommandEx.LogOutput.Num() == 0) && !CommandEx.CommandResult.IsEmpty();
     Result.Output = CommandEx.CommandResult;
     Result.ExecutionTimeMs = ExecutionTimeMs;
 
@@ -702,13 +703,16 @@ void FAdastreaLLMClient::OnStreamDataReceived(
     // Get current response content
     FString ResponseSoFar = Request->GetResponse()->GetContentAsString();
     
-    // Process new data since last call
+    // Process only new data since last call (incremental parsing)
     if (ResponseSoFar.Len() > StreamBuffer.Len())
     {
+        // Extract only the new portion to avoid reprocessing
         FString NewData = ResponseSoFar.Mid(StreamBuffer.Len());
+        
+        // Update buffer to current position
         StreamBuffer = ResponseSoFar;
         
-        // Parse SSE chunks
+        // Parse only the new SSE chunks
         ParseSSEChunk(NewData, OnStreamChunk);
     }
 }
@@ -840,6 +844,9 @@ Replace document ingestion with runtime queries using Asset Registry.
 
 #include "CoreMinimal.h"
 #include "AssetRegistry/AssetRegistryModule.h"
+#include "Engine/Blueprint.h"
+#include "Materials/Material.h"
+#include "Blueprint/WidgetBlueprint.h"
 
 struct FAssetInfo
 {
@@ -1044,7 +1051,9 @@ TOptional<FAssetInfo> FAdastreaAssetService::GetAssetByPath(const FString& Asset
 {
     IAssetRegistry& AssetRegistry = GetAssetRegistry();
     
-    FAssetData AssetData = AssetRegistry.GetAssetByObjectPath(FSoftObjectPath(AssetPath));
+    // Use newer UE5 API with FTopLevelAssetPath for compatibility
+    FSoftObjectPath ObjectPath(AssetPath);
+    FAssetData AssetData = AssetRegistry.GetAssetByObjectPath(ObjectPath);
     
     if (AssetData.IsValid())
     {

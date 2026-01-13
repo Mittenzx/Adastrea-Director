@@ -955,8 +955,8 @@ The key insight: **Don't build a separate Python backend. Build C++ tools that u
 - **VibeUE:** https://www.vibeue.com/
 - **VibeUE Repository:** https://github.com/kevinpbuckley/VibeUE
 - **MCP Protocol:** https://modelcontextprotocol.io/
-- **Unreal HTTP Module:** https://docs.unrealengine.com/en-US/API/Runtime/HTTP/
-- **IPythonScriptPlugin:** https://docs.unrealengine.com/en-US/ProductionPipelines/ScriptingAndAutomation/Python/
+- **Unreal HTTP Module:** https://docs.unrealengine.com/5.3/API/Runtime/HTTP/
+- **IPythonScriptPlugin:** https://docs.unrealengine.com/5.3/ProductionPipelines/ScriptingAndAutomation/Python/
 
 ### Key Contacts
 
@@ -974,5 +974,5 @@ The key insight: **Don't build a separate Python backend. Build C++ tools that u
 ---
 
 *Document Version: 1.0*  
-*Date: 2026-01-13*  
+*Date: 2025-01-13*  
 *Author: GitHub Copilot Research Analysis*
