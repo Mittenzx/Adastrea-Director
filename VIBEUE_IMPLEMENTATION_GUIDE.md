@@ -17,10 +17,10 @@ This comprehensive guide has been enhanced with:
 - ✅ **Extended Troubleshooting** - Solutions for common HTTP, asset, and Python issues
 
 **📊 Guide Statistics:**
-- **2,790+ lines** of comprehensive implementation guidance
-- **12 major sections** covering all aspects of migration
+- **2,929 lines** of comprehensive implementation guidance
+- **13 major sections** covering all aspects of migration
 - **50+ code examples** ready to use in your project
-- **20+ troubleshooting solutions** for common issues
+- **6 troubleshooting solutions** for common issues
 
 **⏱️ Estimated Implementation Time:**
 - **Phase 1 (Python):** 1 week
@@ -2033,33 +2033,68 @@ void FAdastreaDirectorModule::RegisterPythonTools()
     
     ExecutePythonTool.ParameterSchema = Schema;
     
-    // Executor with security check
+    // ⚠️ CRITICAL SECURITY WARNING:
+    // This tool is DISABLED by default because it executes arbitrary Python code.
+    // An attacker controlling tool inputs (e.g., via MCP or compromised client) can run
+    // arbitrary Python in the Unreal Editor process, leading to full project compromise.
+    // 
+    // DO NOT ENABLE unless you implement:
+    // 1. Strict allowlist of permitted operations/modules
+    // 2. Interactive user confirmation in the editor
+    // 3. Code review and approval workflow
+    // 4. Audit logging of all executed code
+    // 5. Sandboxing or restricted execution environment
+    //
+    // See Section 1, Step 5 "Security Considerations" for detailed mitigation strategies.
+    
+    // Executor is DISABLED for security - do not execute arbitrary Python from untrusted inputs
     ExecutePythonTool.Executor.BindLambda([](const TSharedPtr<FJsonObject>& Args) -> FToolExecutionResult
     {
         FToolExecutionResult Result;
-        
-        FString Code;
-        if (!Args->TryGetStringField(TEXT("code"), Code))
-        {
-            Result.bSuccess = false;
-            Result.ErrorMessage = TEXT("Missing 'code' parameter");
-            return Result;
-        }
-        
-        // TODO: Add security validation here
-        // For now, just execute
-        FAdastreaScriptResult ScriptResult = FAdastreaScriptService::ExecuteCode(Code);
-        
-        Result.bSuccess = ScriptResult.bSuccess;
-        Result.Output = ScriptResult.Output;
-        Result.ErrorMessage = ScriptResult.ErrorMessage;
-        
-        TSharedPtr<FJsonObject> Data = MakeShared<FJsonObject>();
-        Data->SetNumberField(TEXT("executionTimeMs"), ScriptResult.ExecutionTimeMs);
-        Result.Data = Data;
+        Result.bSuccess = false;
+        Result.ErrorMessage = TEXT(
+            "SECURITY: The 'execute_python' tool is DISABLED by default. "
+            "This tool executes arbitrary Python code which poses severe security risks. "
+            "Do NOT enable without implementing proper security controls:\n"
+            "1. Allowlist permitted operations/modules\n"
+            "2. Require explicit user approval in editor UI\n"
+            "3. Implement code review workflow\n"
+            "4. Add comprehensive audit logging\n"
+            "5. Use sandboxed execution environment\n\n"
+            "See VIBEUE_IMPLEMENTATION_GUIDE.md Section 1, Step 5 for security guidance.\n\n"
+            "If you understand the risks and have implemented proper controls, "
+            "replace this lambda with a hardened execution wrapper."
+        );
         
         return Result;
     });
+    
+    // ORIGINAL UNSAFE IMPLEMENTATION (DO NOT USE):
+    // ExecutePythonTool.Executor.BindLambda([](const TSharedPtr<FJsonObject>& Args) -> FToolExecutionResult
+    // {
+    //     FToolExecutionResult Result;
+    //     
+    //     FString Code;
+    //     if (!Args->TryGetStringField(TEXT("code"), Code))
+    //     {
+    //         Result.bSuccess = false;
+    //         Result.ErrorMessage = TEXT("Missing 'code' parameter");
+    //         return Result;
+    //     }
+    //     
+    //     // UNSAFE: Executes arbitrary code without validation
+    //     FAdastreaScriptResult ScriptResult = FAdastreaScriptService::ExecuteCode(Code);
+    //     
+    //     Result.bSuccess = ScriptResult.bSuccess;
+    //     Result.Output = ScriptResult.Output;
+    //     Result.ErrorMessage = ScriptResult.ErrorMessage;
+    //     
+    //     TSharedPtr<FJsonObject> Data = MakeShared<FJsonObject>();
+    //     Data->SetNumberField(TEXT("executionTimeMs"), ScriptResult.ExecutionTimeMs);
+    //     Result.Data = Data;
+    //     
+    //     return Result;
+    // });
     
     FAdastreaToolSystem::Get().RegisterTool(ExecutePythonTool);
 }
@@ -2075,7 +2110,9 @@ The Model Context Protocol (MCP) is a standardized way to expose tools to extern
 
 ### MCP Server Implementation
 
-For complete MCP server implementation code, see the detailed code examples added earlier in this guide. The implementation includes:
+**Note:** The complete MCP server implementation code shown in this section is provided as a reference architecture. For a working implementation, refer to VibeUE's `Source/VibeUE/Private/MCP/MCPServer.cpp` and `MCPTransport.cpp` as practical examples.
+
+The MCP server implementation should include:
 
 - HTTP server setup using FHttpServerModule
 - Tool list endpoint (`/mcp/tools/list`)
@@ -2083,6 +2120,29 @@ For complete MCP server implementation code, see the detailed code examples adde
 - Resource endpoint (`/mcp/resources`)
 - JSON request/response handling
 - Error handling and validation
+
+**Reference Implementation Structure:**
+
+```cpp
+// File: Plugins/AdastreaDirector/Source/AdastreaDirector/Public/AdastreaMCPServer.h
+// See VibeUE's MCPServer.h for complete implementation example
+
+class ADASTREADIRECTOR_API FAdastreaMCPServer
+{
+public:
+    bool Start(int32 Port = 8088);
+    void Stop();
+    bool IsRunning() const;
+    
+private:
+    TSharedPtr<IHttpRouter> HttpRouter;
+    bool HandleListTools(const FHttpServerRequest& Request, const FHttpResultCallback& OnComplete);
+    bool HandleExecuteTool(const FHttpServerRequest& Request, const FHttpResultCallback& OnComplete);
+    bool HandleGetResources(const FHttpServerRequest& Request, const FHttpResultCallback& OnComplete);
+};
+```
+
+For the complete implementation with HTTP routing, JSON serialization, and error handling, refer to Section 5 in the earlier code examples or study VibeUE's MCP implementation.
 
 ### External Client Support
 
