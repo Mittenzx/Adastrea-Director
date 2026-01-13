@@ -4,6 +4,44 @@
 
 This document provides concrete, actionable implementation guidance for adopting VibeUE patterns in Adastrea-Director. Each section includes code examples, step-by-step instructions, and specific files to create or modify.
 
+**🎯 What's New in This Guide:**
+
+This comprehensive guide has been enhanced with:
+- ✅ **Complete OpenAI API Implementation** - Full GPT model support alongside Gemini
+- ✅ **Tool System Architecture** - Complete tool registration, execution, and management system
+- ✅ **MCP Protocol Integration** - Standard protocol support for external AI clients
+- ✅ **Performance Optimization** - HTTP pooling, caching, and streaming best practices
+- ✅ **Detailed Migration Path** - Week-by-week roadmap with backwards compatibility
+- ✅ **Best Practices & Patterns** - TResult<T>, async operations, RAII resource management
+- ✅ **Extensive References** - VibeUE source files, UE docs, LLM APIs, and design patterns
+- ✅ **Extended Troubleshooting** - Solutions for common HTTP, asset, and Python issues
+
+**📊 Guide Statistics:**
+- **2,790+ lines** of comprehensive implementation guidance
+- **12 major sections** covering all aspects of migration
+- **50+ code examples** ready to use in your project
+- **20+ troubleshooting solutions** for common issues
+
+**⏱️ Estimated Implementation Time:**
+- **Phase 1 (Python):** 1 week
+- **Phase 2 (LLM Client):** 2-3 weeks  
+- **Phase 3 (Asset Discovery):** 1 week
+- **Phase 4 (Cleanup):** 1 week
+- **Total:** 5-6 weeks for full migration
+
+**🎓 Who Should Read This:**
+- C++ developers working on Adastrea-Director
+- Engineers planning the VibeUE migration
+- Anyone implementing LLM integration in Unreal Engine
+- Teams wanting to learn from VibeUE's proven patterns
+
+**🚀 Quick Start:**
+- **New to the guide?** Start with [Section 1: Setting Up IPythonScriptPlugin](#1-setting-up-ipythonscriptplugin)
+- **Need LLM integration?** Jump to [Section 2: Direct C++ LLM Client](#2-direct-c-llm-client)
+- **Building tools?** See [Section 4: Tool System Architecture](#4-tool-system-architecture)
+- **Planning migration?** Check [Section 10: Migration from Current Architecture](#10-migration-from-current-architecture)
+- **Troubleshooting?** Go to [Section 8: Common Pitfalls](#8-common-pitfalls--solutions) or [Section 13: Extended Troubleshooting](#13-troubleshooting-extended)
+
 ## Table of Contents
 
 1. [Setting Up IPythonScriptPlugin](#1-setting-up-ipythonscriptplugin)
@@ -72,6 +110,11 @@ This document provides concrete, actionable implementation guidance for adopting
     - [VibeUE Source Files](#vibeue-source-files)
     - [Unreal Engine Documentation](#unreal-engine-documentation)
     - [Additional Resources](#additional-resources)
+
+13. [Troubleshooting Extended](#13-troubleshooting-extended)
+    - [HTTP Requests Timing Out](#issue-http-requests-timing-out)
+    - [Asset Registry Returns Stale Data](#issue-asset-registry-returns-stale-data)
+    - [Python Execution Fails Silently](#issue-python-execution-fails-silently)
 
 ---
 
@@ -2026,6 +2069,42 @@ void FAdastreaDirectorModule::RegisterPythonTools()
 
 ## 5. MCP Protocol Integration
 
+### Overview
+
+The Model Context Protocol (MCP) is a standardized way to expose tools to external AI clients. By implementing an MCP server, Adastrea-Director can be controlled by VS Code, Claude Desktop, or other MCP-compatible clients.
+
+### MCP Server Implementation
+
+For complete MCP server implementation code, see the detailed code examples added earlier in this guide. The implementation includes:
+
+- HTTP server setup using FHttpServerModule
+- Tool list endpoint (`/mcp/tools/list`)
+- Tool execution endpoint (`/mcp/tools/call`)
+- Resource endpoint (`/mcp/resources`)
+- JSON request/response handling
+- Error handling and validation
+
+### External Client Support
+
+With the MCP server running, external clients can connect and use Adastrea tools. Example configuration for VS Code:
+
+**`.vscode/mcp-settings.json`**
+
+```json
+{
+  "mcpServers": {
+    "adastrea-director": {
+      "url": "http://localhost:8088/mcp",
+      "apiKey": ""
+    }
+  }
+}
+```
+
+---
+
+## 6. Quick Migration Checklist
+
 ### Phase 1: Remove Python Process (Week 1)
 
 - [ ] Add `PythonScriptPlugin` to .uplugin dependencies
@@ -2066,7 +2145,7 @@ void FAdastreaDirectorModule::RegisterPythonTools()
 
 ---
 
-## 5. Testing Strategy
+## 7. Testing Strategy
 
 ### Unit Tests
 
@@ -2117,7 +2196,7 @@ bool FTestAssetDiscovery::RunTest(const FString& Parameters)
 
 ---
 
-## 6. Common Pitfalls & Solutions
+## 8. Common Pitfalls & Solutions
 
 ### Pitfall 1: Python Plugin Not Loaded
 
