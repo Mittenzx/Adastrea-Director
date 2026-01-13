@@ -29,8 +29,33 @@ TArray<FAssetInfo> FAdastreaAssetService::SearchAssets(
 	
 	if (!ClassName.IsEmpty())
 	{
-		// Use full class path string for FTopLevelAssetPath
-		Filter.ClassPaths.Add(FTopLevelAssetPath(*ClassName));
+		// Map common class names to proper FTopLevelAssetPath format
+		// FTopLevelAssetPath expects format: /Script/ModuleName.ClassName
+		FString ClassPath;
+		if (ClassName == TEXT("Blueprint"))
+		{
+			ClassPath = TEXT("/Script/Engine.Blueprint");
+		}
+		else if (ClassName == TEXT("Material"))
+		{
+			ClassPath = TEXT("/Script/Engine.Material");
+		}
+		else if (ClassName == TEXT("WidgetBlueprint"))
+		{
+			ClassPath = TEXT("/Script/UMGEditor.WidgetBlueprint");
+		}
+		else if (ClassName.Contains(TEXT("/")))
+		{
+			// Already in proper format
+			ClassPath = ClassName;
+		}
+		else
+		{
+			// Assume Engine module for unknown classes
+			ClassPath = FString::Printf(TEXT("/Script/Engine.%s"), *ClassName);
+		}
+		
+		Filter.ClassPaths.Add(FTopLevelAssetPath(ClassPath));
 	}
 
 	// Search all game content

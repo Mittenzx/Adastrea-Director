@@ -225,11 +225,12 @@ for asset in assets:
 		TArray<FToolDefinition> Tools = FAdastreaToolSystem::Get().GetAllToolDefinitions();
 
 		// Send request
+		// Note: Capture Client by value to prevent dangling reference in async callback
 		Client->SendChatRequest(
 			Messages,
 			Tools,
 			FOnStreamChunk(),
-			FOnLLMComplete::CreateLambda([&Messages, &Tools, Client](bool bSuccess, const FString& Content, const TArray<FToolCall>& ToolCalls) {
+			FOnLLMComplete::CreateLambda([Messages, Tools, Client](bool bSuccess, const FString& Content, const TArray<FToolCall>& ToolCalls) mutable {
 				if (!bSuccess)
 				{
 					UE_LOG(LogAdastreaDirector, Error, TEXT("LLM failed: %s"), *Content);

@@ -312,10 +312,11 @@ void FAdastreaLLMClient::OnResponseReceived(
 	FString Content;
 	TArray<FToolCall> ToolCalls;
 
-	// Gemini format: candidates[0].content.parts[]
+	// Try Gemini format first: candidates[0].content.parts[]
 	const TArray<TSharedPtr<FJsonValue>>* Candidates;
 	if (JsonResponse->TryGetArrayField(TEXT("candidates"), Candidates) && Candidates->Num() > 0)
 	{
+		// Gemini API response format
 		TSharedPtr<FJsonObject> Candidate = (*Candidates)[0]->AsObject();
 		if (!Candidate.IsValid())
 		{
@@ -372,6 +373,78 @@ void FAdastreaLLMClient::OnResponseReceived(
 					ToolCalls.Add(ToolCall);
 				}
 			}
+		}
+	}
+	// Try OpenAI format: choices[0].message
+	else
+	{
+		const TArray<TSharedPtr<FJsonValue>>* Choices;
+		if (JsonResponse->TryGetArrayField(TEXT("choices"), Choices) && Choices->Num() > 0)
+		{
+			// OpenAI API response format
+			TSharedPtr<FJsonObject> Choice = (*Choices)[0]->AsObject();
+			if (!Choice.IsValid())
+			{
+				UE_LOG(LogAdastreaDirector, Warning, TEXT("Invalid choice object in OpenAI response"));
+				OnComplete.ExecuteIfBound(false, TEXT("Invalid choice format"), TArray<FToolCall>());
+				return;
+			}
+			
+			TSharedPtr<FJsonObject> Message;
+			if (Choice->TryGetObjectField(TEXT("message"), Message) && Message.IsValid())
+			{
+				// Get content
+				FString MessageContent;
+				if (Message->TryGetStringField(TEXT("content"), MessageContent))
+				{
+					Content = MessageContent;
+				}
+				
+				// Get tool calls
+				const TArray<TSharedPtr<FJsonValue>>* ToolCallsArray;
+				if (Message->TryGetArrayField(TEXT("tool_calls"), ToolCallsArray))
+				{
+					for (const TSharedPtr<FJsonValue>& ToolCallValue : *ToolCallsArray)
+					{
+						TSharedPtr<FJsonObject> ToolCallObj = ToolCallValue->AsObject();
+						if (!ToolCallObj.IsValid())
+						{
+							continue;
+						}
+						
+						FToolCall ToolCall;
+						ToolCallObj->TryGetStringField(TEXT("id"), ToolCall.Id);
+						
+						TSharedPtr<FJsonObject> FunctionObj;
+						if (ToolCallObj->TryGetObjectField(TEXT("function"), FunctionObj))
+						{
+							FunctionObj->TryGetStringField(TEXT("name"), ToolCall.ToolName);
+							
+							// Parse arguments from JSON string
+							FString ArgsString;
+							if (FunctionObj->TryGetStringField(TEXT("arguments"), ArgsString))
+							{
+								TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(ArgsString);
+								FJsonSerializer::Deserialize(Reader, ToolCall.Arguments);
+							}
+						}
+						
+						ToolCalls.Add(ToolCall);
+					}
+				}
+			}
+			else
+			{
+				UE_LOG(LogAdastreaDirector, Warning, TEXT("No message field in choice"));
+				OnComplete.ExecuteIfBound(false, TEXT("No message in response"), TArray<FToolCall>());
+				return;
+			}
+		}
+		else
+		{
+			UE_LOG(LogAdastreaDirector, Warning, TEXT("Response has neither 'candidates' (Gemini) nor 'choices' (OpenAI) field"));
+			OnComplete.ExecuteIfBound(false, TEXT("Unknown response format"), TArray<FToolCall>());
+			return;
 		}
 	}
 

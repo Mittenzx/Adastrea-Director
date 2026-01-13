@@ -170,11 +170,11 @@ bool FAdastreaMCPServer::HandleExecuteTool(const FHttpServerRequest& Request, co
 		return true;
 	}
 
-	// Get arguments
+	// Get arguments (default to empty object if not provided)
 	TSharedPtr<FJsonObject> Arguments;
-	if (!Params->TryGetObjectField(TEXT("arguments"), Arguments))
+	if (!Params->TryGetObjectField(TEXT("arguments"), Arguments) || !Arguments.IsValid())
 	{
-		Arguments = MakeShared<FJsonObject>(); // Empty args
+		Arguments = MakeShared<FJsonObject>(); // Empty args if missing or null
 	}
 
 	// Execute tool
