@@ -2,7 +2,9 @@
 
 An intelligent assistant system designed to understand natural language commands and assist with the game development lifecycle in Unreal Engine.
 
-> 📚 **Documentation Update:** All detailed documentation has been moved to the [Adastrea Director Wiki](https://github.com/Mittenzx/Adastrea-Director/wiki) for better organization and accessibility.
+> 📚 **Documentation:** See [Adastrea Director Wiki](https://github.com/Mittenzx/Adastrea-Director/wiki) for complete documentation.
+> 
+> 🏗️ **Architecture:** See [ARCHITECTURE.md](ARCHITECTURE.md) for system architecture, VibeUE modernization, and component overview.
 
 ## Overview
 
@@ -38,15 +40,17 @@ Adastrea Director is **one AI system** with **two deployment modes**:
 - **Best for:** Rapid prototyping, testing, non-UE users
 - **Status:** ✅ Fully functional (P1-P3)
 
-### 🎮 Plugin Mode (Unreal Engine)
-- **Purpose:** Integrated in-editor workflow
-- **Technology:** C++ (UE Plugin) + same Python backend
-- **Best for:** Game developers working in Unreal Engine
-- **Status:** 🚀 In development (Weeks 1-6 complete: basic UI + RAG)
+### 🎮 Plugin Mode (Unreal Engine - VibeUE Architecture)
+- **Purpose:** Native C++ integration in Unreal Editor
+- **Technology:** Modern C++ with direct LLM integration (no external processes)
+- **Architecture:** VibeUE pattern - IPythonScriptPlugin, direct HTTP, runtime queries
+- **Best for:** Production UE development with integrated AI assistance
+- **Status:** ✅ Core VibeUE components complete (AdastreaScriptService, LLMClient, AssetService, ToolSystem, MCPServer)
+- **Legacy:** Old IPC components maintained for transition, will be removed in Phase 4
 
-**Key Point:** Both modes use the **same Python backend** (RAG, Planning, Agents). The plugin is not a separate implementation—it's a wrapper that integrates the standalone system into Unreal Engine via IPC.
+**Key Point:** The plugin now uses the **VibeUE architecture** with native C++ components (no external Python process needed). The standalone system remains fully functional for development, testing, and non-UE use cases.
 
-📖 **See:** [Architecture Documentation](https://github.com/Mittenzx/Adastrea-Director/wiki) in the Wiki for complete details
+📖 **See:** [ARCHITECTURE.md](ARCHITECTURE.md) for detailed system architecture and [Wiki](https://github.com/Mittenzx/Adastrea-Director/wiki) for complete documentation.
 
 ## Current Phase: P3 Complete - Plugin Integration Focus
 
@@ -56,7 +60,16 @@ Phase 3 has been **completed successfully** with fully implemented autonomous ag
 - ✅ Real-time Dashboard UI for monitoring agent activity
 - ✅ Complete infrastructure (Event Bus, Shared State, Remote Control API)
 
-**🎯 Current Focus:** Unreal Engine Plugin Integration (Weeks 7-16) - Bringing P1-P3 capabilities into the UE Editor
+**🎯 Current Focus:** VibeUE Architecture Complete - Testing & Migration Planning
+
+The C++ plugin has been successfully modernized with the VibeUE architecture:
+- ✅ Direct LLM integration (AdastreaLLMClient) - no Python process needed
+- ✅ Built-in Python execution (AdastreaScriptService) via IPythonScriptPlugin
+- ✅ Runtime asset discovery (AdastreaAssetService) - no document ingestion
+- ✅ Tool system (AdastreaToolSystem) for extensible AI capabilities
+- ✅ MCP server (AdastreaMCPServer) for external AI clients
+
+See [VIBEUE_COMPLETION_SUMMARY.md](VIBEUE_COMPLETION_SUMMARY.md) for implementation details.
 
 ### Features
 
