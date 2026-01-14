@@ -9,6 +9,23 @@
 /**
  * High-level bridge for managing Python backend communication.
  * Combines process management and IPC communication into a single interface.
+ * 
+ * ⚠️ LEGACY COMPONENT - SCHEDULED FOR REMOVAL
+ * 
+ * This component wraps PythonProcessManager and IPCClient, both of which are part
+ * of the old IPC-based architecture. It is maintained for parallel operation during
+ * the transition to the VibeUE architecture.
+ * 
+ * The VibeUE architecture provides direct, native C++ alternatives:
+ * - AdastreaLLMClient - Direct LLM API calls (no Python process needed)
+ * - AdastreaScriptService - In-process Python via IPythonScriptPlugin
+ * - AdastreaAssetService - Runtime asset queries (no ingestion pipeline)
+ * - AdastreaToolSystem - Extensible tool system for AI capabilities
+ * 
+ * This component will be removed in Phase 4 cleanup after full migration validation.
+ * See ARCHITECTURE.md for details on the new architecture.
+ * 
+ * @deprecated Use VibeUE components directly instead of this legacy bridge.
  */
 class ADASTREADIRECTOR_API FPythonBridge
 {

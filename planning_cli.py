@@ -20,8 +20,8 @@ try:
     from rich.table import Table
     from rich.markdown import Markdown
     
-    from goal_analysis_agent import GoalAnalysisAgent
-    from task_decomposition_agent import TaskDecompositionAgent
+    from agents.goal_analysis_agent import GoalAnalysisAgent
+    from agents.task_decomposition_agent import TaskDecompositionAgent
     from agents.models import ActionPlan
     
 except ImportError as e:
