@@ -53,4 +53,10 @@ private:
 
 	/** Helper to initialize the Python bridge */
 	bool InitializePythonBridge();
+
+	/** Register built-in asset tools (VibeUE-style) */
+	void RegisterAssetTools();
+
+	/** Register built-in Python execution tools (VibeUE-style, DISABLED by default for security) */
+	void RegisterPythonTools();
 };
