@@ -130,15 +130,15 @@ void FAdastreaLLMClient::SendGeminiRequest(
 	Request->SetContentAsString(JsonString);
 
 	// Setup callbacks with weak pointer to prevent dangling pointer if object is destroyed
-	TWeakPtr<FAdastreaLLMClient> WeakThis = AsShared();
+	TWeakPtr<FAdastreaLLMClient> WeakSelf = AsShared();
 	
 	if (OnStreamChunk.IsBound())
 	{
 		// Streaming mode
 		Request->OnRequestProgress().BindLambda(
-			[WeakThis, OnStreamChunk](FHttpRequestPtr Req, int32 BytesSent, int32 BytesReceived)
+			[WeakSelf, OnStreamChunk](FHttpRequestPtr Req, int32 BytesSent, int32 BytesReceived)
 			{
-				TSharedPtr<FAdastreaLLMClient> Pinned = WeakThis.Pin();
+				TSharedPtr<FAdastreaLLMClient> Pinned = WeakSelf.Pin();
 				if (!Pinned.IsValid())
 				{
 					return;
@@ -150,9 +150,9 @@ void FAdastreaLLMClient::SendGeminiRequest(
 	}
 
 	Request->OnProcessRequestComplete().BindLambda(
-		[WeakThis, OnComplete](FHttpRequestPtr Req, FHttpResponsePtr Response, bool bWasSuccessful)
+		[WeakSelf, OnComplete](FHttpRequestPtr Req, FHttpResponsePtr Response, bool bWasSuccessful)
 		{
-			TSharedPtr<FAdastreaLLMClient> Pinned = WeakThis.Pin();
+			TSharedPtr<FAdastreaLLMClient> Pinned = WeakSelf.Pin();
 			if (!Pinned.IsValid())
 			{
 				return;
@@ -229,15 +229,15 @@ void FAdastreaLLMClient::SendOpenAIRequest(
 	Request->SetContentAsString(JsonString);
 
 	// Setup callbacks with weak pointer
-	TWeakPtr<FAdastreaLLMClient> WeakThis = AsShared();
+	TWeakPtr<FAdastreaLLMClient> WeakSelf = AsShared();
 	
 	if (OnStreamChunk.IsBound())
 	{
 		// Streaming mode
 		Request->OnRequestProgress().BindLambda(
-			[WeakThis, OnStreamChunk](FHttpRequestPtr Req, int32 BytesSent, int32 BytesReceived)
+			[WeakSelf, OnStreamChunk](FHttpRequestPtr Req, int32 BytesSent, int32 BytesReceived)
 			{
-				TSharedPtr<FAdastreaLLMClient> Pinned = WeakThis.Pin();
+				TSharedPtr<FAdastreaLLMClient> Pinned = WeakSelf.Pin();
 				if (!Pinned.IsValid())
 				{
 					return;
@@ -249,9 +249,9 @@ void FAdastreaLLMClient::SendOpenAIRequest(
 	}
 
 	Request->OnProcessRequestComplete().BindLambda(
-		[WeakThis, OnComplete](FHttpRequestPtr Req, FHttpResponsePtr Response, bool bWasSuccessful)
+		[WeakSelf, OnComplete](FHttpRequestPtr Req, FHttpResponsePtr Response, bool bWasSuccessful)
 		{
-			TSharedPtr<FAdastreaLLMClient> Pinned = WeakThis.Pin();
+			TSharedPtr<FAdastreaLLMClient> Pinned = WeakSelf.Pin();
 			if (!Pinned.IsValid())
 			{
 				return;
