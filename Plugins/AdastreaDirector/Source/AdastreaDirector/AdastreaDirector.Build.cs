@@ -39,6 +39,7 @@ public class AdastreaDirector : ModuleRules
 				"HTTP",              // For LLM API calls
 				"PythonScriptPlugin", // For built-in Python execution
 				"HTTPServer",        // For MCP server
+				"UMG",               // For WidgetBlueprint support
 				// ... add other public dependencies that you statically link with here ...
 			}
 		);
