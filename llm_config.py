@@ -6,12 +6,15 @@ This module provides a unified interface for different LLM providers.
 Currently supports:
 - Google Gemini (default)
 - OpenAI (legacy support)
+- OpenRouter (unified gateway to multiple models)
 
 Environment Variables:
 - GEMINI_KEY: API key for Google Gemini (default provider)
 - GEMINI_MODEL: Model to use (default: gemini-1.5-flash)
 - OPENAI_API_KEY: API key for OpenAI (legacy, if LLM_PROVIDER=openai)
-- LLM_PROVIDER: Provider to use (gemini or openai, default: gemini)
+- OPENROUTER_API_KEY: API key for OpenRouter (if LLM_PROVIDER=openrouter)
+- OPENROUTER_MODEL: Model to use (default: mistralai/mistral-7b-instruct:free)
+- LLM_PROVIDER: Provider to use (gemini, openai, or openrouter, default: gemini)
 """
 
 import os
@@ -28,7 +31,7 @@ def _build_dependency_error_message(provider: str, error: ImportError) -> str:
     Build a detailed error message for missing LLM dependencies.
     
     Args:
-        provider: The LLM provider name ('openai' or 'gemini')
+        provider: The LLM provider name ('openai', 'gemini', or 'openrouter')
         error: The ImportError that was raised
     
     Returns:
@@ -45,6 +48,8 @@ def _build_dependency_error_message(provider: str, error: ImportError) -> str:
     )
     
     if provider == "openai":
+        error_msg += f"  pip install langchain-openai>=0.3.0\n"
+    elif provider == "openrouter":
         error_msg += f"  pip install langchain-openai>=0.3.0\n"
     else:  # gemini
         error_msg += f"  pip install langchain-google-genai>=2.0.5\n"
@@ -69,25 +74,29 @@ def get_llm(model_name: Optional[str] = None, temperature: float = 0.7):
         model_name: Optional model name to use. If not provided, uses defaults:
                    - Gemini: gemini-1.5-flash
                    - OpenAI: gpt-3.5-turbo
+                   - OpenRouter: mistralai/mistral-7b-instruct:free
         temperature: Temperature for response generation (0-1)
     
     Returns:
-        LLM instance (ChatGoogleGenerativeAI or ChatOpenAI)
+        LLM instance (ChatGoogleGenerativeAI, ChatOpenAI, or ChatOpenAI with OpenRouter base URL)
     
     Raises:
         ImportError: If required LangChain dependencies are not installed
     
     Environment Variables:
-        LLM_PROVIDER: Which provider to use (gemini or openai). Default: gemini
+        LLM_PROVIDER: Which provider to use (gemini, openai, or openrouter). Default: gemini
         GEMINI_KEY: API key for Google Gemini
         GEMINI_MODEL: Default Gemini model (default: gemini-1.5-flash)
         OPENAI_API_KEY: API key for OpenAI (only if using openai provider)
         OPENAI_MODEL: Default OpenAI model (default: gpt-3.5-turbo)
+        OPENROUTER_API_KEY: API key for OpenRouter (only if using openrouter provider)
+        OPENROUTER_MODEL: Default OpenRouter model (default: mistralai/mistral-7b-instruct:free)
     
     Example:
         >>> llm = get_llm()  # Uses Gemini by default
         >>> llm = get_llm(model_name="gemini-1.5-pro", temperature=0.3)
         >>> llm = get_llm(model_name="gpt-4", temperature=0.7)  # If LLM_PROVIDER=openai
+        >>> llm = get_llm(model_name="openai/gpt-3.5-turbo")  # If LLM_PROVIDER=openrouter
     """
     provider = os.environ.get("LLM_PROVIDER", "gemini").lower()
     
@@ -110,6 +119,32 @@ def get_llm(model_name: Optional[str] = None, temperature: float = 0.7):
         kwargs = {
             "model_name": model,
             "temperature": temperature
+        }
+        if api_key:
+            kwargs["api_key"] = api_key
+        
+        return ChatOpenAI(**kwargs)
+    elif provider == "openrouter":
+        # OpenRouter support - unified gateway to multiple models
+        try:
+            from langchain_openai import ChatOpenAI
+        except ImportError as e:
+            raise ImportError(_build_dependency_error_message("openrouter", e)) from e
+        
+        # Default to free Mistral model, but users can specify any OpenRouter model
+        model = model_name or os.environ.get("OPENROUTER_MODEL", "mistralai/mistral-7b-instruct:free")
+        
+        # Priority: stored config -> OPENROUTER_API_KEY env var
+        api_key = None
+        if CONFIG_MANAGER_AVAILABLE:
+            api_key = get_stored_api_key("openrouter")
+        if not api_key:
+            api_key = os.environ.get("OPENROUTER_API_KEY")
+        
+        kwargs = {
+            "model_name": model,
+            "temperature": temperature,
+            "openai_api_base": "https://openrouter.ai/api/v1"
         }
         if api_key:
             kwargs["api_key"] = api_key
@@ -155,6 +190,9 @@ def check_dependencies_available() -> Tuple[bool, Optional[str]]:
         if provider == "openai":
             import langchain_openai
             return (True, None)
+        elif provider == "openrouter":
+            import langchain_openai
+            return (True, None)
         else:
             import langchain_google_genai
             return (True, None)
@@ -167,10 +205,15 @@ def get_provider_name() -> str:
     Get the name of the current LLM provider.
     
     Returns:
-        String: "Gemini" or "OpenAI"
+        String: "Gemini", "OpenAI", or "OpenRouter"
     """
     provider = os.environ.get("LLM_PROVIDER", "gemini").lower()
-    return "OpenAI" if provider == "openai" else "Gemini"
+    if provider == "openai":
+        return "OpenAI"
+    elif provider == "openrouter":
+        return "OpenRouter"
+    else:
+        return "Gemini"
 
 
 def get_api_key_env_var() -> str:
@@ -178,7 +221,12 @@ def get_api_key_env_var() -> str:
     Get the environment variable name for the current provider's API key.
     
     Returns:
-        String: "GEMINI_KEY" or "OPENAI_API_KEY"
+        String: "GEMINI_KEY", "OPENAI_API_KEY", or "OPENROUTER_API_KEY"
     """
     provider = os.environ.get("LLM_PROVIDER", "gemini").lower()
-    return "OPENAI_API_KEY" if provider == "openai" else "GEMINI_KEY"
+    if provider == "openai":
+        return "OPENAI_API_KEY"
+    elif provider == "openrouter":
+        return "OPENROUTER_API_KEY"
+    else:
+        return "GEMINI_KEY"
