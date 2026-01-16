@@ -522,17 +522,24 @@ class IPCServer:
             api_key = None
             if provider == 'gemini':
                 # Check multiple env variable names for Gemini
-                api_key = os.environ.get('GEMINI_KEY') or os.environ.get('GOOGLE_API_KEY')
+                # Priority: GEMINI_API_KEY -> GEMINI_KEY (legacy) -> GOOGLE_API_KEY (fallback)
+                api_key = os.environ.get('GEMINI_API_KEY') or os.environ.get('GEMINI_KEY') or os.environ.get('GOOGLE_API_KEY')
+                # Strip whitespace to handle copy-paste errors
+                if api_key:
+                    api_key = api_key.strip()
                 if not api_key:
                     return {
                         'status': 'success',
                         'valid': False,
-                        'error': 'GEMINI_KEY not found in .env file. Please add GEMINI_KEY=your-api-key to your .env file.',
+                        'error': 'GEMINI_API_KEY not found in .env file. Please add GEMINI_API_KEY=your-api-key to your .env file.',
                         'provider': 'gemini'
                     }
                 return self._validate_gemini_key(api_key)
             elif provider == 'openai':
                 api_key = os.environ.get('OPENAI_API_KEY')
+                # Strip whitespace to handle copy-paste errors
+                if api_key:
+                    api_key = api_key.strip()
                 if not api_key:
                     return {
                         'status': 'success',
@@ -790,10 +797,16 @@ class IPCServer:
         provider = os.environ.get('LLM_PROVIDER', 'gemini').lower()
         
         if provider == 'gemini':
-            api_key = os.environ.get('GEMINI_KEY') or os.environ.get('GOOGLE_API_KEY')
-            api_key_var = 'GEMINI_KEY or GOOGLE_API_KEY'
+            api_key = os.environ.get('GEMINI_API_KEY') or os.environ.get('GEMINI_KEY') or os.environ.get('GOOGLE_API_KEY')
+            # Strip whitespace to handle copy-paste errors
+            if api_key:
+                api_key = api_key.strip()
+            api_key_var = 'GEMINI_API_KEY'
         else:
             api_key = os.environ.get('OPENAI_API_KEY')
+            # Strip whitespace to handle copy-paste errors
+            if api_key:
+                api_key = api_key.strip()
             api_key_var = 'OPENAI_API_KEY'
         
         if api_key:

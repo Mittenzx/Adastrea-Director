@@ -104,7 +104,7 @@ def _decrypt_value(encrypted_value: str) -> str:
         encrypted_value: The Fernet token (base64-encoded encrypted value)
 
     Returns:
-        Decrypted value
+        Decrypted value with leading/trailing whitespace stripped
     """
     if not encrypted_value:
         return ""
@@ -114,7 +114,8 @@ def _decrypt_value(encrypted_value: str) -> str:
         f = Fernet(key)
         encrypted = encrypted_value.encode()
         decrypted = f.decrypt(encrypted)
-        return decrypted.decode()
+        # Strip whitespace to handle copy-paste errors
+        return decrypted.decode().strip()
     except Exception:
         # If decryption fails, return empty string
         return ""
@@ -218,7 +219,7 @@ def set_api_key(provider: str, api_key: str) -> None:
 
     Args:
         provider: The LLM provider ("gemini" or "openai")
-        api_key: The API key to save
+        api_key: The API key to save (will be stripped of whitespace)
     """
     provider = provider.lower()
     config = load_config()
@@ -226,6 +227,9 @@ def set_api_key(provider: str, api_key: str) -> None:
     if "api_keys" not in config:
         config["api_keys"] = {}
 
+    # Strip whitespace before encrypting to prevent copy-paste issues
+    api_key = api_key.strip() if api_key else ""
+    
     # Encrypt the API key before storing
     config["api_keys"][provider] = _encrypt_value(api_key)
     save_config(config)

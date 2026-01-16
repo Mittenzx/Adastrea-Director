@@ -25,13 +25,13 @@ class TestLLMConfiguration:
         """Test that Gemini is used by default."""
         # Clear any existing environment variables
         env_backup = {}
-        for key in ['LLM_PROVIDER', 'GEMINI_KEY', 'GOOGLE_API_KEY', 'OPENAI_API_KEY']:
+        for key in ['LLM_PROVIDER', 'GEMINI_API_KEY', 'GEMINI_KEY', 'GOOGLE_API_KEY', 'OPENAI_API_KEY']:
             env_backup[key] = os.environ.get(key)
             if key in os.environ:
                 del os.environ[key]
         
         # Set a dummy API key
-        os.environ['GEMINI_KEY'] = 'test-key'
+        os.environ['GEMINI_API_KEY'] = 'test-key'
         
         try:
             with patch('langchain_google_genai.ChatGoogleGenerativeAI') as mock_gemini:
@@ -49,7 +49,7 @@ class TestLLMConfiguration:
                 
                 # Verify provider name
                 assert get_provider_name() == "Gemini"
-                assert get_api_key_env_var() == "GEMINI_KEY"
+                assert get_api_key_env_var() == "GEMINI_API_KEY"
         finally:
             # Restore environment
             for key, value in env_backup.items():
@@ -61,7 +61,7 @@ class TestLLMConfiguration:
     def test_gemini_with_google_api_key(self):
         """Test that GOOGLE_API_KEY works as fallback for GEMINI_KEY."""
         env_backup = {}
-        for key in ['LLM_PROVIDER', 'GEMINI_KEY', 'GOOGLE_API_KEY', 'OPENAI_API_KEY']:
+        for key in ['LLM_PROVIDER', 'GEMINI_API_KEY', 'GEMINI_KEY', 'GOOGLE_API_KEY', 'OPENAI_API_KEY']:
             env_backup[key] = os.environ.get(key)
             if key in os.environ:
                 del os.environ[key]
@@ -235,7 +235,7 @@ class TestLLMConfiguration:
     def test_stored_config_priority(self):
         """Test that stored config takes priority over environment variables."""
         env_backup = {}
-        for key in ['LLM_PROVIDER', 'GEMINI_KEY', 'GOOGLE_API_KEY', 'OPENAI_API_KEY']:
+        for key in ['LLM_PROVIDER', 'GEMINI_API_KEY', 'GEMINI_KEY', 'GOOGLE_API_KEY', 'OPENAI_API_KEY']:
             env_backup[key] = os.environ.get(key)
             if key in os.environ:
                 del os.environ[key]
@@ -266,7 +266,7 @@ class TestLLMConfiguration:
     def test_fallback_to_env_when_no_stored_config(self):
         """Test that environment variables are used when stored config is not available."""
         env_backup = {}
-        for key in ['LLM_PROVIDER', 'GEMINI_KEY', 'GOOGLE_API_KEY', 'OPENAI_API_KEY']:
+        for key in ['LLM_PROVIDER', 'GEMINI_API_KEY', 'GEMINI_KEY', 'GOOGLE_API_KEY', 'OPENAI_API_KEY']:
             env_backup[key] = os.environ.get(key)
             if key in os.environ:
                 del os.environ[key]

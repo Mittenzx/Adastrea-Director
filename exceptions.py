@@ -47,7 +47,7 @@ class APIKeyError(AdastreaDirectorError):
         if not details:
             if service == "Gemini":
                 details = (
-                    f"Please set the GEMINI_KEY environment variable.\n"
+                    f"Please set the GEMINI_API_KEY environment variable.\n"
                     f"Get your free API key at: https://makersuite.google.com/app/apikey\n"
                     f"You can add it to a .env file in the project root."
                 )

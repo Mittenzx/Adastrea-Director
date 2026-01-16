@@ -231,8 +231,8 @@ def main():
     """Run all examples."""
     print_header()
     
-    console.print("\n[yellow]Note: This example requires a Gemini API key (set GEMINI_KEY environment variable).[/yellow]")
-    console.print("[dim]Set GEMINI_KEY environment variable or create .env file (or LLM_PROVIDER=openai for legacy OpenAI support)[/dim]\n")
+    console.print("\n[yellow]Note: This example requires a Gemini API key (set GEMINI_API_KEY environment variable).[/yellow]")
+    console.print("[dim]Set GEMINI_API_KEY environment variable or create .env file (or LLM_PROVIDER=openai for legacy OpenAI support)[/dim]\n")
     
     try:
         # Example 1: Goal Analysis
@@ -261,7 +261,7 @@ def main():
     except Exception as e:
         console.print(f"\n[red]Error: {e}[/red]\n")
         console.print("[yellow]Make sure you have:[/yellow]")
-        console.print("  1. Set GEMINI_KEY environment variable (or LLM_PROVIDER=openai with OPENAI_API_KEY)")
+        console.print("  1. Set GEMINI_API_KEY environment variable (or LLM_PROVIDER=openai with OPENAI_API_KEY)")
         console.print("  2. Installed all requirements (pip install -r requirements.txt)")
         console.print("  3. Internet connection for API calls\n")
         raise
