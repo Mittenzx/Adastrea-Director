@@ -144,7 +144,7 @@ def get_llm(model_name: Optional[str] = None, temperature: float = 0.7):
         kwargs = {
             "model_name": model,
             "temperature": temperature,
-            "openai_api_base": "https://openrouter.ai/api/v1"
+            "base_url": "https://openrouter.ai/api/v1"
         }
         if api_key:
             kwargs["api_key"] = api_key

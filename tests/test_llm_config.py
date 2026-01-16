@@ -316,7 +316,7 @@ class TestLLMConfiguration:
                 call_kwargs = mock_openai.call_args[1]
                 assert call_kwargs['model_name'] == 'mistralai/mistral-7b-instruct:free'
                 assert call_kwargs['temperature'] == 0.7
-                assert call_kwargs['openai_api_base'] == 'https://openrouter.ai/api/v1'
+                assert call_kwargs['base_url'] == 'https://openrouter.ai/api/v1'
                 assert call_kwargs['api_key'] == 'test-key'
                 
                 # Verify provider name
@@ -351,7 +351,7 @@ class TestLLMConfiguration:
                 # Verify ChatOpenAI was called with custom model
                 call_kwargs = mock_openai.call_args[1]
                 assert call_kwargs['model_name'] == 'openai/gpt-3.5-turbo'
-                assert call_kwargs['openai_api_base'] == 'https://openrouter.ai/api/v1'
+                assert call_kwargs['base_url'] == 'https://openrouter.ai/api/v1'
         finally:
             for key, value in env_backup.items():
                 if value is not None:
@@ -384,7 +384,7 @@ class TestLLMConfiguration:
                         # Verify the stored key was used, not the env var
                         call_kwargs = mock_openai.call_args[1]
                         assert call_kwargs['api_key'] == 'stored-key'
-                        assert call_kwargs['openai_api_base'] == 'https://openrouter.ai/api/v1'
+                        assert call_kwargs['base_url'] == 'https://openrouter.ai/api/v1'
         finally:
             for key, value in env_backup.items():
                 if value is not None:
