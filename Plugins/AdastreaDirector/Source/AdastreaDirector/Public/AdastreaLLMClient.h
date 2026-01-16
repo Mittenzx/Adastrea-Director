@@ -143,8 +143,8 @@ private:
 	
 	void OnStreamDataReceived(
 		FHttpRequestPtr Request,
-		int32 BytesSent,
-		int32 BytesReceived,
+		uint64 BytesSent,
+		uint64 BytesReceived,
 		FOnStreamChunk OnStreamChunk
 	);
 	

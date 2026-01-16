@@ -6,7 +6,6 @@
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "Engine/Blueprint.h"
 #include "Materials/Material.h"
-#include "Blueprint/WidgetBlueprint.h"
 #include "Dom/JsonObject.h"
 
 struct FAssetInfo

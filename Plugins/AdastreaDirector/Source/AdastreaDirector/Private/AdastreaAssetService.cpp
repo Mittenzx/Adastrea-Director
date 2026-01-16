@@ -135,7 +135,8 @@ TArray<FAssetInfo> FAdastreaAssetService::GetWidgets(const FString& PathPrefix)
 	IAssetRegistry& AssetRegistry = GetAssetRegistry();
 	
 	FARFilter Filter;
-	Filter.ClassPaths.Add(UWidgetBlueprint::StaticClass()->GetClassPathName());
+	// Use FTopLevelAssetPath directly instead of UWidgetBlueprint::StaticClass() to avoid UMGEditor dependency
+	Filter.ClassPaths.Add(FTopLevelAssetPath(TEXT("/Script/UMGEditor.WidgetBlueprint")));
 	Filter.PackagePaths.Add(PathPrefix.IsEmpty() ? FName("/Game") : FName(*PathPrefix));
 	Filter.bRecursivePaths = true;
 
