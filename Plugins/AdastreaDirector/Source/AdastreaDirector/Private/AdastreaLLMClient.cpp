@@ -134,9 +134,9 @@ void FAdastreaLLMClient::SendGeminiRequest(
 	
 	if (OnStreamChunk.IsBound())
 	{
-		// Streaming mode
-		Request->OnRequestProgress().BindLambda(
-			[WeakSelf, OnStreamChunk](FHttpRequestPtr Req, int32 BytesSent, int32 BytesReceived)
+		// Streaming mode - UE 5.6+ uses OnRequestProgress64 with uint64 parameters
+		Request->OnRequestProgress64().BindLambda(
+			[WeakSelf, OnStreamChunk](FHttpRequestPtr Req, uint64 BytesSent, uint64 BytesReceived)
 			{
 				TSharedPtr<FAdastreaLLMClient> Pinned = WeakSelf.Pin();
 				if (!Pinned.IsValid())
@@ -233,9 +233,9 @@ void FAdastreaLLMClient::SendOpenAIRequest(
 	
 	if (OnStreamChunk.IsBound())
 	{
-		// Streaming mode
-		Request->OnRequestProgress().BindLambda(
-			[WeakSelf, OnStreamChunk](FHttpRequestPtr Req, int32 BytesSent, int32 BytesReceived)
+		// Streaming mode - UE 5.6+ uses OnRequestProgress64 with uint64 parameters
+		Request->OnRequestProgress64().BindLambda(
+			[WeakSelf, OnStreamChunk](FHttpRequestPtr Req, uint64 BytesSent, uint64 BytesReceived)
 			{
 				TSharedPtr<FAdastreaLLMClient> Pinned = WeakSelf.Pin();
 				if (!Pinned.IsValid())
@@ -325,13 +325,16 @@ void FAdastreaLLMClient::OnResponseReceived(
 			return;
 		}
 		
-		TSharedPtr<FJsonObject> ContentObj;
-		if (!Candidate->TryGetObjectField(TEXT("content"), ContentObj) || !ContentObj.IsValid())
+		// UE 5.6+ TryGetObjectField signature changed to use const TSharedPtr<FJsonObject>*
+		const TSharedPtr<FJsonObject>* ContentObjPtr;
+		if (!Candidate->TryGetObjectField(TEXT("content"), ContentObjPtr) || !ContentObjPtr || !(*ContentObjPtr).IsValid())
 		{
 			UE_LOG(LogAdastreaDirector, Warning, TEXT("No content field in candidate"));
 			OnComplete.ExecuteIfBound(false, TEXT("No content in response"), TArray<FToolCall>());
 			return;
 		}
+		
+		const TSharedPtr<FJsonObject>& ContentObj = *ContentObjPtr;
 		
 		const TArray<TSharedPtr<FJsonValue>>* Parts;
 		if (ContentObj->TryGetArrayField(TEXT("parts"), Parts))
@@ -352,18 +355,19 @@ void FAdastreaLLMClient::OnResponseReceived(
 				}
 				
 				// Function call part
-				TSharedPtr<FJsonObject> FunctionCall;
-				if (Part->TryGetObjectField(TEXT("functionCall"), FunctionCall))
+				const TSharedPtr<FJsonObject>* FunctionCallPtr;
+				if (Part->TryGetObjectField(TEXT("functionCall"), FunctionCallPtr) && FunctionCallPtr && (*FunctionCallPtr).IsValid())
 				{
+					const TSharedPtr<FJsonObject>& FunctionCall = *FunctionCallPtr;
 					FToolCall ToolCall;
 					ToolCall.Id = FGuid::NewGuid().ToString();
 					FunctionCall->TryGetStringField(TEXT("name"), ToolCall.ToolName);
 					
 					// Safely get args object
-					TSharedPtr<FJsonObject> ArgsObject;
-					if (FunctionCall->TryGetObjectField(TEXT("args"), ArgsObject))
+					const TSharedPtr<FJsonObject>* ArgsObjectPtr;
+					if (FunctionCall->TryGetObjectField(TEXT("args"), ArgsObjectPtr) && ArgsObjectPtr && (*ArgsObjectPtr).IsValid())
 					{
-						ToolCall.Arguments = ArgsObject;
+						ToolCall.Arguments = *ArgsObjectPtr;
 					}
 					else
 					{
@@ -390,9 +394,10 @@ void FAdastreaLLMClient::OnResponseReceived(
 				return;
 			}
 			
-			TSharedPtr<FJsonObject> Message;
-			if (Choice->TryGetObjectField(TEXT("message"), Message) && Message.IsValid())
+			const TSharedPtr<FJsonObject>* MessagePtr;
+			if (Choice->TryGetObjectField(TEXT("message"), MessagePtr) && MessagePtr && (*MessagePtr).IsValid())
 			{
+				const TSharedPtr<FJsonObject>& Message = *MessagePtr;
 				// Get content
 				FString MessageContent;
 				if (Message->TryGetStringField(TEXT("content"), MessageContent))
@@ -415,9 +420,10 @@ void FAdastreaLLMClient::OnResponseReceived(
 						FToolCall ToolCall;
 						ToolCallObj->TryGetStringField(TEXT("id"), ToolCall.Id);
 						
-						TSharedPtr<FJsonObject> FunctionObj;
-						if (ToolCallObj->TryGetObjectField(TEXT("function"), FunctionObj))
+						const TSharedPtr<FJsonObject>* FunctionObjPtr;
+						if (ToolCallObj->TryGetObjectField(TEXT("function"), FunctionObjPtr) && FunctionObjPtr && (*FunctionObjPtr).IsValid())
 						{
+							const TSharedPtr<FJsonObject>& FunctionObj = *FunctionObjPtr;
 							FunctionObj->TryGetStringField(TEXT("name"), ToolCall.ToolName);
 							
 							// Parse arguments from JSON string
@@ -456,8 +462,8 @@ void FAdastreaLLMClient::OnResponseReceived(
 
 void FAdastreaLLMClient::OnStreamDataReceived(
 	FHttpRequestPtr Request,
-	int32 BytesSent,
-	int32 BytesReceived,
+	uint64 BytesSent,
+	uint64 BytesReceived,
 	FOnStreamChunk OnStreamChunk)
 {
 	// Ensure the request and response are valid before accessing content
@@ -578,9 +584,10 @@ FToolCall FToolCall::FromJson(const TSharedPtr<FJsonObject>& Json)
 	FToolCall ToolCall;
 	Json->TryGetStringField(TEXT("id"), ToolCall.Id);
 	
-	TSharedPtr<FJsonObject> FunctionObj;
-	if (Json->TryGetObjectField(TEXT("function"), FunctionObj))
+	const TSharedPtr<FJsonObject>* FunctionObjPtr;
+	if (Json->TryGetObjectField(TEXT("function"), FunctionObjPtr) && FunctionObjPtr && (*FunctionObjPtr).IsValid())
 	{
+		const TSharedPtr<FJsonObject>& FunctionObj = *FunctionObjPtr;
 		FunctionObj->TryGetStringField(TEXT("name"), ToolCall.ToolName);
 		
 		FString ArgsString;

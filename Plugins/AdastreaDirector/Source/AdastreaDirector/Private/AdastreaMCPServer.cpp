@@ -154,13 +154,15 @@ bool FAdastreaMCPServer::HandleExecuteTool(const FHttpServerRequest& Request, co
 		return true;
 	}
 
-	// Extract params
-	TSharedPtr<FJsonObject> Params;
-	if (!RequestBody->TryGetObjectField(TEXT("params"), Params))
+	// Extract params - UE 5.6+ TryGetObjectField signature
+	const TSharedPtr<FJsonObject>* ParamsPtr;
+	if (!RequestBody->TryGetObjectField(TEXT("params"), ParamsPtr) || !ParamsPtr || !(*ParamsPtr).IsValid())
 	{
 		OnComplete(CreateErrorResponse(TEXT("Missing 'params' field"), 400));
 		return true;
 	}
+	
+	const TSharedPtr<FJsonObject>& Params = *ParamsPtr;
 
 	// Get tool name
 	FString ToolName;
@@ -172,9 +174,15 @@ bool FAdastreaMCPServer::HandleExecuteTool(const FHttpServerRequest& Request, co
 
 	// Get arguments (default to empty object if not provided)
 	TSharedPtr<FJsonObject> Arguments;
-	if (!Params->TryGetObjectField(TEXT("arguments"), Arguments) || !Arguments.IsValid())
+	const TSharedPtr<FJsonObject>* ArgumentsPtr;
+	if (!Params->TryGetObjectField(TEXT("arguments"), ArgumentsPtr) || !ArgumentsPtr || !(*ArgumentsPtr).IsValid())
 	{
-		Arguments = MakeShared<FJsonObject>(); // Empty args if missing or null
+		// Empty args if missing or null
+		Arguments = MakeShared<FJsonObject>();
+	}
+	else
+	{
+		Arguments = *ArgumentsPtr;
 	}
 
 	// Execute tool
