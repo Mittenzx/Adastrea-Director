@@ -293,6 +293,105 @@ class TestLLMConfiguration:
                 elif key in os.environ:
                     del os.environ[key]
 
+    def test_openrouter_provider_selection(self):
+        """Test selecting OpenRouter via environment variable."""
+        env_backup = {}
+        for key in ['LLM_PROVIDER', 'OPENROUTER_API_KEY', 'GEMINI_KEY', 'GOOGLE_API_KEY', 'OPENAI_API_KEY']:
+            env_backup[key] = os.environ.get(key)
+            if key in os.environ:
+                del os.environ[key]
+        
+        os.environ['LLM_PROVIDER'] = 'openrouter'
+        os.environ['OPENROUTER_API_KEY'] = 'test-key'
+        
+        try:
+            with patch('langchain_openai.ChatOpenAI') as mock_openai:
+                mock_openai.return_value = Mock()
+                from llm_config import get_llm, get_provider_name, get_api_key_env_var
+                
+                get_llm()
+                
+                # Verify ChatOpenAI was called with OpenRouter configuration
+                mock_openai.assert_called_once()
+                call_kwargs = mock_openai.call_args[1]
+                assert call_kwargs['model_name'] == 'mistralai/mistral-7b-instruct:free'
+                assert call_kwargs['temperature'] == 0.7
+                assert call_kwargs['base_url'] == 'https://openrouter.ai/api/v1'
+                assert call_kwargs['api_key'] == 'test-key'
+                
+                # Verify provider name
+                assert get_provider_name() == "OpenRouter"
+                assert get_api_key_env_var() == "OPENROUTER_API_KEY"
+        finally:
+            for key, value in env_backup.items():
+                if value is not None:
+                    os.environ[key] = value
+                elif key in os.environ:
+                    del os.environ[key]
+
+    def test_custom_openrouter_model(self):
+        """Test using a custom OpenRouter model via environment variable."""
+        env_backup = {}
+        for key in ['LLM_PROVIDER', 'OPENROUTER_MODEL', 'OPENROUTER_API_KEY', 'GEMINI_KEY', 'GOOGLE_API_KEY', 'OPENAI_API_KEY']:
+            env_backup[key] = os.environ.get(key)
+            if key in os.environ:
+                del os.environ[key]
+        
+        os.environ['LLM_PROVIDER'] = 'openrouter'
+        os.environ['OPENROUTER_MODEL'] = 'openai/gpt-3.5-turbo'
+        os.environ['OPENROUTER_API_KEY'] = 'test-key'
+        
+        try:
+            with patch('langchain_openai.ChatOpenAI') as mock_openai:
+                mock_openai.return_value = Mock()
+                from llm_config import get_llm
+                
+                get_llm()
+                
+                # Verify ChatOpenAI was called with custom model
+                call_kwargs = mock_openai.call_args[1]
+                assert call_kwargs['model_name'] == 'openai/gpt-3.5-turbo'
+                assert call_kwargs['base_url'] == 'https://openrouter.ai/api/v1'
+        finally:
+            for key, value in env_backup.items():
+                if value is not None:
+                    os.environ[key] = value
+                elif key in os.environ:
+                    del os.environ[key]
+
+    def test_openrouter_stored_config_priority(self):
+        """Test that stored config takes priority over environment variables for OpenRouter."""
+        env_backup = {}
+        for key in ['LLM_PROVIDER', 'OPENROUTER_API_KEY', 'GEMINI_KEY', 'GOOGLE_API_KEY', 'OPENAI_API_KEY']:
+            env_backup[key] = os.environ.get(key)
+            if key in os.environ:
+                del os.environ[key]
+        
+        # Set env var
+        os.environ['LLM_PROVIDER'] = 'openrouter'
+        os.environ['OPENROUTER_API_KEY'] = 'env-key'
+        
+        try:
+            # Mock the stored config to return a different key
+            with patch('llm_config.CONFIG_MANAGER_AVAILABLE', True):
+                with patch('llm_config.get_stored_api_key', return_value='stored-key'):
+                    with patch('langchain_openai.ChatOpenAI') as mock_openai:
+                        mock_openai.return_value = Mock()
+                        from llm_config import get_llm
+                        
+                        get_llm()
+                        
+                        # Verify the stored key was used, not the env var
+                        call_kwargs = mock_openai.call_args[1]
+                        assert call_kwargs['api_key'] == 'stored-key'
+                        assert call_kwargs['base_url'] == 'https://openrouter.ai/api/v1'
+        finally:
+            for key, value in env_backup.items():
+                if value is not None:
+                    os.environ[key] = value
+                elif key in os.environ:
+                    del os.environ[key]
+
 
 if __name__ == '__main__':
     pytest.main([__file__, '-v'])
