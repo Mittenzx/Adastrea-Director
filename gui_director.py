@@ -4708,6 +4708,8 @@ Type your question below to get started! 🚀
                 if existing_key:
                     openrouter_key_entry.insert(0, existing_key)
             except (ImportError, KeyError, AttributeError):
+                # Silently ignore if config manager is unavailable or key doesn't exist
+                # User can still enter the key manually in the field
                 pass
         
         # Embedding Provider Selection
