@@ -85,12 +85,10 @@ def get_llm(model_name: Optional[str] = None, temperature: float = 0.7):
         ImportError: If required LangChain dependencies are not installed
     
     Environment Variables:
-        LLM_PROVIDER: Which provider to use (gemini or openai). Default: gemini
+        LLM_PROVIDER: Which provider to use (gemini, openai, or openrouter). Default: gemini
         GEMINI_API_KEY: API key for Google Gemini (primary, highest priority)
         GEMINI_KEY: Legacy alias for GEMINI_API_KEY (backward compatibility, medium priority)
         GOOGLE_API_KEY: Alternative name for Gemini API key (fallback, lowest priority)
-        LLM_PROVIDER: Which provider to use (gemini, openai, or openrouter). Default: gemini
-        GEMINI_KEY: API key for Google Gemini
         GEMINI_MODEL: Default Gemini model (default: gemini-1.5-flash)
         OPENAI_API_KEY: API key for OpenAI (only if using openai provider)
         OPENAI_MODEL: Default OpenAI model (default: gpt-3.5-turbo)
@@ -234,11 +232,7 @@ def get_api_key_env_var() -> str:
     Get the environment variable name for the current provider's API key.
     
     Returns:
-        String: "GEMINI_API_KEY" or "OPENAI_API_KEY"
-    """
-    provider = os.environ.get("LLM_PROVIDER", "gemini").lower()
-    return "OPENAI_API_KEY" if provider == "openai" else "GEMINI_API_KEY"
-        String: "GEMINI_KEY", "OPENAI_API_KEY", or "OPENROUTER_API_KEY"
+        String: "GEMINI_API_KEY", "OPENAI_API_KEY", or "OPENROUTER_API_KEY"
     """
     provider = os.environ.get("LLM_PROVIDER", "gemini").lower()
     if provider == "openai":
@@ -246,4 +240,4 @@ def get_api_key_env_var() -> str:
     elif provider == "openrouter":
         return "OPENROUTER_API_KEY"
     else:
-        return "GEMINI_KEY"
+        return "GEMINI_API_KEY"
