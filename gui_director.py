@@ -4459,6 +4459,8 @@ Type your question below to get started! 🚀
             if key:
                 # Strip whitespace to handle copy-paste errors
                 key = key.strip()
+                # Set all three environment variables for maximum compatibility across codebase
+                # This ensures both new code (using GEMINI_API_KEY) and legacy code work correctly
                 os.environ['GEMINI_API_KEY'] = key
                 os.environ['GEMINI_KEY'] = key  # Also set for backward compatibility
                 os.environ['GOOGLE_API_KEY'] = key  # Also set for compatibility

@@ -8,8 +8,8 @@ Currently supports:
 - OpenAI (legacy support)
 
 Environment Variables:
-- GEMINI_API_KEY: API key for Google Gemini (default provider)
-- GEMINI_KEY: Legacy alias for GEMINI_API_KEY (for backward compatibility)
+- GEMINI_API_KEY: API key for Google Gemini (default provider, primary)
+- GEMINI_KEY: Legacy alias for GEMINI_API_KEY (backward compatibility, lower priority)
 - GEMINI_MODEL: Model to use (default: gemini-1.5-flash)
 - OPENAI_API_KEY: API key for OpenAI (legacy, if LLM_PROVIDER=openai)
 - LLM_PROVIDER: Provider to use (gemini or openai, default: gemini)
@@ -80,8 +80,9 @@ def get_llm(model_name: Optional[str] = None, temperature: float = 0.7):
     
     Environment Variables:
         LLM_PROVIDER: Which provider to use (gemini or openai). Default: gemini
-        GEMINI_API_KEY: API key for Google Gemini (primary)
-        GEMINI_KEY: Legacy alias for GEMINI_API_KEY (backward compatibility)
+        GEMINI_API_KEY: API key for Google Gemini (primary, highest priority)
+        GEMINI_KEY: Legacy alias for GEMINI_API_KEY (backward compatibility, medium priority)
+        GOOGLE_API_KEY: Alternative name for Gemini API key (fallback, lowest priority)
         GEMINI_MODEL: Default Gemini model (default: gemini-1.5-flash)
         OPENAI_API_KEY: API key for OpenAI (only if using openai provider)
         OPENAI_MODEL: Default OpenAI model (default: gpt-3.5-turbo)
