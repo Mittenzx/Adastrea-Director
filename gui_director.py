@@ -2675,7 +2675,7 @@ class AdastreaDirectorApp:
         self._update_status_label("llm_provider", llm_provider.title(), self.fg_color)
         
         # Check Gemini API key
-        gemini_key = os.getenv("GEMINI_KEY") or os.getenv("GOOGLE_API_KEY")
+        gemini_key = os.getenv("GEMINI_API_KEY") or os.getenv("GEMINI_KEY") or os.getenv("GOOGLE_API_KEY")
         if gemini_key:
             self._update_status_label("gemini_key", "● Configured", self.success_color)
         else:
@@ -4465,8 +4465,10 @@ Type your question below to get started! 🚀
         def on_ok():
             key = key_entry.get()
             if key:
-                os.environ['GEMINI_KEY'] = key
-                os.environ['GOOGLE_API_KEY'] = key  # Also set for compatibility
+                # Strip whitespace to handle copy-paste errors
+                key = key.strip()
+                # Set the primary environment variable; compatibility is handled via llm_config.py fallback
+                os.environ['GEMINI_API_KEY'] = key
                 
                 # Save to local config if checkbox is selected
                 if save_var.get():
@@ -4835,8 +4837,7 @@ Type your question below to get started! 🚀
                     gemini_key = gemini_key_entry.get().strip()
                     if gemini_key:
                         config_manager.set_api_key("gemini", gemini_key)
-                        os.environ['GEMINI_KEY'] = gemini_key
-                        os.environ['GOOGLE_API_KEY'] = gemini_key
+                        os.environ['GEMINI_API_KEY'] = gemini_key
                     
                     # Save OpenAI API key
                     openai_key = openai_key_entry.get().strip()
@@ -4922,8 +4923,7 @@ Type your question below to get started! 🚀
             import config_manager
             stored_key = config_manager.get_api_key("gemini")
             if stored_key:
-                os.environ['GEMINI_KEY'] = stored_key
-                os.environ['GOOGLE_API_KEY'] = stored_key
+                os.environ['GEMINI_API_KEY'] = stored_key
                 has_key = True
         except Exception:
             # Silently fail if config_manager is not available or config loading fails
@@ -4931,7 +4931,7 @@ Type your question below to get started! 🚀
             pass
         
         # Check environment variables
-        if not has_key and (os.getenv("GEMINI_KEY") or os.getenv("GOOGLE_API_KEY")):
+        if not has_key and (os.getenv("GEMINI_API_KEY") or os.getenv("GEMINI_KEY") or os.getenv("GOOGLE_API_KEY")):
             has_key = True
         
         # Prompt for key if not found

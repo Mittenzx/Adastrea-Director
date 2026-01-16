@@ -9,7 +9,8 @@ Currently supports:
 - OpenRouter (unified gateway to multiple models)
 
 Environment Variables:
-- GEMINI_KEY: API key for Google Gemini (default provider)
+- GEMINI_API_KEY: API key for Google Gemini (default provider, primary)
+- GEMINI_KEY: Legacy alias for GEMINI_API_KEY (backward compatibility, lower priority)
 - GEMINI_MODEL: Model to use (default: gemini-1.5-flash)
 - OPENAI_API_KEY: API key for OpenAI (legacy, if LLM_PROVIDER=openai)
 - OPENROUTER_API_KEY: API key for OpenRouter (if LLM_PROVIDER=openrouter)
@@ -84,6 +85,10 @@ def get_llm(model_name: Optional[str] = None, temperature: float = 0.7):
         ImportError: If required LangChain dependencies are not installed
     
     Environment Variables:
+        LLM_PROVIDER: Which provider to use (gemini or openai). Default: gemini
+        GEMINI_API_KEY: API key for Google Gemini (primary, highest priority)
+        GEMINI_KEY: Legacy alias for GEMINI_API_KEY (backward compatibility, medium priority)
+        GOOGLE_API_KEY: Alternative name for Gemini API key (fallback, lowest priority)
         LLM_PROVIDER: Which provider to use (gemini, openai, or openrouter). Default: gemini
         GEMINI_KEY: API key for Google Gemini
         GEMINI_MODEL: Default Gemini model (default: gemini-1.5-flash)
@@ -115,6 +120,10 @@ def get_llm(model_name: Optional[str] = None, temperature: float = 0.7):
             api_key = get_stored_api_key("openai")
         if not api_key:
             api_key = os.environ.get("OPENAI_API_KEY")
+        
+        # Strip whitespace from API key (handles copy-paste errors)
+        if api_key:
+            api_key = api_key.strip()
         
         kwargs = {
             "model_name": model,
@@ -161,12 +170,16 @@ def get_llm(model_name: Optional[str] = None, temperature: float = 0.7):
         # Use gemini-1.5-pro for complex planning tasks
         model = model_name or os.environ.get("GEMINI_MODEL", "gemini-1.5-flash")
         
-        # Priority: stored config -> GEMINI_KEY env var -> GOOGLE_API_KEY env var
+        # Priority: stored config -> GEMINI_API_KEY -> GEMINI_KEY (legacy) -> GOOGLE_API_KEY (fallback)
         api_key = None
         if CONFIG_MANAGER_AVAILABLE:
             api_key = get_stored_api_key("gemini")
         if not api_key:
-            api_key = os.environ.get("GEMINI_KEY") or os.environ.get("GOOGLE_API_KEY")
+            api_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GEMINI_KEY") or os.environ.get("GOOGLE_API_KEY")
+        
+        # Strip whitespace from API key (handles copy-paste errors)
+        if api_key:
+            api_key = api_key.strip()
         
         return ChatGoogleGenerativeAI(
             model=model,
@@ -221,6 +234,10 @@ def get_api_key_env_var() -> str:
     Get the environment variable name for the current provider's API key.
     
     Returns:
+        String: "GEMINI_API_KEY" or "OPENAI_API_KEY"
+    """
+    provider = os.environ.get("LLM_PROVIDER", "gemini").lower()
+    return "OPENAI_API_KEY" if provider == "openai" else "GEMINI_API_KEY"
         String: "GEMINI_KEY", "OPENAI_API_KEY", or "OPENROUTER_API_KEY"
     """
     provider = os.environ.get("LLM_PROVIDER", "gemini").lower()

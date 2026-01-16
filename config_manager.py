@@ -99,12 +99,16 @@ def _encrypt_value(value: str) -> str:
 def _decrypt_value(encrypted_value: str) -> str:
     """
     Decrypt a configuration value.
+    
+    Automatically strips leading/trailing whitespace from decrypted values
+    to handle copy-paste errors. This is a non-breaking enhancement since
+    API keys should never contain meaningful leading/trailing whitespace.
 
     Args:
         encrypted_value: The Fernet token (base64-encoded encrypted value)
 
     Returns:
-        Decrypted value
+        Decrypted value with leading/trailing whitespace stripped
     """
     if not encrypted_value:
         return ""
@@ -114,7 +118,8 @@ def _decrypt_value(encrypted_value: str) -> str:
         f = Fernet(key)
         encrypted = encrypted_value.encode()
         decrypted = f.decrypt(encrypted)
-        return decrypted.decode()
+        # Strip whitespace to handle copy-paste errors
+        return decrypted.decode().strip()
     except Exception:
         # If decryption fails, return empty string
         return ""
@@ -216,9 +221,12 @@ def set_api_key(provider: str, api_key: str) -> None:
     """
     Save API key for the specified provider to local config.
 
+    Automatically strips leading/trailing whitespace from API keys
+    to prevent authentication issues from copy-paste operations.
+
     Args:
         provider: The LLM provider ("gemini" or "openai")
-        api_key: The API key to save
+        api_key: The API key to save (whitespace will be automatically stripped)
     """
     provider = provider.lower()
     config = load_config()
@@ -226,6 +234,9 @@ def set_api_key(provider: str, api_key: str) -> None:
     if "api_keys" not in config:
         config["api_keys"] = {}
 
+    # Strip whitespace before encrypting to prevent copy-paste issues
+    api_key = api_key.strip() if api_key else ""
+    
     # Encrypt the API key before storing
     config["api_keys"][provider] = _encrypt_value(api_key)
     save_config(config)
