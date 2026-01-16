@@ -531,7 +531,7 @@ class IPCServer:
                     return {
                         'status': 'success',
                         'valid': False,
-                        'error': 'GEMINI_API_KEY not found in .env file. Please add GEMINI_API_KEY=your-api-key to your .env file. (Legacy variables GEMINI_KEY and GOOGLE_API_KEY are also supported)',
+                        'error': 'GEMINI_API_KEY not found. Please set GEMINI_API_KEY environment variable or add it to your .env file.',
                         'provider': 'gemini'
                     }
                 return self._validate_gemini_key(api_key)

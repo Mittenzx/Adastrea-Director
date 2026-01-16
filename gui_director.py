@@ -4459,11 +4459,8 @@ Type your question below to get started! 🚀
             if key:
                 # Strip whitespace to handle copy-paste errors
                 key = key.strip()
-                # Set all three environment variables for maximum compatibility across codebase
-                # This ensures both new code (using GEMINI_API_KEY) and legacy code work correctly
+                # Set the primary environment variable; compatibility is handled via llm_config.py fallback
                 os.environ['GEMINI_API_KEY'] = key
-                os.environ['GEMINI_KEY'] = key  # Also set for backward compatibility
-                os.environ['GOOGLE_API_KEY'] = key  # Also set for compatibility
                 
                 # Save to local config if checkbox is selected
                 if save_var.get():
@@ -4796,8 +4793,6 @@ Type your question below to get started! 🚀
                     if gemini_key:
                         config_manager.set_api_key("gemini", gemini_key)
                         os.environ['GEMINI_API_KEY'] = gemini_key
-                        os.environ['GEMINI_KEY'] = gemini_key
-                        os.environ['GOOGLE_API_KEY'] = gemini_key
                     
                     # Save OpenAI API key
                     openai_key = openai_key_entry.get().strip()
@@ -4878,8 +4873,6 @@ Type your question below to get started! 🚀
             stored_key = config_manager.get_api_key("gemini")
             if stored_key:
                 os.environ['GEMINI_API_KEY'] = stored_key
-                os.environ['GEMINI_KEY'] = stored_key
-                os.environ['GOOGLE_API_KEY'] = stored_key
                 has_key = True
         except Exception:
             # Silently fail if config_manager is not available or config loading fails

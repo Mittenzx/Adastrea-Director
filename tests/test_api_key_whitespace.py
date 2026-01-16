@@ -8,7 +8,7 @@ are properly stripped before being used for authentication.
 
 import os
 import pytest
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import patch, MagicMock
 import sys
 
 
@@ -32,9 +32,9 @@ class TestAPIKeyWhitespaceHandling:
             mock_langchain = MagicMock()
             sys.modules['langchain_google_genai'] = mock_langchain
             
-            # Import after mocking
-            import llm_config
+            # Import after mocking and reload to pick up mocked module
             from importlib import reload
+            import llm_config
             reload(llm_config)
             
             from llm_config import get_llm
@@ -44,7 +44,6 @@ class TestAPIKeyWhitespaceHandling:
             # Verify the API key was stripped
             call_kwargs = mock_langchain.ChatGoogleGenerativeAI.call_args[1]
             assert call_kwargs['google_api_key'] == 'test-key-with-spaces'
-            assert call_kwargs['google_api_key'] == call_kwargs['google_api_key'].strip()
         finally:
             # Restore environment
             for key, value in env_backup.items():
@@ -74,9 +73,9 @@ class TestAPIKeyWhitespaceHandling:
             mock_langchain = MagicMock()
             sys.modules['langchain_openai'] = mock_langchain
             
-            # Import after mocking
-            import llm_config
+            # Import after mocking and reload to pick up mocked module
             from importlib import reload
+            import llm_config
             reload(llm_config)
             
             from llm_config import get_llm
@@ -86,7 +85,6 @@ class TestAPIKeyWhitespaceHandling:
             # Verify the API key was stripped
             call_kwargs = mock_langchain.ChatOpenAI.call_args[1]
             assert call_kwargs['api_key'] == 'test-openai-key'
-            assert call_kwargs['api_key'] == call_kwargs['api_key'].strip()
         finally:
             # Restore environment
             for key, value in env_backup.items():
@@ -122,7 +120,6 @@ class TestAPIKeyWhitespaceHandling:
                 
                 # Verify it was stripped
                 assert retrieved_key == "test-key-whitespace"
-                assert retrieved_key == retrieved_key.strip()
         finally:
             # Clean up
             shutil.rmtree(temp_dir, ignore_errors=True)
@@ -151,7 +148,6 @@ class TestAPIKeyWhitespaceHandling:
                 
                 # Verify there's no whitespace
                 assert retrieved_key == "test-openai-key"
-                assert retrieved_key == retrieved_key.strip()
         finally:
             # Clean up
             shutil.rmtree(temp_dir, ignore_errors=True)
@@ -173,9 +169,9 @@ class TestAPIKeyWhitespaceHandling:
             mock_langchain = MagicMock()
             sys.modules['langchain_google_genai'] = mock_langchain
             
-            # Import after mocking
-            import llm_config
+            # Import after mocking and reload to pick up mocked module
             from importlib import reload
+            import llm_config
             reload(llm_config)
             
             from llm_config import get_llm
@@ -213,9 +209,9 @@ class TestAPIKeyWhitespaceHandling:
             mock_langchain = MagicMock()
             sys.modules['langchain_google_genai'] = mock_langchain
             
-            # Import after mocking
-            import llm_config
+            # Import after mocking and reload to pick up mocked module
             from importlib import reload
+            import llm_config
             reload(llm_config)
             
             from llm_config import get_llm
