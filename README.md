@@ -221,12 +221,12 @@ pip install -r requirements.txt
 **For document embeddings:** The system uses **HuggingFace embeddings by default** (no API key required, works offline).
 - See the [Wiki](https://github.com/Mittenzx/Adastrea-Director/wiki) for OpenAI embeddings setup if needed
 
-**For LLM queries:** Set up your preferred LLM provider. You have three options:
+**For LLM queries:** Set up your preferred LLM provider. You have four options:
 
 **Option A: Save to local config (Recommended - persists across repository clones)**
 ```bash
 # Via CLI
-python main.py --set-api-key gemini
+python main.py --set-api-key gemini  # or openai, or openrouter
 
 # Via GUI
 # When prompted, check "Save API key for future sessions"
@@ -238,13 +238,18 @@ Keys are securely stored in `~/.adastrea/config.json` and encrypted with a machi
 export GEMINI_KEY="your-api-key-here"
 # or for OpenAI
 export OPENAI_API_KEY="your-api-key-here"
+# or for OpenRouter
+export OPENROUTER_API_KEY="your-api-key-here"
 ```
 
 **Option C: Use .env file**
 ```bash
 cp .env.example .env
-# Edit .env and add your GEMINI_KEY
+# Edit .env and add your GEMINI_KEY, OPENAI_API_KEY, or OPENROUTER_API_KEY
 ```
+
+**Option D: Select provider in GUI Settings**
+Open the Settings dialog (⚙️) and configure your preferred provider and API key.
 
 **Priority:** Local config → Environment variables (including .env file)
 
@@ -466,7 +471,7 @@ python gui_director.py
 The improved GUI provides:
 - **Modern Dark Theme**: Professional appearance with reduced eye strain
 - **Comprehensive Settings Dialog**: Configure API keys, LLM providers, embedding providers, and display options
-- **API Key Management**: Secure storage for multiple providers (Gemini, OpenAI)
+- **API Key Management**: Secure storage for multiple providers (Gemini, OpenAI, OpenRouter)
 - **Knowledge Base Updates**: One-click knowledge base updates
 - **Ingest List Tab**: Visual checklist of ingested documents with statistics
 - **🎮 Unreal MCP Tab**: Direct integration with Unreal Engine via MCP

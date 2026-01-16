@@ -2463,6 +2463,7 @@ class AdastreaDirectorApp:
                 ("LLM Provider", "llm_provider"),
                 ("Gemini API Key", "gemini_key"),
                 ("OpenAI API Key", "openai_key"),
+                ("OpenRouter API Key", "openrouter_key"),
                 ("Embedding Provider", "embedding_provider")
             ]
         )
@@ -2686,6 +2687,13 @@ class AdastreaDirectorApp:
             self._update_status_label("openai_key", "● Configured", self.success_color)
         else:
             self._update_status_label("openai_key", "● Not set", self.fg_muted)
+        
+        # Check OpenRouter API key
+        openrouter_key = os.getenv("OPENROUTER_API_KEY")
+        if openrouter_key:
+            self._update_status_label("openrouter_key", "● Configured", self.success_color)
+        else:
+            self._update_status_label("openrouter_key", "● Not set", self.fg_muted)
         
         # Check embedding provider
         embedding_provider = os.getenv("EMBEDDING_PROVIDER", "huggingface")
@@ -4581,7 +4589,7 @@ Type your question below to get started! 🚀
         ).pack(side=tk.LEFT, padx=(0, 10))
         
         llm_provider_var = tk.StringVar(value=os.getenv("LLM_PROVIDER", "gemini"))
-        llm_providers = [("Gemini (Recommended)", "gemini"), ("OpenAI", "openai")]
+        llm_providers = [("Gemini (Recommended)", "gemini"), ("OpenAI", "openai"), ("OpenRouter", "openrouter")]
         
         for text, value in llm_providers:
             tk.Radiobutton(
@@ -4665,6 +4673,43 @@ Type your question below to get started! 🚀
                 if existing_key:
                     openai_key_entry.insert(0, existing_key)
             except (ImportError, KeyError, AttributeError):
+                pass
+        
+        # OpenRouter API Key
+        openrouter_frame = tk.Frame(api_section, bg=self.bg_color)
+        openrouter_frame.pack(fill=tk.X, pady=(0, 10))
+        
+        tk.Label(
+            openrouter_frame,
+            text="OpenRouter API Key:",
+            bg=self.bg_color,
+            fg=self.fg_color,
+            font=("Segoe UI", 10)
+        ).pack(anchor=tk.W, pady=(0, 5))
+        
+        openrouter_key_entry = tk.Entry(
+            openrouter_frame,
+            show='•',
+            font=("Segoe UI", 9),
+            bg=self.text_bg,
+            fg=self.fg_color,
+            insertbackground=self.fg_color,
+            relief=tk.FLAT,
+            highlightthickness=1,
+            highlightbackground=self.button_bg,
+            highlightcolor=self.accent_color
+        )
+        openrouter_key_entry.pack(fill=tk.X, pady=(0, 5))
+        
+        # Try to load existing key
+        if config_manager:
+            try:
+                existing_key = config_manager.get_api_key("openrouter")
+                if existing_key:
+                    openrouter_key_entry.insert(0, existing_key)
+            except (ImportError, KeyError, AttributeError):
+                # Silently ignore if config manager is unavailable or key doesn't exist
+                # User can still enter the key manually in the field
                 pass
         
         # Embedding Provider Selection
@@ -4798,6 +4843,12 @@ Type your question below to get started! 🚀
                     if openai_key:
                         config_manager.set_api_key("openai", openai_key)
                         os.environ['OPENAI_API_KEY'] = openai_key
+                    
+                    # Save OpenRouter API key
+                    openrouter_key = openrouter_key_entry.get().strip()
+                    if openrouter_key:
+                        config_manager.set_api_key("openrouter", openrouter_key)
+                        os.environ['OPENROUTER_API_KEY'] = openrouter_key
                 
                 # Save embedding provider
                 os.environ['EMBEDDING_PROVIDER'] = embedding_provider_var.get()
