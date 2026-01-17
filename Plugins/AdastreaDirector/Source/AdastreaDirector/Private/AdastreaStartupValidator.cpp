@@ -229,9 +229,11 @@ FStartupValidationResult FAdastreaStartupValidator::ValidateAPIKey(FPythonBridge
 				UE_LOG(LogAdastreaDirector, Log, TEXT("    Key Source: %s from .env file"), *UsedKey);
 				UE_LOG(LogAdastreaDirector, Log, TEXT("═══════════════════════════════════════════════════════"));
 				
-				return FStartupValidationResult::Success(
+				FStartupValidationResult Result = FStartupValidationResult::Success(
 					FString::Printf(TEXT("%s API key validated successfully (using %s from .env)"), *Provider, *UsedKey)
 				);
+				Result.UsedKeyName = UsedKey;
+				return Result;
 			}
 			else
 			{

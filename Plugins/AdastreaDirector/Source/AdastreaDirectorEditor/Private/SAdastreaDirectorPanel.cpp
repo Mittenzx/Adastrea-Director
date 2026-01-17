@@ -1707,22 +1707,9 @@ void SAdastreaDirectorPanel::UpdateStatusLights()
 			const FStartupValidationResult& APIKeyResult = CachedAPIKeyResult;
 			if (APIKeyResult.bSuccess)
 			{
-				// Extract which key was used from detailed status
-				FString UsedKey = TEXT("Valid");
-				if (APIKeyResult.DetailedStatus.Contains(TEXT("using ")))
-				{
-					// Extract the key name from the status message
-					int32 UsingIdx = APIKeyResult.DetailedStatus.Find(TEXT("using "));
-					if (UsingIdx != INDEX_NONE)
-					{
-						FString Remainder = APIKeyResult.DetailedStatus.RightChop(UsingIdx + 6);
-						int32 FromIdx = Remainder.Find(TEXT(" from"));
-						if (FromIdx != INDEX_NONE)
-						{
-							UsedKey = Remainder.Left(FromIdx);
-						}
-					}
-				}
+				// Use the dedicated UsedKeyName field if available, otherwise show "Valid"
+				FString UsedKey = APIKeyResult.UsedKeyName.IsEmpty() ? TEXT("Valid") : APIKeyResult.UsedKeyName;
+				
 				APIKeyStatusLight->SetStatus(
 					SStatusIndicator::EStatus::Good,
 					FText::Format(LOCTEXT("APIKeyValid", "API Key: {0}"), FText::FromString(UsedKey))
