@@ -436,7 +436,6 @@ Examples:
         console.print("\n[bold green]✓ Game repository ingestion complete![/bold green]")
         console.print("\n[cyan]You can now use the assistant with game repository knowledge:[/cyan]")
         console.print(f"  python main.py")
-        console.print(f"  python gui_director.py")
         sys.exit(0)
     else:
         console.print("\n[bold red]✗ Game repository ingestion failed[/bold red]")

@@ -119,7 +119,6 @@ Located in repository root:
 | Component | Purpose |
 |-----------|---------|
 | **main.py** | RAG-based Q&A CLI |
-| **gui_director.py** | Full-featured GUI application |
 | **planner.py / planning_cli.py** | Goal decomposition and planning |
 | **agent_orchestrator_cli.py** | Phase 3 autonomous agents CLI |
 | **agent_dashboard.py** | Real-time agent monitoring |

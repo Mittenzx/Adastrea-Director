@@ -249,7 +249,6 @@ def verify_installation():
         print("  python check_compatibility.py    # Run compatibility checks")
         print("  python validate_requirements.py  # Detailed validation")
         print("  python main.py                   # Start the CLI")
-        print("  python gui_director.py           # Start the GUI")
     else:
         print("❌ Some packages failed to import")
         print("\nPlease review the errors above and:")
