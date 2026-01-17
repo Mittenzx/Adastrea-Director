@@ -570,32 +570,100 @@ class IPCServer:
                     }
                     
             elif provider == 'openai':
-                api_key = os.environ.get('OPENAI_API_KEY')
-                # Strip whitespace to handle copy-paste errors
-                if api_key:
-                    api_key = api_key.strip()
-                    
-                if not api_key:
+                # Define key priority order for OpenAI
+                key_sources = [
+                    ('OPENAI_API_KEY', os.environ.get('OPENAI_API_KEY')),
+                    ('OPENAI_KEY', os.environ.get('OPENAI_KEY'))
+                ]
+                
+                tested_keys = []
+                last_error = None
+                
+                logger.info("Testing OpenAI API keys in priority order...")
+                for key_name, api_key in key_sources:
+                    if api_key:
+                        # Strip whitespace to handle copy-paste errors
+                        api_key = api_key.strip()
+                        if api_key:  # Check again after stripping
+                            tested_keys.append(key_name)
+                            logger.info(f"  Testing {key_name}...")
+                            
+                            result = self._validate_openai_key(api_key)
+                            
+                            if result.get('valid'):
+                                logger.info(f"  ✓ {key_name} is valid!")
+                                result['used_key'] = key_name
+                                result['tested_keys'] = ', '.join(tested_keys)
+                                return result
+                            else:
+                                logger.warning(f"  ✗ {key_name} validation failed: {result.get('error', 'Unknown error')}")
+                                last_error = result.get('error', 'Unknown error')
+                
+                # No valid keys found
+                if not tested_keys:
                     return {
                         'status': 'success',
                         'valid': False,
-                        'error': 'OPENAI_API_KEY not found in .env file. Please add OPENAI_API_KEY=your-api-key to your .env file.',
+                        'error': 'No OpenAI API keys found in .env file. Please add OPENAI_API_KEY=your-api-key to your .env file.',
                         'provider': 'openai',
                         'tested_keys': 'None'
                     }
-                
-                logger.info("Testing OpenAI API key...")
-                result = self._validate_openai_key(api_key)
-                
-                if result.get('valid'):
-                    logger.info("✓ OpenAI API key is valid!")
-                    result['used_key'] = 'OPENAI_API_KEY'
-                    result['tested_keys'] = 'OPENAI_API_KEY'
                 else:
-                    logger.warning(f"✗ OpenAI API key validation failed: {result.get('error', 'Unknown error')}")
-                    result['tested_keys'] = 'OPENAI_API_KEY'
+                    return {
+                        'status': 'success',
+                        'valid': False,
+                        'error': f'All OpenAI API keys failed validation. Last error: {last_error}',
+                        'provider': 'openai',
+                        'tested_keys': ', '.join(tested_keys)
+                    }
                     
-                return result
+            elif provider == 'openrouter':
+                # Define key priority order for OpenRouter
+                key_sources = [
+                    ('OPENROUTER_API_KEY', os.environ.get('OPENROUTER_API_KEY')),
+                    ('OPENROUTER_KEY', os.environ.get('OPENROUTER_KEY'))
+                ]
+                
+                tested_keys = []
+                last_error = None
+                
+                logger.info("Testing OpenRouter API keys in priority order...")
+                for key_name, api_key in key_sources:
+                    if api_key:
+                        # Strip whitespace to handle copy-paste errors
+                        api_key = api_key.strip()
+                        if api_key:  # Check again after stripping
+                            tested_keys.append(key_name)
+                            logger.info(f"  Testing {key_name}...")
+                            
+                            result = self._validate_openrouter_key(api_key)
+                            
+                            if result.get('valid'):
+                                logger.info(f"  ✓ {key_name} is valid!")
+                                result['used_key'] = key_name
+                                result['tested_keys'] = ', '.join(tested_keys)
+                                return result
+                            else:
+                                logger.warning(f"  ✗ {key_name} validation failed: {result.get('error', 'Unknown error')}")
+                                last_error = result.get('error', 'Unknown error')
+                
+                # No valid keys found
+                if not tested_keys:
+                    return {
+                        'status': 'success',
+                        'valid': False,
+                        'error': 'No OpenRouter API keys found in .env file. Please add OPENROUTER_API_KEY=your-api-key to your .env file.',
+                        'provider': 'openrouter',
+                        'tested_keys': 'None'
+                    }
+                else:
+                    return {
+                        'status': 'success',
+                        'valid': False,
+                        'error': f'All OpenRouter API keys failed validation. Last error: {last_error}',
+                        'provider': 'openrouter',
+                        'tested_keys': ', '.join(tested_keys)
+                    }
             else:
                 return {
                     'status': 'error',
@@ -761,6 +829,76 @@ class IPCServer:
                     'valid': False,
                     'error': 'Validation failed due to an unexpected error. Check server logs for details.',
                     'provider': 'openai'
+                }
+    
+    def _validate_openrouter_key(self, api_key: str) -> Dict[str, Any]:
+        """
+        Validate an OpenRouter API key by attempting a simple test request.
+        
+        Args:
+            api_key: The OpenRouter API key to validate
+            
+        Returns:
+            Dict with validation result
+        """
+        try:
+            # OpenRouter uses the OpenAI client with a custom base URL
+            try:
+                from openai import OpenAI
+                client = OpenAI(
+                    api_key=api_key,
+                    base_url="https://openrouter.ai/api/v1"
+                )
+                # Try to list models to verify the key
+                models = client.models.list()
+                model_count = len(list(models))
+                
+                return {
+                    'status': 'success',
+                    'valid': True,
+                    'message': f'OpenRouter API key is valid. Found {model_count} available models.',
+                    'provider': 'openrouter'
+                }
+            except ImportError:
+                return {
+                    'status': 'success',
+                    'valid': False,
+                    'error': 'OpenAI library not installed. Required for OpenRouter validation.',
+                    'provider': 'openrouter'
+                }
+            
+        except Exception as e:
+            error_msg = str(e)
+            
+            # Check for common error patterns
+            if '401' in error_msg or 'Unauthorized' in error_msg or 'invalid' in error_msg.lower():
+                return {
+                    'status': 'success',
+                    'valid': False,
+                    'error': 'API key is invalid or has been revoked',
+                    'provider': 'openrouter'
+                }
+            elif 'quota' in error_msg.lower() or 'rate limit' in error_msg.lower():
+                return {
+                    'status': 'success',
+                    'valid': True,
+                    'message': 'API key is valid but rate limit/quota may be exceeded',
+                    'provider': 'openrouter'
+                }
+            elif 'network' in error_msg.lower() or 'connection' in error_msg.lower():
+                return {
+                    'status': 'success',
+                    'valid': False,
+                    'error': 'Network error - cannot verify API key at this time',
+                    'provider': 'openrouter'
+                }
+            else:
+                logger.warning(f"OpenRouter validation error: {error_msg}")
+                return {
+                    'status': 'success',
+                    'valid': False,
+                    'error': 'Validation failed due to an unexpected error. Check server logs for details.',
+                    'provider': 'openrouter'
                 }
     
     def _handle_metrics(self, data: str) -> Dict[str, Any]:

@@ -131,9 +131,9 @@ FStartupValidationResult FAdastreaStartupValidator::ValidateAPIKey(FPythonBridge
 	UE_LOG(LogAdastreaDirector, Log, TEXT("🔍 Step 1/4: Checking LLM Provider Configuration"));
 	UE_LOG(LogAdastreaDirector, Log, TEXT("    Provider: %s"), *Provider);
 	
-	if (Provider != TEXT("gemini") && Provider != TEXT("openai"))
+	if (Provider != TEXT("gemini") && Provider != TEXT("openai") && Provider != TEXT("openrouter"))
 	{
-		UE_LOG(LogAdastreaDirector, Error, TEXT("❌ Invalid provider: %s (expected 'gemini' or 'openai')"), *Provider);
+		UE_LOG(LogAdastreaDirector, Error, TEXT("❌ Invalid provider: %s (expected 'gemini', 'openai', or 'openrouter')"), *Provider);
 		return FStartupValidationResult::Failure(
 			FString::Printf(TEXT("Unknown LLM provider: %s"), *Provider)
 		);
@@ -150,9 +150,15 @@ FStartupValidationResult FAdastreaStartupValidator::ValidateAPIKey(FPythonBridge
 		UE_LOG(LogAdastreaDirector, Log, TEXT("    2. GEMINI_KEY (legacy alias)"));
 		UE_LOG(LogAdastreaDirector, Log, TEXT("    3. GOOGLE_API_KEY (fallback)"));
 	}
-	else
+	else if (Provider == TEXT("openai"))
 	{
-		UE_LOG(LogAdastreaDirector, Log, TEXT("    1. OPENAI_API_KEY"));
+		UE_LOG(LogAdastreaDirector, Log, TEXT("    1. OPENAI_API_KEY (primary)"));
+		UE_LOG(LogAdastreaDirector, Log, TEXT("    2. OPENAI_KEY (legacy alias)"));
+	}
+	else if (Provider == TEXT("openrouter"))
+	{
+		UE_LOG(LogAdastreaDirector, Log, TEXT("    1. OPENROUTER_API_KEY (primary)"));
+		UE_LOG(LogAdastreaDirector, Log, TEXT("    2. OPENROUTER_KEY (legacy alias)"));
 	}
 	
 	TSharedPtr<FJsonObject> RequestData = MakeShared<FJsonObject>();
