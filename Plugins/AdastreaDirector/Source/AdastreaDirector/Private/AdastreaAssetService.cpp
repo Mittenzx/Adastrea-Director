@@ -174,6 +174,7 @@ FAssetInfo FAdastreaAssetService::ConvertAssetData(const FAssetData& AssetData)
 	Info.Name = AssetData.AssetName.ToString();
 	Info.Path = AssetData.GetObjectPathString();
 	Info.Class = AssetData.AssetClassPath.GetAssetName().ToString();
+	Info.DiskSize = 0; // Initialize to 0 in case package data is not available
 	
 	// Get disk size - UE 5.6+ uses GetAssetPackageDataCopy
 	FAssetPackageData PackageData;

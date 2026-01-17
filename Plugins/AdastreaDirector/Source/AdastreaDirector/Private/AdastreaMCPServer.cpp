@@ -42,7 +42,7 @@ bool FAdastreaMCPServer::Start(int32 Port)
 	FHttpRouteHandle ListToolsHandle = HttpRouter->BindRoute(
 		FHttpPath(TEXT("/mcp/tools/list")),
 		EHttpServerRequestVerbs::VERB_POST,
-		[this](const FHttpServerRequest& Request, const FHttpResultCallback& OnComplete, FHttpConnectionContextPtr Connection) {
+		[this](const FHttpServerRequest& Request, const FHttpResultCallback& OnComplete, [[maybe_unused]] FHttpConnectionContextPtr Connection) {
 			return HandleListTools(Request, OnComplete);
 		}
 	);
@@ -51,7 +51,7 @@ bool FAdastreaMCPServer::Start(int32 Port)
 	FHttpRouteHandle ExecuteToolHandle = HttpRouter->BindRoute(
 		FHttpPath(TEXT("/mcp/tools/call")),
 		EHttpServerRequestVerbs::VERB_POST,
-		[this](const FHttpServerRequest& Request, const FHttpResultCallback& OnComplete, FHttpConnectionContextPtr Connection) {
+		[this](const FHttpServerRequest& Request, const FHttpResultCallback& OnComplete, [[maybe_unused]] FHttpConnectionContextPtr Connection) {
 			return HandleExecuteTool(Request, OnComplete);
 		}
 	);
@@ -60,7 +60,7 @@ bool FAdastreaMCPServer::Start(int32 Port)
 	FHttpRouteHandle GetResourcesHandle = HttpRouter->BindRoute(
 		FHttpPath(TEXT("/mcp/resources")),
 		EHttpServerRequestVerbs::VERB_POST,
-		[this](const FHttpServerRequest& Request, const FHttpResultCallback& OnComplete, FHttpConnectionContextPtr Connection) {
+		[this](const FHttpServerRequest& Request, const FHttpResultCallback& OnComplete, [[maybe_unused]] FHttpConnectionContextPtr Connection) {
 			return HandleGetResources(Request, OnComplete);
 		}
 	);
