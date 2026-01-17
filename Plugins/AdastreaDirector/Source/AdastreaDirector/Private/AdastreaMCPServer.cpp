@@ -5,6 +5,8 @@
 #include "AdastreaToolSystem.h"
 #include "HttpServerModule.h"
 #include "HttpServerResponse.h"
+#include "HttpServerRequest.h"
+#include "HttpConnectionContext.h"
 #include "Serialization/JsonSerializer.h"
 #include "Serialization/JsonWriter.h"
 
@@ -40,7 +42,7 @@ bool FAdastreaMCPServer::Start(int32 Port)
 	FHttpRouteHandle ListToolsHandle = HttpRouter->BindRoute(
 		FHttpPath(TEXT("/mcp/tools/list")),
 		EHttpServerRequestVerbs::VERB_POST,
-		[this](const FHttpServerRequest& Request, const FHttpResultCallback& OnComplete) {
+		[this](const FHttpServerRequest& Request, const FHttpResultCallback& OnComplete, FHttpConnectionContextPtr Connection) {
 			return HandleListTools(Request, OnComplete);
 		}
 	);
@@ -49,7 +51,7 @@ bool FAdastreaMCPServer::Start(int32 Port)
 	FHttpRouteHandle ExecuteToolHandle = HttpRouter->BindRoute(
 		FHttpPath(TEXT("/mcp/tools/call")),
 		EHttpServerRequestVerbs::VERB_POST,
-		[this](const FHttpServerRequest& Request, const FHttpResultCallback& OnComplete) {
+		[this](const FHttpServerRequest& Request, const FHttpResultCallback& OnComplete, FHttpConnectionContextPtr Connection) {
 			return HandleExecuteTool(Request, OnComplete);
 		}
 	);
@@ -58,7 +60,7 @@ bool FAdastreaMCPServer::Start(int32 Port)
 	FHttpRouteHandle GetResourcesHandle = HttpRouter->BindRoute(
 		FHttpPath(TEXT("/mcp/resources")),
 		EHttpServerRequestVerbs::VERB_POST,
-		[this](const FHttpServerRequest& Request, const FHttpResultCallback& OnComplete) {
+		[this](const FHttpServerRequest& Request, const FHttpResultCallback& OnComplete, FHttpConnectionContextPtr Connection) {
 			return HandleGetResources(Request, OnComplete);
 		}
 	);

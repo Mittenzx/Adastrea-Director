@@ -54,6 +54,7 @@ public class AdastreaDirector : ModuleRules
 				"AssetTools",        // For asset import and creation
 				"AssetRegistry",     // For asset queries
 				"EditorScriptingUtilities", // For EditorAssetLibrary
+				"ContentBrowser",    // For getting selected assets in UE 5.6+
 				// ... add private dependencies that you statically link with here ...	
 			}
 		);

@@ -18,6 +18,8 @@
 #include "HAL/PlatformFileManager.h"
 #include "Misc/Paths.h"
 #include "Misc/EngineVersion.h"
+#include "IContentBrowserSingleton.h"
+#include "ContentBrowserModule.h"
 
 UUEBridge::UUEBridge()
 {
@@ -72,14 +74,10 @@ FAdastreaResult UUEBridge::GetSelectedAssets(TArray<FUEAssetInfo>& OutAssets)
 	OutAssets.Empty();
 
 #if WITH_EDITOR
-	UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
-	if (!EditorAssetSubsystem)
-	{
-		return FAdastreaResult::MakeError(TEXT("Failed to get EditorAssetSubsystem"));
-	}
-
+	// UE 5.6+: Use ContentBrowserModule to get selected assets
+	FContentBrowserModule& ContentBrowserModule = FModuleManager::LoadModuleChecked<FContentBrowserModule>("ContentBrowser");
 	TArray<FAssetData> SelectedAssets;
-	EditorAssetSubsystem->GetSelectedAssets(SelectedAssets);
+	ContentBrowserModule.Get().GetSelectedAssets(SelectedAssets);
 
 	for (const FAssetData& AssetData : SelectedAssets)
 	{
