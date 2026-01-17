@@ -460,51 +460,6 @@ python unreal_mcp_cli.py run-python "import unreal; print(unreal.SystemLibrary.g
 
 **🔗 Related Project:** [Adastrea-MCP](https://github.com/Mittenzx/Adastrea-MCP) - Complementary MCP server providing static analysis, code generation, and UE5.6+ knowledge (37 tools). Can integrate with Adastrea-Director for comprehensive UE development assistance. See [MCP Integration Architecture](Documentation/architecture/MCP_INTEGRATION_ARCHITECTURE.md) for details.
 
-#### Graphical User Interface (GUI - Standalone)
-
-For a more user-friendly experience, you can use the enhanced GUI application:
-
-```bash
-python gui_director.py
-```
-
-The improved GUI provides:
-- **Modern Dark Theme**: Professional appearance with reduced eye strain
-- **Comprehensive Settings Dialog**: Configure API keys, LLM providers, embedding providers, and display options
-- **API Key Management**: Secure storage for multiple providers (Gemini, OpenAI, OpenRouter)
-- **Knowledge Base Updates**: One-click knowledge base updates
-- **Ingest List Tab**: Visual checklist of ingested documents with statistics
-- **🎮 Unreal MCP Tab**: Direct integration with Unreal Engine via MCP
-- **🐛 Debug Logs Tab**: Real-time log viewer with auto-refresh and colorized output
-- **Conversation History**: Full conversation display with timestamps and color-coding
-- **Keyboard Shortcuts**: Fast workflow with comprehensive keyboard support
-- **Copy & Export**: One-click copy to clipboard and export conversations to file
-- **Font Size Controls**: Adjustable text size for better accessibility
-- **Menu Bar**: File, Edit, and Help menus with full functionality
-- **Tooltips**: Helpful hints on all interactive elements
-- **Status Feedback**: Real-time status updates with visual indicators
-- **Comprehensive Logging**: All operations logged with structured output for debugging
-
-**🎮 Unreal MCP Tab Features:**
-- Connect/disconnect to Unreal Engine via MCP server
-- Quick access to common tools (Project Info, Map Info, Assets, World Outliner)
-- Python code execution directly in Unreal Editor
-- Console command execution
-- Real-time output display with JSON formatting
-- **✨ Automatic UE log capture** - All UE output is saved to dated log files for agent processing
-
-**Keyboard Shortcuts:**
-- `Enter` or `Ctrl+Enter` - Send question
-- `Ctrl+K` - Set API Key (quick access)
-- `Ctrl+,` - Open Settings dialog (comprehensive configuration)
-- `Ctrl+U` - Update knowledge base
-- `Ctrl+L` - Clear conversation
-- `Ctrl+C` - Copy last response (from menu)
-- `Ctrl+E` - Export conversation
-
-**Documentation:** See the [GUI Guide](https://github.com/Mittenzx/Adastrea-Director/wiki) in the Wiki for complete feature documentation
-
-**Note**: The GUI application requires tkinter, which is included with most Python installations on Windows and can be installed on Linux/Mac.
 
 ## Project Structure
 
@@ -523,7 +478,7 @@ Adastrea-Director/
 ├── ingest_game_repo.py            # Game repository ingestion
 ├── main.py                        # P1 CLI entry point
 ├── planner.py                     # P2 planning CLI
-├── gui_director.py                # GUI application
+
 ├── ue_log_capture.py              # UE log capture module
 ├── agent_orchestrator_cli.py      # P3 agent CLI
 ├── agent_dashboard.py             # P3 dashboard
@@ -601,9 +556,6 @@ Adastrea Director includes a comprehensive test suite to ensure reliability and 
 ```bash
 # Run all tests
 pytest
-
-# Run GUI tests specifically
-pytest tests/test_gui_director.py -v
 
 # Run with coverage report
 pytest --cov=. --cov-report=html

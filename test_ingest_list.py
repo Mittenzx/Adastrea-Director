@@ -120,8 +120,6 @@ def main():
     print("=" * 60)
     if success:
         print("✓ All tests passed!")
-        print("\nYou can now run the GUI and see the Ingest List tab:")
-        print("  python gui_director.py")
     else:
         print("⚠️  Tests incomplete")
         print("\nPlease follow the instructions above to complete setup.")

@@ -130,16 +130,6 @@ class TestChromaDBTelemetryFix:
         )
     
     @pytest.mark.unit
-    def test_gui_director_sets_telemetry_env(self):
-        """Test that gui_director.py sets ANONYMIZED_TELEMETRY."""
-        gui_file = Path(__file__).parent.parent / "gui_director.py"
-        content = gui_file.read_text()
-        
-        assert 'os.environ["ANONYMIZED_TELEMETRY"]' in content, (
-            "gui_director.py should set ANONYMIZED_TELEMETRY"
-        )
-    
-    @pytest.mark.unit
     def test_test_ingest_list_sets_telemetry_env(self):
         """Test that test_ingest_list.py sets ANONYMIZED_TELEMETRY."""
         test_file = Path(__file__).parent.parent / "test_ingest_list.py"

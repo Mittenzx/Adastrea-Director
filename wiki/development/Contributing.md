@@ -120,9 +120,6 @@ Manual testing:
 # Test CLI
 python main.py
 
-# Test GUI
-python gui_director.py
-
 # Test planning
 python planner.py --interactive
 

@@ -47,9 +47,6 @@ Standalone mode provides a Python-based interface (CLI and GUI) for using Adastr
 - `agent_orchestrator_cli.py` - Agent management
 - `agent_dashboard.py` - Real-time monitoring
 
-**GUI Application:**
-- `gui_director.py` - Graphical interface with all features
-
 ### Features
 
 ✅ **All Core Features:**
@@ -87,12 +84,6 @@ python planner.py --interactive
 
 # Agent orchestrator
 python agent_orchestrator_cli.py start --all
-```
-
-**GUI:**
-```bash
-# Start GUI application
-python gui_director.py
 ```
 
 ### Advantages

@@ -61,17 +61,6 @@ python main.py
 > quit
 ```
 
-#### GUI Mode
-
-```bash
-# Start the GUI
-python gui_director.py
-
-# 1. Type your question in the input box
-# 2. Press Enter or click "Send"
-# 3. View the answer with source citations
-```
-
 #### Single Query Mode
 
 ```bash

@@ -128,7 +128,6 @@ Orchestrator → Event Bus ← Agents
 
 **Components:**
 - Python CLI (`main.py`, `planner.py`, `agent_orchestrator_cli.py`)
-- Python GUI (`gui_director.py`)
 - Agent Dashboard (`agent_dashboard.py`)
 
 **Advantages:**

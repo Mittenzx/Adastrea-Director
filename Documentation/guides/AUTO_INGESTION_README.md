@@ -339,7 +339,7 @@ If ingestion is slow:
 
 ## Integration with GUI
 
-These modules are designed for GUI integration. See `gui_director.py` for how to integrate:
+These modules are designed for integration with the system.
 
 ```python
 # Create auto-ingestion tab

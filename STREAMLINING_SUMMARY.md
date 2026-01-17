@@ -151,7 +151,7 @@ Clear guidance for developers:
 ## What Was Kept
 
 ### Standalone Python System (Fully Functional)
-- ✅ main.py, gui_director.py (RAG-based Q&A)
+- ✅ main.py (RAG-based Q&A)
 - ✅ planner.py, planning_cli.py (goal decomposition)
 - ✅ agent_orchestrator_cli.py, agent_dashboard.py (autonomous agents)
 - ✅ ingest.py, ingest_game_repo.py (document ingestion)

@@ -11,7 +11,6 @@ This document provides a security analysis of the UE log capture feature impleme
 ## Components Reviewed
 
 - `ue_log_capture.py` - Core log capture module
-- `gui_director.py` - GUI integration
 - `tests/test_ue_log_capture.py` - Test suite
 
 ## Vulnerabilities Discovered

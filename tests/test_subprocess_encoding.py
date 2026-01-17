@@ -2,8 +2,8 @@
 """
 Test to verify that subprocess calls properly handle UTF-8 encoding.
 
-This test ensures that the encoding fixes in ingest_game_repo.py, gui_director.py,
-and other files properly handle UTF-8 characters in subprocess output on Windows.
+This test ensures that the encoding fixes in ingest_game_repo.py and
+other files properly handle UTF-8 characters in subprocess output on Windows.
 """
 
 import subprocess
