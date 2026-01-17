@@ -50,10 +50,6 @@
 		{
 			"Name": "HTTPServer",
 			"Enabled": true
-		},
-		{
-			"Name": "UMG",
-			"Enabled": true
 		}
 	]
 }
