@@ -46,6 +46,14 @@
 		{
 			"Name": "EditorScriptingUtilities",
 			"Enabled": true
+		},
+		{
+			"Name": "HTTPServer",
+			"Enabled": true
+		},
+		{
+			"Name": "UMG",
+			"Enabled": true
 		}
 	]
 }
