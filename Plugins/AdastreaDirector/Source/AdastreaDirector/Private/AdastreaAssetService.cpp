@@ -176,12 +176,12 @@ FAssetInfo FAdastreaAssetService::ConvertAssetData(const FAssetData& AssetData)
 	Info.Class = AssetData.AssetClassPath.GetAssetName().ToString();
 	Info.DiskSize = 0; // Initialize to 0 in case package data is not available
 	
-	// Get disk size - UE 5.6+ uses GetAssetPackageDataCopy
-	FAssetPackageData PackageData;
+	// Get disk size - UE 5.6+ uses GetAssetPackageDataCopy returning TOptional
 	IAssetRegistry& AssetRegistry = GetAssetRegistry();
-	if (AssetRegistry.GetAssetPackageDataCopy(AssetData.PackageName, PackageData))
+	TOptional<FAssetPackageData> PackageData = AssetRegistry.GetAssetPackageDataCopy(AssetData.PackageName);
+	if (PackageData.IsSet())
 	{
-		Info.DiskSize = PackageData.DiskSize;
+		Info.DiskSize = PackageData.GetValue().DiskSize;
 	}
 	
 	return Info;
