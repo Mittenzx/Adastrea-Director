@@ -620,8 +620,9 @@ TSharedRef<SWidget> SAdastreaDirectorPanel::CreateDashboardTab()
 				SNew(SGridPanel)
 				.FillColumn(0, 1.0f)
 				.FillColumn(1, 1.0f)
+				.FillColumn(2, 1.0f)
 				
-				// Row 0: Python Process & IPC Connection
+				// Row 0: Python Process, IPC Connection, & API Key Status
 				+ SGridPanel::Slot(0, 0)
 				.Padding(5.0f)
 				[
@@ -635,6 +636,14 @@ TSharedRef<SWidget> SAdastreaDirectorPanel::CreateDashboardTab()
 				[
 					SAssignNew(IPCConnectionStatusLight, SStatusIndicator)
 					.StatusText(LOCTEXT("IPCConnectionStatus", "IPC Connection"))
+					.InitialStatus(SStatusIndicator::EStatus::Unknown)
+				]
+				
+				+ SGridPanel::Slot(2, 0)
+				.Padding(5.0f)
+				[
+					SAssignNew(APIKeyStatusLight, SStatusIndicator)
+					.StatusText(LOCTEXT("APIKeyStatus", "API Key Validation"))
 					.InitialStatus(SStatusIndicator::EStatus::Unknown)
 				]
 				
@@ -1571,6 +1580,8 @@ void SAdastreaDirectorPanel::SetAllStatusLightsToError(const FText& Reason)
 		BridgeReadyStatusLight->SetStatus(SStatusIndicator::EStatus::Error, FText::Format(LOCTEXT("BridgeReadyErrorFmt", "Python Bridge: {0}"), Reason));
 	if (BackendHealthStatusLight.IsValid())
 		BackendHealthStatusLight->SetStatus(SStatusIndicator::EStatus::Error, FText::Format(LOCTEXT("BackendHealthErrorFmt", "Backend Health: {0}"), Reason));
+	if (APIKeyStatusLight.IsValid())
+		APIKeyStatusLight->SetStatus(SStatusIndicator::EStatus::Error, FText::Format(LOCTEXT("APIKeyErrorFmt", "API Key: {0}"), Reason));
 	if (QueryProcessingStatusLight.IsValid())
 		QueryProcessingStatusLight->SetStatus(SStatusIndicator::EStatus::Error, FText::Format(LOCTEXT("QueryProcessingErrorFmt", "Query Processing: {0}"), Reason));
 	if (IngestionStatusLight.IsValid())
@@ -1607,6 +1618,8 @@ void SAdastreaDirectorPanel::UpdateStatusLights()
 			BridgeReadyStatusLight->SetStatus(SStatusIndicator::EStatus::Error, LOCTEXT("BridgeReadyNotInit", "Python Bridge: Not initialized"));
 		if (BackendHealthStatusLight.IsValid())
 			BackendHealthStatusLight->SetStatus(SStatusIndicator::EStatus::Error, LOCTEXT("BackendHealthNotInit", "Backend Health: Bridge not initialized"));
+		if (APIKeyStatusLight.IsValid())
+			APIKeyStatusLight->SetStatus(SStatusIndicator::EStatus::Unknown, LOCTEXT("APIKeyNotInit", "API Key: Cannot check (bridge not initialized)"));
 		if (QueryProcessingStatusLight.IsValid())
 			QueryProcessingStatusLight->SetStatus(SStatusIndicator::EStatus::Unknown, LOCTEXT("QueryProcessingIdle", "Query Processing: Idle"));
 		if (IngestionStatusLight.IsValid())
@@ -1668,6 +1681,49 @@ void SAdastreaDirectorPanel::UpdateStatusLights()
 			BridgeReadyStatusLight->SetStatus(SStatusIndicator::EStatus::Good, LOCTEXT("BridgeReady", "Python Bridge: Ready"));
 		if (BackendHealthStatusLight.IsValid())
 			BackendHealthStatusLight->SetStatus(SStatusIndicator::EStatus::Good, LOCTEXT("BackendHealthGood", "Backend Health: Operational"));
+		
+		// Check API key validation when backend is ready
+		if (APIKeyStatusLight.IsValid())
+		{
+			FStartupValidationResult APIKeyResult = FAdastreaStartupValidator::ValidateAPIKey(PythonBridge);
+			if (APIKeyResult.bSuccess)
+			{
+				// Extract which key was used from detailed status
+				FString UsedKey = TEXT("Valid");
+				if (APIKeyResult.DetailedStatus.Contains(TEXT("using ")))
+				{
+					// Extract the key name from the status message
+					int32 UsingIdx = APIKeyResult.DetailedStatus.Find(TEXT("using "));
+					if (UsingIdx != INDEX_NONE)
+					{
+						FString Remainder = APIKeyResult.DetailedStatus.RightChop(UsingIdx + 6);
+						int32 FromIdx = Remainder.Find(TEXT(" from"));
+						if (FromIdx != INDEX_NONE)
+						{
+							UsedKey = Remainder.Left(FromIdx);
+						}
+					}
+				}
+				APIKeyStatusLight->SetStatus(
+					SStatusIndicator::EStatus::Good,
+					FText::Format(LOCTEXT("APIKeyValid", "API Key: {0}"), FText::FromString(UsedKey))
+				);
+			}
+			else
+			{
+				// Show which keys were tested if available
+				FString ErrorMsg = APIKeyResult.ErrorMessage;
+				if (ErrorMsg.Len() > 50)
+				{
+					// Truncate long error messages
+					ErrorMsg = ErrorMsg.Left(47) + TEXT("...");
+				}
+				APIKeyStatusLight->SetStatus(
+					SStatusIndicator::EStatus::Error,
+					FText::Format(LOCTEXT("APIKeyInvalid", "API Key: {0}"), FText::FromString(ErrorMsg))
+				);
+			}
+		}
 	}
 	else
 	{
@@ -1675,6 +1731,8 @@ void SAdastreaDirectorPanel::UpdateStatusLights()
 			BridgeReadyStatusLight->SetStatus(SStatusIndicator::EStatus::Error, LOCTEXT("BridgeNotReady", "Python Bridge: Not ready"));
 		if (BackendHealthStatusLight.IsValid())
 			BackendHealthStatusLight->SetStatus(SStatusIndicator::EStatus::Error, LOCTEXT("BackendHealthBad", "Backend Health: Not operational"));
+		if (APIKeyStatusLight.IsValid())
+			APIKeyStatusLight->SetStatus(SStatusIndicator::EStatus::Unknown, LOCTEXT("APIKeyUnknown", "API Key: Cannot check (backend not ready)"));
 	}
 
 	// Check query processing state

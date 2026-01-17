@@ -115,22 +115,46 @@ FStartupValidationResult FAdastreaStartupValidator::ValidateBackend(FPythonBridg
 
 FStartupValidationResult FAdastreaStartupValidator::ValidateAPIKey(FPythonBridge* PythonBridge)
 {
+	UE_LOG(LogAdastreaDirector, Log, TEXT("═══════════════════════════════════════════════════════"));
+	UE_LOG(LogAdastreaDirector, Log, TEXT("  API Key Validation - Checking LLM Provider Access"));
+	UE_LOG(LogAdastreaDirector, Log, TEXT("═══════════════════════════════════════════════════════"));
+	
 	if (!PythonBridge || !PythonBridge->IsReady())
 	{
+		UE_LOG(LogAdastreaDirector, Error, TEXT("❌ Backend Connectivity: Python bridge is not ready"));
 		return FStartupValidationResult::Failure(TEXT("Cannot validate API key - backend not ready"));
 	}
 
 	FAdastreaSettings& Settings = FAdastreaSettings::Get();
 	FString Provider = Settings.GetLLMProvider();
 	
+	UE_LOG(LogAdastreaDirector, Log, TEXT("🔍 Step 1/4: Checking LLM Provider Configuration"));
+	UE_LOG(LogAdastreaDirector, Log, TEXT("    Provider: %s"), *Provider);
+	
 	if (Provider != TEXT("gemini") && Provider != TEXT("openai"))
 	{
+		UE_LOG(LogAdastreaDirector, Error, TEXT("❌ Invalid provider: %s (expected 'gemini' or 'openai')"), *Provider);
 		return FStartupValidationResult::Failure(
 			FString::Printf(TEXT("Unknown LLM provider: %s"), *Provider)
 		);
 	}
+	UE_LOG(LogAdastreaDirector, Log, TEXT("✅ Provider configuration valid"));
 
 	// Build JSON request with provider only (API key is read from .env by Python backend)
+	UE_LOG(LogAdastreaDirector, Log, TEXT(""));
+	UE_LOG(LogAdastreaDirector, Log, TEXT("🔍 Step 2/4: Scanning .env File for API Keys"));
+	UE_LOG(LogAdastreaDirector, Log, TEXT("    The backend will check for keys in priority order:"));
+	if (Provider == TEXT("gemini"))
+	{
+		UE_LOG(LogAdastreaDirector, Log, TEXT("    1. GEMINI_API_KEY (primary, recommended)"));
+		UE_LOG(LogAdastreaDirector, Log, TEXT("    2. GEMINI_KEY (legacy alias)"));
+		UE_LOG(LogAdastreaDirector, Log, TEXT("    3. GOOGLE_API_KEY (fallback)"));
+	}
+	else
+	{
+		UE_LOG(LogAdastreaDirector, Log, TEXT("    1. OPENAI_API_KEY"));
+	}
+	
 	TSharedPtr<FJsonObject> RequestData = MakeShared<FJsonObject>();
 	RequestData->SetStringField(TEXT("provider"), Provider);
 	// Don't send api_key - the Python backend will read it from .env file
@@ -140,9 +164,14 @@ FStartupValidationResult FAdastreaStartupValidator::ValidateAPIKey(FPythonBridge
 	FJsonSerializer::Serialize(RequestData.ToSharedRef(), Writer);
 
 	// Send validation request to backend
+	UE_LOG(LogAdastreaDirector, Log, TEXT(""));
+	UE_LOG(LogAdastreaDirector, Log, TEXT("🔍 Step 3/4: Testing API Key with Provider"));
+	UE_LOG(LogAdastreaDirector, Log, TEXT("    Sending validation request to backend..."));
+	
 	FString Response;
 	if (!PythonBridge->SendRequest(TEXT("validate_api_key"), RequestDataString, Response))
 	{
+		UE_LOG(LogAdastreaDirector, Error, TEXT("❌ Backend communication failed"));
 		FStartupValidationResult Result = FStartupValidationResult::Failure(
 			TEXT("Failed to communicate with backend for API key validation")
 		);
@@ -156,6 +185,7 @@ FStartupValidationResult FAdastreaStartupValidator::ValidateAPIKey(FPythonBridge
 	
 	if (!FJsonSerializer::Deserialize(Reader, JsonObject) || !JsonObject.IsValid())
 	{
+		UE_LOG(LogAdastreaDirector, Error, TEXT("❌ Failed to parse validation response"));
 		FStartupValidationResult Result = FStartupValidationResult::Failure(
 			TEXT("Failed to parse API key validation response")
 		);
@@ -166,6 +196,7 @@ FStartupValidationResult FAdastreaStartupValidator::ValidateAPIKey(FPythonBridge
 	FString Status;
 	if (!JsonObject->TryGetStringField(TEXT("status"), Status))
 	{
+		UE_LOG(LogAdastreaDirector, Error, TEXT("❌ Response missing status field"));
 		FStartupValidationResult Result = FStartupValidationResult::Failure(
 			TEXT("Invalid validation response format")
 		);
@@ -173,6 +204,9 @@ FStartupValidationResult FAdastreaStartupValidator::ValidateAPIKey(FPythonBridge
 		return Result;
 	}
 
+	UE_LOG(LogAdastreaDirector, Log, TEXT(""));
+	UE_LOG(LogAdastreaDirector, Log, TEXT("🔍 Step 4/4: Analyzing Validation Results"));
+	
 	if (Status == TEXT("success"))
 	{
 		bool bValid = false;
@@ -180,14 +214,49 @@ FStartupValidationResult FAdastreaStartupValidator::ValidateAPIKey(FPythonBridge
 		
 		if (bValid)
 		{
-			return FStartupValidationResult::Success(
-				FString::Printf(TEXT("%s API key validated successfully (from .env)"), *Provider)
-			);
+			// Extract which key was used
+			FString UsedKey;
+			if (JsonObject->TryGetStringField(TEXT("used_key"), UsedKey) && !UsedKey.IsEmpty())
+			{
+				UE_LOG(LogAdastreaDirector, Log, TEXT("✅ API Key Validated Successfully!"));
+				UE_LOG(LogAdastreaDirector, Log, TEXT("    Provider: %s"), *Provider);
+				UE_LOG(LogAdastreaDirector, Log, TEXT("    Key Source: %s from .env file"), *UsedKey);
+				UE_LOG(LogAdastreaDirector, Log, TEXT("═══════════════════════════════════════════════════════"));
+				
+				return FStartupValidationResult::Success(
+					FString::Printf(TEXT("%s API key validated successfully (using %s from .env)"), *Provider, *UsedKey)
+				);
+			}
+			else
+			{
+				UE_LOG(LogAdastreaDirector, Log, TEXT("✅ API Key Validated Successfully!"));
+				UE_LOG(LogAdastreaDirector, Log, TEXT("    Provider: %s"), *Provider);
+				UE_LOG(LogAdastreaDirector, Log, TEXT("═══════════════════════════════════════════════════════"));
+				
+				return FStartupValidationResult::Success(
+					FString::Printf(TEXT("%s API key validated successfully (from .env)"), *Provider)
+				);
+			}
 		}
 		else
 		{
 			FString ErrorDetail;
 			JsonObject->TryGetStringField(TEXT("error"), ErrorDetail);
+			
+			// Extract which keys were tried
+			FString TestedKeys;
+			if (JsonObject->TryGetStringField(TEXT("tested_keys"), TestedKeys))
+			{
+				UE_LOG(LogAdastreaDirector, Error, TEXT("❌ API Key Validation Failed"));
+				UE_LOG(LogAdastreaDirector, Error, TEXT("    Keys Tested: %s"), *TestedKeys);
+				UE_LOG(LogAdastreaDirector, Error, TEXT("    Error: %s"), *ErrorDetail);
+				UE_LOG(LogAdastreaDirector, Error, TEXT("═══════════════════════════════════════════════════════"));
+			}
+			else
+			{
+				UE_LOG(LogAdastreaDirector, Error, TEXT("❌ API Key Validation Failed: %s"), *ErrorDetail);
+				UE_LOG(LogAdastreaDirector, Error, TEXT("═══════════════════════════════════════════════════════"));
+			}
 			
 			return FStartupValidationResult::Failure(
 				FString::Printf(
@@ -202,6 +271,9 @@ FStartupValidationResult FAdastreaStartupValidator::ValidateAPIKey(FPythonBridge
 	{
 		FString Error;
 		JsonObject->TryGetStringField(TEXT("error"), Error);
+		
+		UE_LOG(LogAdastreaDirector, Error, TEXT("❌ Validation Error: %s"), *Error);
+		UE_LOG(LogAdastreaDirector, Error, TEXT("═══════════════════════════════════════════════════════"));
 		
 		FStartupValidationResult Result = FStartupValidationResult::Failure(
 			FString::Printf(TEXT("API key validation failed: %s"), *Error)
