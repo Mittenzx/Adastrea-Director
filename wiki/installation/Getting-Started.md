@@ -116,12 +116,6 @@ python main.py --set-api-key gemini
 # Follow the prompts and check "Save API key for future sessions"
 ```
 
-**Via GUI:**
-```bash
-python gui_director.py
-# Use Settings dialog (Ctrl+,) to save API keys
-```
-
 #### Option B: Environment Variables
 
 ```bash
@@ -160,9 +154,6 @@ Run a quick test to ensure everything is working:
 ```bash
 # Test the CLI
 python main.py --help
-
-# Test the GUI
-python gui_director.py
 ```
 
 ## Configuration

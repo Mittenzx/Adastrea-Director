@@ -188,11 +188,6 @@ Content here...
 
 ### Check What's Ingested
 
-**Via GUI:**
-1. Open `python gui_director.py`
-2. Go to "Ingest List" tab
-3. View all ingested documents with statistics
-
 **Via CLI:**
 ```bash
 # Query the database

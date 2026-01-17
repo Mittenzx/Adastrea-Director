@@ -215,10 +215,7 @@ python planner.py "Add authentication" --export markdown --output auth_plan.md
 # 1. Keep knowledge base updated
 python ingest.py --docs-dir . --update
 
-# 2. Use GUI for quick queries during development
-python gui_director.py
-
-# 3. Generate plans as needed
+# 2. Generate plans as needed
 python planner.py "Refactor module X"
 ```
 

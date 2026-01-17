@@ -92,7 +92,7 @@ brew install python-tk
 1. Install: `./setup.sh`
 2. Configure API key: `python main.py --set-api-key gemini`
 3. Ingest docs: `python ingest.py --docs-dir /path/to/docs`
-4. Start using: `python main.py` or `python gui_director.py`
+4. Start using: `python main.py`
 
 See [Quick Start Tutorial](Quick-Start.md) for details.
 
@@ -322,10 +322,6 @@ Configure your API key:
 ```bash
 # Via CLI
 python main.py --set-api-key gemini
-
-# Via GUI
-python gui_director.py
-# Settings → API Keys
 ```
 
 ### More troubleshooting help?

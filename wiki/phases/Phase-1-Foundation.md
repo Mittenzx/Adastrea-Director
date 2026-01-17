@@ -81,11 +81,6 @@ python main.py
 > What is the main gameplay loop?
 ```
 
-**GUI Mode:**
-```bash
-python gui_director.py
-```
-
 **Single Query:**
 ```bash
 python main.py --query "Your question here"
@@ -313,7 +308,6 @@ Phase 1 provided the foundation for subsequent phases:
 - ✅ `ingest.py` - Document ingestion script
 - ✅ `ingest_game_repo.py` - Game repository ingestion
 - ✅ `main.py` - CLI application
-- ✅ `gui_director.py` - GUI application
 - ✅ `llm_config.py` - LLM provider management
 - ✅ `config_manager.py` - Configuration management
 
