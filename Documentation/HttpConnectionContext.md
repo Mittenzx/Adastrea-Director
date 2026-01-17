@@ -9,8 +9,10 @@ In the file `AdastreaMCPServer.cpp`, what is `#include "HttpConnectionContext.h"
 `HttpConnectionContext.h` is part of **Unreal Engine's HTTPServer module**, which is included in the engine's runtime libraries. The file is located in the Unreal Engine source code at:
 
 ```
-Engine/Source/Runtime/Online/HTTPServer/Public/HttpConnectionContext.h
+Engine/Source/Runtime/Online/HTTPServer/Private/HttpConnectionContext.h
 ```
+
+**Note:** This header is in the `Private/` folder, meaning it's an internal implementation detail of the HTTPServer module. Accessing private headers is generally discouraged as they may change between engine versions without notice.
 
 ### How It's Made Available
 The header becomes available to the AdastreaDirector plugin because the `HTTPServer` module is declared as a dependency in the build configuration file:
