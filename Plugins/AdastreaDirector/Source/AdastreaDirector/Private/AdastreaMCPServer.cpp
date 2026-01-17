@@ -6,6 +6,8 @@
 #include "HttpServerModule.h"
 #include "HttpServerResponse.h"
 #include "HttpServerRequest.h"
+// Note: HttpConnectionContext.h is part of UE's HTTPServer module (Engine/Source/Runtime/Online/HTTPServer/Private/)
+// Currently not used but included for potential future connection management features
 #include "HttpConnectionContext.h"
 #include "Serialization/JsonSerializer.h"
 #include "Serialization/JsonWriter.h"
