@@ -904,7 +904,7 @@ class IPCServer:
         try:
             import chromadb
             
-            # Note: Telemetry is already disabled globally at startup in gui_director.py and ingest.py
+            # Note: Telemetry is already disabled globally at startup in ingest.py
             
             client = chromadb.PersistentClient(path=persist_directory)
             collection = client.get_or_create_collection(name=DEFAULT_COLLECTION_NAME)

@@ -70,10 +70,6 @@ Query: "What's the best way to optimize draw calls?"
 ```bash
 # Via CLI
 python planner.py "Add inventory system with weight limits"
-
-# Via GUI (standalone)
-python gui_director.py
-# Then use planning features
 ```
 
 ### Generate Code
@@ -264,9 +260,6 @@ python ingest.py --docs-dir /custom/path --db-path /custom/db
 ```bash
 # Interactive assistant
 python main.py
-
-# GUI application
-python gui_director.py
 
 # Planning system
 python planner.py --interactive

@@ -24,7 +24,7 @@ The `ANONYMIZED_TELEMETRY` environment variable was being set to the string valu
 
 2. **Specific Value Check**: ChromaDB specifically checks if the `ANONYMIZED_TELEMETRY` environment variable equals `"1"` to disable telemetry, not just any truthy value.
 
-3. **Subprocess Inheritance**: When `gui_director.py` spawns `ingest.py` as a subprocess, environment variables are inherited. However, the incorrect value was being passed down.
+3. **Subprocess Inheritance**: When subprocess tools spawn `ingest.py` as a subprocess, environment variables are inherited. However, the incorrect value was being passed down.
 
 ## Solution
 
@@ -40,11 +40,10 @@ os.environ["ANONYMIZED_TELEMETRY"] = "1"
 
 ### Files Updated
 
-#### Core Scripts (12 files)
+#### Core Scripts (11 files)
 1. `ingest.py` - Main ingestion script
-2. `gui_director.py` - GUI application
-3. `main.py` - CLI entry point
-4. `ingest_game_repo.py` - Game repository ingestion
+2. `main.py` - CLI entry point
+3. `ingest_game_repo.py` - Game repository ingestion
 5. `test_ingest_list.py` - Test script
 6. `test_ingestion_infrastructure.py` - Infrastructure test
 7. `validate_requirements.py` - Requirements validation
