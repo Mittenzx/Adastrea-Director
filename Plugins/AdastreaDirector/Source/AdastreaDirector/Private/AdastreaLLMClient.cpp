@@ -430,8 +430,8 @@ void FAdastreaLLMClient::OnResponseReceived(
 							FString ArgsString;
 							if (FunctionObj->TryGetStringField(TEXT("arguments"), ArgsString))
 							{
-								TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(ArgsString);
-								FJsonSerializer::Deserialize(Reader, ToolCall.Arguments);
+								TSharedRef<TJsonReader<>> ArgsReader = TJsonReaderFactory<>::Create(ArgsString);
+								FJsonSerializer::Deserialize(ArgsReader, ToolCall.Arguments);
 							}
 						}
 						
