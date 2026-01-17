@@ -118,43 +118,7 @@ python planner.py "Optimize rendering pipeline" --export markdown --output plan.
 python planner.py "Add multiplayer support" --export json --output plan.json
 ```
 
-## Step 4: Use the GUI Application
-
-For a more user-friendly experience:
-
-```bash
-python gui_director.py
-```
-
-### GUI Quick Tour
-
-**1. Main Interface:**
-- **Query Tab:** Ask questions about your project
-- **Ingest List Tab:** See what's in your knowledge base
-- **Conversation History:** View all Q&A with timestamps
-
-**2. Settings Dialog (Ctrl+,):**
-- Configure API keys
-- Select LLM provider (Gemini, OpenAI, Ollama)
-- Choose embedding provider
-- Adjust display options
-
-**3. Useful Shortcuts:**
-- `Enter` or `Ctrl+Enter` - Send question
-- `Ctrl+K` - Quick API key setup
-- `Ctrl+,` - Open settings
-- `Ctrl+U` - Update knowledge base
-- `Ctrl+L` - Clear conversation
-- `Ctrl+E` - Export conversation
-
-### Your First GUI Query
-
-1. Type your question in the input box at the bottom
-2. Press Enter or click "Send"
-3. Watch as the AI processes your query
-4. View the response with source citations
-
-## Step 5: Explore Advanced Features
+## Step 4: Explore Advanced Features
 
 ### Agent Orchestration (P3)
 
