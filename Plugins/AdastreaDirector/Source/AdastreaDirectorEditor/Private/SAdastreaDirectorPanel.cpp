@@ -1683,9 +1683,28 @@ void SAdastreaDirectorPanel::UpdateStatusLights()
 			BackendHealthStatusLight->SetStatus(SStatusIndicator::EStatus::Good, LOCTEXT("BackendHealthGood", "Backend Health: Operational"));
 		
 		// Check API key validation when backend is ready
+		// Cache API key validation result to avoid frequent external validation calls.
+		// This prevents hitting rate limits by validating at most once per cache window.
 		if (APIKeyStatusLight.IsValid())
 		{
-			FStartupValidationResult APIKeyResult = FAdastreaStartupValidator::ValidateAPIKey(PythonBridge);
+			static FStartupValidationResult CachedAPIKeyResult;
+			static bool bHasCachedAPIKeyResult = false;
+			static FDateTime LastAPIKeyValidationTime = FDateTime::MinValue();
+
+			const double CacheValiditySeconds = 300.0; // 5 minutes
+			const FDateTime Now = FDateTime::UtcNow();
+			const bool bCacheExpired = !bHasCachedAPIKeyResult ||
+				(LastAPIKeyValidationTime != FDateTime::MinValue() &&
+					(Now - LastAPIKeyValidationTime).GetTotalSeconds() >= CacheValiditySeconds);
+
+			if (bCacheExpired)
+			{
+				CachedAPIKeyResult = FAdastreaStartupValidator::ValidateAPIKey(PythonBridge);
+				LastAPIKeyValidationTime = Now;
+				bHasCachedAPIKeyResult = true;
+			}
+
+			const FStartupValidationResult& APIKeyResult = CachedAPIKeyResult;
 			if (APIKeyResult.bSuccess)
 			{
 				// Extract which key was used from detailed status
