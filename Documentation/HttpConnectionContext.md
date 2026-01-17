@@ -37,7 +37,7 @@ The `HttpConnectionContext.h` header defines classes and structures used to mana
 - Low-level connection state handling
 
 ### Current Usage in AdastreaMCPServer.cpp
-**Status:** The include is present on line 9 but **not actively used** in the current implementation.
+**Status:** The include is present in the file but **not actively used** in the current implementation.
 
 **Analysis:** A code review shows that `AdastreaMCPServer.cpp` uses these HTTPServer types:
 - `FHttpServerModule` - Module access
