@@ -494,16 +494,71 @@ class IPCServer:
             'timestamp': time.time()
         }
     
+    def _test_api_keys_sequentially(self, provider: str, key_sources: list, validate_func) -> Dict[str, Any]:
+        """
+        Helper method to test API keys sequentially until a valid one is found.
+        
+        Args:
+            provider: The provider name (e.g., 'gemini', 'openai', 'openrouter')
+            key_sources: List of tuples (key_name, key_value) to test in priority order
+            validate_func: Function to call to validate each key
+            
+        Returns:
+            Dict with validation result including which key was used if successful
+        """
+        tested_keys = []
+        last_error = None
+        
+        logger.info(f"Testing {provider.capitalize()} API keys in priority order...")
+        for key_name, api_key in key_sources:
+            if api_key:
+                # Strip whitespace to handle copy-paste errors
+                api_key = api_key.strip()
+                if api_key:  # Check again after stripping
+                    tested_keys.append(key_name)
+                    logger.info(f"  Testing {key_name}...")
+                    
+                    result = validate_func(api_key)
+                    
+                    if result.get('valid'):
+                        logger.info(f"  ✓ {key_name} is valid!")
+                        result['used_key'] = key_name
+                        result['tested_keys'] = ', '.join(tested_keys)
+                        return result
+                    else:
+                        logger.warning(f"  ✗ {key_name} validation failed: {result.get('error', 'Unknown error')}")
+                        last_error = result.get('error', 'Unknown error')
+        
+        # No valid keys found
+        primary_key = key_sources[0][0] if key_sources else f'{provider.upper()}_API_KEY'
+        if not tested_keys:
+            return {
+                'status': 'success',
+                'valid': False,
+                'error': f'No {provider.capitalize()} API keys found in .env file. Please add {primary_key}=your-api-key to your .env file.',
+                'provider': provider,
+                'tested_keys': 'None'
+            }
+        else:
+            return {
+                'status': 'success',
+                'valid': False,
+                'error': f'All {provider.capitalize()} API keys failed validation. Last error: {last_error}',
+                'provider': provider,
+                'tested_keys': ', '.join(tested_keys)
+            }
+    
     def _handle_validate_api_key(self, data: str) -> Dict[str, Any]:
         """
-        Validate an API key by attempting a simple test request.
+        Validate API keys by testing each one sequentially until a valid key is found.
         API keys are read from environment variables (.env file).
+        Tests keys in priority order and returns the first successful one.
         
         Args:
             data: JSON string with 'provider' field
             
         Returns:
-            Dict with validation result
+            Dict with validation result, including which key was used if successful
         """
         logger.info("API key validation requested")
         
@@ -518,36 +573,31 @@ class IPCServer:
                     'error': 'Missing provider in request'
                 }
             
-            # Get API key from environment variables
-            api_key = None
+            # Get API keys from environment variables and test them in priority order
             if provider == 'gemini':
-                # Check multiple env variable names for Gemini
-                # Priority: GEMINI_API_KEY -> GEMINI_KEY (legacy) -> GOOGLE_API_KEY (fallback)
-                api_key = os.environ.get('GEMINI_API_KEY') or os.environ.get('GEMINI_KEY') or os.environ.get('GOOGLE_API_KEY')
-                # Strip whitespace to handle copy-paste errors
-                if api_key:
-                    api_key = api_key.strip()
-                if not api_key:
-                    return {
-                        'status': 'success',
-                        'valid': False,
-                        'error': 'GEMINI_API_KEY not found. Please set GEMINI_API_KEY environment variable or add it to your .env file.',
-                        'provider': 'gemini'
-                    }
-                return self._validate_gemini_key(api_key)
+                # Define key priority order for Gemini
+                key_sources = [
+                    ('GEMINI_API_KEY', os.environ.get('GEMINI_API_KEY')),
+                    ('GEMINI_KEY', os.environ.get('GEMINI_KEY')),
+                    ('GOOGLE_API_KEY', os.environ.get('GOOGLE_API_KEY'))
+                ]
+                return self._test_api_keys_sequentially(provider, key_sources, self._validate_gemini_key)
+                    
             elif provider == 'openai':
-                api_key = os.environ.get('OPENAI_API_KEY')
-                # Strip whitespace to handle copy-paste errors
-                if api_key:
-                    api_key = api_key.strip()
-                if not api_key:
-                    return {
-                        'status': 'success',
-                        'valid': False,
-                        'error': 'OPENAI_API_KEY not found in .env file. Please add OPENAI_API_KEY=your-api-key to your .env file.',
-                        'provider': 'openai'
-                    }
-                return self._validate_openai_key(api_key)
+                # Define key priority order for OpenAI
+                key_sources = [
+                    ('OPENAI_API_KEY', os.environ.get('OPENAI_API_KEY')),
+                    ('OPENAI_KEY', os.environ.get('OPENAI_KEY'))
+                ]
+                return self._test_api_keys_sequentially(provider, key_sources, self._validate_openai_key)
+                    
+            elif provider == 'openrouter':
+                # Define key priority order for OpenRouter
+                key_sources = [
+                    ('OPENROUTER_API_KEY', os.environ.get('OPENROUTER_API_KEY')),
+                    ('OPENROUTER_KEY', os.environ.get('OPENROUTER_KEY'))
+                ]
+                return self._test_api_keys_sequentially(provider, key_sources, self._validate_openrouter_key)
             else:
                 return {
                     'status': 'error',
@@ -713,6 +763,78 @@ class IPCServer:
                     'valid': False,
                     'error': 'Validation failed due to an unexpected error. Check server logs for details.',
                     'provider': 'openai'
+                }
+    
+    def _validate_openrouter_key(self, api_key: str) -> Dict[str, Any]:
+        """
+        Validate an OpenRouter API key by attempting a simple test request.
+        
+        Args:
+            api_key: The OpenRouter API key to validate
+            
+        Returns:
+            Dict with validation result
+        """
+        # First, ensure the OpenAI client library is available
+        try:
+            from openai import OpenAI
+        except ImportError:
+            return {
+                'status': 'success',
+                'valid': False,
+                'error': 'OpenAI library not installed. Required for OpenRouter validation.',
+                'provider': 'openrouter'
+            }
+
+        try:
+            # OpenRouter uses the OpenAI client with a custom base URL
+            client = OpenAI(
+                api_key=api_key,
+                base_url="https://openrouter.ai/api/v1"
+            )
+            # Try to list models to verify the key
+            models = client.models.list()
+            model_count = len(list(models))
+            
+            return {
+                'status': 'success',
+                'valid': True,
+                'message': f'OpenRouter API key is valid. Found {model_count} available models.',
+                'provider': 'openrouter'
+            }
+            
+        except Exception as e:
+            error_msg = str(e)
+            
+            # Check for common error patterns
+            if '401' in error_msg or 'Unauthorized' in error_msg or 'invalid' in error_msg.lower():
+                return {
+                    'status': 'success',
+                    'valid': False,
+                    'error': 'API key is invalid or has been revoked',
+                    'provider': 'openrouter'
+                }
+            elif 'quota' in error_msg.lower() or 'rate limit' in error_msg.lower():
+                return {
+                    'status': 'success',
+                    'valid': True,
+                    'message': 'API key is valid but rate limit/quota may be exceeded',
+                    'provider': 'openrouter'
+                }
+            elif 'network' in error_msg.lower() or 'connection' in error_msg.lower():
+                return {
+                    'status': 'success',
+                    'valid': False,
+                    'error': 'Network error - cannot verify API key at this time',
+                    'provider': 'openrouter'
+                }
+            else:
+                logger.warning(f"OpenRouter validation error: {error_msg}")
+                return {
+                    'status': 'success',
+                    'valid': False,
+                    'error': 'Validation failed due to an unexpected error. Check server logs for details.',
+                    'provider': 'openrouter'
                 }
     
     def _handle_metrics(self, data: str) -> Dict[str, Any]:

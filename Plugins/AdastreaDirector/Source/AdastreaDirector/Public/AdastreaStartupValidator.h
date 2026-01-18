@@ -23,6 +23,9 @@ struct FStartupValidationResult
 	/** Detailed status for logging */
 	FString DetailedStatus;
 
+	/** Name of the API key that was successfully used (e.g., "GEMINI_API_KEY") */
+	FString UsedKeyName;
+
 	FStartupValidationResult() = default;
 
 	static FStartupValidationResult Success(const FString& Status = TEXT("All checks passed"))

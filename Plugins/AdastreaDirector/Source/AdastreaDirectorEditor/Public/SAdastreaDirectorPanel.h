@@ -235,6 +235,9 @@ private:
 	
 	/** Backend health status indicator */
 	TSharedPtr<SStatusIndicator> BackendHealthStatusLight;
+	
+	/** API Key validation status indicator */
+	TSharedPtr<SStatusIndicator> APIKeyStatusLight;
 
 	/** Status lights update interval in seconds */
 	static constexpr double StatusLightsUpdateInterval = 0.5;
