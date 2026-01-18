@@ -46,10 +46,6 @@
 		{
 			"Name": "EditorScriptingUtilities",
 			"Enabled": true
-		},
-		{
-			"Name": "HTTPServer",
-			"Enabled": true
 		}
 	]
 }
