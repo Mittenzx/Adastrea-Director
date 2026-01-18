@@ -727,17 +727,7 @@ class IPCServer:
             except AttributeError:
                 # Fallback to old API (openai < 1.0.0)
                 # Use local state to avoid affecting global openai.api_key
-                try:
-                    import openai
-                except ImportError as import_err:
-                    # OpenAI library not installed at all
-                    logger.error(f"OpenAI dependency not installed: {import_err}")
-                    return {
-                        'status': 'success',
-                        'valid': False,
-                        'error': 'OpenAI dependencies not installed. Please run: pip install -r requirements.txt',
-                        'provider': 'openai'
-                    }
+                import openai
                 # Save current global state
                 old_api_key = getattr(openai, 'api_key', None)
                 try:
