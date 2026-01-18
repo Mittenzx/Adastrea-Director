@@ -216,7 +216,22 @@ pip install -r requirements.txt
 
 **📝 Note**: If you encounter issues (especially on Apple Silicon Macs or ARM systems), use the smart installer or see the [Installation Guide](https://github.com/Mittenzx/Adastrea-Director/wiki) in the Wiki for platform-specific instructions and troubleshooting.
 
-3. Set up your LLM API key:
+3. **Verify your installation and test API keys:**
+
+```bash
+# Test that all dependencies are installed and API keys work
+python test_api_keys.py
+
+# Test specific provider
+python test_api_keys.py --provider gemini
+
+# Check configuration without making API calls
+python test_api_keys.py --skip-api-test
+```
+
+This script will help you diagnose any issues with dependencies or API key configuration.
+
+4. Set up your LLM API key:
 
 **For document embeddings:** The system uses **HuggingFace embeddings by default** (no API key required, works offline).
 - See the [Wiki](https://github.com/Mittenzx/Adastrea-Director/wiki) for OpenAI embeddings setup if needed
@@ -253,7 +268,13 @@ Open the Settings dialog (⚙️) and configure your preferred provider and API 
 
 **Priority:** Local config → Environment variables (including .env file)
 
-4. **(Optional)** Set up GitHub token for game repository ingestion:
+**🔍 Test your configuration:**
+After setting up your API key, verify it works:
+```bash
+python test_api_keys.py
+```
+
+5. **(Optional)** Set up GitHub token for game repository ingestion:
 ```bash
 export GITHUB_TOKEN="your-github-token-here"
 ```
