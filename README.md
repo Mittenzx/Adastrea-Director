@@ -218,6 +218,8 @@ pip install -r requirements.txt
 
 3. **Verify your installation and test API keys:**
 
+**⚠️ Run from system terminal, NOT UE Python console!**
+
 ```bash
 # Test that all dependencies are installed and API keys work
 python test_api_keys.py
@@ -230,6 +232,10 @@ python test_api_keys.py --skip-api-test
 ```
 
 This script will help you diagnose any issues with dependencies or API key configuration.
+
+**Note:** If run from Unreal Engine's Python console, you'll see "Dependencies NOT INSTALLED" 
+messages. This is expected - the script should be run from your system terminal. See 
+TROUBLESHOOTING.md for details.
 
 4. Set up your LLM API key:
 

@@ -8,6 +8,9 @@
 
 1. **Test API Keys and Dependencies**
    ```bash
+   # ⚠️  IMPORTANT: Run this from a system terminal/command prompt,
+   # NOT from Unreal Engine's Python console!
+   
    # Run the comprehensive diagnostic script
    python test_api_keys.py
    
@@ -17,6 +20,11 @@
    # Check configuration only (no API calls)
    python test_api_keys.py --skip-api-test
    ```
+   
+   **Note**: If you accidentally run this from UE's Python console, you'll see
+   "Dependencies NOT INSTALLED" errors. This is expected! The plugin doesn't
+   require these dependencies in UE's Python environment. Run the script from
+   your system terminal instead.
    
    This script will check:
    - All required dependencies are installed
@@ -55,6 +63,50 @@
 
 ## 🔴 Critical Issues
 
+### "Dependencies NOT INSTALLED" Error in UE Python Console
+
+**Symptoms:**
+- Running `test_api_keys.py` from Unreal Engine's Python console shows:
+  ```
+  LogPython:   ✗ python-dotenv NOT INSTALLED
+  LogPython:   ✗ langchain NOT INSTALLED
+  LogPython:   ✗ chromadb NOT INSTALLED
+  ```
+- Path shows UE installation directory (e.g., `C:\Program Files\Epic Games\UE_5.6\`)
+
+**Cause:**
+You're running the test script from inside Unreal Engine's Python environment instead
+of your system Python environment.
+
+**Solution:**
+This is **expected behavior** and **not an error**! The Adastrea Director plugin does NOT
+require LangChain dependencies to be installed in UE's Python environment.
+
+1. **Close UE's Python console**
+2. **Open a system terminal/command prompt** (Windows: cmd.exe or PowerShell, Mac/Linux: Terminal)
+3. **Navigate to your repository:**
+   ```bash
+   cd path/to/Adastrea-Director
+   ```
+4. **Run the test from there:**
+   ```bash
+   python test_api_keys.py
+   ```
+
+**Why this happens:**
+- The plugin uses UE's built-in Python for in-editor operations only
+- LLM functionality runs through a separate IPC server using your system Python
+- Only the system Python needs the LangChain dependencies installed
+- If you run `test_api_keys.py` from UE Python, it will now detect this and show
+  helpful guidance instead of failing
+
+**Updated behavior (v1.x+):**
+The script now detects when running in UE's Python and displays:
+- ⚠️  WARNING at the top
+- ✅ "This is EXPECTED behavior" message  
+- Clear instructions on proper usage
+- Returns success (exit code 0) instead of failure
+
 ### API Key Not Working
 
 **Symptoms:**
@@ -64,6 +116,7 @@
 
 **Diagnosis:**
 ```bash
+# ⚠️  Run from system terminal, NOT UE Python console
 # Run comprehensive API key test
 python test_api_keys.py --verbose
 
