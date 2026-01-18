@@ -39,7 +39,8 @@ openai>=1.57.0,<2.0.0
 #   - ARM Linux/Windows systems
 # See INSTALLATION.md for platform-specific solutions.
 chromadb>=1.3.5,<2.0.0
-# langchain-chroma 0.2.6+ supports numpy 2.0+ for Python <3.13 and requires langchain-core >=0.3.76
+# langchain-chroma 0.2.6+ supports numpy 2.0+ for Python <3.13
+# Note: Python 3.13+ requires numpy >=2.1.0 and is not yet fully supported (onnxruntime incompatibility)
 langchain-chroma>=0.2.6,<1.0.0
 
 # Document loading and processing
