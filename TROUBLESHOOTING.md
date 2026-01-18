@@ -6,12 +6,30 @@
 
 ### First Steps (Do This First!)
 
-1. **Check the Dashboard**
+1. **Test API Keys and Dependencies**
+   ```bash
+   # Run the comprehensive diagnostic script
+   python test_api_keys.py
+   
+   # Test specific provider
+   python test_api_keys.py --provider gemini
+   
+   # Check configuration only (no API calls)
+   python test_api_keys.py --skip-api-test
+   ```
+   
+   This script will check:
+   - All required dependencies are installed
+   - API keys are properly configured
+   - API keys can authenticate with their services
+   - Which configuration source is being used (.env, environment, config file)
+
+2. **Check the Dashboard**
    - Open the Dashboard tab in the plugin panel
    - Review all 6 status indicators
    - Note which ones are red or yellow
 
-2. **Verify Installation**
+3. **Verify Installation**
    ```bash
    # Check Python version
    python --version  # Should be 3.9+
@@ -23,7 +41,7 @@
    # In UE: Edit → Plugins → Search "Adastrea"
    ```
 
-3. **Check Logs**
+4. **Check Logs**
    ```bash
    # Plugin logs
    tail -f Plugins/AdastreaDirector/Python/logs/ipc_server.log
@@ -36,6 +54,59 @@
    ```
 
 ## 🔴 Critical Issues
+
+### API Key Not Working
+
+**Symptoms:**
+- "API key not configured" errors
+- Authentication failures
+- System asking to install dependencies even though they're installed
+
+**Diagnosis:**
+```bash
+# Run comprehensive API key test
+python test_api_keys.py --verbose
+
+# This will show:
+# - Which API key sources are checked
+# - Which key is actually being used
+# - Whether the key authenticates successfully
+```
+
+**Solutions:**
+
+1. **Check API key configuration:**
+   ```bash
+   # View current configuration
+   python test_api_keys.py --skip-api-test
+   ```
+
+2. **Set API key via environment variable:**
+   ```bash
+   export GEMINI_API_KEY="your-key-here"
+   # or
+   export OPENAI_API_KEY="your-key-here"
+   ```
+
+3. **Set API key via .env file:**
+   ```bash
+   cp .env.example .env
+   # Edit .env and add your key
+   nano .env  # or use your preferred editor
+   ```
+
+4. **Set API key via config file:**
+   ```bash
+   python main.py --set-api-key gemini
+   ```
+
+5. **Check for whitespace:**
+   API keys should not have leading or trailing spaces. The test script will detect this.
+
+6. **Verify key is valid:**
+   - Gemini: https://makersuite.google.com/app/apikey
+   - OpenAI: https://platform.openai.com/api-keys
+   - OpenRouter: https://openrouter.ai/keys
 
 ### Plugin Panel Empty or Not Loading
 
