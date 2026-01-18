@@ -578,9 +578,12 @@ class AgentDashboard:
                 debt = agent.calculate_technical_debt()
                 text.append("\n\n💸 Technical Debt:\n", style="dim")
                 text.append("  Hours: ", style="dim")
-                debt_style = ("red" if debt.total_debt_hours > 40
-                              else "yellow" if debt.total_debt_hours > 20
-                              else "green")
+                if debt.total_debt_hours > 40:
+                    debt_style = "red"
+                elif debt.total_debt_hours > 20:
+                    debt_style = "yellow"
+                else:
+                    debt_style = "green"
                 text.append(f"{debt.total_debt_hours:.1f}h", style=debt_style)
                 text.append("\n  Ratio: ", style="dim")
                 text.append(f"{debt.debt_ratio:.2f}", style="cyan")
@@ -636,11 +639,15 @@ class AgentDashboard:
 
         # Right column: Event summary, recent events, error details, controls
         error_size = 8 if self.agent_errors else 0
+        if error_size > 0:
+            error_layout = Layout(name="error_details", size=error_size)
+        else:
+            error_layout = Layout(name="error_details", visible=False)
+
         layout["right_column"].split_column(
             Layout(name="event_summary", size=12),
             Layout(name="recent_events"),
-            (Layout(name="error_details", size=error_size) if error_size > 0
-             else Layout(name="error_details", visible=False)),
+            error_layout,
             Layout(name="controls", size=6)
         )
 
