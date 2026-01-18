@@ -634,7 +634,7 @@ class IPCServer:
             return {
                 'status': 'success',
                 'valid': False,
-                'error': 'Gemini API library not installed. Please run: pip install google-generativeai',
+                'error': 'Gemini API dependencies not installed. Please run: pip install -r requirements.txt',
                 'provider': 'gemini'
             }
         
@@ -721,7 +721,7 @@ class IPCServer:
                 return {
                     'status': 'success',
                     'valid': False,
-                    'error': 'OpenAI library not installed. Please run: pip install openai',
+                    'error': 'OpenAI dependencies not installed. Please run: pip install -r requirements.txt',
                     'provider': 'openai'
                 }
             except AttributeError:
@@ -735,7 +735,7 @@ class IPCServer:
                     return {
                         'status': 'success',
                         'valid': False,
-                        'error': 'OpenAI library not installed. Please run: pip install openai',
+                        'error': 'OpenAI dependencies not installed. Please run: pip install -r requirements.txt',
                         'provider': 'openai'
                     }
                 # Save current global state
@@ -810,7 +810,7 @@ class IPCServer:
             return {
                 'status': 'success',
                 'valid': False,
-                'error': 'OpenAI library not installed. Required for OpenRouter validation.',
+                'error': 'OpenAI dependencies not installed. Required for OpenRouter validation. Please run: pip install -r requirements.txt',
                 'provider': 'openrouter'
             }
 
