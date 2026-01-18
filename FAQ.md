@@ -225,6 +225,10 @@ It has general knowledge of UE multiplayer systems from its training.
 ### How do I test if my API keys are working?
 
 **Use the API key testing script:**
+
+**⚠️ IMPORTANT:** Run these commands from a **system terminal/command prompt**, 
+NOT from Unreal Engine's Python console!
+
 ```bash
 # Test all configured providers
 python test_api_keys.py
@@ -239,8 +243,12 @@ python test_api_keys.py --skip-api-test
 python test_api_keys.py --verbose
 ```
 
+**Note:** If you accidentally run this from UE's Python console, you'll see 
+"Dependencies NOT INSTALLED" errors. This is expected behavior - see TROUBLESHOOTING.md
+for details.
+
 This script will:
-- Check if dependencies are installed
+- Check if dependencies are installed (in system Python)
 - Verify API keys are configured
 - Show which configuration source is being used (.env, environment, config file)
 - Test actual API connectivity
@@ -257,7 +265,9 @@ This script will:
 **Solutions:**
 1. Check Dashboard tab - ensure all status lights are green
 2. Verify Python backend is running (should auto-start)
-3. Check your API key is configured correctly using `python test_api_keys.py`
+3. Check your API key is configured correctly:
+   - Open system terminal (NOT UE Python console)
+   - Run: `python test_api_keys.py`
 4. Restart Unreal Engine Editor
 5. See `SETUP_GUIDE.md` troubleshooting section
 
