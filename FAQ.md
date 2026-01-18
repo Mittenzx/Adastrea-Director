@@ -222,12 +222,42 @@ It has general knowledge of UE multiplayer systems from its training.
 
 ## Troubleshooting
 
+### How do I test if my API keys are working?
+
+**Use the API key testing script:**
+```bash
+# Test all configured providers
+python test_api_keys.py
+
+# Test specific provider
+python test_api_keys.py --provider gemini
+
+# Check configuration only (no API calls)
+python test_api_keys.py --skip-api-test
+
+# Show detailed output
+python test_api_keys.py --verbose
+```
+
+This script will:
+- Check if dependencies are installed
+- Verify API keys are configured
+- Show which configuration source is being used (.env, environment, config file)
+- Test actual API connectivity
+- Provide clear error messages and solutions
+
+**Common API key issues:**
+- **Whitespace in key**: The script detects and strips whitespace automatically
+- **Wrong environment variable**: Use `GEMINI_API_KEY`, `OPENAI_API_KEY`, or `OPENROUTER_API_KEY`
+- **Invalid key**: Verify the key is correct and not expired
+- **Missing .env file**: Copy `.env.example` to `.env` and add your key
+
 ### The plugin panel is empty or not responding
 
 **Solutions:**
 1. Check Dashboard tab - ensure all status lights are green
 2. Verify Python backend is running (should auto-start)
-3. Check your API key is configured correctly
+3. Check your API key is configured correctly using `python test_api_keys.py`
 4. Restart Unreal Engine Editor
 5. See `SETUP_GUIDE.md` troubleshooting section
 
