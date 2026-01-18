@@ -709,15 +709,13 @@ class IntegratedIPCServer(IPCServer):
     def _handle_analyze_performance(self, data: str) -> Dict[str, Any]:
         """
         Analyze performance metrics.
-        
+
         Args:
             data: JSON string with metrics to analyze
-            
+
         Returns:
             Performance analysis
         """
-        import json
-        
         try:
             if not self.performance_agent:
                 return {
