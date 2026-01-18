@@ -43,9 +43,8 @@ OPENROUTER_MODEL = "mistralai/mistral-7b-instruct:free"
 
 # Check if running inside Unreal Engine's Python environment
 try:
-    import unreal
-    RUNNING_IN_UE = True
-except ImportError:
+    RUNNING_IN_UE = importlib.util.find_spec("unreal") is not None
+except Exception:
     RUNNING_IN_UE = False
 
 # Try to load .env file if it exists
@@ -616,6 +615,15 @@ Examples:
         print("\n⚠️  Dependencies check failed. Some tests may not work properly.")
         print("Install dependencies first: pip install -r requirements.txt\n")
     
+    # If running in UE, skip all provider tests and go straight to summary
+    if RUNNING_IN_UE:
+        # Check environment
+        tester.check_env_file()
+        
+        # Print summary and exit
+        tester.print_summary()
+        return 0
+    
     # Check environment
     tester.check_env_file()
     
@@ -651,11 +659,7 @@ Examples:
     # Print summary
     tester.print_summary()
     
-    # Return exit code
-    # If running in UE, always return success since this is expected behavior
-    if RUNNING_IN_UE:
-        return 0
-    
+    # Return exit code based on test results
     failed = sum(1 for r in tester.results if not r.success)
     return 0 if failed == 0 else 1
 
