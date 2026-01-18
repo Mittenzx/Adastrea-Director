@@ -20,7 +20,7 @@ import os
 import sys
 import argparse
 import importlib
-from typing import Optional, Dict, Any, Tuple, List
+from typing import Optional, Dict, Any, List
 from dataclasses import dataclass, field
 from datetime import datetime
 
@@ -47,7 +47,7 @@ class TestResult:
     success: bool
     message: str
     details: Optional[Dict[str, Any]] = None
-    timestamp: datetime = field(default_factory=datetime.now)
+    timestamp: datetime = field(default_factory=lambda: datetime.now())
 
 
 class APIKeyTester:
@@ -163,46 +163,53 @@ class APIKeyTester:
         """
         Get all possible sources for an API key.
         
+        Priority order matches llm_config.py:
+        1. Config file (highest priority)
+        2. Primary environment variable
+        3. Legacy environment variables (for Gemini only)
+        
         Args:
             provider: Provider name (gemini, openai, openrouter)
         
         Returns:
-            Dictionary of source -> key value
+            Dictionary of source -> key value (ordered by priority)
         """
         sources = {}
         
         if provider == "gemini":
-            # Check environment variables in priority order
-            sources['GEMINI_API_KEY'] = os.getenv('GEMINI_API_KEY')
-            sources['GEMINI_KEY'] = os.getenv('GEMINI_KEY')
-            sources['GOOGLE_API_KEY'] = os.getenv('GOOGLE_API_KEY')
-            
-            # Check config file
+            # Check config file first (highest priority)
             try:
                 from config_manager import get_api_key
                 sources['config_file'] = get_api_key('gemini')
             except Exception:
                 sources['config_file'] = None
+            
+            # Check environment variables in priority order (matches llm_config.py)
+            sources['GEMINI_API_KEY'] = os.getenv('GEMINI_API_KEY')
+            sources['GEMINI_KEY'] = os.getenv('GEMINI_KEY')
+            sources['GOOGLE_API_KEY'] = os.getenv('GOOGLE_API_KEY')
         
         elif provider == "openai":
-            sources['OPENAI_API_KEY'] = os.getenv('OPENAI_API_KEY')
-            sources['OPENAI_KEY'] = os.getenv('OPENAI_KEY')
-            
+            # Check config file first (highest priority)
             try:
                 from config_manager import get_api_key
                 sources['config_file'] = get_api_key('openai')
             except Exception:
                 sources['config_file'] = None
+            
+            # Check only OPENAI_API_KEY env var (matches llm_config.py)
+            sources['OPENAI_API_KEY'] = os.getenv('OPENAI_API_KEY')
         
         elif provider == "openrouter":
-            sources['OPENROUTER_API_KEY'] = os.getenv('OPENROUTER_API_KEY')
-            sources['OPENROUTER_KEY'] = os.getenv('OPENROUTER_KEY')
-            
+            # Check config file first (highest priority)
             try:
                 from config_manager import get_api_key
                 sources['config_file'] = get_api_key('openrouter')
             except Exception:
                 sources['config_file'] = None
+            
+            # Check only OPENROUTER_API_KEY env var (matches llm_config.py)
+            sources['OPENROUTER_API_KEY'] = os.getenv('OPENROUTER_API_KEY')
         
         return sources
     
@@ -227,11 +234,15 @@ class APIKeyTester:
         # Check each source
         for source, key in sources.items():
             if key:
-                # Mask the key for display - always show first 4 and last 4 chars
-                if len(key) > 8:
+                # Mask the key for display - show first 4 and last 4 chars for long keys,
+                # and show length-only information for short keys to aid diagnostics.
+                key_length = len(key)
+                if key_length > 8:
                     masked_key = key[:4] + "..." + key[-4:]
+                elif key_length > 0:
+                    masked_key = f"<{key_length} chars hidden>"
                 else:
-                    masked_key = "***"
+                    masked_key = "<empty key>"
                 configured_sources.append(source)
                 print(f"  ✓ {source}: {masked_key}")
                 
@@ -274,23 +285,66 @@ class APIKeyTester:
             print(f"\nTo configure {provider.upper()} API key, use one of:")
             
             if provider == "gemini":
-                print("  1. Environment variable: export GEMINI_API_KEY='your-key-here'")
-                print("  2. .env file: GEMINI_API_KEY=your-key-here")
-                print("  3. Config file: python main.py --set-api-key gemini")
+                print("  1. Config file (HIGHEST PRIORITY): python main.py --set-api-key gemini")
+                print("  2. Environment variable: export GEMINI_API_KEY='your-key-here'")
+                print("  3. .env file: GEMINI_API_KEY=your-key-here")
                 print("\nGet your Gemini API key from: https://makersuite.google.com/app/apikey")
             elif provider == "openai":
-                print("  1. Environment variable: export OPENAI_API_KEY='your-key-here'")
-                print("  2. .env file: OPENAI_API_KEY=your-key-here")
-                print("  3. Config file: python main.py --set-api-key openai")
+                print("  1. Config file (HIGHEST PRIORITY): python main.py --set-api-key openai")
+                print("  2. Environment variable: export OPENAI_API_KEY='your-key-here'")
+                print("  3. .env file: OPENAI_API_KEY=your-key-here")
                 print("\nGet your OpenAI API key from: https://platform.openai.com/api-keys")
             elif provider == "openrouter":
-                print("  1. Environment variable: export OPENROUTER_API_KEY='your-key-here'")
-                print("  2. .env file: OPENROUTER_API_KEY=your-key-here")
-                print("  3. Config file: python main.py --set-api-key openrouter")
+                print("  1. Config file (HIGHEST PRIORITY): python main.py --set-api-key openrouter")
+                print("  2. Environment variable: export OPENROUTER_API_KEY='your-key-here'")
+                print("  3. .env file: OPENROUTER_API_KEY=your-key-here")
                 print("\nGet your OpenRouter API key from: https://openrouter.ai/keys")
         
         print()
         self.results.append(result)
+        return result
+    
+    def _get_first_api_key(self, provider: str) -> Optional[str]:
+        """
+        Get the first available API key from sources.
+        
+        Args:
+            provider: Provider name
+            
+        Returns:
+            First available API key or None
+        """
+        sources = self.get_api_key_sources(provider)
+        for key in sources.values():
+            if key:
+                return key
+        return None
+    
+    def _create_success_result(self, provider: str, model: str, response_text: str) -> TestResult:
+        """
+        Create a success TestResult for API connectivity test.
+        
+        Args:
+            provider: Provider name
+            model: Model name used
+            response_text: Response from API
+            
+        Returns:
+            TestResult indicating success
+        """
+        result = TestResult(
+            component=f"{provider.upper()} API Test",
+            success=True,
+            message="API authentication successful",
+            details={
+                'provider': provider,
+                'model': model,
+                'test_response': response_text[:MAX_RESPONSE_LENGTH]
+            }
+        )
+        print(f"✅ {provider.upper()} API connection successful!")
+        print(f"   Model: {model}")
+        print(f"   Test response: {response_text[:MAX_RESPONSE_LENGTH]}")
         return result
     
     def test_api_connectivity(self, provider: str, skip_test: bool = False) -> TestResult:
@@ -321,93 +375,37 @@ class APIKeyTester:
         print("  Making a minimal API request to verify authentication...")
         
         try:
+            # Get API key using helper method
+            api_key = self._get_first_api_key(provider)
+            if not api_key:
+                raise ValueError("No API key found")
+            
             if provider == "gemini":
                 from langchain_google_genai import ChatGoogleGenerativeAI
                 
-                # Get API key
-                sources = self.get_api_key_sources(provider)
-                api_key = None
-                for key in sources.values():
-                    if key:
-                        api_key = key
-                        break
-                
-                if not api_key:
-                    raise ValueError("No API key found")
-                
-                # Create client and make a minimal request
                 llm = ChatGoogleGenerativeAI(
                     model=GEMINI_MODEL,
                     temperature=0,
                     google_api_key=api_key
                 )
-                
-                # Test with a simple prompt
                 response = llm.invoke("Say 'OK'")
                 response_text = response.content.strip()
-                
-                result = TestResult(
-                    component=f"{provider.upper()} API Test",
-                    success=True,
-                    message="API authentication successful",
-                    details={
-                        'provider': provider,
-                        'model': GEMINI_MODEL,
-                        'test_response': response_text[:MAX_RESPONSE_LENGTH]
-                    }
-                )
-                print(f"✅ {provider.upper()} API connection successful!")
-                print(f"   Model: {GEMINI_MODEL}")
-                print(f"   Test response: {response_text[:MAX_RESPONSE_LENGTH]}")
+                result = self._create_success_result(provider, GEMINI_MODEL, response_text)
             
             elif provider == "openai":
                 from langchain_openai import ChatOpenAI
-                
-                sources = self.get_api_key_sources(provider)
-                api_key = None
-                for key in sources.values():
-                    if key:
-                        api_key = key
-                        break
-                
-                if not api_key:
-                    raise ValueError("No API key found")
                 
                 llm = ChatOpenAI(
                     model=OPENAI_MODEL,
                     temperature=0,
                     api_key=api_key
                 )
-                
                 response = llm.invoke("Say 'OK'")
                 response_text = response.content.strip()
-                
-                result = TestResult(
-                    component=f"{provider.upper()} API Test",
-                    success=True,
-                    message="API authentication successful",
-                    details={
-                        'provider': provider,
-                        'model': OPENAI_MODEL,
-                        'test_response': response_text[:MAX_RESPONSE_LENGTH]
-                    }
-                )
-                print(f"✅ {provider.upper()} API connection successful!")
-                print(f"   Model: {OPENAI_MODEL}")
-                print(f"   Test response: {response_text[:MAX_RESPONSE_LENGTH]}")
+                result = self._create_success_result(provider, OPENAI_MODEL, response_text)
             
             elif provider == "openrouter":
                 from langchain_openai import ChatOpenAI
-                
-                sources = self.get_api_key_sources(provider)
-                api_key = None
-                for key in sources.values():
-                    if key:
-                        api_key = key
-                        break
-                
-                if not api_key:
-                    raise ValueError("No API key found")
                 
                 llm = ChatOpenAI(
                     model=OPENROUTER_MODEL,
@@ -415,23 +413,9 @@ class APIKeyTester:
                     api_key=api_key,
                     base_url="https://openrouter.ai/api/v1"
                 )
-                
                 response = llm.invoke("Say 'OK'")
                 response_text = response.content.strip()
-                
-                result = TestResult(
-                    component=f"{provider.upper()} API Test",
-                    success=True,
-                    message="API authentication successful",
-                    details={
-                        'provider': provider,
-                        'model': OPENROUTER_MODEL,
-                        'test_response': response_text[:MAX_RESPONSE_LENGTH]
-                    }
-                )
-                print(f"✅ {provider.upper()} API connection successful!")
-                print(f"   Model: {OPENROUTER_MODEL}")
-                print(f"   Test response: {response_text[:MAX_RESPONSE_LENGTH]}")
+                result = self._create_success_result(provider, OPENROUTER_MODEL, response_text)
         
         except Exception as e:
             error_msg = str(e)
