@@ -19,9 +19,17 @@ Usage:
 import os
 import sys
 import argparse
+import importlib
 from typing import Optional, Dict, Any, Tuple, List
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
+
+# Constants
+DEFAULT_PROVIDER = "gemini"
+MAX_RESPONSE_LENGTH = 50
+GEMINI_MODEL = "gemini-1.5-flash"
+OPENAI_MODEL = "gpt-3.5-turbo"
+OPENROUTER_MODEL = "mistralai/mistral-7b-instruct:free"
 
 # Try to load .env file if it exists
 try:
@@ -39,11 +47,7 @@ class TestResult:
     success: bool
     message: str
     details: Optional[Dict[str, Any]] = None
-    timestamp: datetime = None
-    
-    def __post_init__(self):
-        if self.timestamp is None:
-            self.timestamp = datetime.now()
+    timestamp: datetime = field(default_factory=datetime.now)
 
 
 class APIKeyTester:
@@ -80,7 +84,7 @@ class APIKeyTester:
         
         for module_name, package_name in required_packages.items():
             try:
-                __import__(module_name)
+                importlib.import_module(module_name)
                 installed.append(package_name)
                 if self.verbose:
                     print(f"  ✓ {package_name}")
@@ -223,8 +227,11 @@ class APIKeyTester:
         # Check each source
         for source, key in sources.items():
             if key:
-                # Mask the key for display
-                masked_key = key[:8] + "..." + key[-4:] if len(key) > 12 else "***"
+                # Mask the key for display - always show first 4 and last 4 chars
+                if len(key) > 8:
+                    masked_key = key[:4] + "..." + key[-4:]
+                else:
+                    masked_key = "***"
                 configured_sources.append(source)
                 print(f"  ✓ {source}: {masked_key}")
                 
@@ -330,7 +337,7 @@ class APIKeyTester:
                 
                 # Create client and make a minimal request
                 llm = ChatGoogleGenerativeAI(
-                    model="gemini-1.5-flash",
+                    model=GEMINI_MODEL,
                     temperature=0,
                     google_api_key=api_key
                 )
@@ -345,13 +352,13 @@ class APIKeyTester:
                     message="API authentication successful",
                     details={
                         'provider': provider,
-                        'model': 'gemini-1.5-flash',
-                        'test_response': response_text[:50]
+                        'model': GEMINI_MODEL,
+                        'test_response': response_text[:MAX_RESPONSE_LENGTH]
                     }
                 )
                 print(f"✅ {provider.upper()} API connection successful!")
-                print(f"   Model: gemini-1.5-flash")
-                print(f"   Test response: {response_text[:50]}")
+                print(f"   Model: {GEMINI_MODEL}")
+                print(f"   Test response: {response_text[:MAX_RESPONSE_LENGTH]}")
             
             elif provider == "openai":
                 from langchain_openai import ChatOpenAI
@@ -367,7 +374,7 @@ class APIKeyTester:
                     raise ValueError("No API key found")
                 
                 llm = ChatOpenAI(
-                    model="gpt-3.5-turbo",
+                    model=OPENAI_MODEL,
                     temperature=0,
                     api_key=api_key
                 )
@@ -381,13 +388,13 @@ class APIKeyTester:
                     message="API authentication successful",
                     details={
                         'provider': provider,
-                        'model': 'gpt-3.5-turbo',
-                        'test_response': response_text[:50]
+                        'model': OPENAI_MODEL,
+                        'test_response': response_text[:MAX_RESPONSE_LENGTH]
                     }
                 )
                 print(f"✅ {provider.upper()} API connection successful!")
-                print(f"   Model: gpt-3.5-turbo")
-                print(f"   Test response: {response_text[:50]}")
+                print(f"   Model: {OPENAI_MODEL}")
+                print(f"   Test response: {response_text[:MAX_RESPONSE_LENGTH]}")
             
             elif provider == "openrouter":
                 from langchain_openai import ChatOpenAI
@@ -403,7 +410,7 @@ class APIKeyTester:
                     raise ValueError("No API key found")
                 
                 llm = ChatOpenAI(
-                    model="mistralai/mistral-7b-instruct:free",
+                    model=OPENROUTER_MODEL,
                     temperature=0,
                     api_key=api_key,
                     base_url="https://openrouter.ai/api/v1"
@@ -418,13 +425,13 @@ class APIKeyTester:
                     message="API authentication successful",
                     details={
                         'provider': provider,
-                        'model': 'mistralai/mistral-7b-instruct:free',
-                        'test_response': response_text[:50]
+                        'model': OPENROUTER_MODEL,
+                        'test_response': response_text[:MAX_RESPONSE_LENGTH]
                     }
                 )
                 print(f"✅ {provider.upper()} API connection successful!")
-                print(f"   Model: mistralai/mistral-7b-instruct:free")
-                print(f"   Test response: {response_text[:50]}")
+                print(f"   Model: {OPENROUTER_MODEL}")
+                print(f"   Test response: {response_text[:MAX_RESPONSE_LENGTH]}")
         
         except Exception as e:
             error_msg = str(e)
@@ -560,7 +567,7 @@ Examples:
     else:
         # Test only configured providers
         providers = []
-        llm_provider = os.getenv('LLM_PROVIDER', 'gemini').lower()
+        llm_provider = os.getenv('LLM_PROVIDER', DEFAULT_PROVIDER).lower()
         providers.append(llm_provider)
         
         # Also test if other providers are configured
