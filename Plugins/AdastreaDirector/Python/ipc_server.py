@@ -627,7 +627,16 @@ class IPCServer:
         Returns:
             Dict with validation result
         """
-        import google.generativeai as genai
+        try:
+            import google.generativeai as genai
+        except ImportError as e:
+            logger.error(f"Gemini dependency not installed: {e}")
+            return {
+                'status': 'success',
+                'valid': False,
+                'error': 'Gemini API dependencies not installed. Please run: pip install -r requirements.txt',
+                'provider': 'gemini'
+            }
         
         try:
             # Configure with the provided key (note: this still sets global state)
@@ -706,7 +715,16 @@ class IPCServer:
                 client = OpenAI(api_key=api_key)
                 models = client.models.list()
                 model_count = len(list(models))
-            except (ImportError, AttributeError):
+            except ImportError as import_err:
+                # OpenAI library not installed
+                logger.error(f"OpenAI dependency not installed: {import_err}")
+                return {
+                    'status': 'success',
+                    'valid': False,
+                    'error': 'OpenAI dependencies not installed. Please run: pip install -r requirements.txt',
+                    'provider': 'openai'
+                }
+            except AttributeError:
                 # Fallback to old API (openai < 1.0.0)
                 # Use local state to avoid affecting global openai.api_key
                 import openai
@@ -782,7 +800,7 @@ class IPCServer:
             return {
                 'status': 'success',
                 'valid': False,
-                'error': 'OpenAI library not installed. Required for OpenRouter validation.',
+                'error': 'OpenAI dependencies not installed. Required for OpenRouter validation. Please run: pip install -r requirements.txt',
                 'provider': 'openrouter'
             }
 
