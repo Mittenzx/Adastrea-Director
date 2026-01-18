@@ -627,7 +627,16 @@ class IPCServer:
         Returns:
             Dict with validation result
         """
-        import google.generativeai as genai
+        try:
+            import google.generativeai as genai
+        except ImportError as e:
+            logger.error(f"Gemini dependency not installed: {e}")
+            return {
+                'status': 'success',
+                'valid': False,
+                'error': 'Gemini API library not installed. Please run: pip install google-generativeai',
+                'provider': 'gemini'
+            }
         
         try:
             # Configure with the provided key (note: this still sets global state)
@@ -706,10 +715,29 @@ class IPCServer:
                 client = OpenAI(api_key=api_key)
                 models = client.models.list()
                 model_count = len(list(models))
-            except (ImportError, AttributeError):
+            except ImportError as import_err:
+                # OpenAI library not installed
+                logger.error(f"OpenAI dependency not installed: {import_err}")
+                return {
+                    'status': 'success',
+                    'valid': False,
+                    'error': 'OpenAI library not installed. Please run: pip install openai',
+                    'provider': 'openai'
+                }
+            except AttributeError:
                 # Fallback to old API (openai < 1.0.0)
                 # Use local state to avoid affecting global openai.api_key
-                import openai
+                try:
+                    import openai
+                except ImportError as import_err:
+                    # OpenAI library not installed at all
+                    logger.error(f"OpenAI dependency not installed: {import_err}")
+                    return {
+                        'status': 'success',
+                        'valid': False,
+                        'error': 'OpenAI library not installed. Please run: pip install openai',
+                        'provider': 'openai'
+                    }
                 # Save current global state
                 old_api_key = getattr(openai, 'api_key', None)
                 try:
