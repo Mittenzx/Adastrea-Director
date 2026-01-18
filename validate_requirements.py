@@ -49,21 +49,21 @@ def check_package_versions():
 
     # Check langchain-openai
     try:
-        import langchain_openai
+        import langchain_openai  # noqa: F401
         successes.append("✓ langchain-openai installed")
     except ImportError as e:
         failures.append(f"✗ langchain-openai not installed: {e}")
 
     # Check langchain-community
     try:
-        import langchain_community
+        import langchain_community  # noqa: F401
         successes.append("✓ langchain-community installed")
     except ImportError as e:
         failures.append(f"✗ langchain-community not installed: {e}")
 
     # Check chromadb
     try:
-        import chromadb
+        import chromadb  # noqa: F401
         successes.append(f"✓ chromadb installed")
     except ImportError as e:
         failures.append(f"✗ chromadb not installed: {e}")

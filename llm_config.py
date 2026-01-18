@@ -199,13 +199,13 @@ def check_dependencies_available() -> Tuple[bool, Optional[str]]:
     
     try:
         if provider == "openai":
-            import langchain_openai
+            import langchain_openai  # noqa: F401
             return (True, None)
         elif provider == "openrouter":
-            import langchain_openai
+            import langchain_openai  # noqa: F401
             return (True, None)
         else:
-            import langchain_google_genai
+            import langchain_google_genai  # noqa: F401
             return (True, None)
     except ImportError as e:
         return (False, _build_dependency_error_message(provider, e))

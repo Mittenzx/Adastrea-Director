@@ -6,8 +6,6 @@ Test RAG modules structure (syntax and code validation)
 import sys
 import os
 import ast
-import json
-import tempfile
 
 # Get the directory where this test file is located
 TEST_DIR = os.path.dirname(os.path.abspath(__file__))

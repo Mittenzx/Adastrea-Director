@@ -120,7 +120,7 @@ def test_imports_work():
         os.environ["ANONYMIZED_TELEMETRY"] = "1"
         
         # Try importing the DocumentIngestionAgent
-        from ingest import DocumentIngestionAgent
+        from ingest import DocumentIngestionAgent  # noqa: F401
         print_test("Can import DocumentIngestionAgent", True)
         return True
     except Exception as e:

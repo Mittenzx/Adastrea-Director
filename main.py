@@ -15,7 +15,7 @@ import sys
 import argparse
 import time
 import copy
-from typing import List, Dict, Any, Optional
+from typing import Dict, Any
 from exceptions import (
     APIKeyError,
     DatabaseError,
@@ -48,7 +48,7 @@ try:
     from rich.console import Console
     from rich.markdown import Markdown
     from rich.panel import Panel
-    from rich import print as rprint
+
     from llm_config import get_llm, get_provider_name, get_api_key_env_var
 except ImportError as e:
     print(f"Error: Missing required dependencies. Please install requirements.txt")
