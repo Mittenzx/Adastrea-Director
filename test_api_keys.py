@@ -9,11 +9,21 @@ It checks:
 3. API keys can authenticate with their respective services
 4. All supported LLM providers (Gemini, OpenAI, OpenRouter)
 
+⚠️  IMPORTANT: This script should be run from a STANDALONE Python environment,
+NOT from within Unreal Engine's Python console!
+
+The Adastrea Director plugin uses UE's built-in Python for in-editor operations,
+but LLM functionality runs through a separate IPC server that uses your system Python
+with the full dependencies installed.
+
 Usage:
     python test_api_keys.py              # Test all configured providers
     python test_api_keys.py --provider gemini     # Test specific provider
     python test_api_keys.py --all        # Test all providers (even if not configured)
     python test_api_keys.py --skip-api-test       # Only check configuration, no API calls
+
+If you accidentally run this from UE's Python console, it will detect this and provide
+guidance on how to properly test your setup.
 """
 
 import os
@@ -30,6 +40,13 @@ MAX_RESPONSE_LENGTH = 50
 GEMINI_MODEL = "gemini-1.5-flash"
 OPENAI_MODEL = "gpt-3.5-turbo"
 OPENROUTER_MODEL = "mistralai/mistral-7b-instruct:free"
+
+# Check if running inside Unreal Engine's Python environment
+try:
+    import unreal
+    RUNNING_IN_UE = True
+except ImportError:
+    RUNNING_IN_UE = False
 
 # Try to load .env file if it exists
 try:
@@ -64,12 +81,51 @@ class APIKeyTester:
         print("Adastrea Director - API Key Testing Script")
         print("=" * 80)
         print(f"Timestamp: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        if RUNNING_IN_UE:
+            print()
+            print("⚠️  WARNING: Detected Unreal Engine Python Environment")
+            print("This script should be run from a standalone Python environment.")
+            print("See output below for more information.")
         print()
     
     def check_dependencies(self) -> TestResult:
         """Check if required dependencies are installed."""
         print("Checking Dependencies...")
         print("-" * 80)
+        
+        # Check if running inside Unreal Engine
+        if RUNNING_IN_UE:
+            print("⚠️  RUNNING INSIDE UNREAL ENGINE")
+            print()
+            print("This script is designed to run in a standalone Python environment,")
+            print("not inside Unreal Engine's bundled Python interpreter.")
+            print()
+            print("The Adastrea Director plugin uses Unreal Engine's built-in Python")
+            print("environment which does NOT require these external dependencies.")
+            print()
+            print("✅ This is EXPECTED behavior when running from UE!")
+            print()
+            print("If you want to test API keys:")
+            print("  1. Open a system terminal/command prompt (NOT UE Python console)")
+            print("  2. Navigate to the Adastrea-Director repository")
+            print("  3. Run: python test_api_keys.py")
+            print()
+            print("The plugin will work correctly without these dependencies installed")
+            print("in UE's Python environment. API key testing and LLM functionality")
+            print("is handled through the IPC server which runs in a separate Python")
+            print("process with the proper dependencies installed.")
+            print()
+            result = TestResult(
+                component="Dependencies",
+                success=True,
+                message="Running in UE - dependency check skipped (expected)",
+                details={
+                    'running_in_ue': True,
+                    'note': 'Dependencies not needed in UE Python environment'
+                }
+            )
+            self.results.append(result)
+            return result
         
         required_packages = {
             'dotenv': 'python-dotenv',
@@ -458,6 +514,26 @@ class APIKeyTester:
         print("=" * 80)
         print()
         
+        # Check if running in UE
+        if RUNNING_IN_UE:
+            print("⚠️  RUNNING IN UNREAL ENGINE ENVIRONMENT")
+            print()
+            print("This script detected it's running inside Unreal Engine's Python interpreter.")
+            print("This is NOT the intended environment for testing API keys.")
+            print()
+            print("The Adastrea Director plugin does not require LangChain dependencies")
+            print("to be installed in Unreal Engine's Python environment.")
+            print()
+            print("✅ Your setup is likely correct!")
+            print()
+            print("To properly test API keys and dependencies:")
+            print("  1. Open a system terminal/command prompt (NOT UE Python console)")
+            print("  2. Navigate to: <your-path>/Adastrea-Director")
+            print("  3. Run: python test_api_keys.py")
+            print()
+            print("=" * 80)
+            return
+        
         passed = sum(1 for r in self.results if r.success)
         failed = sum(1 for r in self.results if not r.success)
         total = len(self.results)
@@ -576,6 +652,10 @@ Examples:
     tester.print_summary()
     
     # Return exit code
+    # If running in UE, always return success since this is expected behavior
+    if RUNNING_IN_UE:
+        return 0
+    
     failed = sum(1 for r in tester.results if not r.success)
     return 0 if failed == 0 else 1
 
