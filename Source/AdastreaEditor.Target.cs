@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 public class AdastreaEditorTarget : TargetRules
 {
-	public AdastreaEditorTarget( TargetInfo Target) : base(Target)
+	public AdastreaEditorTarget(TargetInfo Target) : base(Target)
 	{
 		Type = TargetType.Editor;
 		DefaultBuildSettings = BuildSettingsVersion.V5;
