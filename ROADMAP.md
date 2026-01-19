@@ -32,12 +32,21 @@ Transform game development by providing:
 
 ### Current Priorities (Q1 2026)
 
-🎯 **PRIMARY FOCUS:** Testing, Migration & Documentation
+🎯 **PRIMARY FOCUS:** Phase 2 Migration to VibeUE Architecture
+1. ✅ Add deprecation warnings to legacy IPC components (Jan 2026)
+2. ✅ Create comprehensive migration guide (Jan 2026)
+3. ✅ Update architecture documentation (Jan 2026)
+4. 🚧 Route new features through VibeUE components
+5. 🚧 Migrate existing code to VibeUE architecture
+6. 📅 Maintain backwards compatibility during transition
+7. 📅 Prepare for Phase 3 component removal (Q2 2026)
+
+🎯 **SECONDARY FOCUS:** Testing, Performance & UI Enhancements
 1. Create comprehensive test suite for VibeUE components
-2. Gradual migration from Python IPC to native C++ services
-3. Update documentation and user guides
-4. Feature flags for parallel operation
-5. Performance profiling and optimization
+2. Performance profiling and optimization
+3. UI/UX overhaul for better usability
+4. Blueprint-side integration widgets
+5. Real-time event streaming to UE Editor UI
 
 ---
 
@@ -150,6 +159,62 @@ Create autonomous agents that proactively monitor, analyze, and assist with deve
 
 ## Phase 3.5: VibeUE Architecture Migration
 
+**Status:** ✅ **COMPLETE** (Implementation) → 🚧 **IN PROGRESS** (Migration - Phase 2)  
+**Completion Date:** January 2026 (Implementation), Q1-Q2 2026 (Migration)
+
+### Current Phase: Phase 2 - Gradual Cutover
+
+**Goal:** Deprecate legacy IPC components while maintaining backwards compatibility and guide users to VibeUE architecture.
+
+**Completed:**
+- ✅ **Deprecation Warnings Added** (January 2026)
+  - FPythonProcessManager emits warnings on construction and key methods
+  - FIPCClient emits warnings on construction and connection
+  - FPythonBridge emits warnings on construction and initialization
+  - ipc_server.py emits warnings on startup
+- ✅ **Comprehensive Migration Guide** (January 2026)
+  - Created MIGRATION_GUIDE.md with complete migration instructions
+  - Component-by-component migration examples
+  - Before/after code comparisons
+  - Step-by-step migration process
+  - Troubleshooting section
+  - API key configuration guide
+- ✅ **Documentation Updates** (January 2026)
+  - Updated ARCHITECTURE.md with migration phases
+  - Updated README.md with deprecation notices
+  - Updated ROADMAP.md with current phase status
+
+**In Progress:**
+- 🚧 Route new features through VibeUE components
+- 🚧 Migrate existing code to VibeUE architecture
+- 📅 Update examples to use VibeUE components
+- 📅 Add feature flags for migration control
+- 📅 Create compatibility layer tests
+
+### Next Phase: Phase 3 - Complete Migration (Planned Q2 2026)
+
+**Goal:** Remove all legacy IPC components and complete transition to VibeUE architecture.
+
+**Planned Changes:**
+- ❌ Remove FPythonProcessManager class and source files
+- ❌ Remove FIPCClient class and source files
+- ❌ Remove FPythonBridge class and source files
+- ❌ Remove ipc_server.py and Python IPC infrastructure
+- 🔄 Update all documentation to remove legacy references
+- 🔄 Remove IPC-related tests
+- 🔄 Clean up build dependencies (Sockets/Networking if unused)
+- ✅ Update ROADMAP.md to reflect completion
+
+**Prerequisites:**
+- All internal code migrated to VibeUE
+- External users notified (1+ release cycle with warnings)
+- Migration guide validated with real-world use cases
+- No outstanding migration blockers
+
+---
+
+## Phase 3.5: VibeUE Architecture Implementation
+
 **Status:** ✅ **COMPLETE**  
 **Completion Date:** January 2026
 
@@ -225,13 +290,15 @@ Modernize the plugin architecture following VibeUE patterns for better performan
 - MCP protocol opens integration with external AI tools
 - Security considerations critical for Python execution
 
-### Next Steps
-1. Create comprehensive unit and integration tests
-2. Implement feature flags for gradual rollout
-3. Create backwards compatibility layer
-4. Performance profiling and optimization
-5. Update user documentation
-6. Gradual migration from Python IPC to native services
+### Migration Progress (Phase 2)
+See above "Phase 2 - Gradual Cutover" section for current migration status.
+
+1. ✅ Deprecation warnings added to all legacy components
+2. ✅ Comprehensive migration guide created
+3. ✅ Architecture documentation updated
+4. 🚧 Route new features through VibeUE components
+5. 🚧 Migrate existing code
+6. 📅 Phase 3 removal planned for Q2 2026
 
 ---
 

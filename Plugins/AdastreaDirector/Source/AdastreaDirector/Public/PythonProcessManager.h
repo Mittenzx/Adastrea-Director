@@ -11,16 +11,21 @@
  * Manages the Python subprocess for the Adastrea Director backend.
  * Handles starting, stopping, and monitoring the Python process lifecycle.
  * 
- * ⚠️ LEGACY COMPONENT - SCHEDULED FOR REMOVAL
+ * ⚠️⚠️⚠️ DEPRECATED - WILL BE REMOVED IN PHASE 3 (Q2 2026) ⚠️⚠️⚠️
  * 
- * This component is part of the old IPC-based architecture and is maintained for
- * parallel operation during the transition to the VibeUE architecture.
+ * This component is part of the legacy IPC-based architecture and is scheduled for
+ * removal in Phase 3 of the VibeUE migration (Q2 2026).
+ * 
+ * MIGRATION REQUIRED:
+ * Please migrate to AdastreaScriptService IMMEDIATELY for in-process Python execution.
+ * No external process management is needed with VibeUE architecture.
+ * 
+ * See MIGRATION_GUIDE.md for complete migration instructions.
  * 
  * The VibeUE architecture uses AdastreaScriptService (IPythonScriptPlugin) for
  * in-process Python execution, eliminating the need for external processes.
  * 
- * This component will be removed in Phase 4 cleanup after full migration validation.
- * See ARCHITECTURE.md for details on the new architecture.
+ * This component will be REMOVED in Phase 3 (Q2 2026).
  * 
  * @deprecated Use AdastreaScriptService instead for Python execution.
  */

@@ -11,18 +11,25 @@
  * IPC client for communicating with the Python backend via TCP sockets.
  * Handles JSON request/response serialization and socket management.
  * 
- * ⚠️ LEGACY COMPONENT - SCHEDULED FOR REMOVAL
+ * ⚠️⚠️⚠️ DEPRECATED - WILL BE REMOVED IN PHASE 3 (Q2 2026) ⚠️⚠️⚠️
  * 
- * This component is part of the old IPC-based architecture and is maintained for
- * parallel operation during the transition to the VibeUE architecture.
+ * This component is part of the legacy IPC-based architecture and is scheduled for
+ * removal in Phase 3 of the VibeUE migration (Q2 2026).
+ * 
+ * MIGRATION REQUIRED:
+ * Please migrate to VibeUE components IMMEDIATELY:
+ * - For LLM queries: Use AdastreaLLMClient (direct C++ HTTP calls)
+ * - For Python execution: Use AdastreaScriptService (in-process)
+ * - For asset queries: Use AdastreaAssetService (runtime discovery)
+ * 
+ * See MIGRATION_GUIDE.md for complete migration instructions.
  * 
  * The VibeUE architecture eliminates the need for IPC communication by using:
  * - AdastreaLLMClient for direct LLM API calls (no Python intermediary)
  * - AdastreaAssetService for runtime asset queries (no document ingestion)
  * - AdastreaScriptService for in-process Python execution
  * 
- * This component will be removed in Phase 4 cleanup after full migration validation.
- * See ARCHITECTURE.md for details on the new architecture.
+ * This component will be REMOVED in Phase 3 (Q2 2026).
  * 
  * @deprecated Use VibeUE components (AdastreaLLMClient, AdastreaAssetService) instead.
  */
