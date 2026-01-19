@@ -7,7 +7,8 @@
 #include "AdastreaDirectorModule.h"
 #include "AdastreaSettings.h"
 #include "AdastreaStartupValidator.h"
-#include "PythonBridge.h"
+// Legacy IPC components removed in Phase 3 migration
+// Use VibeUE components: AdastreaLLMClient, AdastreaScriptService, AdastreaAssetService
 #include "Widgets/Input/SEditableTextBox.h"
 #include "Widgets/Input/SMultiLineEditableTextBox.h"
 #include "Widgets/Input/SButton.h"

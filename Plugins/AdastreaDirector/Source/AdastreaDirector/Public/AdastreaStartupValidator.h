@@ -4,8 +4,6 @@
 
 #include "CoreMinimal.h"
 
-class FPythonBridge;
-
 /**
  * Result of startup validation
  */
@@ -46,39 +44,28 @@ struct FStartupValidationResult
 };
 
 /**
- * Validator for plugin startup checks.
- * Performs comprehensive validation of settings, backend connectivity, and API keys.
+ * Validator for plugin startup checks (VibeUE architecture).
+ * Performs validation of settings and VibeUE component availability.
+ * 
+ * Note: Legacy backend connectivity checks have been removed as part of Phase 3 migration.
+ * The plugin now uses native C++ VibeUE components (AdastreaLLMClient, AdastreaScriptService, etc.)
  */
 class ADASTREADIRECTOR_API FAdastreaStartupValidator
 {
 public:
 	/**
-	 * Perform complete startup validation.
-	 * Checks settings, backend connectivity, and API key validity.
-	 * @param PythonBridge The Python bridge to validate (optional, can be nullptr)
+	 * Perform complete startup validation for VibeUE components.
+	 * Checks settings and component availability.
+	 * @param Unused Legacy parameter kept for API compatibility, will be removed
 	 * @return Validation result with status and any error messages
 	 */
-	static FStartupValidationResult ValidateStartup(FPythonBridge* PythonBridge = nullptr);
+	static FStartupValidationResult ValidateStartup(void* Unused = nullptr);
 
 	/**
-	 * Validate settings configuration only (no backend check).
+	 * Validate settings configuration only.
 	 * @return Validation result
 	 */
 	static FStartupValidationResult ValidateSettings();
-
-	/**
-	 * Validate backend connectivity and health.
-	 * @param PythonBridge The Python bridge to test
-	 * @return Validation result
-	 */
-	static FStartupValidationResult ValidateBackend(FPythonBridge* PythonBridge);
-
-	/**
-	 * Validate API key by attempting to use it (requires backend).
-	 * @param PythonBridge The Python bridge to use for validation
-	 * @return Validation result
-	 */
-	static FStartupValidationResult ValidateAPIKey(FPythonBridge* PythonBridge);
 
 private:
 	/** Helper to create detailed status message */

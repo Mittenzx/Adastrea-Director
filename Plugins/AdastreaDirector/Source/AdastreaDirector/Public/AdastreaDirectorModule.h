@@ -8,12 +8,16 @@
 // Custom log category for Adastrea Director
 DECLARE_LOG_CATEGORY_EXTERN(LogAdastreaDirector, Log, All);
 
-// Forward declarations
-class FPythonBridge;
-
 /**
  * Runtime module for Adastrea Director plugin.
- * Provides core functionality for AI-powered development assistance.
+ * Provides core functionality for AI-powered development assistance using VibeUE architecture.
+ * 
+ * The module uses native C++ components:
+ * - AdastreaLLMClient: Direct LLM API calls (Gemini, OpenAI)
+ * - AdastreaScriptService: In-process Python execution via IPythonScriptPlugin
+ * - AdastreaAssetService: Runtime asset discovery via Asset Registry
+ * - AdastreaToolSystem: Extensible tool system for AI capabilities
+ * - AdastreaMCPServer: MCP protocol server for external AI clients
  */
 class FAdastreaDirectorModule : public IModuleInterface
 {
@@ -22,12 +26,6 @@ public:
 	/** IModuleInterface implementation */
 	virtual void StartupModule() override;
 	virtual void ShutdownModule() override;
-
-	/**
-	 * Gets the Python bridge instance.
-	 * @return Pointer to the bridge, or nullptr if not initialized
-	 */
-	FPythonBridge* GetPythonBridge() const { return PythonBridge.Get(); }
 
 	/**
 	 * Checks if the module is fully initialized and ready to use.
@@ -42,17 +40,11 @@ public:
 	FString GetInitializationError() const { return InitializationError; }
 
 private:
-	/** Python bridge for backend communication */
-	TUniquePtr<FPythonBridge> PythonBridge;
-
 	/** Whether the module passed all startup validation */
 	bool bIsFullyInitialized = false;
 
 	/** Initialization error message if validation failed */
 	FString InitializationError;
-
-	/** Helper to initialize the Python bridge */
-	bool InitializePythonBridge();
 
 	/** Register built-in asset tools (VibeUE-style) */
 	void RegisterAssetTools();
