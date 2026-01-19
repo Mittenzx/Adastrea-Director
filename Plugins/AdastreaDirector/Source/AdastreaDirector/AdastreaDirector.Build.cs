@@ -29,16 +29,15 @@ public class AdastreaDirector : ModuleRules
 				"CoreUObject",
 				"Engine",
 				"InputCore",
-				"Sockets",
-				"Networking",
+				// Legacy IPC components removed (Phase 3) - Sockets/Networking no longer needed
 				"UnrealEd",          // For GEditor and editor functionality
 				"LevelEditor",       // For level editor access
 				"ImageWrapper",      // For PNG encoding
 				"RenderCore",        // For rendering thread operations
 				"RHI",               // For viewport pixel reading
-				"HTTP",              // For LLM API calls
-				"PythonScriptPlugin", // For built-in Python execution
-				"HTTPServer",        // For MCP server
+				"HTTP",              // For LLM API calls (VibeUE: AdastreaLLMClient)
+				"PythonScriptPlugin", // For built-in Python execution (VibeUE: AdastreaScriptService)
+				"HTTPServer",        // For MCP server (VibeUE: AdastreaMCPServer)
 				"UMG",               // For WidgetBlueprint support
 				// ... add other public dependencies that you statically link with here ...
 			}
