@@ -860,61 +860,8 @@ void SAdastreaDirectorPanel::SendQueryToPython(const FString& Query)
 		TEXT("• Runtime asset discovery via AdastreaAssetService\n\n")
 		TEXT("See MIGRATION_GUIDE.md for updated usage examples."));
 	return;
-
-	// Removed legacy code - previously used FPythonBridge for IPC communication
-	bool bSuccess = false;
-
-	if (bSuccess)
-	{
-		// Parse the JSON response
-		TSharedPtr<FJsonObject> JsonObject;
-		TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(Response);
-		
-		if (FJsonSerializer::Deserialize(Reader, JsonObject) && JsonObject.IsValid())
-		{
-			FString Status;
-			if (!JsonObject->TryGetStringField(TEXT("status"), Status))
-			{
-				UE_LOG(LogAdastreaDirectorEditor, Error, TEXT("Response missing 'status' field"));
-				UpdateResults(TEXT("Error: Invalid response format (missing 'status')."));
-				return;
-			}
-			
-			if (Status == TEXT("success"))
-			{
-				FString Result;
-				if (!JsonObject->TryGetStringField(TEXT("result"), Result))
-				{
-					UE_LOG(LogAdastreaDirectorEditor, Error, TEXT("Response missing 'result' field"));
-					UpdateResults(TEXT("Error: Invalid response format (missing 'result')."));
-					return;
-				}
-				UpdateResults(FString::Printf(TEXT("Query: %s\n\nResponse:\n%s"), *Query, *Result));
-			}
-			else
-			{
-				FString Error;
-				if (!JsonObject->TryGetStringField(TEXT("error"), Error))
-				{
-					UE_LOG(LogAdastreaDirectorEditor, Error, TEXT("Response missing 'error' field"));
-					UpdateResults(TEXT("Error: Invalid response format (missing 'error')."));
-					return;
-				}
-				UpdateResults(FString::Printf(TEXT("Error: %s"), *Error));
-			}
-		}
-		else
-		{
-			UE_LOG(LogAdastreaDirectorEditor, Error, TEXT("Failed to parse response JSON: %s"), *Response);
-			UpdateResults(FString::Printf(TEXT("Error: Failed to parse response.\n\nRaw response: %s"), *Response));
-		}
-	}
-	else
-	{
-		UE_LOG(LogAdastreaDirectorEditor, Error, TEXT("Failed to send query to Python backend"));
-		UpdateResults(TEXT("Error: Failed to communicate with Python backend.\n\nPlease check the connection and try again."));
-	}
 }
+
 
 void SAdastreaDirectorPanel::UpdateResults(const FString& Results)
 {
@@ -1120,15 +1067,8 @@ void SAdastreaDirectorPanel::StartIngestion(const FString& DocsPath, const FStri
 	AppendIngestionDebugLog(TEXT("• See MIGRATION_GUIDE.md for updated asset query examples\n\n"));
 	bIsIngesting = false;
 	return;
-	
-	// Removed legacy code - previously performed ChromaDB document ingestion via FPythonBridge IPC
-		if (!Response.IsEmpty())
-		{
-			AppendIngestionDebugLog(FString::Printf(TEXT("  → Response: %s\n"), *Response));
-		}
-		bIsIngesting = false;
-	}
 }
+
 
 void SAdastreaDirectorPanel::UpdateIngestionProgress()
 {
@@ -1741,72 +1681,8 @@ void SAdastreaDirectorPanel::RunTests(const FString& TestType)
 	bIsTestRunning = false;
 	TestStatusMessage = LOCTEXT("TestsNotAvailable", "Legacy tests not available");
 	return;
-	
-	// Removed legacy code - previously ran tests via FPythonBridge IPC
-
-	if (bSuccess)
-	{
-		// Parse the JSON response
-		TSharedPtr<FJsonObject> JsonObject;
-		TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(Response);
-		
-		if (FJsonSerializer::Deserialize(Reader, JsonObject) && JsonObject.IsValid())
-		{
-			FString Status;
-			if (JsonObject->TryGetStringField(TEXT("status"), Status) && Status == TEXT("success"))
-			{
-				FString Result;
-				if (JsonObject->TryGetStringField(TEXT("result"), Result))
-				{
-					AppendTestOutput(Result);
-					AppendTestOutput(TEXT("\n"));
-				}
-				
-				int32 Passed = 0;
-				int32 Failed = 0;
-				JsonObject->TryGetNumberField(TEXT("passed"), Passed);
-				JsonObject->TryGetNumberField(TEXT("failed"), Failed);
-				
-				if (Passed == 0 && Failed == 0)
-				{
-					TestStatusMessage = LOCTEXT("TestsNoResults", "⚠️ No tests found or failed to parse results");
-					TestProgress = 1.0f;
-				}
-				else if (Failed == 0)
-				{
-					TestStatusMessage = FText::Format(LOCTEXT("TestsPassedStatus", "✅ All tests passed ({0} tests)"), FText::AsNumber(Passed));
-					TestProgress = 1.0f;
-				}
-				else
-				{
-					TestStatusMessage = FText::Format(LOCTEXT("TestsFailedStatus", "❌ {0} passed, {1} failed"), FText::AsNumber(Passed), FText::AsNumber(Failed));
-					TestProgress = 1.0f;
-				}
-			}
-			else
-			{
-				FString Error;
-				if (!JsonObject->TryGetStringField(TEXT("error"), Error) || Error.IsEmpty())
-				{
-					Error = TEXT("Unknown error occurred");
-				}
-				AppendTestOutput(FString::Printf(TEXT("❌ Error: %s\n"), *Error));
-				TestStatusMessage = LOCTEXT("TestsError", "Tests encountered an error");
-			}
-		}
-		else
-		{
-			AppendTestOutput(FString::Printf(TEXT("Raw response: %s\n"), *Response));
-		}
-	}
-	else
-	{
-		AppendTestOutput(TEXT("❌ Failed to communicate with Python backend\n"));
-		TestStatusMessage = LOCTEXT("TestsCommError", "Communication error");
-	}
-
-	bIsTestRunning = false;
 }
+
 
 void SAdastreaDirectorPanel::PerformSelfCheck()
 {
