@@ -25,9 +25,14 @@ try:
     from agents.models import ActionPlan
     
 except ImportError as e:
-    print(f"Error: Missing required dependencies: {e}")
-    print("Please install requirements.txt")
-    sys.exit(1)
+    # Only exit if this module is being run directly, not imported
+    if __name__ == '__main__':
+        print(f"Error: Missing required dependencies: {e}")
+        print("Please install requirements.txt")
+        sys.exit(1)
+    else:
+        # Re-raise the ImportError if imported as a module
+        raise
 
 console = Console(legacy_windows=False)
 

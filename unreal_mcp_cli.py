@@ -20,9 +20,14 @@ import sys
 try:
     from mcp_server import UnrealMCPServer
 except ImportError:
-    print("Error: mcp_server module not found.")
-    print("Make sure you're running from the Adastrea-Director directory.")
-    sys.exit(1)
+    # Only exit if this module is being run directly, not imported
+    if __name__ == '__main__':
+        print("Error: mcp_server module not found.")
+        print("Make sure you're running from the Adastrea-Director directory.")
+        sys.exit(1)
+    else:
+        # Re-raise the ImportError if imported as a module
+        raise
 
 
 def print_result(result: dict, pretty: bool = True) -> None:
