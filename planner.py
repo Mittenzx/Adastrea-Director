@@ -30,13 +30,18 @@ try:
     from llm_config import get_provider_name
     from logging_config import setup_logging, get_logger
 except ImportError as e:
-    print(f"Error: Missing required dependencies")
-    print(f"Details: {e}")
-    print(f"\nTo install dependencies, run:")
-    print(f"  pip install -r requirements.txt")
-    print(f"\nOr use the setup script:")
-    print(f"  ./setup.sh")
-    sys.exit(1)
+    # Only exit if this module is being run directly, not imported
+    if __name__ == '__main__':
+        print(f"Error: Missing required dependencies")
+        print(f"Details: {e}")
+        print(f"\nTo install dependencies, run:")
+        print(f"  pip install -r requirements.txt")
+        print(f"\nOr use the setup script:")
+        print(f"  ./setup.sh")
+        sys.exit(1)
+    else:
+        # Re-raise the ImportError if imported as a module
+        raise
 
 console = Console()
 logger = get_logger(__name__)

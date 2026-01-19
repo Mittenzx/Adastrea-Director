@@ -38,13 +38,18 @@ try:
     )
     from system_health import SystemHealthChecker
 except ImportError as e:
-    print("Error: Missing required dependencies")
-    print(f"Details: {e}")
-    print("\nTo install dependencies, run:")
-    print("  pip install -r requirements.txt")
-    print("\nOr use the setup script:")
-    print("  ./setup.sh")
-    sys.exit(1)
+    # Only exit if this module is being run directly, not imported
+    if __name__ == '__main__':
+        print("Error: Missing required dependencies")
+        print(f"Details: {e}")
+        print("\nTo install dependencies, run:")
+        print("  pip install -r requirements.txt")
+        print("\nOr use the setup script:")
+        print("  ./setup.sh")
+        sys.exit(1)
+    else:
+        # Re-raise the ImportError if imported as a module
+        raise
 
 console = Console()
 
