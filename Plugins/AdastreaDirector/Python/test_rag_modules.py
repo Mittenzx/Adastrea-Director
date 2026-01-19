@@ -23,16 +23,11 @@ def test_python_syntax():
     for filename in files_to_test:
         filepath = os.path.join(TEST_DIR, filename)
         print(f"  Checking {filename}...")
-        try:
-            with open(filepath, 'r') as f:
-                code = f.read()
-                ast.parse(code)
-            print(f"    ✓ {filename} has valid syntax")
-        except SyntaxError as e:
-            print(f"    ✗ {filename} has syntax error: {e}")
-            return False
-    
-    return True
+        with open(filepath, 'r') as f:
+            code = f.read()
+            # This will raise SyntaxError if syntax is invalid
+            ast.parse(code)
+        print(f"    ✓ {filename} has valid syntax")
 
 def test_class_structure():
     """Test that required classes and methods exist."""
@@ -82,8 +77,6 @@ def test_class_structure():
         for item in required_items:
             assert item in content, f"Missing: {item}"
         print("    ✓ IntegratedIPCServer structure verified")
-    
-    return True
 
 def test_progress_writer_logic():
     """Test ProgressWriter logic (structure validation only to avoid langchain dependency)."""
@@ -107,8 +100,6 @@ def test_progress_writer_logic():
     # Note: Full functional testing requires langchain dependencies.
     # The ProgressWriter writes JSON progress updates with format:
     # {'percent': 0-100, 'label': str, 'details': str, 'status': str, 'timestamp': float}
-    
-    return True
 
 def main():
     """Run all tests."""
@@ -116,14 +107,9 @@ def main():
     print("=" * 50)
     
     try:
-        if not test_python_syntax():
-            return False
-        
-        if not test_class_structure():
-            return False
-        
-        if not test_progress_writer_logic():
-            return False
+        test_python_syntax()
+        test_class_structure()
+        test_progress_writer_logic()
         
         print("\n" + "=" * 50)
         print("✓ All structure tests passed!")
