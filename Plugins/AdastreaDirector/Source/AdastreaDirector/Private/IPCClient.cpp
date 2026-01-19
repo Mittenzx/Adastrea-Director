@@ -11,6 +11,7 @@ FIPCClient::FIPCClient()
 	: Socket(nullptr)
 	, SocketSubsystem(nullptr)
 {
+	UE_LOG(LogAdastreaDirector, Warning, TEXT("⚠️ FIPCClient is DEPRECATED and will be removed in a future version. Please use AdastreaLLMClient for direct LLM API calls instead."));
 	SocketSubsystem = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM);
 }
 
@@ -21,6 +22,8 @@ FIPCClient::~FIPCClient()
 
 bool FIPCClient::Connect(const FString& Host, int32 Port, float TimeoutSeconds)
 {
+	UE_LOG(LogAdastreaDirector, Warning, TEXT("⚠️ DEPRECATED: FIPCClient::Connect is deprecated. Use AdastreaLLMClient instead. This component will be removed in Phase 3."));
+	
 	// Disconnect any existing connection
 	if (Socket != nullptr)
 	{

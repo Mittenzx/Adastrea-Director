@@ -2,8 +2,20 @@
 """
 IPC Server for Adastrea Director Plugin
 
+⚠️ DEPRECATED - SCHEDULED FOR REMOVAL IN PHASE 3 ⚠️
+
 This server provides socket-based IPC communication between the Unreal Engine
 plugin (C++) and the Python backend (RAG system, planning agents, etc.).
+
+DEPRECATION NOTICE:
+This IPC server is part of the legacy architecture and will be removed in Phase 3
+of the VibeUE migration. Please migrate to the new VibeUE components:
+- AdastreaLLMClient: Direct C++ LLM API calls (no Python process needed)
+- AdastreaScriptService: In-process Python via IPythonScriptPlugin
+- AdastreaAssetService: Runtime asset queries (no document ingestion)
+- AdastreaMCPServer: Standard MCP protocol for external AI clients
+
+See MIGRATION_GUIDE.md for migration instructions.
 
 Week 3 Enhancements:
 - Performance monitoring and metrics
@@ -216,6 +228,10 @@ class IPCServer:
 
     def start(self):
         """Start the IPC server."""
+        logger.warning("⚠️ DEPRECATED: The IPC server is deprecated and will be removed in Phase 3.")
+        logger.warning("⚠️ Please migrate to VibeUE components (AdastreaLLMClient, AdastreaScriptService, AdastreaMCPServer).")
+        logger.warning("⚠️ See MIGRATION_GUIDE.md for migration instructions.")
+        
         try:
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)

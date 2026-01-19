@@ -10,6 +10,7 @@
 FPythonBridge::FPythonBridge()
 	: IPCPort(0)
 {
+	UE_LOG(LogAdastreaDirector, Warning, TEXT("⚠️ FPythonBridge is DEPRECATED and will be removed in a future version. Please migrate to VibeUE components: AdastreaLLMClient, AdastreaScriptService, AdastreaAssetService. See MIGRATION_GUIDE.md for details."));
 	ProcessManager = MakeUnique<FPythonProcessManager>();
 	IPCClient = MakeUnique<FIPCClient>();
 }
@@ -21,6 +22,7 @@ FPythonBridge::~FPythonBridge()
 
 bool FPythonBridge::Initialize(const FString& PythonExecutable, const FString& BackendScript, int32 Port)
 {
+	UE_LOG(LogAdastreaDirector, Warning, TEXT("⚠️ DEPRECATED: FPythonBridge::Initialize is deprecated. Migrate to VibeUE components. This component will be removed in Phase 3."));
 	UE_LOG(LogAdastreaDirector, Log, TEXT("Initializing Python Bridge..."));
 
 	// Store configuration

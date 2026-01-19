@@ -46,9 +46,9 @@ Adastrea Director is **one AI system** with **two deployment modes**:
 - **Architecture:** VibeUE pattern - IPythonScriptPlugin, direct HTTP, runtime queries
 - **Best for:** Production UE development with integrated AI assistance
 - **Status:** ✅ Core VibeUE components complete (AdastreaScriptService, LLMClient, AssetService, ToolSystem, MCPServer)
-- **Legacy:** Old IPC components maintained for transition, will be removed in Phase 4
+- **Migration:** 🚧 Phase 2 in progress - Legacy IPC components deprecated, see [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md)
 
-**Key Point:** The plugin now uses the **VibeUE architecture** with native C++ components (no external Python process needed). The standalone system remains fully functional for development, testing, and non-UE use cases.
+**Key Point:** The plugin now uses the **VibeUE architecture** with native C++ components (no external Python process needed). Legacy IPC components are **DEPRECATED** and will be removed in Phase 3 (Q2 2026). See `MIGRATION_GUIDE.md` for migration instructions.
 
 📖 **See:** [ARCHITECTURE.md](ARCHITECTURE.md) for detailed system architecture and [Wiki](https://github.com/Mittenzx/Adastrea-Director/wiki) for complete documentation.
 
@@ -60,14 +60,18 @@ Phase 3 has been **completed successfully** with fully implemented autonomous ag
 - ✅ Real-time Dashboard UI for monitoring agent activity
 - ✅ Complete infrastructure (Event Bus, Shared State, Remote Control API)
 
-**🎯 Current Focus:** VibeUE Architecture Complete - Testing & Migration Planning
+**🎯 Current Focus:** Phase 2 - Gradual Cutover to VibeUE Architecture
 
-The C++ plugin has been successfully modernized with the VibeUE architecture:
+The C++ plugin has been successfully modernized with the VibeUE architecture. **Phase 2 migration is now underway:**
 - ✅ Direct LLM integration (AdastreaLLMClient) - no Python process needed
 - ✅ Built-in Python execution (AdastreaScriptService) via IPythonScriptPlugin
 - ✅ Runtime asset discovery (AdastreaAssetService) - no document ingestion
 - ✅ Tool system (AdastreaToolSystem) for extensible AI capabilities
 - ✅ MCP server (AdastreaMCPServer) for external AI clients
+- ✅ Deprecation warnings added to legacy IPC components
+- ✅ Migration guide created ([MIGRATION_GUIDE.md](MIGRATION_GUIDE.md))
+
+**⚠️ Important:** Legacy IPC components (`PythonProcessManager`, `IPCClient`, `PythonBridge`, `ipc_server.py`) are now **DEPRECATED** and will be removed in Phase 3 (Q2 2026). All new features must use VibeUE components. See [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md) for complete migration instructions.
 
 See [VIBEUE_COMPLETION_SUMMARY.md](VIBEUE_COMPLETION_SUMMARY.md) for implementation details.
 

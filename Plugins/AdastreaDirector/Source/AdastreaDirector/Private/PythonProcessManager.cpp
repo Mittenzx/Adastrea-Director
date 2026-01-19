@@ -9,6 +9,7 @@ FPythonProcessManager::FPythonProcessManager()
 	: ProcessId(0)
 	, IPCPort(0)
 {
+	UE_LOG(LogAdastreaDirector, Warning, TEXT("⚠️ FPythonProcessManager is DEPRECATED and will be removed in a future version. Please use AdastreaScriptService instead for in-process Python execution."));
 }
 
 FPythonProcessManager::~FPythonProcessManager()
@@ -18,6 +19,8 @@ FPythonProcessManager::~FPythonProcessManager()
 
 bool FPythonProcessManager::StartPythonProcess(const FString& PythonExecutablePath, const FString& BackendScriptPath, int32 Port)
 {
+	UE_LOG(LogAdastreaDirector, Warning, TEXT("⚠️ DEPRECATED: FPythonProcessManager::StartPythonProcess is deprecated. Use AdastreaScriptService for in-process Python execution instead. This component will be removed in Phase 3."));
+	
 	// Stop any existing process
 	if (IsProcessRunning())
 	{
