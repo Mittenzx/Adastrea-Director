@@ -2,6 +2,8 @@
 
 An intelligent assistant system designed to understand natural language commands and assist with the game development lifecycle in Unreal Engine.
 
+> ⚠️ **IMPORTANT:** Legacy IPC components are DEPRECATED. See [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md) for migration to VibeUE architecture.
+> 
 > 📚 **Documentation:** See [Adastrea Director Wiki](https://github.com/Mittenzx/Adastrea-Director/wiki) for complete documentation.
 > 
 > 🏗️ **Architecture:** See [ARCHITECTURE.md](ARCHITECTURE.md) for system architecture, VibeUE modernization, and component overview.
