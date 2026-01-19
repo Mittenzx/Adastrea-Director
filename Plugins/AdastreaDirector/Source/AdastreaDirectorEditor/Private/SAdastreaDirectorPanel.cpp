@@ -1683,43 +1683,24 @@ void SAdastreaDirectorPanel::UpdateStatusLights()
 		if (BackendHealthStatusLight.IsValid())
 			BackendHealthStatusLight->SetStatus(SStatusIndicator::EStatus::Good, LOCTEXT("BackendHealthGood", "Backend Health: Operational"));
 		
-		// Check API key validation when backend is ready
-		// Cache API key validation result to avoid frequent external validation calls.
-		// This prevents hitting rate limits by validating at most once per cache window.
+		// Check API key validation (VibeUE Phase 3 - settings only, no backend validation)
 		if (APIKeyStatusLight.IsValid())
 		{
-			static FStartupValidationResult CachedAPIKeyResult;
-			static bool bHasCachedAPIKeyResult = false;
-			static FDateTime LastAPIKeyValidationTime = FDateTime::MinValue();
-
-			const double CacheValiditySeconds = 300.0; // 5 minutes
-			const FDateTime Now = FDateTime::UtcNow();
-			const bool bCacheExpired = !bHasCachedAPIKeyResult ||
-				(LastAPIKeyValidationTime != FDateTime::MinValue() &&
-					(Now - LastAPIKeyValidationTime).GetTotalSeconds() >= CacheValiditySeconds);
-
-			if (bCacheExpired)
+			FStartupValidationResult SettingsResult = FAdastreaStartupValidator::ValidateSettings();
+			if (SettingsResult.bSuccess)
 			{
-				CachedAPIKeyResult = FAdastreaStartupValidator::ValidateAPIKey(PythonBridge);
-				LastAPIKeyValidationTime = Now;
-				bHasCachedAPIKeyResult = true;
-			}
-
-			const FStartupValidationResult& APIKeyResult = CachedAPIKeyResult;
-			if (APIKeyResult.bSuccess)
-			{
-				// Use the dedicated UsedKeyName field if available, otherwise show "Valid"
-				FString UsedKey = APIKeyResult.UsedKeyName.IsEmpty() ? TEXT("Valid") : APIKeyResult.UsedKeyName;
+				FAdastreaSettings& Settings = FAdastreaSettings::Get();
+				FString Provider = Settings.GetLLMProvider();
 				
 				APIKeyStatusLight->SetStatus(
 					SStatusIndicator::EStatus::Good,
-					FText::Format(LOCTEXT("APIKeyValid", "API Key: {0}"), FText::FromString(UsedKey))
+					FText::Format(LOCTEXT("APIKeyValid", "API Key: {0} configured"), FText::FromString(Provider))
 				);
 			}
 			else
 			{
-				// Show which keys were tested if available
-				FString ErrorMsg = APIKeyResult.ErrorMessage;
+				// Show validation error
+				FString ErrorMsg = SettingsResult.ErrorMessage;
 				if (ErrorMsg.Len() > 50)
 				{
 					// Truncate long error messages
@@ -2310,30 +2291,25 @@ void SAdastreaDirectorPanel::PerformSelfCheck()
 		SkippedCount++;
 	}
 
-	// Check 7: API Key Validation (if backend is ready)
+	// Check 7: API Key Validation (VibeUE Phase 3 - settings only, no backend validation)
 	CurrentCheck++;
 	TestProgress = static_cast<float>(CurrentCheck) / TotalChecks;
-	if (PythonBridge && PythonBridge->IsReady())
 	{
-		
-		FStartupValidationResult APIKeyResult = FAdastreaStartupValidator::ValidateAPIKey(PythonBridge);
-		if (APIKeyResult.bSuccess)
+		FStartupValidationResult SettingsResult = FAdastreaStartupValidator::ValidateSettings();
+		if (SettingsResult.bSuccess)
 		{
-			AppendTestOutput(TEXT("✅ [7/8] API Key Validation: VALID\n"));
-			AppendTestOutput(FString::Printf(TEXT("    → %s\n"), *APIKeyResult.DetailedStatus));
+			FAdastreaSettings& Settings = FAdastreaSettings::Get();
+			FString Provider = Settings.GetLLMProvider();
+			AppendTestOutput(TEXT("✅ [7/8] API Key Validation: CONFIGURED\n"));
+			AppendTestOutput(FString::Printf(TEXT("    → LLM Provider: %s\n"), *Provider));
 			PassCount++;
 		}
 		else
 		{
-			AppendTestOutput(TEXT("❌ [7/8] API Key Validation: INVALID\n"));
-			AppendTestOutput(FString::Printf(TEXT("    → %s\n"), *APIKeyResult.ErrorMessage));
+			AppendTestOutput(TEXT("❌ [7/8] API Key Validation: NOT CONFIGURED\n"));
+			AppendTestOutput(FString::Printf(TEXT("    → %s\n"), *SettingsResult.ErrorMessage));
 			FailCount++;
 		}
-	}
-	else
-	{
-		AppendTestOutput(TEXT("⚠️ [7/8] API Key Validation: Cannot check (backend not ready)\n"));
-		SkippedCount++;
 	}
 
 	// Check 8: Query Processing (verify query handler responds correctly)
