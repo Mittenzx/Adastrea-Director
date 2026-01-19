@@ -895,9 +895,8 @@ FReply SAdastreaDirectorPanel::OnClearHistoryClicked()
 	UpdateResults(TEXT("Notice: Legacy conversation history feature is no longer available.\n\n")
 		TEXT("The IPC-based query system has been replaced with VibeUE architecture.\n")
 		TEXT("See MIGRATION_GUIDE.md for updated approaches."));
-	return FReply::Handled();
-	
 	// Removed legacy code - previously cleared conversation history via FPythonBridge IPC
+	return FReply::Handled();
 }
 
 FReply SAdastreaDirectorPanel::OnSettingsClicked()
@@ -1045,9 +1044,8 @@ FReply SAdastreaDirectorPanel::OnRefreshDbStatusClicked()
 		TEXT("• AdastreaAssetService provides instant asset queries\n")
 		TEXT("• No document ingestion needed\n\n")
 		TEXT("See MIGRATION_GUIDE.md for details."));
-	return FReply::Handled();
-	
 	// Removed legacy code - previously queried ChromaDB status via FPythonBridge IPC
+	return FReply::Handled();
 }
 
 bool SAdastreaDirectorPanel::CanRefreshDbStatus() const
@@ -1198,9 +1196,8 @@ FReply SAdastreaDirectorPanel::OnReconnectClicked()
 	UpdateConnectionStatus();
 	UpdateStatusLights();
 	
-	return FReply::Handled();
-	
 	// Removed legacy code - previously reconnected to Python IPC server via FPythonBridge
+	return FReply::Handled();
 }
 
 FReply SAdastreaDirectorPanel::OnClearLogsClicked()
@@ -1273,9 +1270,9 @@ void SAdastreaDirectorPanel::UpdateConnectionStatus()
 {
 	// Legacy IPC connection status has been removed in Phase 3 migration
 	CachedConnectionStatus = FText::FromString(TEXT("ℹ️ Legacy IPC system removed - migrated to VibeUE architecture"));
-	return;
-	
 	// Removed legacy code - previously checked FPythonBridge IPC connection status
+	return;
+}
 
 void SAdastreaDirectorPanel::UpdateDashboardLogs()
 {
@@ -1290,8 +1287,8 @@ void SAdastreaDirectorPanel::UpdateDashboardLogs()
 	);
 	
 	AppendLogEntry(NewLogEntry);
-	
 	// Removed legacy code - previously fetched Python process logs via FPythonBridge IPC
+}
 
 void SAdastreaDirectorPanel::SetAllStatusLightsToError(const FText& Reason)
 {
@@ -1771,32 +1768,13 @@ void SAdastreaDirectorPanel::PerformSelfCheck()
 	TestProgress = static_cast<float>(CurrentCheck) / TotalChecks;
 	AppendTestOutput(TEXT("ℹ️  [5/8] IPC Connection: N/A (VibeUE architecture)\n"));
 	SkippedCount++;
-	
 	// Removed legacy code - previously checked FPythonBridge initialization and status
 
-	// Check 6: Backend Health (Ping test)
+	// Check 6: Backend Health (Legacy - No longer used)
 	CurrentCheck++;
 	TestProgress = static_cast<float>(CurrentCheck) / TotalChecks;
-	if (PythonBridge && PythonBridge->IsReady())
-	{
-		FString Response;
-		bool bPingSuccess = PythonBridge->SendRequest(TEXT("ping"), TEXT(""), Response);
-		if (bPingSuccess && Response.Contains(TEXT("pong")))
-		{
-			AppendTestOutput(TEXT("✅ [6/8] Backend Health: Responding (ping → pong)\n"));
-			PassCount++;
-		}
-		else
-		{
-			AppendTestOutput(TEXT("❌ [6/8] Backend Health: NOT RESPONDING\n"));
-			FailCount++;
-		}
-	}
-	else
-	{
-		AppendTestOutput(TEXT("⚠️ [6/8] Backend Health: Cannot check (not connected)\n"));
-		SkippedCount++;
-	}
+	AppendTestOutput(TEXT("ℹ️  [6/8] Backend Health: N/A (VibeUE native)\n"));
+	SkippedCount++;
 
 	// Check 7: API Key Configuration (VibeUE Phase 3 - settings only, no backend validation)
 	CurrentCheck++;
@@ -1819,32 +1797,11 @@ void SAdastreaDirectorPanel::PerformSelfCheck()
 		}
 	}
 
-	// Check 8: Query Processing (verify query handler responds correctly)
+	// Check 8: Query Processing (Legacy - No longer used)
 	CurrentCheck++;
 	TestProgress = static_cast<float>(CurrentCheck) / TotalChecks;
-	if (PythonBridge && PythonBridge->IsReady())
-	{
-		// Test actual query processing by sending a query request
-		FString Response;
-		bool bQuerySuccess = PythonBridge->SendRequest(TEXT("query"), TEXT("test"), Response);
-		if (bQuerySuccess && (Response.Contains(TEXT("success")) || Response.Contains(TEXT("result"))))
-		{
-			AppendTestOutput(TEXT("✅ [8/8] Query Processing: Working\n"));
-			PassCount++;
-		}
-		else
-		{
-			// Truncate response for display if too long
-			FString DisplayResponse = Response.Len() > 100 ? Response.Left(100) + TEXT("...") : Response;
-			AppendTestOutput(FString::Printf(TEXT("❌ [8/8] Query Processing: FAILED - %s\n"), *DisplayResponse));
-			FailCount++;
-		}
-	}
-	else
-	{
-		AppendTestOutput(TEXT("⚠️ [8/8] Query Processing: Cannot check (not connected)\n"));
-		SkippedCount++;
-	}
+	AppendTestOutput(TEXT("ℹ️  [8/8] Query Processing: N/A (use VibeUE components)\n"));
+	SkippedCount++;
 
 	// Summary
 	AppendTestOutput(TEXT("\n═══════════════════════════════════════════════════════════════\n"));
