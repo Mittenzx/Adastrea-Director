@@ -74,3 +74,20 @@ coverage.xml
 api_costs.json
 cost_report.json
 verify_endpoint_fix.py
+
+# Unreal Engine
+Binaries/
+Build/
+DerivedDataCache/
+Intermediate/
+Saved/
+*.sln
+*.suo
+*.xcodeproj
+*.xcworkspace
+
+# Keep project files but ignore generated files
+!Adastrea.uproject
+!Source/
+!Config/
+!Content/

@@ -8,6 +8,26 @@ An intelligent assistant system designed to understand natural language commands
 > 
 > 🏗️ **Architecture:** See [ARCHITECTURE.md](ARCHITECTURE.md) for system architecture and VibeUE components.
 
+## 🎯 Quick Start
+
+This repository serves two purposes:
+
+1. **Plugin Distribution**: The `Plugins/AdastreaDirector/` folder contains the Unreal Engine plugin that can be installed into any UE5+ project.
+2. **Development Project**: The repository includes a minimal `Adastrea.uproject` file for plugin development and testing.
+
+### For Plugin Users
+Copy the `Plugins/AdastreaDirector/` folder to your project's `Plugins/` directory. See the [Installation Guide](Plugins/AdastreaDirector/Documentation/guides/INSTALLATION.md) for details.
+
+### For Plugin Developers
+This repository is a complete Unreal Engine project. Generate project files using:
+```bash
+# Windows
+# Right-click Adastrea.uproject → "Generate Visual Studio project files"
+
+# Mac/Linux
+/Path/To/UnrealEngine/Engine/Build/BatchFiles/GenerateProjectFiles.sh -project="Adastrea.uproject"
+```
+
 ## Overview
 
 Adastrea Director is an AI-powered tool that aims to revolutionize game development by providing context-aware assistance, automated planning, and eventually autonomous development capabilities. The project is being developed in four distinct phases, with each phase building upon the previous one.
