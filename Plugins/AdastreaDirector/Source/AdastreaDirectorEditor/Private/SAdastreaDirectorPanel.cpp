@@ -850,35 +850,19 @@ FReply SAdastreaDirectorPanel::OnSendQueryClicked()
 
 void SAdastreaDirectorPanel::SendQueryToPython(const FString& Query)
 {
-	// Get the Python bridge from the runtime module
-	FAdastreaDirectorModule* RuntimeModule = FModuleManager::GetModulePtr<FAdastreaDirectorModule>("AdastreaDirector");
-	
-	if (!RuntimeModule)
-	{
-		UE_LOG(LogAdastreaDirectorEditor, Error, TEXT("Failed to get AdastreaDirector runtime module"));
-		UpdateResults(TEXT("Error: AdastreaDirector runtime module not available."));
-		return;
-	}
+	// Legacy IPC system has been removed in Phase 3 migration to VibeUE architecture
+	// This feature is no longer available - use VibeUE components instead
+	UE_LOG(LogAdastreaDirectorEditor, Warning, TEXT("Legacy IPC query feature is no longer available - migrated to VibeUE architecture"));
+	UpdateResults(TEXT("Notice: Legacy IPC query system has been removed.\n\n")
+		TEXT("The Adastrea Director plugin has migrated to the VibeUE architecture which provides:\n")
+		TEXT("• Direct LLM integration via AdastreaLLMClient\n")
+		TEXT("• In-process Python execution via AdastreaScriptService\n")
+		TEXT("• Runtime asset discovery via AdastreaAssetService\n\n")
+		TEXT("See MIGRATION_GUIDE.md for updated usage examples."));
+	return;
 
-	FPythonBridge* PythonBridge = RuntimeModule->GetPythonBridge();
-	
-	if (!PythonBridge)
-	{
-		UE_LOG(LogAdastreaDirectorEditor, Error, TEXT("Python bridge not available"));
-		UpdateResults(TEXT("Error: Python backend is not initialized.\n\nPlease ensure the Python backend is running."));
-		return;
-	}
-
-	if (!PythonBridge->IsReady())
-	{
-		UE_LOG(LogAdastreaDirectorEditor, Warning, TEXT("Python bridge not ready"));
-		UpdateResults(TEXT("Error: Python backend is not ready.\n\nPlease check that the Python backend is running and connected."));
-		return;
-	}
-
-	// Send query request
-	FString Response;
-	bool bSuccess = PythonBridge->SendRequest(TEXT("query"), Query, Response);
+	// Removed legacy code - previously used FPythonBridge for IPC communication
+	bool bSuccess = false;
 
 	if (bSuccess)
 	{
@@ -960,37 +944,13 @@ FReply SAdastreaDirectorPanel::OnClearHistoryClicked()
 		return FReply::Handled();
 	}
 
-	// Get the Python bridge
-	FAdastreaDirectorModule* RuntimeModule = FModuleManager::GetModulePtr<FAdastreaDirectorModule>("AdastreaDirector");
-	
-	if (!RuntimeModule)
-	{
-		UpdateResults(TEXT("Error: Cannot clear history - runtime module not available."));
-		return FReply::Handled();
-	}
-
-	FPythonBridge* PythonBridge = RuntimeModule->GetPythonBridge();
-	
-	if (!PythonBridge || !PythonBridge->IsReady())
-	{
-		UpdateResults(TEXT("Error: Python backend is not ready."));
-		return FReply::Handled();
-	}
-
-	// Send clear history request
-	FString Response;
-	bool bSuccess = PythonBridge->SendRequest(TEXT("clear_history"), TEXT(""), Response);
-
-	if (bSuccess)
-	{
-		UpdateResults(TEXT("✓ Conversation history cleared successfully."));
-	}
-	else
-	{
-		UpdateResults(TEXT("Error: Failed to clear history."));
-	}
-
+	// Legacy IPC system has been removed in Phase 3 migration
+	UpdateResults(TEXT("Notice: Legacy conversation history feature is no longer available.\n\n")
+		TEXT("The IPC-based query system has been replaced with VibeUE architecture.\n")
+		TEXT("See MIGRATION_GUIDE.md for updated approaches."));
 	return FReply::Handled();
+	
+	// Removed legacy code - previously cleared conversation history via FPythonBridge IPC
 }
 
 FReply SAdastreaDirectorPanel::OnSettingsClicked()
@@ -1132,87 +1092,15 @@ bool SAdastreaDirectorPanel::CanStopIngestion() const
 
 FReply SAdastreaDirectorPanel::OnRefreshDbStatusClicked()
 {
-	// Get the Python bridge
-	FAdastreaDirectorModule* RuntimeModule = FModuleManager::GetModulePtr<FAdastreaDirectorModule>("AdastreaDirector");
-	
-	if (!RuntimeModule || !RuntimeModule->GetPythonBridge())
-	{
-		DatabaseStatusMessage = LOCTEXT("DbStatusError", "Error: Python bridge not available");
-		return FReply::Handled();
-	}
-
-	auto PythonBridge = RuntimeModule->GetPythonBridge();
-
-	// Build request with database path if provided
-	FString DbPath = DbPathBox->GetText().ToString().TrimStartAndEnd();
-	
-	// Always send a structured JSON object: collection_name is fixed,
-	// and persist_directory is only included when the user provides a path.
-	// When DbPath is empty (e.g., the user cleared the field), we omit
-	// persist_directory so the backend can auto-detect the default location.
-	TSharedPtr<FJsonObject> RequestObject = MakeShared<FJsonObject>();
-	RequestObject->SetStringField(TEXT("collection_name"), TEXT("adastrea_game_docs"));
-	
-	FString RequestData;
-	if (!DbPath.IsEmpty())
-	{
-		// Convert to full path
-		DbPath = FPaths::ConvertRelativePathToFull(DbPath);
-		
-		// Include persist_directory only when explicitly provided
-		RequestObject->SetStringField(TEXT("persist_directory"), DbPath);
-	}
-	
-	TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&RequestData);
-	FJsonSerializer::Serialize(RequestObject.ToSharedRef(), Writer);
-
-	// Send database info request
-	FString Response;
-	bool bSuccess = PythonBridge->SendRequest(TEXT("db_info"), RequestData, Response);
-
-	if (bSuccess)
-	{
-		// Parse the response
-		TSharedPtr<FJsonObject> JsonObject;
-		TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(Response);
-		
-		if (FJsonSerializer::Deserialize(Reader, JsonObject) && JsonObject.IsValid())
-		{
-			FString Status = JsonObject->GetStringField(TEXT("status"));
-			
-			if (Status == TEXT("success"))
-			{
-				// Get the info object
-				const TSharedPtr<FJsonObject>* InfoObject;
-				if (JsonObject->TryGetObjectField(TEXT("info"), InfoObject) && InfoObject)
-				{
-					FString CollectionName = (*InfoObject)->GetStringField(TEXT("collection_name"));
-					int32 DocumentCount = (*InfoObject)->GetIntegerField(TEXT("document_count"));
-					FString PersistDirectory = (*InfoObject)->GetStringField(TEXT("persist_directory"));
-					
-					FString StatusText = FString::Printf(TEXT("Collection: %s\nDocuments: %d\nLocation: %s"), 
-						*CollectionName, DocumentCount, *PersistDirectory);
-					
-					DatabaseStatusMessage = FText::FromString(StatusText);
-				}
-			}
-			else
-			{
-				FString Error = JsonObject->GetStringField(TEXT("error"));
-				DatabaseStatusMessage = FText::FromString(FString::Printf(TEXT("Error: %s"), *Error));
-			}
-		}
-		else
-		{
-			DatabaseStatusMessage = LOCTEXT("DbStatusParseError", "Error: Failed to parse response");
-		}
-	}
-	else
-	{
-		DatabaseStatusMessage = LOCTEXT("DbStatusRequestError", "Error: Failed to send request");
-	}
-
+	// Legacy IPC system has been removed in Phase 3 migration
+	DatabaseStatusMessage = FText::FromString(TEXT("Legacy database ingestion feature is no longer available.\n\n")
+		TEXT("The VibeUE architecture uses runtime asset discovery instead:\n")
+		TEXT("• AdastreaAssetService provides instant asset queries\n")
+		TEXT("• No document ingestion needed\n\n")
+		TEXT("See MIGRATION_GUIDE.md for details."));
 	return FReply::Handled();
+	
+	// Removed legacy code - previously queried ChromaDB status via FPythonBridge IPC
 }
 
 bool SAdastreaDirectorPanel::CanRefreshDbStatus() const
@@ -1223,71 +1111,17 @@ bool SAdastreaDirectorPanel::CanRefreshDbStatus() const
 
 void SAdastreaDirectorPanel::StartIngestion(const FString& DocsPath, const FString& DbPath)
 {
-	// Get the Python bridge
-	FAdastreaDirectorModule* RuntimeModule = FModuleManager::GetModulePtr<FAdastreaDirectorModule>("AdastreaDirector");
+	// Legacy IPC ingestion system has been removed in Phase 3 migration
+	IngestionStatusMessage = LOCTEXT("IngestionNotAvailable", "Legacy ingestion feature is no longer available");
+	AppendIngestionDebugLog(TEXT("❌ Legacy document ingestion feature has been removed\n\n"));
+	AppendIngestionDebugLog(TEXT("The VibeUE architecture uses runtime asset discovery instead of document ingestion:\n"));
+	AppendIngestionDebugLog(TEXT("• AdastreaAssetService provides instant asset queries via Unreal's Asset Registry\n"));
+	AppendIngestionDebugLog(TEXT("• No ChromaDB or vector database ingestion needed\n"));
+	AppendIngestionDebugLog(TEXT("• See MIGRATION_GUIDE.md for updated asset query examples\n\n"));
+	bIsIngesting = false;
+	return;
 	
-	if (!RuntimeModule)
-	{
-		IngestionStatusMessage = LOCTEXT("IngestionErrorModuleNotAvailable", "Error: Runtime module not available");
-		AppendIngestionDebugLog(TEXT("❌ Error: AdastreaDirector runtime module not available\n"));
-		bIsIngesting = false;
-		return;
-	}
-
-	AppendIngestionDebugLog(TEXT("✅ Runtime module found\n"));
-
-	FPythonBridge* PythonBridge = RuntimeModule->GetPythonBridge();
-	
-	if (!PythonBridge || !PythonBridge->IsReady())
-	{
-		IngestionStatusMessage = LOCTEXT("IngestionErrorBackendNotReady", "Error: Python backend not ready");
-		AppendIngestionDebugLog(TEXT("❌ Error: Python backend not ready\n"));
-		if (PythonBridge)
-		{
-			FString Status = PythonBridge->GetStatus();
-			AppendIngestionDebugLog(FString::Printf(TEXT("  → Backend status: %s\n"), *Status));
-		}
-		else
-		{
-			AppendIngestionDebugLog(TEXT("  → Python bridge is null\n"));
-		}
-		bIsIngesting = false;
-		return;
-	}
-
-	AppendIngestionDebugLog(TEXT("✅ Python backend ready\n"));
-
-	// Build JSON request
-	TSharedPtr<FJsonObject> RequestData = MakeShared<FJsonObject>();
-	RequestData->SetStringField(TEXT("docs_dir"), DocsPath);
-	RequestData->SetStringField(TEXT("persist_dir"), DbPath);
-	RequestData->SetStringField(TEXT("progress_file"), ProgressFilePath);
-	RequestData->SetBoolField(TEXT("force_reingest"), false);
-	RequestData->SetStringField(TEXT("collection_name"), TEXT("adastrea_game_docs"));
-
-	FString RequestDataString;
-	TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&RequestDataString);
-	FJsonSerializer::Serialize(RequestData.ToSharedRef(), Writer);
-
-	AppendIngestionDebugLog(TEXT("📤 Sending ingestion request to Python backend...\n"));
-	AppendIngestionDebugLog(FString::Printf(TEXT("  → Collection: adastrea_game_docs\n")));
-	AppendIngestionDebugLog(FString::Printf(TEXT("  → Force reingest: No\n")));
-
-	// Send ingestion request
-	FString Response;
-	bool bSuccess = PythonBridge->SendRequest(TEXT("ingest"), RequestDataString, Response);
-
-	if (bSuccess)
-	{
-		IngestionStatusMessage = LOCTEXT("IngestionInProgress", "Ingestion in progress...");
-		AppendIngestionDebugLog(TEXT("✅ Ingestion request sent successfully\n"));
-		AppendIngestionDebugLog(TEXT("⏳ Waiting for Python backend to process files...\n"));
-		AppendIngestionDebugLog(TEXT("📊 Progress updates will appear below:\n"));
-	}
-	else
-	{
-		IngestionStatusMessage = LOCTEXT("IngestionErrorFailedToStart", "Error: Failed to start ingestion");
-		AppendIngestionDebugLog(TEXT("❌ Error: Failed to send ingestion request\n"));
+	// Removed legacy code - previously performed ChromaDB document ingestion via FPythonBridge IPC
 		if (!Response.IsEmpty())
 		{
 			AppendIngestionDebugLog(FString::Printf(TEXT("  → Response: %s\n"), *Response));
@@ -1407,6 +1241,7 @@ FReply SAdastreaDirectorPanel::OnRefreshDashboardClicked()
 
 FReply SAdastreaDirectorPanel::OnReconnectClicked()
 {
+	// Legacy IPC reconnection feature has been removed in Phase 3 migration
 	FAdastreaDirectorModule* RuntimeModule = FModuleManager::GetModulePtr<FAdastreaDirectorModule>("AdastreaDirector");
 	
 	if (!RuntimeModule)
@@ -1415,32 +1250,17 @@ FReply SAdastreaDirectorPanel::OnReconnectClicked()
 		return FReply::Handled();
 	}
 
-	FPythonBridge* PythonBridge = RuntimeModule->GetPythonBridge();
-	
-	if (!PythonBridge)
-	{
-		AppendLogEntry(TEXT("Error: Python bridge not initialized\n"));
-		return FReply::Handled();
-	}
-
-	FString LogEntry = TEXT("Attempting to reconnect to Python backend...\n");
-	
-	bool bSuccess = PythonBridge->Reconnect();
-	
-	if (bSuccess)
-	{
-		LogEntry += TEXT("✅ Reconnection successful!\n");
-	}
-	else
-	{
-		LogEntry += TEXT("❌ Reconnection failed. Please check Python backend.\n");
-	}
+	FString LogEntry = TEXT("Legacy IPC reconnection feature is no longer available.\n");
+	LogEntry += TEXT("The VibeUE architecture does not use IPC connections.\n");
+	LogEntry += TEXT("See MIGRATION_GUIDE.md for updated architecture.\n");
 	
 	AppendLogEntry(LogEntry);
 	UpdateConnectionStatus();
 	UpdateStatusLights();
 	
 	return FReply::Handled();
+	
+	// Removed legacy code - previously reconnected to Python IPC server via FPythonBridge
 }
 
 FReply SAdastreaDirectorPanel::OnClearLogsClicked()
@@ -1511,64 +1331,27 @@ void SAdastreaDirectorPanel::AppendIngestionDebugLog(const FString& Entry)
 
 void SAdastreaDirectorPanel::UpdateConnectionStatus()
 {
-	FAdastreaDirectorModule* RuntimeModule = FModuleManager::GetModulePtr<FAdastreaDirectorModule>("AdastreaDirector");
-	if (!RuntimeModule)
-	{
-		CachedConnectionStatus = FText::FromString(TEXT("❌ Runtime module not available"));
-		return;
-	}
-
-	FPythonBridge* PythonBridge = RuntimeModule->GetPythonBridge();
-	if (!PythonBridge)
-	{
-		CachedConnectionStatus = FText::FromString(TEXT("❌ Python bridge not initialized"));
-		return;
-	}
-
-	if (PythonBridge->IsReady())
-	{
-		FString Status = PythonBridge->GetStatus();
-		CachedConnectionStatus = FText::FromString(FString::Printf(TEXT("✅ Connected - %s"), *Status));
-	}
-	else
-	{
-		CachedConnectionStatus = FText::FromString(TEXT("⚠️ Not connected - Python backend not ready"));
-	}
-}
+	// Legacy IPC connection status has been removed in Phase 3 migration
+	CachedConnectionStatus = FText::FromString(TEXT("ℹ️ Legacy IPC system removed - migrated to VibeUE architecture"));
+	return;
+	
+	// Removed legacy code - previously checked FPythonBridge IPC connection status
 
 void SAdastreaDirectorPanel::UpdateDashboardLogs()
 {
-	// Get the Python bridge
-	FAdastreaDirectorModule* RuntimeModule = FModuleManager::GetModulePtr<FAdastreaDirectorModule>("AdastreaDirector");
-	
-	if (!RuntimeModule)
-	{
-		AppendLogEntry(TEXT("Error: Runtime module not available - cannot fetch logs\n"));
-		return;
-	}
-
-	FPythonBridge* PythonBridge = RuntimeModule->GetPythonBridge();
-	
-	if (!PythonBridge)
-	{
-		AppendLogEntry(TEXT("Error: Python bridge not initialized - cannot fetch logs\n"));
-		return;
-	}
-
-	// Build diagnostic log entry using Printf for efficiency
+	// Legacy IPC dashboard logs have been removed in Phase 3 migration
 	FString NewLogEntry = FString::Printf(
 		TEXT("=== Dashboard Status Update ===\n")
 		TEXT("Timestamp: %s\n")
-		TEXT("Python Bridge Ready: %s\n")
-		TEXT("Status: %s\n")
+		TEXT("Architecture: VibeUE (native C++)\n")
+		TEXT("Legacy IPC: Removed (Phase 3)\n")
 		TEXT("===============================\n\n"),
-		*FDateTime::Now().ToString(TEXT("%Y-%m-%d %H:%M:%S")),
-		PythonBridge->IsReady() ? TEXT("Yes") : TEXT("No"),
-		*PythonBridge->GetStatus()
+		*FDateTime::Now().ToString(TEXT("%Y-%m-%d %H:%M:%S"))
 	);
 	
 	AppendLogEntry(NewLogEntry);
-}
+	
+	// Removed legacy code - previously fetched Python process logs via FPythonBridge IPC
 
 void SAdastreaDirectorPanel::SetAllStatusLightsToError(const FText& Reason)
 {
@@ -1591,12 +1374,9 @@ void SAdastreaDirectorPanel::SetAllStatusLightsToError(const FText& Reason)
 
 void SAdastreaDirectorPanel::UpdateStatusLights()
 {
-	// NOTE: This implementation uses string parsing of GetStatus() output.
-	// While not ideal, it works with the current PythonBridge API without requiring
-	// changes to the bridge interface. Future enhancement: add structured status
-	// methods (e.g., IsProcessRunning(), IsIPCConnected()) to PythonBridge.
+	// Legacy IPC status lights have been removed in Phase 3 migration
+	// Set all lights to indicate the migration to VibeUE architecture
 	
-	// Get the Python bridge
 	FAdastreaDirectorModule* RuntimeModule = FModuleManager::GetModulePtr<FAdastreaDirectorModule>("AdastreaDirector");
 	
 	if (!RuntimeModule)
@@ -1606,163 +1386,57 @@ void SAdastreaDirectorPanel::UpdateStatusLights()
 		return;
 	}
 
-	FPythonBridge* PythonBridge = RuntimeModule->GetPythonBridge();
+	// Legacy Python Process and IPC are no longer used
+	if (PythonProcessStatusLight.IsValid())
+		PythonProcessStatusLight->SetStatus(SStatusIndicator::EStatus::Unknown, LOCTEXT("PythonProcessRemoved", "Python Process: N/A (VibeUE)"));
+	if (IPCConnectionStatusLight.IsValid())
+		IPCConnectionStatusLight->SetStatus(SStatusIndicator::EStatus::Unknown, LOCTEXT("IPCRemoved", "IPC Connection: N/A (VibeUE)"));
+	if (BridgeReadyStatusLight.IsValid())
+		BridgeReadyStatusLight->SetStatus(SStatusIndicator::EStatus::Unknown, LOCTEXT("BridgeRemoved", "Python Bridge: Removed (Phase 3)"));
+	if (BackendHealthStatusLight.IsValid())
+		BackendHealthStatusLight->SetStatus(SStatusIndicator::EStatus::Good, LOCTEXT("BackendVibeUE", "Backend: VibeUE (Native C++)"));
 	
-	if (!PythonBridge)
+	// Check API key configuration (VibeUE Phase 3 - settings only, no backend validation)
+	if (APIKeyStatusLight.IsValid())
 	{
-		// Python bridge not initialized - set most to error, query/ingestion to unknown
-		if (PythonProcessStatusLight.IsValid())
-			PythonProcessStatusLight->SetStatus(SStatusIndicator::EStatus::Error, LOCTEXT("PythonProcessNotInit", "Python Process: Bridge not initialized"));
-		if (IPCConnectionStatusLight.IsValid())
-			IPCConnectionStatusLight->SetStatus(SStatusIndicator::EStatus::Error, LOCTEXT("IPCConnectionNotInit", "IPC Connection: Bridge not initialized"));
-		if (BridgeReadyStatusLight.IsValid())
-			BridgeReadyStatusLight->SetStatus(SStatusIndicator::EStatus::Error, LOCTEXT("BridgeReadyNotInit", "Python Bridge: Not initialized"));
-		if (BackendHealthStatusLight.IsValid())
-			BackendHealthStatusLight->SetStatus(SStatusIndicator::EStatus::Error, LOCTEXT("BackendHealthNotInit", "Backend Health: Bridge not initialized"));
-		if (APIKeyStatusLight.IsValid())
-			APIKeyStatusLight->SetStatus(SStatusIndicator::EStatus::Unknown, LOCTEXT("APIKeyNotInit", "API Key: Cannot check (bridge not initialized)"));
-		if (QueryProcessingStatusLight.IsValid())
-			QueryProcessingStatusLight->SetStatus(SStatusIndicator::EStatus::Unknown, LOCTEXT("QueryProcessingIdle", "Query Processing: Idle"));
-		if (IngestionStatusLight.IsValid())
-			IngestionStatusLight->SetStatus(SStatusIndicator::EStatus::Unknown, LOCTEXT("IngestionIdle", "Document Ingestion: Not running"));
-		return;
-	}
-
-	// Check Python process status (we need to access internal state through GetStatus)
-	FString StatusString = PythonBridge->GetStatus();
-	
-	// Use precise, mutually exclusive checks to avoid ambiguity
-	// Check for "not running" first as it's the most specific error state
-	bool bProcessNotRunning = StatusString.Contains(TEXT("not running"));
-	bool bIPCNotConnected = StatusString.Contains(TEXT("IPC not connected"));
-	bool bIsReady = StatusString.Contains(TEXT("Ready"));
-	
-	// Python Process status
-	if (bProcessNotRunning)
-	{
-		if (PythonProcessStatusLight.IsValid())
-			PythonProcessStatusLight->SetStatus(SStatusIndicator::EStatus::Error, LOCTEXT("PythonProcessStopped", "Python Process: Not running"));
-	}
-	else if (bIsReady)
-	{
-		// Extract just the relevant part - "Running" instead of full status string
-		if (PythonProcessStatusLight.IsValid())
-			PythonProcessStatusLight->SetStatus(SStatusIndicator::EStatus::Good, LOCTEXT("PythonProcessRunning", "Python Process: Running"));
-	}
-	else
-	{
-		if (PythonProcessStatusLight.IsValid())
-			PythonProcessStatusLight->SetStatus(SStatusIndicator::EStatus::Warning, LOCTEXT("PythonProcessUnknown", "Python Process: Unknown state"));
-	}
-
-	// Check IPC connection status
-	if (bIPCNotConnected)
-	{
-		if (IPCConnectionStatusLight.IsValid())
-			IPCConnectionStatusLight->SetStatus(SStatusIndicator::EStatus::Error, LOCTEXT("IPCDisconnected", "IPC Connection: Disconnected"));
-	}
-	else if (bIsReady)
-	{
-		if (IPCConnectionStatusLight.IsValid())
-			IPCConnectionStatusLight->SetStatus(SStatusIndicator::EStatus::Good, LOCTEXT("IPCConnected", "IPC Connection: Connected"));
-	}
-	else
-	{
-		if (IPCConnectionStatusLight.IsValid())
-			IPCConnectionStatusLight->SetStatus(SStatusIndicator::EStatus::Warning, LOCTEXT("IPCUnknown", "IPC Connection: Unknown state"));
-	}
-
-	// Check Python bridge ready state
-	// Note: bIsReady is derived from StatusString.Contains("Ready"), which is equivalent to
-	// PythonBridge->IsReady() since GetStatus() returns "Ready..." only when both
-	// ProcessManager->IsProcessRunning() and IPCClient->IsConnected() are true.
-	if (bIsReady)
-	{
-		if (BridgeReadyStatusLight.IsValid())
-			BridgeReadyStatusLight->SetStatus(SStatusIndicator::EStatus::Good, LOCTEXT("BridgeReady", "Python Bridge: Ready"));
-		if (BackendHealthStatusLight.IsValid())
-			BackendHealthStatusLight->SetStatus(SStatusIndicator::EStatus::Good, LOCTEXT("BackendHealthGood", "Backend Health: Operational"));
-		
-		// Check API key configuration (VibeUE Phase 3 - settings only, no backend validation)
-		if (APIKeyStatusLight.IsValid())
+		FStartupValidationResult SettingsResult = FAdastreaStartupValidator::ValidateSettings();
+		if (SettingsResult.bSuccess)
 		{
-			FStartupValidationResult SettingsResult = FAdastreaStartupValidator::ValidateSettings();
-			if (SettingsResult.bSuccess)
-			{
-				FAdastreaSettings& Settings = FAdastreaSettings::Get();
-				FString Provider = Settings.GetLLMProvider();
-				
-				APIKeyStatusLight->SetStatus(
-					SStatusIndicator::EStatus::Good,
-					FText::Format(LOCTEXT("APIKeyConfigured", "API Key: {0} configured"), FText::FromString(Provider))
-				);
-			}
-			else
-			{
-				// Show validation error
-				FString ErrorMsg = SettingsResult.ErrorMessage;
-				if (ErrorMsg.Len() > 50)
-				{
-					// Truncate long error messages
-					ErrorMsg = ErrorMsg.Left(47) + TEXT("...");
-				}
-				APIKeyStatusLight->SetStatus(
-					SStatusIndicator::EStatus::Error,
-					FText::Format(LOCTEXT("APIKeyInvalid", "API Key: {0}"), FText::FromString(ErrorMsg))
-				);
-			}
+			FAdastreaSettings& Settings = FAdastreaSettings::Get();
+			FString Provider = Settings.GetLLMProvider();
+			
+			APIKeyStatusLight->SetStatus(
+				SStatusIndicator::EStatus::Good,
+				FText::Format(LOCTEXT("APIKeyConfigured", "API Key: {0} configured"), FText::FromString(Provider))
+			);
 		}
-	}
-	else
-	{
-		if (BridgeReadyStatusLight.IsValid())
-			BridgeReadyStatusLight->SetStatus(SStatusIndicator::EStatus::Error, LOCTEXT("BridgeNotReady", "Python Bridge: Not ready"));
-		if (BackendHealthStatusLight.IsValid())
-			BackendHealthStatusLight->SetStatus(SStatusIndicator::EStatus::Error, LOCTEXT("BackendHealthBad", "Backend Health: Not operational"));
-		if (APIKeyStatusLight.IsValid())
-			APIKeyStatusLight->SetStatus(SStatusIndicator::EStatus::Unknown, LOCTEXT("APIKeyUnknown", "API Key: Cannot check (backend not ready)"));
-	}
-
-	// Check query processing state
-	if (bIsProcessing)
-	{
-		if (QueryProcessingStatusLight.IsValid())
-			QueryProcessingStatusLight->SetStatus(SStatusIndicator::EStatus::Good, LOCTEXT("QueryProcessingActive", "Query Processing: Active"));
-	}
-	else if (bIsReady)
-	{
-		if (QueryProcessingStatusLight.IsValid())
-			QueryProcessingStatusLight->SetStatus(SStatusIndicator::EStatus::Good, LOCTEXT("QueryProcessingReady", "Query Processing: Ready"));
-	}
-	else
-	{
-		if (QueryProcessingStatusLight.IsValid())
-			QueryProcessingStatusLight->SetStatus(SStatusIndicator::EStatus::Error, LOCTEXT("QueryProcessingUnavailable", "Query Processing: Unavailable"));
-	}
-
-	// Check ingestion state
-	if (bIsIngesting)
-	{
-		if (IngestionStatusLight.IsValid())
+		else
 		{
-			float ProgressPercent = IngestionProgress * 100.0f;
-			IngestionStatusLight->SetStatus(
-				SStatusIndicator::EStatus::Warning, 
-				FText::Format(LOCTEXT("IngestionActive", "Document Ingestion: Active ({0}%)"), FText::AsNumber(static_cast<int32>(ProgressPercent)))
+			// Show validation error
+			FString ErrorMsg = SettingsResult.ErrorMessage;
+			if (ErrorMsg.Len() > 50)
+			{
+				// Truncate long error messages
+				ErrorMsg = ErrorMsg.Left(47) + TEXT("...");
+			}
+			APIKeyStatusLight->SetStatus(
+				SStatusIndicator::EStatus::Error,
+				FText::Format(LOCTEXT("APIKeyInvalid", "API Key: {0}"), FText::FromString(ErrorMsg))
 			);
 		}
 	}
-	else if (bIsReady)
-	{
-		if (IngestionStatusLight.IsValid())
-			IngestionStatusLight->SetStatus(SStatusIndicator::EStatus::Good, LOCTEXT("IngestionReady", "Document Ingestion: Ready"));
-	}
-	else
-	{
-		if (IngestionStatusLight.IsValid())
-			IngestionStatusLight->SetStatus(SStatusIndicator::EStatus::Error, LOCTEXT("IngestionUnavailable", "Document Ingestion: Unavailable"));
-	}
+
+	// Legacy query processing is no longer available
+	if (QueryProcessingStatusLight.IsValid())
+		QueryProcessingStatusLight->SetStatus(SStatusIndicator::EStatus::Unknown, LOCTEXT("QueryProcessingRemoved", "Query Processing: N/A (legacy)"));
+
+	// Legacy ingestion is no longer available
+	if (IngestionStatusLight.IsValid())
+		IngestionStatusLight->SetStatus(SStatusIndicator::EStatus::Unknown, LOCTEXT("IngestionRemoved", "Document Ingestion: N/A (use Asset Registry)"));
+		
+	// Removed legacy code - previously checked FPythonBridge and IPC connection status
 }
+
 
 void SAdastreaDirectorPanel::Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime)
 {
@@ -2060,25 +1734,15 @@ void SAdastreaDirectorPanel::RunTests(const FString& TestType)
 		return;
 	}
 
-	FPythonBridge* PythonBridge = RuntimeModule->GetPythonBridge();
+	// Legacy IPC tests are no longer available
+	AppendTestOutput(TEXT("❌ Error: Legacy IPC test system has been removed\n"));
+	AppendTestOutput(TEXT("The plugin has migrated to VibeUE architecture which does not use IPC.\n"));
+	AppendTestOutput(TEXT("See MIGRATION_GUIDE.md for information about the new architecture.\n"));
+	bIsTestRunning = false;
+	TestStatusMessage = LOCTEXT("TestsNotAvailable", "Legacy tests not available");
+	return;
 	
-	if (!PythonBridge || !PythonBridge->IsReady())
-	{
-		AppendTestOutput(TEXT("❌ Error: Python backend not ready\n"));
-		AppendTestOutput(TEXT("Please ensure the Python backend is running.\n"));
-		bIsTestRunning = false;
-		TestStatusMessage = LOCTEXT("TestsFailed", "Tests failed - backend not ready");
-		return;
-	}
-
-	// Update status
-	TestStatusMessage = FText::Format(LOCTEXT("TestsRunning", "Running {0} tests..."), FText::FromString(TestType));
-	AppendTestOutput(FString::Printf(TEXT("🧪 Running %s tests...\n"), *TestType));
-	AppendTestOutput(FString::Printf(TEXT("Timestamp: %s\n\n"), *FDateTime::Now().ToString(TEXT("%Y-%m-%d %H:%M:%S"))));
-
-	// Send test request to Python backend
-	FString Response;
-	bool bSuccess = PythonBridge->SendRequest(TEXT("run_tests"), TestType, Response);
+	// Removed legacy code - previously ran tests via FPythonBridge IPC
 
 	if (bSuccess)
 	{
@@ -2214,58 +1878,25 @@ void SAdastreaDirectorPanel::PerformSelfCheck()
 		}
 	}
 
-	// Check 3: Python Bridge
+	// Check 3: Python Bridge (Legacy - No longer used)
 	CurrentCheck++;
 	TestProgress = static_cast<float>(CurrentCheck) / TotalChecks;
-	FPythonBridge* PythonBridge = RuntimeModule->GetPythonBridge();
-	if (PythonBridge)
-	{
-		AppendTestOutput(TEXT("✅ [3/8] Python Bridge: Initialized\n"));
-		PassCount++;
-	}
-	else
-	{
-		AppendTestOutput(TEXT("❌ [3/8] Python Bridge: NOT INITIALIZED\n"));
-		FailCount++;
-	}
+	AppendTestOutput(TEXT("ℹ️  [3/8] Python Bridge: N/A (Removed in Phase 3)\n"));
+	SkippedCount++;
 
-	// Check 4: Python Process
+	// Check 4: Python Process (Legacy - No longer used)
 	CurrentCheck++;
 	TestProgress = static_cast<float>(CurrentCheck) / TotalChecks;
-	if (PythonBridge)
-	{
-		FString Status = PythonBridge->GetStatus();
-		if (!Status.Contains(TEXT("not running")))
-		{
-			AppendTestOutput(TEXT("✅ [4/8] Python Process: Running\n"));
-			AppendTestOutput(FString::Printf(TEXT("    → Status: %s\n"), *Status));
-			PassCount++;
-		}
-		else
-		{
-			AppendTestOutput(TEXT("❌ [4/8] Python Process: NOT RUNNING\n"));
-			FailCount++;
-		}
-	}
-	else
-	{
-		AppendTestOutput(TEXT("⚠️ [4/8] Python Process: Cannot check (bridge not initialized)\n"));
-		SkippedCount++;
-	}
+	AppendTestOutput(TEXT("ℹ️  [4/8] Python Process: N/A (VibeUE uses native C++)\n"));
+	SkippedCount++;
 
-	// Check 5: IPC Connection
+	// Check 5: IPC Connection (Legacy - No longer used)
 	CurrentCheck++;
 	TestProgress = static_cast<float>(CurrentCheck) / TotalChecks;
-	if (PythonBridge && PythonBridge->IsReady())
-	{
-		AppendTestOutput(TEXT("✅ [5/8] IPC Connection: Connected\n"));
-		PassCount++;
-	}
-	else
-	{
-		AppendTestOutput(TEXT("❌ [5/8] IPC Connection: NOT CONNECTED\n"));
-		FailCount++;
-	}
+	AppendTestOutput(TEXT("ℹ️  [5/8] IPC Connection: N/A (VibeUE architecture)\n"));
+	SkippedCount++;
+	
+	// Removed legacy code - previously checked FPythonBridge initialization and status
 
 	// Check 6: Backend Health (Ping test)
 	CurrentCheck++;
