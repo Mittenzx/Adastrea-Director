@@ -1683,7 +1683,7 @@ void SAdastreaDirectorPanel::UpdateStatusLights()
 		if (BackendHealthStatusLight.IsValid())
 			BackendHealthStatusLight->SetStatus(SStatusIndicator::EStatus::Good, LOCTEXT("BackendHealthGood", "Backend Health: Operational"));
 		
-		// Check API key validation (VibeUE Phase 3 - settings only, no backend validation)
+		// Check API key configuration (VibeUE Phase 3 - settings only, no backend validation)
 		if (APIKeyStatusLight.IsValid())
 		{
 			FStartupValidationResult SettingsResult = FAdastreaStartupValidator::ValidateSettings();
@@ -1694,7 +1694,7 @@ void SAdastreaDirectorPanel::UpdateStatusLights()
 				
 				APIKeyStatusLight->SetStatus(
 					SStatusIndicator::EStatus::Good,
-					FText::Format(LOCTEXT("APIKeyValid", "API Key: {0} configured"), FText::FromString(Provider))
+					FText::Format(LOCTEXT("APIKeyConfigured", "API Key: {0} configured"), FText::FromString(Provider))
 				);
 			}
 			else
@@ -2291,7 +2291,7 @@ void SAdastreaDirectorPanel::PerformSelfCheck()
 		SkippedCount++;
 	}
 
-	// Check 7: API Key Validation (VibeUE Phase 3 - settings only, no backend validation)
+	// Check 7: API Key Configuration (VibeUE Phase 3 - settings only, no backend validation)
 	CurrentCheck++;
 	TestProgress = static_cast<float>(CurrentCheck) / TotalChecks;
 	{
@@ -2300,13 +2300,13 @@ void SAdastreaDirectorPanel::PerformSelfCheck()
 		{
 			FAdastreaSettings& Settings = FAdastreaSettings::Get();
 			FString Provider = Settings.GetLLMProvider();
-			AppendTestOutput(TEXT("✅ [7/8] API Key Validation: CONFIGURED\n"));
+			AppendTestOutput(TEXT("✅ [7/8] API Key Configuration: CONFIGURED\n"));
 			AppendTestOutput(FString::Printf(TEXT("    → LLM Provider: %s\n"), *Provider));
 			PassCount++;
 		}
 		else
 		{
-			AppendTestOutput(TEXT("❌ [7/8] API Key Validation: NOT CONFIGURED\n"));
+			AppendTestOutput(TEXT("❌ [7/8] API Key Configuration: NOT CONFIGURED\n"));
 			AppendTestOutput(FString::Printf(TEXT("    → %s\n"), *SettingsResult.ErrorMessage));
 			FailCount++;
 		}
