@@ -131,7 +131,7 @@ print(f'Project directory: {unreal.SystemLibrary.get_project_directory()}')
 	FAdastreaScriptResult Result = FAdastreaScriptService::ExecuteCode(Code);
 	TestTrue(TEXT("Unreal module access should succeed"), Result.bSuccess);
 	TestTrue(TEXT("Output should contain project directory"), Result.Output.Len() > 0);
-	TestFalse(TEXT("Should not have error message"), !Result.ErrorMessage.IsEmpty() && Result.bSuccess);
+	TestTrue(TEXT("Error message should be empty on success"), Result.ErrorMessage.IsEmpty() || !Result.bSuccess);
 	
 	return true;
 }
