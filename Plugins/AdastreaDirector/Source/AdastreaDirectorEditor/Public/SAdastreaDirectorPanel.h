@@ -124,27 +124,18 @@ private:
 	/** Timer reset value to prevent immediate auto-refresh */
 	static constexpr double RefreshTimerReset = -10.0;
 
-	// Status indicator widgets
-	/** Python process status indicator */
-	TSharedPtr<SStatusIndicator> PythonProcessStatusLight;
-	
-	/** IPC connection status indicator */
-	TSharedPtr<SStatusIndicator> IPCConnectionStatusLight;
-	
-	/** Python bridge ready status indicator */
-	TSharedPtr<SStatusIndicator> BridgeReadyStatusLight;
-	
-	/** Query processing status indicator */
-	TSharedPtr<SStatusIndicator> QueryProcessingStatusLight;
-	
-	/** Ingestion status indicator */
-	TSharedPtr<SStatusIndicator> IngestionStatusLight;
-	
-	/** Backend health status indicator */
-	TSharedPtr<SStatusIndicator> BackendHealthStatusLight;
-	
+	// Status indicator widgets (VibeUE architecture)
 	/** API Key validation status indicator */
 	TSharedPtr<SStatusIndicator> APIKeyStatusLight;
+	
+	/** LLM Client status indicator */
+	TSharedPtr<SStatusIndicator> LLMClientStatusLight;
+	
+	/** Script Service status indicator */
+	TSharedPtr<SStatusIndicator> ScriptServiceStatusLight;
+	
+	/** Asset Service status indicator */
+	TSharedPtr<SStatusIndicator> AssetServiceStatusLight;
 
 	/** Status lights update interval in seconds */
 	static constexpr double StatusLightsUpdateInterval = 0.5;
@@ -155,9 +146,6 @@ private:
 	// Dashboard tab methods
 	/** Called when Refresh Dashboard button is clicked */
 	FReply OnRefreshDashboardClicked();
-
-	/** Called when Reconnect button is clicked */
-	FReply OnReconnectClicked();
 
 	/** Called when Clear Logs button is clicked */
 	FReply OnClearLogsClicked();
@@ -173,9 +161,6 @@ private:
 
 	/** Update all status indicator lights */
 	void UpdateStatusLights();
-
-	/** Helper to set all status lights to error state */
-	void SetAllStatusLightsToError(const FText& Reason);
 
 	// Utility methods
 	/** Create the Query tab content */

@@ -356,7 +356,7 @@ TSharedRef<SWidget> SAdastreaDirectorPanel::CreateDashboardTab()
 		.Padding(10.0f, 10.0f, 10.0f, 5.0f)
 		[
 			SNew(STextBlock)
-			.Text(LOCTEXT("StatusIndicatorsLabel", "System Status Indicators:"))
+			.Text(LOCTEXT("StatusIndicatorsLabel", "VibeUE Component Status:"))
 			.Font(FCoreStyle::GetDefaultFontStyle("Bold", 12))
 		]
 
@@ -371,64 +371,38 @@ TSharedRef<SWidget> SAdastreaDirectorPanel::CreateDashboardTab()
 				SNew(SGridPanel)
 				.FillColumn(0, 1.0f)
 				.FillColumn(1, 1.0f)
-				.FillColumn(2, 1.0f)
 				
-				// Row 0: Python Process, IPC Connection, & API Key Status
+				// Row 0: API Key & LLM Client
 				+ SGridPanel::Slot(0, 0)
 				.Padding(5.0f)
 				[
-					SAssignNew(PythonProcessStatusLight, SStatusIndicator)
-					.StatusText(LOCTEXT("PythonProcessStatus", "Python Process"))
+					SAssignNew(APIKeyStatusLight, SStatusIndicator)
+					.StatusText(LOCTEXT("APIKeyStatus", "API Key Configuration"))
 					.InitialStatus(SStatusIndicator::EStatus::Unknown)
 				]
 				
 				+ SGridPanel::Slot(1, 0)
 				.Padding(5.0f)
 				[
-					SAssignNew(IPCConnectionStatusLight, SStatusIndicator)
-					.StatusText(LOCTEXT("IPCConnectionStatus", "IPC Connection"))
+					SAssignNew(LLMClientStatusLight, SStatusIndicator)
+					.StatusText(LOCTEXT("LLMClientStatus", "LLM Client"))
 					.InitialStatus(SStatusIndicator::EStatus::Unknown)
 				]
 				
-				+ SGridPanel::Slot(2, 0)
-				.Padding(5.0f)
-				[
-					SAssignNew(APIKeyStatusLight, SStatusIndicator)
-					.StatusText(LOCTEXT("APIKeyStatus", "API Key Validation"))
-					.InitialStatus(SStatusIndicator::EStatus::Unknown)
-				]
-				
-				// Row 1: Python Bridge & Backend Health
+				// Row 1: Script Service & Asset Service
 				+ SGridPanel::Slot(0, 1)
 				.Padding(5.0f)
 				[
-					SAssignNew(BridgeReadyStatusLight, SStatusIndicator)
-					.StatusText(LOCTEXT("BridgeReadyStatus", "Python Bridge Ready"))
+					SAssignNew(ScriptServiceStatusLight, SStatusIndicator)
+					.StatusText(LOCTEXT("ScriptServiceStatus", "Python Script Service"))
 					.InitialStatus(SStatusIndicator::EStatus::Unknown)
 				]
 				
 				+ SGridPanel::Slot(1, 1)
 				.Padding(5.0f)
 				[
-					SAssignNew(BackendHealthStatusLight, SStatusIndicator)
-					.StatusText(LOCTEXT("BackendHealthStatus", "Backend Health"))
-					.InitialStatus(SStatusIndicator::EStatus::Unknown)
-				]
-				
-				// Row 2: Query Processing & Ingestion
-				+ SGridPanel::Slot(0, 2)
-				.Padding(5.0f)
-				[
-					SAssignNew(QueryProcessingStatusLight, SStatusIndicator)
-					.StatusText(LOCTEXT("QueryProcessingStatus", "Query Processing"))
-					.InitialStatus(SStatusIndicator::EStatus::Unknown)
-				]
-				
-				+ SGridPanel::Slot(1, 2)
-				.Padding(5.0f)
-				[
-					SAssignNew(IngestionStatusLight, SStatusIndicator)
-					.StatusText(LOCTEXT("IngestionStatus", "Document Ingestion"))
+					SAssignNew(AssetServiceStatusLight, SStatusIndicator)
+					.StatusText(LOCTEXT("AssetServiceStatus", "Asset Discovery Service"))
 					.InitialStatus(SStatusIndicator::EStatus::Unknown)
 				]
 			]
@@ -482,17 +456,8 @@ TSharedRef<SWidget> SAdastreaDirectorPanel::CreateDashboardTab()
 					[
 						SNew(SButton)
 						.Text(LOCTEXT("RefreshStatusButton", "Refresh Status"))
-						.ToolTipText(LOCTEXT("RefreshStatusTooltip", "Update connection status and indicators"))
+						.ToolTipText(LOCTEXT("RefreshStatusTooltip", "Update component status and indicators"))
 						.OnClicked(this, &SAdastreaDirectorPanel::OnRefreshDashboardClicked)
-					]
-
-					+ SHorizontalBox::Slot()
-					.AutoWidth()
-					[
-						SNew(SButton)
-						.Text(LOCTEXT("ReconnectButton", "Reconnect"))
-						.ToolTipText(LOCTEXT("ReconnectTooltip", "Attempt to reconnect to Python backend"))
-						.OnClicked(this, &SAdastreaDirectorPanel::OnReconnectClicked)
 					]
 				]
 			]
@@ -754,29 +719,6 @@ FReply SAdastreaDirectorPanel::OnRefreshDashboardClicked()
 	return FReply::Handled();
 }
 
-FReply SAdastreaDirectorPanel::OnReconnectClicked()
-{
-	// Legacy IPC reconnection feature has been removed in Phase 3 migration
-	FAdastreaDirectorModule* RuntimeModule = FModuleManager::GetModulePtr<FAdastreaDirectorModule>("AdastreaDirector");
-	
-	if (!RuntimeModule)
-	{
-		AppendLogEntry(TEXT("Error: Runtime module not available\n"));
-		return FReply::Handled();
-	}
-
-	FString LogEntry = TEXT("Legacy IPC reconnection feature is no longer available.\n");
-	LogEntry += TEXT("The VibeUE architecture does not use IPC connections.\n");
-	LogEntry += TEXT("See MIGRATION_GUIDE.md for updated architecture.\n");
-	
-	AppendLogEntry(LogEntry);
-	UpdateConnectionStatus();
-	UpdateStatusLights();
-	
-	// Removed legacy code - previously reconnected to Python IPC server via FPythonBridge
-	return FReply::Handled();
-}
-
 FReply SAdastreaDirectorPanel::OnClearLogsClicked()
 {
 	CurrentLogContent = TEXT("Logs cleared.\n");
@@ -803,72 +745,76 @@ void SAdastreaDirectorPanel::AppendLogEntry(const FString& Entry)
 
 void SAdastreaDirectorPanel::UpdateConnectionStatus()
 {
-	// Legacy IPC connection status has been removed in Phase 3 migration
-	CachedConnectionStatus = FText::FromString(TEXT("ℹ️ Legacy IPC system removed - migrated to VibeUE architecture"));
-	// Removed legacy code - previously checked FPythonBridge IPC connection status
-	return;
+	// Build status message based on VibeUE component states
+	FString StatusMessage;
+	
+	FAdastreaSettings& Settings = FAdastreaSettings::Get();
+	FString ErrorMessage;
+	bool bSettingsValid = Settings.ValidateSettings(ErrorMessage);
+	
+	if (bSettingsValid)
+	{
+		StatusMessage = FString::Printf(
+			TEXT("✅ VibeUE Architecture Ready\n")
+			TEXT("• LLM Provider: %s\n")
+			TEXT("• Python: %s\n")
+			TEXT("• Asset Registry: %s"),
+			*Settings.GetLLMProvider(),
+			FAdastreaScriptService::IsPythonAvailable() ? TEXT("Available") : TEXT("Not Available"),
+			FAdastreaAssetService::IsAssetRegistryReady() ? TEXT("Ready") : TEXT("Loading...")
+		);
+	}
+	else
+	{
+		StatusMessage = FString::Printf(
+			TEXT("⚠️ Configuration Required\n")
+			TEXT("• %s\n\n")
+			TEXT("Please configure your API key in Settings."),
+			*ErrorMessage
+		);
+	}
+	
+	CachedConnectionStatus = FText::FromString(StatusMessage);
 }
 
 void SAdastreaDirectorPanel::UpdateDashboardLogs()
 {
-	// Legacy IPC dashboard logs have been removed in Phase 3 migration
 	FString NewLogEntry = FString::Printf(
 		TEXT("=== Dashboard Status Update ===\n")
 		TEXT("Timestamp: %s\n")
-		TEXT("Architecture: VibeUE (native C++)\n")
-		TEXT("Legacy IPC: Removed (Phase 3)\n")
+		TEXT("Architecture: VibeUE (Native C++)\n")
+		TEXT("LLM Provider: %s\n")
+		TEXT("Python Service: %s\n")
+		TEXT("Asset Service: %s\n")
 		TEXT("===============================\n\n"),
-		*FDateTime::Now().ToString(TEXT("%Y-%m-%d %H:%M:%S"))
+		*FDateTime::Now().ToString(TEXT("%Y-%m-%d %H:%M:%S")),
+		*FAdastreaSettings::Get().GetLLMProvider(),
+		FAdastreaScriptService::IsPythonAvailable() ? TEXT("Available") : TEXT("Not Available"),
+		FAdastreaAssetService::IsAssetRegistryReady() ? TEXT("Ready") : TEXT("Loading...")
 	);
 	
 	AppendLogEntry(NewLogEntry);
-	// Removed legacy code - previously fetched Python process logs via FPythonBridge IPC
-}
-
-void SAdastreaDirectorPanel::SetAllStatusLightsToError(const FText& Reason)
-{
-	// Helper method to set all status lights to error state with the same reason
-	if (PythonProcessStatusLight.IsValid())
-		PythonProcessStatusLight->SetStatus(SStatusIndicator::EStatus::Error, FText::Format(LOCTEXT("PythonProcessErrorFmt", "Python Process: {0}"), Reason));
-	if (IPCConnectionStatusLight.IsValid())
-		IPCConnectionStatusLight->SetStatus(SStatusIndicator::EStatus::Error, FText::Format(LOCTEXT("IPCConnectionErrorFmt", "IPC Connection: {0}"), Reason));
-	if (BridgeReadyStatusLight.IsValid())
-		BridgeReadyStatusLight->SetStatus(SStatusIndicator::EStatus::Error, FText::Format(LOCTEXT("BridgeReadyErrorFmt", "Python Bridge: {0}"), Reason));
-	if (BackendHealthStatusLight.IsValid())
-		BackendHealthStatusLight->SetStatus(SStatusIndicator::EStatus::Error, FText::Format(LOCTEXT("BackendHealthErrorFmt", "Backend Health: {0}"), Reason));
-	if (APIKeyStatusLight.IsValid())
-		APIKeyStatusLight->SetStatus(SStatusIndicator::EStatus::Error, FText::Format(LOCTEXT("APIKeyErrorFmt", "API Key: {0}"), Reason));
-	if (QueryProcessingStatusLight.IsValid())
-		QueryProcessingStatusLight->SetStatus(SStatusIndicator::EStatus::Error, FText::Format(LOCTEXT("QueryProcessingErrorFmt", "Query Processing: {0}"), Reason));
-	if (IngestionStatusLight.IsValid())
-		IngestionStatusLight->SetStatus(SStatusIndicator::EStatus::Error, FText::Format(LOCTEXT("IngestionErrorFmt", "Document Ingestion: {0}"), Reason));
 }
 
 void SAdastreaDirectorPanel::UpdateStatusLights()
 {
-	// Legacy IPC status lights have been removed in Phase 3 migration
-	// Set all lights to indicate the migration to VibeUE architecture
-	
 	FAdastreaDirectorModule* RuntimeModule = FModuleManager::GetModulePtr<FAdastreaDirectorModule>("AdastreaDirector");
 	
 	if (!RuntimeModule)
 	{
 		// Runtime module not available - all systems down
-		SetAllStatusLightsToError(LOCTEXT("RuntimeModuleNotAvailable", "Runtime module not available"));
+		if (APIKeyStatusLight.IsValid())
+			APIKeyStatusLight->SetStatus(SStatusIndicator::EStatus::Error, LOCTEXT("RuntimeModuleNotAvailable", "Runtime module not available"));
+		if (LLMClientStatusLight.IsValid())
+			LLMClientStatusLight->SetStatus(SStatusIndicator::EStatus::Error, LOCTEXT("RuntimeModuleNotAvailable", "Runtime module not available"));
+		if (ScriptServiceStatusLight.IsValid())
+			ScriptServiceStatusLight->SetStatus(SStatusIndicator::EStatus::Error, LOCTEXT("RuntimeModuleNotAvailable", "Runtime module not available"));
+		if (AssetServiceStatusLight.IsValid())
+			AssetServiceStatusLight->SetStatus(SStatusIndicator::EStatus::Error, LOCTEXT("RuntimeModuleNotAvailable", "Runtime module not available"));
 		return;
 	}
 
-	// Legacy Python Process and IPC are no longer used
-	if (PythonProcessStatusLight.IsValid())
-		PythonProcessStatusLight->SetStatus(SStatusIndicator::EStatus::Unknown, LOCTEXT("PythonProcessRemoved", "Python Process: N/A (VibeUE)"));
-	if (IPCConnectionStatusLight.IsValid())
-		IPCConnectionStatusLight->SetStatus(SStatusIndicator::EStatus::Unknown, LOCTEXT("IPCRemoved", "IPC Connection: N/A (VibeUE)"));
-	if (BridgeReadyStatusLight.IsValid())
-		BridgeReadyStatusLight->SetStatus(SStatusIndicator::EStatus::Unknown, LOCTEXT("BridgeRemoved", "Python Bridge: Removed (Phase 3)"));
-	if (BackendHealthStatusLight.IsValid())
-		BackendHealthStatusLight->SetStatus(SStatusIndicator::EStatus::Good, LOCTEXT("BackendVibeUE", "Backend: VibeUE (Native C++)"));
-	
-	// Check API key configuration (VibeUE Phase 3 - settings only, no backend validation)
+	// Check API key configuration
 	if (APIKeyStatusLight.IsValid())
 	{
 		FStartupValidationResult SettingsResult = FAdastreaStartupValidator::ValidateSettings();
@@ -879,34 +825,82 @@ void SAdastreaDirectorPanel::UpdateStatusLights()
 			
 			APIKeyStatusLight->SetStatus(
 				SStatusIndicator::EStatus::Good,
-				FText::Format(LOCTEXT("APIKeyConfigured", "API Key: {0} configured"), FText::FromString(Provider))
+				FText::Format(LOCTEXT("APIKeyConfigured", "{0} configured"), FText::FromString(Provider))
 			);
 		}
 		else
 		{
-			// Show validation error
 			FString ErrorMsg = SettingsResult.ErrorMessage;
-			if (ErrorMsg.Len() > 50)
+			if (ErrorMsg.Len() > 40)
 			{
-				// Truncate long error messages
-				ErrorMsg = ErrorMsg.Left(47) + TEXT("...");
+				ErrorMsg = ErrorMsg.Left(37) + TEXT("...");
 			}
 			APIKeyStatusLight->SetStatus(
 				SStatusIndicator::EStatus::Error,
-				FText::Format(LOCTEXT("APIKeyInvalid", "API Key: {0}"), FText::FromString(ErrorMsg))
+				FText::FromString(ErrorMsg)
 			);
 		}
 	}
 
-	// Legacy query processing is no longer available
-	if (QueryProcessingStatusLight.IsValid())
-		QueryProcessingStatusLight->SetStatus(SStatusIndicator::EStatus::Unknown, LOCTEXT("QueryProcessingRemoved", "Query Processing: N/A (legacy)"));
+	// Check LLM Client
+	if (LLMClientStatusLight.IsValid())
+	{
+		FAdastreaSettings& Settings = FAdastreaSettings::Get();
+		FString ErrorMessage;
+		if (Settings.ValidateSettings(ErrorMessage))
+		{
+			LLMClientStatusLight->SetStatus(
+				SStatusIndicator::EStatus::Good,
+				LOCTEXT("LLMClientReady", "Ready for queries")
+			);
+		}
+		else
+		{
+			LLMClientStatusLight->SetStatus(
+				SStatusIndicator::EStatus::Error,
+				LOCTEXT("LLMClientNotConfigured", "Not configured")
+			);
+		}
+	}
 
-	// Legacy ingestion is no longer available
-	if (IngestionStatusLight.IsValid())
-		IngestionStatusLight->SetStatus(SStatusIndicator::EStatus::Unknown, LOCTEXT("IngestionRemoved", "Document Ingestion: N/A (use Asset Registry)"));
-		
-	// Removed legacy code - previously checked FPythonBridge and IPC connection status
+	// Check Python Script Service
+	if (ScriptServiceStatusLight.IsValid())
+	{
+		if (FAdastreaScriptService::IsPythonAvailable())
+		{
+			FString PythonInfo = FAdastreaScriptService::GetPythonInfo();
+			ScriptServiceStatusLight->SetStatus(
+				SStatusIndicator::EStatus::Good,
+				FText::FromString(PythonInfo)
+			);
+		}
+		else
+		{
+			ScriptServiceStatusLight->SetStatus(
+				SStatusIndicator::EStatus::Error,
+				LOCTEXT("PythonNotAvailable", "Python plugin not available")
+			);
+		}
+	}
+
+	// Check Asset Service
+	if (AssetServiceStatusLight.IsValid())
+	{
+		if (FAdastreaAssetService::IsAssetRegistryReady())
+		{
+			AssetServiceStatusLight->SetStatus(
+				SStatusIndicator::EStatus::Good,
+				LOCTEXT("AssetServiceReady", "Asset registry ready")
+			);
+		}
+		else
+		{
+			AssetServiceStatusLight->SetStatus(
+				SStatusIndicator::EStatus::Warning,
+				LOCTEXT("AssetServiceLoading", "Loading assets...")
+			);
+		}
+	}
 }
 
 
