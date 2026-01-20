@@ -51,6 +51,26 @@ void FAdastreaSettings::LoadSettings()
 	
 	FString ShowTimestampsStr = GetValue(TEXT("ShowTimestamps"), TEXT("true"));
 	bShowTimestamps = ShowTimestampsStr == TEXT("true");
+
+	// VibeUE Migration Feature Flags (default to true for new architecture)
+	FString UseBuiltInPythonStr = GetValue(TEXT("UseBuiltInPython"), TEXT("true"));
+	bUseBuiltInPython = UseBuiltInPythonStr == TEXT("true");
+
+	FString UseDirectLLMStr = GetValue(TEXT("UseDirectLLM"), TEXT("true"));
+	bUseDirectLLM = UseDirectLLMStr == TEXT("true");
+
+	FString UseRuntimeDiscoveryStr = GetValue(TEXT("UseRuntimeDiscovery"), TEXT("true"));
+	bUseRuntimeDiscovery = UseRuntimeDiscoveryStr == TEXT("true");
+
+	FString EnableMCPServerStr = GetValue(TEXT("EnableMCPServer"), TEXT("true"));
+	bEnableMCPServer = EnableMCPServerStr == TEXT("true");
+
+	FString MCPServerPortStr = GetValue(TEXT("MCPServerPort"), TEXT("8088"));
+	MCPServerPort = FCString::Atoi(*MCPServerPortStr);
+	if (MCPServerPort < 1024 || MCPServerPort > 65535)
+	{
+		MCPServerPort = 8088;
+	}
 }
 
 void FAdastreaSettings::SaveSettings()
@@ -75,6 +95,13 @@ void FAdastreaSettings::SaveSettings()
 	ConfigMap.FindOrAdd(TEXT("DefaultFontSize")) = FString::FromInt(DefaultFontSize);
 	ConfigMap.FindOrAdd(TEXT("AutoSaveSettings")) = bAutoSaveSettings ? TEXT("true") : TEXT("false");
 	ConfigMap.FindOrAdd(TEXT("ShowTimestamps")) = bShowTimestamps ? TEXT("true") : TEXT("false");
+
+	// VibeUE Migration Feature Flags
+	ConfigMap.FindOrAdd(TEXT("UseBuiltInPython")) = bUseBuiltInPython ? TEXT("true") : TEXT("false");
+	ConfigMap.FindOrAdd(TEXT("UseDirectLLM")) = bUseDirectLLM ? TEXT("true") : TEXT("false");
+	ConfigMap.FindOrAdd(TEXT("UseRuntimeDiscovery")) = bUseRuntimeDiscovery ? TEXT("true") : TEXT("false");
+	ConfigMap.FindOrAdd(TEXT("EnableMCPServer")) = bEnableMCPServer ? TEXT("true") : TEXT("false");
+	ConfigMap.FindOrAdd(TEXT("MCPServerPort")) = FString::FromInt(MCPServerPort);
 	
 	// Write back to file once
 	FString NewContent;
