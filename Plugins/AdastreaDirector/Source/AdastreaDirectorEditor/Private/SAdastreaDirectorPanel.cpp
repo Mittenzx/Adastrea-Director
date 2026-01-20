@@ -82,7 +82,7 @@ void SAdastreaDirectorPanel::Construct(const FArguments& InArgs)
 	LastConnectionStatusUpdateTime = 0.0;
 	CurrentLogContent = TEXT("Dashboard logs will appear here...");
 	CachedLogContentText = FText::FromString(CurrentLogContent);
-	CachedConnectionStatus = FText::FromString(TEXT("⚠️ Not connected - Python backend not ready"));
+	CachedConnectionStatus = FText::FromString(TEXT("Loading VibeUE architecture..."));
 	LastStatusLightsUpdateTime = 0.0;
 	
 	// Initialize Tests tab state
