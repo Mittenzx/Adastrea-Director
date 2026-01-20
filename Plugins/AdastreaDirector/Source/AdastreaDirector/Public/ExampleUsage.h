@@ -1,5 +1,7 @@
 // Copyright (c) 2025 Mittenzx. All Rights Reserved.
 
+#pragma once
+
 /**
  * Example usage of Adastrea Director C++ API
  * 
