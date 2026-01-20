@@ -608,7 +608,7 @@ void SAdastreaDirectorPanel::SendQueryToPython(const FString& Query)
 	{
 		LLMClient->SetProvider(ELLMProvider::Gemini, APIKey);
 		// Use configured model or default for provider
-		if (ModelName.IsEmpty() || (!ModelName.Contains(TEXT("gemini"))))
+		if (ModelName.IsEmpty())
 		{
 			ModelName = TEXT("gemini-1.5-flash");
 		}
@@ -618,7 +618,7 @@ void SAdastreaDirectorPanel::SendQueryToPython(const FString& Query)
 	{
 		LLMClient->SetProvider(ELLMProvider::OpenAI, APIKey);
 		// Use configured model or default for provider
-		if (ModelName.IsEmpty() || (!ModelName.Contains(TEXT("gpt"))))
+		if (ModelName.IsEmpty())
 		{
 			ModelName = TEXT("gpt-4-turbo");
 		}
@@ -626,7 +626,7 @@ void SAdastreaDirectorPanel::SendQueryToPython(const FString& Query)
 	}
 	else
 	{
-		UpdateResults(FString::Printf(TEXT("❌ Unknown provider: %s\n\nSupported providers: Gemini, OpenAI"), *Provider));
+		UpdateResults(FString::Printf(TEXT("Unknown provider: %s\n\nSupported providers: Gemini, OpenAI"), *Provider));
 		bIsProcessing = false;
 		return;
 	}
@@ -698,47 +698,47 @@ void SAdastreaDirectorPanel::SendQueryToPython(const FString& Query)
 			FString TroubleshootingSteps;
 			
 			// Parse error message to provide specific guidance
-			if (ErrorDetails.Contains(TEXT("401")) || ErrorDetails.Contains(TEXT("unauthorized")) || ErrorDetails.Contains(TEXT("invalid") && TEXT("key")))
+			if (ErrorDetails.Contains(TEXT("401")) || ErrorDetails.Contains(TEXT("unauthorized")) || (ErrorDetails.Contains(TEXT("invalid")) && ErrorDetails.Contains(TEXT("key"))))
 			{
-				ErrorType = TEXT("❌ Authentication Error");
+				ErrorType = TEXT("Authentication Error");
 				TroubleshootingSteps = TEXT("• Verify your API key in Settings\n")
 					TEXT("• Check if your API key has expired\n")
 					TEXT("• Ensure you're using the correct provider (Gemini/OpenAI)");
 			}
 			else if (ErrorDetails.Contains(TEXT("429")) || ErrorDetails.Contains(TEXT("quota")) || ErrorDetails.Contains(TEXT("rate limit")))
 			{
-				ErrorType = TEXT("⏱️ Rate Limit Exceeded");
+				ErrorType = TEXT("Rate Limit Exceeded");
 				TroubleshootingSteps = TEXT("• Wait a few moments and try again\n")
 					TEXT("• Check your API usage quota\n")
 					TEXT("• Consider upgrading your API plan");
 			}
 			else if (ErrorDetails.Contains(TEXT("timeout")) || ErrorDetails.Contains(TEXT("timed out")))
 			{
-				ErrorType = TEXT("⏰ Request Timeout");
+				ErrorType = TEXT("Request Timeout");
 				TroubleshootingSteps = TEXT("• Check your internet connection\n")
 					TEXT("• Try a shorter or simpler query\n")
 					TEXT("• The API service may be experiencing issues");
 			}
 			else if (ErrorDetails.Contains(TEXT("network")) || ErrorDetails.Contains(TEXT("connection")))
 			{
-				ErrorType = TEXT("🌐 Network Error");
+				ErrorType = TEXT("Network Error");
 				TroubleshootingSteps = TEXT("• Verify your internet connection is active\n")
 					TEXT("• Check if firewall is blocking the request\n")
 					TEXT("• Try again in a few moments");
 			}
 			else if (ErrorDetails.Contains(TEXT("500")) || ErrorDetails.Contains(TEXT("503")))
 			{
-				ErrorType = TEXT("🔧 Server Error");
+				ErrorType = TEXT("Server Error");
 				TroubleshootingSteps = TEXT("• The API service is temporarily unavailable\n")
 					TEXT("• Wait a few minutes and try again\n")
 					TEXT("• Check the provider's status page");
 			}
 			else
 			{
-				ErrorType = TEXT("❌ Error");
-				TroubleshootingSteps = TEXT("• Your API key is valid\n")
-					TEXT("• You have an internet connection\n")
-					TEXT("• The selected provider is available");
+				ErrorType = TEXT("Error");
+				TroubleshootingSteps = TEXT("• Check that your API key is correct and has not expired\n")
+					TEXT("• Verify that you have an active internet connection\n")
+					TEXT("• Confirm that the selected provider is correctly configured and available");
 			}
 			
 			FString ErrorResponse = FString::Printf(

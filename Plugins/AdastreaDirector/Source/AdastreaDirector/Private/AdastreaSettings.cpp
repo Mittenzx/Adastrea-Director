@@ -34,11 +34,23 @@ void FAdastreaSettings::LoadSettings()
 	EmbeddingProvider = GetValue(TEXT("EmbeddingProvider"), TEXT("huggingface"));
 	ModelName = GetValue(TEXT("ModelName"), TEXT("gemini-1.5-flash"));
 	
+	// Temperature validation is provider-specific because different LLM APIs
+	// have different supported ranges (e.g., OpenAI: [0.0, 1.0], Gemini: [0.0, 2.0])
 	FString TemperatureStr = GetValue(TEXT("Temperature"), TEXT("0.7"));
 	Temperature = FCString::Atof(*TemperatureStr);
-	if (Temperature < 0.0f || Temperature > 2.0f)
+	
+	// Determine max temperature based on provider
+	float MaxTemperature = 2.0f; // Default for Gemini
+	if (LLMProvider.Equals(TEXT("OpenAI"), ESearchCase::IgnoreCase) || 
+	    LLMProvider.Equals(TEXT("openai"), ESearchCase::IgnoreCase))
 	{
-		Temperature = 0.7f;
+		MaxTemperature = 1.0f; // OpenAI limit
+	}
+	
+	// Validate and clamp temperature to provider-specific range
+	if (Temperature < 0.0f || Temperature > MaxTemperature)
+	{
+		Temperature = 0.7f; // Safe default for all providers
 	}
 	
 	FString MaxTokensStr = GetValue(TEXT("MaxTokens"), TEXT("2000"));

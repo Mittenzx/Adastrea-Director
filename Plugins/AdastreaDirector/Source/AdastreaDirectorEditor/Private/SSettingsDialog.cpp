@@ -495,7 +495,7 @@ TSharedRef<SWidget> SSettingsDialog::CreateLLMSettingsSection()
 			.Padding(0.0f, 0.0f, 0.0f, 15.0f)
 			[
 				SNew(STextBlock)
-				.Text(LOCTEXT("TemperatureHint", "0.0 = Focused, 1.0 = Balanced, 2.0 = Creative"))
+				.Text(LOCTEXT("TemperatureHint", "Lower values = more focused, higher values = more creative. Maximum depends on provider (OpenAI: 0.0-1.0, Gemini: 0.0-2.0)"))
 				.Font(FCoreStyle::GetDefaultFontStyle("Italic", 8))
 			]
 
@@ -540,7 +540,7 @@ TSharedRef<SWidget> SSettingsDialog::CreateLLMSettingsSection()
 				.AutoWidth()
 				[
 					SNew(SButton)
-					.Text(LOCTEXT("TestAPIKeyButton", "🔑 Test API Key"))
+					.Text(LOCTEXT("TestAPIKeyButton", "Test API Key"))
 					.ToolTipText(LOCTEXT("TestAPIKeyTooltip", "Send a test request to verify your API key works"))
 					.OnClicked(this, &SSettingsDialog::OnTestAPIKeyClicked)
 				]
@@ -738,7 +738,7 @@ FReply SSettingsDialog::OnTestAPIKeyClicked()
 	// Update status to show testing
 	if (TestStatusText.IsValid())
 	{
-		TestStatusText->SetText(LOCTEXT("TestStatusTesting", "⏳ Testing..."));
+		TestStatusText->SetText(LOCTEXT("TestStatusTesting", "Testing..."));
 	}
 
 	// Test the API key by making a simple request
@@ -758,7 +758,7 @@ FReply SSettingsDialog::OnTestAPIKeyClicked()
 	{
 		if (TestStatusText.IsValid())
 		{
-			TestStatusText->SetText(LOCTEXT("TestStatusNoKey", "❌ No API key configured"));
+			TestStatusText->SetText(LOCTEXT("TestStatusNoKey", "No API key configured"));
 		}
 	}
 	else
@@ -767,7 +767,7 @@ FReply SSettingsDialog::OnTestAPIKeyClicked()
 		// For now, just show success if a key is present
 		if (TestStatusText.IsValid())
 		{
-			TestStatusText->SetText(LOCTEXT("TestStatusSuccess", "✅ API key format valid (not tested with provider)"));
+			TestStatusText->SetText(LOCTEXT("TestStatusSuccess", "API key format valid (not tested with provider)"));
 		}
 	}
 
