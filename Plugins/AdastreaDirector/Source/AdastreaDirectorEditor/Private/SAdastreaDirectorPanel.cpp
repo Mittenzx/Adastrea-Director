@@ -76,6 +76,8 @@ void SAdastreaDirectorPanel::Construct(const FArguments& InArgs)
 {
 	// Initialize state
 	bIsProcessing = false;
+	StreamingContent = TEXT("");
+	CurrentQueryString = TEXT("");
 	CurrentResults = LOCTEXT("WelcomeMessage", "Welcome to Adastrea Director!\n\nEnter a query above and click 'Send Query' or press Enter to get started.\n\nExample: \"What is Unreal Engine?\"");
 	CurrentTabIndex = 0; // Start with Query tab
 	LastDashboardRefreshTime = 0.0;
@@ -577,6 +579,22 @@ void SAdastreaDirectorPanel::SendQueryToPython(const FString& Query)
 		return;
 	}
 	
+	// Store query for streaming context
+	CurrentQueryString = Query;
+	StreamingContent = TEXT("");
+	
+	// Show initial "Thinking..." message
+	UpdateResults(FString::Printf(
+		TEXT("═══════════════════════════════════════════\n")
+		TEXT("🤖 AI Response\n")
+		TEXT("═══════════════════════════════════════════\n\n")
+		TEXT("⏳ Thinking...\n\n")
+		TEXT("═══════════════════════════════════════════\n")
+		TEXT("Query: %s\n")
+		TEXT("═══════════════════════════════════════════"),
+		*Query
+	));
+	
 	// Create LLM client
 	TSharedPtr<FAdastreaLLMClient> LLMClient = MakeShared<FAdastreaLLMClient>();
 	
@@ -616,19 +634,34 @@ void SAdastreaDirectorPanel::SendQueryToPython(const FString& Query)
 	UserMsg.Content = Query;
 	Messages.Add(UserMsg);
 	
-	// Send request with callbacks
+	// Send request with streaming callbacks
 	FOnStreamChunk OnStreamChunk;
 	OnStreamChunk.BindLambda([this](const FString& Chunk) {
-		// For now, we'll collect chunks and display them all at once
-		// In the future, we could implement progressive display
+		// Append chunk to streaming content
+		StreamingContent += Chunk;
+		
+		// Update display progressively
+		FString FormattedResponse = FString::Printf(
+			TEXT("═══════════════════════════════════════════\n")
+			TEXT("🤖 AI Response\n")
+			TEXT("═══════════════════════════════════════════\n\n")
+			TEXT("%s\n\n")
+			TEXT("═══════════════════════════════════════════\n")
+			TEXT("Query: %s\n")
+			TEXT("═══════════════════════════════════════════"),
+			*StreamingContent,
+			*CurrentQueryString
+		);
+		UpdateResults(FormattedResponse);
 	});
 	
 	FOnLLMComplete OnComplete;
-	OnComplete.BindLambda([this, Query](bool bSuccess, const FString& Content, const TArray<FToolCall>& ToolCalls) {
+	OnComplete.BindLambda([this](bool bSuccess, const FString& Content, const TArray<FToolCall>& ToolCalls) {
 		bIsProcessing = false;
 		
 		if (bSuccess)
 		{
+			// Final update with complete content (in case streaming missed anything)
 			FString FormattedResponse = FString::Printf(
 				TEXT("═══════════════════════════════════════════\n")
 				TEXT("🤖 AI Response\n")
@@ -637,20 +670,69 @@ void SAdastreaDirectorPanel::SendQueryToPython(const FString& Query)
 				TEXT("═══════════════════════════════════════════\n")
 				TEXT("Query: %s\n")
 				TEXT("═══════════════════════════════════════════"),
-				*Content,
-				*Query
+				Content.IsEmpty() ? *StreamingContent : *Content,
+				*CurrentQueryString
 			);
 			UpdateResults(FormattedResponse);
 		}
 		else
 		{
+			// Enhanced error handling with specific error types
+			FString ErrorType = TEXT("Unknown Error");
+			FString ErrorDetails = Content;
+			FString TroubleshootingSteps;
+			
+			// Parse error message to provide specific guidance
+			if (ErrorDetails.Contains(TEXT("401")) || ErrorDetails.Contains(TEXT("unauthorized")) || ErrorDetails.Contains(TEXT("invalid") && TEXT("key")))
+			{
+				ErrorType = TEXT("❌ Authentication Error");
+				TroubleshootingSteps = TEXT("• Verify your API key in Settings\n")
+					TEXT("• Check if your API key has expired\n")
+					TEXT("• Ensure you're using the correct provider (Gemini/OpenAI)");
+			}
+			else if (ErrorDetails.Contains(TEXT("429")) || ErrorDetails.Contains(TEXT("quota")) || ErrorDetails.Contains(TEXT("rate limit")))
+			{
+				ErrorType = TEXT("⏱️ Rate Limit Exceeded");
+				TroubleshootingSteps = TEXT("• Wait a few moments and try again\n")
+					TEXT("• Check your API usage quota\n")
+					TEXT("• Consider upgrading your API plan");
+			}
+			else if (ErrorDetails.Contains(TEXT("timeout")) || ErrorDetails.Contains(TEXT("timed out")))
+			{
+				ErrorType = TEXT("⏰ Request Timeout");
+				TroubleshootingSteps = TEXT("• Check your internet connection\n")
+					TEXT("• Try a shorter or simpler query\n")
+					TEXT("• The API service may be experiencing issues");
+			}
+			else if (ErrorDetails.Contains(TEXT("network")) || ErrorDetails.Contains(TEXT("connection")))
+			{
+				ErrorType = TEXT("🌐 Network Error");
+				TroubleshootingSteps = TEXT("• Verify your internet connection is active\n")
+					TEXT("• Check if firewall is blocking the request\n")
+					TEXT("• Try again in a few moments");
+			}
+			else if (ErrorDetails.Contains(TEXT("500")) || ErrorDetails.Contains(TEXT("503")))
+			{
+				ErrorType = TEXT("🔧 Server Error");
+				TroubleshootingSteps = TEXT("• The API service is temporarily unavailable\n")
+					TEXT("• Wait a few minutes and try again\n")
+					TEXT("• Check the provider's status page");
+			}
+			else
+			{
+				ErrorType = TEXT("❌ Error");
+				TroubleshootingSteps = TEXT("• Your API key is valid\n")
+					TEXT("• You have an internet connection\n")
+					TEXT("• The selected provider is available");
+			}
+			
 			FString ErrorResponse = FString::Printf(
-				TEXT("❌ Error\n\n%s\n\n")
-				TEXT("Please check:\n")
-				TEXT("• Your API key is valid\n")
-				TEXT("• You have an internet connection\n")
-				TEXT("• The selected provider is available"),
-				*Content
+				TEXT("%s\n\n")
+				TEXT("Details: %s\n\n")
+				TEXT("Troubleshooting:\n%s"),
+				*ErrorType,
+				*ErrorDetails,
+				*TroubleshootingSteps
 			);
 			UpdateResults(ErrorResponse);
 		}

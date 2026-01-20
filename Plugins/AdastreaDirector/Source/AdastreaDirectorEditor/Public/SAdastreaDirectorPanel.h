@@ -62,6 +62,12 @@ private:
 	/** Is a query currently being processed */
 	bool bIsProcessing;
 
+	/** Streaming response content */
+	FString StreamingContent;
+
+	/** Original query for streaming context */
+	FString CurrentQueryString;
+
 	// Dashboard tab widgets
 	/** Called when the Send Query button is clicked */
 	FReply OnSendQueryClicked();
