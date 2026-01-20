@@ -601,16 +601,28 @@ void SAdastreaDirectorPanel::SendQueryToPython(const FString& Query)
 	// Configure client from settings
 	FString Provider = Settings.GetLLMProvider();
 	FString APIKey = Settings.GetAPIKey();
+	FString ModelName = Settings.GetModelName();
+	float Temperature = Settings.GetTemperature();
 	
 	if (Provider == TEXT("Gemini"))
 	{
 		LLMClient->SetProvider(ELLMProvider::Gemini, APIKey);
-		LLMClient->SetModel(TEXT("gemini-1.5-flash"));
+		// Use configured model or default for provider
+		if (ModelName.IsEmpty() || (!ModelName.Contains(TEXT("gemini"))))
+		{
+			ModelName = TEXT("gemini-1.5-flash");
+		}
+		LLMClient->SetModel(ModelName);
 	}
 	else if (Provider == TEXT("OpenAI"))
 	{
 		LLMClient->SetProvider(ELLMProvider::OpenAI, APIKey);
-		LLMClient->SetModel(TEXT("gpt-4"));
+		// Use configured model or default for provider
+		if (ModelName.IsEmpty() || (!ModelName.Contains(TEXT("gpt"))))
+		{
+			ModelName = TEXT("gpt-4-turbo");
+		}
+		LLMClient->SetModel(ModelName);
 	}
 	else
 	{
@@ -618,6 +630,9 @@ void SAdastreaDirectorPanel::SendQueryToPython(const FString& Query)
 		bIsProcessing = false;
 		return;
 	}
+	
+	// Set temperature
+	LLMClient->SetTemperature(Temperature);
 	
 	// Prepare messages
 	TArray<FChatMessage> Messages;

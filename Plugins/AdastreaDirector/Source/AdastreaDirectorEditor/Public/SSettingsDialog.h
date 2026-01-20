@@ -31,26 +31,35 @@ private:
 	TWeakPtr<SWindow> ParentWindow;
 	TSharedPtr<SEditableTextBox> GeminiKeyBox;
 	TSharedPtr<SEditableTextBox> OpenAIKeyBox;
+	TSharedPtr<STextBlock> TestStatusText;
 	
 	// Settings state
 	FString LLMProvider;
 	FString EmbeddingProvider;
 	FString GeminiAPIKey;
 	FString OpenAIAPIKey;
+	FString ModelName;
+	float Temperature;
+	int32 MaxTokens;
 	bool bAutoSaveSettings;
 	bool bShowTimestamps;
 	int32 DefaultFontSize;
 
 	// UI creation methods
 	TSharedRef<SWidget> CreateAPIKeysSection();
+	TSharedRef<SWidget> CreateLLMSettingsSection();
 	TSharedRef<SWidget> CreateDisplaySettingsSection();
 	TSharedRef<SWidget> CreateButtonSection();
 
 	// Event handlers
 	FReply OnSaveClicked();
 	FReply OnCancelClicked();
+	FReply OnTestAPIKeyClicked();
 	void OnLLMProviderChanged(FString NewProvider);
 	void OnEmbeddingProviderChanged(FString NewProvider);
+	void OnModelNameChanged(FString NewModel);
+	void OnTemperatureChanged(float NewTemperature);
+	void OnMaxTokensChanged(int32 NewMaxTokens);
 	void OnFontSizeChanged(int32 NewSize);
 	void OnAutoSaveChanged(ECheckBoxState NewState);
 	void OnShowTimestampsChanged(ECheckBoxState NewState);
