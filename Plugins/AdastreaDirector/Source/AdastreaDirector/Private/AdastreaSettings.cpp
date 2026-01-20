@@ -32,6 +32,33 @@ void FAdastreaSettings::LoadSettings()
 	
 	LLMProvider = GetValue(TEXT("LLMProvider"), TEXT("gemini"));
 	EmbeddingProvider = GetValue(TEXT("EmbeddingProvider"), TEXT("huggingface"));
+	ModelName = GetValue(TEXT("ModelName"), TEXT("gemini-1.5-flash"));
+	
+	// Temperature validation is provider-specific because different LLM APIs
+	// have different supported ranges (e.g., OpenAI: [0.0, 1.0], Gemini: [0.0, 2.0])
+	FString TemperatureStr = GetValue(TEXT("Temperature"), TEXT("0.7"));
+	Temperature = FCString::Atof(*TemperatureStr);
+	
+	// Determine max temperature based on provider
+	float MaxTemperature = 2.0f; // Default for Gemini
+	if (LLMProvider.Equals(TEXT("OpenAI"), ESearchCase::IgnoreCase) || 
+	    LLMProvider.Equals(TEXT("openai"), ESearchCase::IgnoreCase))
+	{
+		MaxTemperature = 1.0f; // OpenAI limit
+	}
+	
+	// Validate and clamp temperature to provider-specific range
+	if (Temperature < 0.0f || Temperature > MaxTemperature)
+	{
+		Temperature = 0.7f; // Safe default for all providers
+	}
+	
+	FString MaxTokensStr = GetValue(TEXT("MaxTokens"), TEXT("2000"));
+	MaxTokens = FCString::Atoi(*MaxTokensStr);
+	if (MaxTokens < 100 || MaxTokens > 8000)
+	{
+		MaxTokens = 2000;
+	}
 	
 	// API keys are no longer stored in config.ini - they're configured via .env file
 	// The Python backend reads them from environment variables
@@ -97,6 +124,9 @@ void FAdastreaSettings::SaveSettings()
 	// Update all values in the map (write once, not multiple times)
 	ConfigMap.FindOrAdd(TEXT("LLMProvider")) = LLMProvider;
 	ConfigMap.FindOrAdd(TEXT("EmbeddingProvider")) = EmbeddingProvider;
+	ConfigMap.FindOrAdd(TEXT("ModelName")) = ModelName;
+	ConfigMap.FindOrAdd(TEXT("Temperature")) = FString::SanitizeFloat(Temperature);
+	ConfigMap.FindOrAdd(TEXT("MaxTokens")) = FString::FromInt(MaxTokens);
 	// API keys are not saved - they're managed via .env file
 	ConfigMap.FindOrAdd(TEXT("DefaultFontSize")) = FString::FromInt(DefaultFontSize);
 	ConfigMap.FindOrAdd(TEXT("AutoSaveSettings")) = bAutoSaveSettings ? TEXT("true") : TEXT("false");

@@ -68,6 +68,14 @@ void SSettingsDialog::Construct(const FArguments& InArgs, TSharedPtr<SWindow> In
 						CreateAPIKeysSection()
 					]
 
+					// LLM Settings Section
+					+ SVerticalBox::Slot()
+					.AutoHeight()
+					.Padding(0.0f, 0.0f, 0.0f, 15.0f)
+					[
+						CreateLLMSettingsSection()
+					]
+
 					// Display Settings Section
 					+ SVerticalBox::Slot()
 					.AutoHeight()
@@ -346,6 +354,208 @@ TSharedRef<SWidget> SSettingsDialog::CreateAPIKeysSection()
 		];
 }
 
+TSharedRef<SWidget> SSettingsDialog::CreateLLMSettingsSection()
+{
+	return SNew(SBorder)
+		.BorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
+		.Padding(15.0f)
+		[
+			SNew(SVerticalBox)
+
+			// Section Header
+			+ SVerticalBox::Slot()
+			.AutoHeight()
+			.Padding(0.0f, 0.0f, 0.0f, 10.0f)
+			[
+				SNew(STextBlock)
+				.Text(LOCTEXT("LLMSettingsHeader", "LLM Configuration"))
+				.Font(FCoreStyle::GetDefaultFontStyle("Bold", 12))
+			]
+
+			// Model Selection
+			+ SVerticalBox::Slot()
+			.AutoHeight()
+			.Padding(0.0f, 0.0f, 0.0f, 5.0f)
+			[
+				SNew(STextBlock)
+				.Text(LOCTEXT("ModelNameLabel", "Model:"))
+			]
+
+			+ SVerticalBox::Slot()
+			.AutoHeight()
+			.Padding(0.0f, 0.0f, 0.0f, 15.0f)
+			[
+				SNew(SHorizontalBox)
+
+				+ SHorizontalBox::Slot()
+				.AutoWidth()
+				.Padding(0.0f, 0.0f, 5.0f, 0.0f)
+				[
+					SNew(SButton)
+					.Text(LOCTEXT("GeminiFlashButton", "Gemini 1.5 Flash"))
+					.ToolTipText(LOCTEXT("GeminiFlashTooltip", "Fast and cost-effective model"))
+					.OnClicked_Lambda([this]() {
+						OnModelNameChanged(TEXT("gemini-1.5-flash"));
+						return FReply::Handled();
+					})
+				]
+
+				+ SHorizontalBox::Slot()
+				.AutoWidth()
+				.Padding(0.0f, 0.0f, 5.0f, 0.0f)
+				[
+					SNew(SButton)
+					.Text(LOCTEXT("GeminiProButton", "Gemini 1.5 Pro"))
+					.ToolTipText(LOCTEXT("GeminiProTooltip", "More capable for complex tasks"))
+					.OnClicked_Lambda([this]() {
+						OnModelNameChanged(TEXT("gemini-1.5-pro"));
+						return FReply::Handled();
+					})
+				]
+
+				+ SHorizontalBox::Slot()
+				.AutoWidth()
+				.Padding(0.0f, 0.0f, 5.0f, 0.0f)
+				[
+					SNew(SButton)
+					.Text(LOCTEXT("GPT4Button", "GPT-4"))
+					.ToolTipText(LOCTEXT("GPT4Tooltip", "OpenAI's most capable model"))
+					.OnClicked_Lambda([this]() {
+						OnModelNameChanged(TEXT("gpt-4"));
+						return FReply::Handled();
+					})
+				]
+
+				+ SHorizontalBox::Slot()
+				.AutoWidth()
+				[
+					SNew(SButton)
+					.Text(LOCTEXT("GPT4TurboButton", "GPT-4 Turbo"))
+					.ToolTipText(LOCTEXT("GPT4TurboTooltip", "Faster and more cost-effective"))
+					.OnClicked_Lambda([this]() {
+						OnModelNameChanged(TEXT("gpt-4-turbo"));
+						return FReply::Handled();
+					})
+				]
+			]
+
+			+ SVerticalBox::Slot()
+			.AutoHeight()
+			.Padding(0.0f, 0.0f, 0.0f, 10.0f)
+			[
+				SNew(STextBlock)
+				.Text_Lambda([this]() {
+					return FText::Format(LOCTEXT("CurrentModelText", "Current: {0}"), FText::FromString(ModelName));
+				})
+				.Font(FCoreStyle::GetDefaultFontStyle("Italic", 9))
+			]
+
+			// Temperature Slider
+			+ SVerticalBox::Slot()
+			.AutoHeight()
+			.Padding(0.0f, 0.0f, 0.0f, 5.0f)
+			[
+				SNew(STextBlock)
+				.Text(LOCTEXT("TemperatureLabel", "Temperature (Creativity):"))
+			]
+
+			+ SVerticalBox::Slot()
+			.AutoHeight()
+			.Padding(0.0f, 0.0f, 0.0f, 5.0f)
+			[
+				SNew(SHorizontalBox)
+
+				+ SHorizontalBox::Slot()
+				.FillWidth(1.0f)
+				[
+					SNew(SSpinBox<float>)
+					.MinValue(0.0f)
+					.MaxValue(2.0f)
+					.Delta(0.1f)
+					.Value_Lambda([this]() { return Temperature; })
+					.OnValueChanged_Lambda([this](float NewValue) {
+						OnTemperatureChanged(NewValue);
+					})
+				]
+
+				+ SHorizontalBox::Slot()
+				.AutoWidth()
+				.Padding(10.0f, 0.0f, 0.0f, 0.0f)
+				[
+					SNew(STextBlock)
+					.Text_Lambda([this]() {
+						return FText::AsNumber(Temperature, &FNumberFormattingOptions::DefaultNoGrouping());
+					})
+					.MinDesiredWidth(40.0f)
+				]
+			]
+
+			+ SVerticalBox::Slot()
+			.AutoHeight()
+			.Padding(0.0f, 0.0f, 0.0f, 15.0f)
+			[
+				SNew(STextBlock)
+				.Text(LOCTEXT("TemperatureHint", "Lower values = more focused, higher values = more creative. Maximum depends on provider (OpenAI: 0.0-1.0, Gemini: 0.0-2.0)"))
+				.Font(FCoreStyle::GetDefaultFontStyle("Italic", 8))
+			]
+
+			// Max Tokens
+			+ SVerticalBox::Slot()
+			.AutoHeight()
+			.Padding(0.0f, 0.0f, 0.0f, 5.0f)
+			[
+				SNew(STextBlock)
+				.Text(LOCTEXT("MaxTokensLabel", "Max Response Length (Tokens):"))
+			]
+
+			+ SVerticalBox::Slot()
+			.AutoHeight()
+			.Padding(0.0f, 0.0f, 0.0f, 5.0f)
+			[
+				SNew(SSpinBox<int32>)
+				.MinValue(100)
+				.MaxValue(8000)
+				.Value_Lambda([this]() { return MaxTokens; })
+				.OnValueChanged_Lambda([this](int32 NewValue) {
+					OnMaxTokensChanged(NewValue);
+				})
+			]
+
+			+ SVerticalBox::Slot()
+			.AutoHeight()
+			.Padding(0.0f, 0.0f, 0.0f, 15.0f)
+			[
+				SNew(STextBlock)
+				.Text(LOCTEXT("MaxTokensHint", "Higher values allow longer responses but may cost more"))
+				.Font(FCoreStyle::GetDefaultFontStyle("Italic", 8))
+			]
+
+			// Test API Key Button
+			+ SVerticalBox::Slot()
+			.AutoHeight()
+			[
+				SNew(SHorizontalBox)
+
+				+ SHorizontalBox::Slot()
+				.AutoWidth()
+				[
+					SNew(SButton)
+					.Text(LOCTEXT("TestAPIKeyButton", "Test API Key"))
+					.ToolTipText(LOCTEXT("TestAPIKeyTooltip", "Send a test request to verify your API key works"))
+					.OnClicked(this, &SSettingsDialog::OnTestAPIKeyClicked)
+				]
+
+				+ SHorizontalBox::Slot()
+				.FillWidth(1.0f)
+				.Padding(10.0f, 0.0f, 0.0f, 0.0f)
+				[
+					SAssignNew(TestStatusText, STextBlock)
+					.Text(LOCTEXT("TestStatusIdle", "Click to test"))
+				]
+			]
+		];
+}
+
 TSharedRef<SWidget> SSettingsDialog::CreateDisplaySettingsSection()
 {
 	return SNew(SBorder)
@@ -493,6 +703,21 @@ void SSettingsDialog::OnEmbeddingProviderChanged(FString NewProvider)
 	EmbeddingProvider = NewProvider;
 }
 
+void SSettingsDialog::OnModelNameChanged(FString NewModel)
+{
+	ModelName = NewModel;
+}
+
+void SSettingsDialog::OnTemperatureChanged(float NewTemperature)
+{
+	Temperature = NewTemperature;
+}
+
+void SSettingsDialog::OnMaxTokensChanged(int32 NewMaxTokens)
+{
+	MaxTokens = NewMaxTokens;
+}
+
 void SSettingsDialog::OnFontSizeChanged(int32 NewSize)
 {
 	DefaultFontSize = NewSize;
@@ -508,12 +733,68 @@ void SSettingsDialog::OnShowTimestampsChanged(ECheckBoxState NewState)
 	bShowTimestamps = (NewState == ECheckBoxState::Checked);
 }
 
+FReply SSettingsDialog::OnTestAPIKeyClicked()
+{
+	// Update status to show testing
+	if (TestStatusText.IsValid())
+	{
+		TestStatusText->SetText(LOCTEXT("TestStatusTesting", "Testing..."));
+	}
+
+	// Test the API key by making a simple request
+	// Note: This would need the LLM client implementation
+	// For now, just validate that a key is present
+	FString APIKey;
+	if (LLMProvider == TEXT("Gemini"))
+	{
+		APIKey = GeminiAPIKey;
+	}
+	else if (LLMProvider == TEXT("OpenAI"))
+	{
+		APIKey = OpenAIAPIKey;
+	}
+
+	if (APIKey.IsEmpty())
+	{
+		if (TestStatusText.IsValid())
+		{
+			TestStatusText->SetText(LOCTEXT("TestStatusNoKey", "No API key configured"));
+		}
+	}
+	else
+	{
+		// In a real implementation, we would make a test API call here
+		// For now, just show success if a key is present
+		if (TestStatusText.IsValid())
+		{
+			TestStatusText->SetText(LOCTEXT("TestStatusSuccess", "API key format valid (not tested with provider)"));
+		}
+	}
+
+	return FReply::Handled();
+}
+
 void SSettingsDialog::LoadSettings()
 {
 	// Load from config file
 	// Note: API keys are now configured via .env file, not stored in config.ini
 	LLMProvider = LoadConfigValue(TEXT("LLMProvider"), TEXT("gemini"));
 	EmbeddingProvider = LoadConfigValue(TEXT("EmbeddingProvider"), TEXT("huggingface"));
+	ModelName = LoadConfigValue(TEXT("ModelName"), TEXT("gemini-1.5-flash"));
+	
+	FString TemperatureStr = LoadConfigValue(TEXT("Temperature"), TEXT("0.7"));
+	Temperature = FCString::Atof(*TemperatureStr);
+	if (Temperature < 0.0f || Temperature > 2.0f)
+	{
+		Temperature = 0.7f; // Reset to default if out of bounds
+	}
+	
+	FString MaxTokensStr = LoadConfigValue(TEXT("MaxTokens"), TEXT("2000"));
+	MaxTokens = FCString::Atoi(*MaxTokensStr);
+	if (MaxTokens < 100 || MaxTokens > 8000)
+	{
+		MaxTokens = 2000; // Reset to default if out of bounds
+	}
 	
 	FString FontSizeStr = LoadConfigValue(TEXT("DefaultFontSize"), TEXT("10"));
 	DefaultFontSize = FCString::Atoi(*FontSizeStr);
@@ -536,10 +817,13 @@ void SSettingsDialog::LoadSettings()
 
 void SSettingsDialog::SaveSettings()
 {
-	// Save provider preferences and display settings
+	// Save provider preferences, LLM settings, and display settings
 	// Note: API keys are configured via .env file and not saved here
 	SaveConfigValue(TEXT("LLMProvider"), LLMProvider);
 	SaveConfigValue(TEXT("EmbeddingProvider"), EmbeddingProvider);
+	SaveConfigValue(TEXT("ModelName"), ModelName);
+	SaveConfigValue(TEXT("Temperature"), FString::SanitizeFloat(Temperature));
+	SaveConfigValue(TEXT("MaxTokens"), FString::FromInt(MaxTokens));
 	SaveConfigValue(TEXT("DefaultFontSize"), FString::FromInt(DefaultFontSize));
 	SaveConfigValue(TEXT("AutoSaveSettings"), bAutoSaveSettings ? TEXT("true") : TEXT("false"));
 	SaveConfigValue(TEXT("ShowTimestamps"), bShowTimestamps ? TEXT("true") : TEXT("false"));

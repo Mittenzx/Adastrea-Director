@@ -7,8 +7,10 @@
 #include "AdastreaDirectorModule.h"
 #include "AdastreaSettings.h"
 #include "AdastreaStartupValidator.h"
-// Legacy IPC components removed in Phase 3 migration
-// Use VibeUE components: AdastreaLLMClient, AdastreaScriptService, AdastreaAssetService
+// VibeUE components
+#include "AdastreaLLMClient.h"
+#include "AdastreaScriptService.h"
+#include "AdastreaAssetService.h"
 #include "Widgets/Input/SEditableTextBox.h"
 #include "Widgets/Input/SMultiLineEditableTextBox.h"
 #include "Widgets/Input/SButton.h"
@@ -42,11 +44,7 @@ static const FString PluginName(TEXT("AdastreaDirector"));
 
 SAdastreaDirectorPanel::~SAdastreaDirectorPanel()
 {
-	// Clean up progress file if it exists
-	if (!ProgressFilePath.IsEmpty() && FPaths::FileExists(ProgressFilePath))
-	{
-		IFileManager::Get().Delete(*ProgressFilePath);
-	}
+	// Cleanup
 }
 
 FString SAdastreaDirectorPanel::GetPluginVersion()
@@ -78,24 +76,16 @@ void SAdastreaDirectorPanel::Construct(const FArguments& InArgs)
 {
 	// Initialize state
 	bIsProcessing = false;
-	bIsIngesting = false;
-	IngestionProgress = 0.0f;
-	IngestionStatusMessage = LOCTEXT("IngestionIdle", "Ready to ingest documents");
-	IngestionDetailsMessage = FText::GetEmpty();
-	DatabaseStatusMessage = LOCTEXT("DbStatusNotLoaded", "Not loaded - Click Refresh to check");
+	StreamingContent = TEXT("");
+	CurrentQueryString = TEXT("");
 	CurrentResults = LOCTEXT("WelcomeMessage", "Welcome to Adastrea Director!\n\nEnter a query above and click 'Send Query' or press Enter to get started.\n\nExample: \"What is Unreal Engine?\"");
-	LastProgressUpdateTime = 0.0;
 	CurrentTabIndex = 0; // Start with Query tab
 	LastDashboardRefreshTime = 0.0;
 	LastConnectionStatusUpdateTime = 0.0;
 	CurrentLogContent = TEXT("Dashboard logs will appear here...");
 	CachedLogContentText = FText::FromString(CurrentLogContent);
-	CachedConnectionStatus = FText::FromString(TEXT("⚠️ Not connected - Python backend not ready"));
+	CachedConnectionStatus = FText::FromString(TEXT("Loading VibeUE architecture..."));
 	LastStatusLightsUpdateTime = 0.0;
-	
-	// Initialize ingestion debug log
-	CurrentIngestionDebugLog = TEXT("📋 Ingestion Debug Log\n\nDebug messages will appear here when you start ingestion.\nThis shows exactly what's happening during the ingestion process.\n");
-	CachedIngestionDebugLogText = FText::FromString(CurrentIngestionDebugLog);
 	
 	// Initialize Tests tab state
 	bIsTestRunning = false;
@@ -104,9 +94,6 @@ void SAdastreaDirectorPanel::Construct(const FArguments& InArgs)
 	CurrentTestOutput = TEXT("🧪 Plugin Self-Test Suite\n\nClick a test button above to run tests.\nResults will appear here.\n");
 	CachedTestOutputText = FText::FromString(CurrentTestOutput);
 	LastTestOutputUpdateTime = 0.0;
-	
-	// Setup progress file path
-	ProgressFilePath = FPaths::ProjectIntermediateDir() / TEXT("AdastreaDirector") / TEXT("ingestion_progress.json");
 
 	ChildSlot
 	[
@@ -189,7 +176,7 @@ void SAdastreaDirectorPanel::Construct(const FArguments& InArgs)
 				]
 			]
 
-			// Ingestion Tab Button
+			// Dashboard Tab Button
 			+ SHorizontalBox::Slot()
 			.AutoWidth()
 			.Padding(0.0f, 0.0f, 5.0f, 0.0f)
@@ -201,27 +188,6 @@ void SAdastreaDirectorPanel::Construct(const FArguments& InArgs)
 					if (NewState == ECheckBoxState::Checked)
 					{
 						OnTabButtonClicked(1);
-					}
-				})
-				[
-					SNew(STextBlock)
-					.Text(LOCTEXT("IngestionTabButton", "Ingestion"))
-					.Font(FCoreStyle::GetDefaultFontStyle("Bold", 10))
-				]
-			]
-
-			// Dashboard Tab Button
-			+ SHorizontalBox::Slot()
-			.AutoWidth()
-			.Padding(0.0f, 0.0f, 5.0f, 0.0f)
-			[
-				SNew(SCheckBox)
-				.Style(FAppStyle::Get(), "RadioButton")
-				.IsChecked(this, &SAdastreaDirectorPanel::GetTabButtonCheckedState, 2)
-				.OnCheckStateChanged_Lambda([this](ECheckBoxState NewState) {
-					if (NewState == ECheckBoxState::Checked)
-					{
-						OnTabButtonClicked(2);
 					}
 				})
 				[
@@ -238,11 +204,11 @@ void SAdastreaDirectorPanel::Construct(const FArguments& InArgs)
 			[
 				SNew(SCheckBox)
 				.Style(FAppStyle::Get(), "RadioButton")
-				.IsChecked(this, &SAdastreaDirectorPanel::GetTabButtonCheckedState, 3)
+				.IsChecked(this, &SAdastreaDirectorPanel::GetTabButtonCheckedState, 2)
 				.OnCheckStateChanged_Lambda([this](ECheckBoxState NewState) {
 					if (NewState == ECheckBoxState::Checked)
 					{
-						OnTabButtonClicked(3);
+						OnTabButtonClicked(2);
 					}
 				})
 				[
@@ -274,19 +240,13 @@ void SAdastreaDirectorPanel::Construct(const FArguments& InArgs)
 				CreateQueryTab()
 			]
 			
-			// Ingestion Tab (index 1)
-			+ SWidgetSwitcher::Slot()
-			[
-				CreateIngestionTab()
-			]
-			
-			// Dashboard Tab (index 2)
+			// Dashboard Tab (index 1)
 			+ SWidgetSwitcher::Slot()
 			[
 				CreateDashboardTab()
 			]
 			
-			// Tests Tab (index 3)
+			// Tests Tab (index 2)
 			+ SWidgetSwitcher::Slot()
 			[
 				CreateTestsTab()
@@ -338,13 +298,13 @@ TSharedRef<SWidget> SAdastreaDirectorPanel::CreateQueryTab()
 				.IsEnabled(this, &SAdastreaDirectorPanel::IsSendButtonEnabled)
 			]
 
-			// Clear History Button
+			// Clear Results Button
 			+ SHorizontalBox::Slot()
 			.AutoWidth()
 			[
 				SNew(SButton)
-				.Text(LOCTEXT("ClearHistoryButton", "Clear History"))
-				.ToolTipText(LOCTEXT("ClearHistoryTooltip", "Clear conversation history"))
+				.Text(LOCTEXT("ClearResultsButton", "Clear Results"))
+				.ToolTipText(LOCTEXT("ClearResultsTooltip", "Clear the results display"))
 				.OnClicked(this, &SAdastreaDirectorPanel::OnClearHistoryClicked)
 			]
 		]
@@ -388,214 +348,6 @@ TSharedRef<SWidget> SAdastreaDirectorPanel::CreateQueryTab()
 		];
 }
 
-TSharedRef<SWidget> SAdastreaDirectorPanel::CreateIngestionTab()
-{
-	return SNew(SVerticalBox)
-		
-		// Docs Path Section
-		+ SVerticalBox::Slot()
-		.AutoHeight()
-		.Padding(10.0f, 10.0f, 10.0f, 5.0f)
-		[
-			SNew(STextBlock)
-			.Text(LOCTEXT("DocsPathLabel", "Documentation Folder:"))
-			.Font(FCoreStyle::GetDefaultFontStyle("Bold", 10))
-		]
-
-		+ SVerticalBox::Slot()
-		.AutoHeight()
-		.Padding(10.0f, 0.0f, 10.0f, 10.0f)
-		[
-			SNew(SHorizontalBox)
-			
-			+ SHorizontalBox::Slot()
-			.FillWidth(1.0f)
-			.Padding(0.0f, 0.0f, 5.0f, 0.0f)
-			[
-				SAssignNew(DocsPathBox, SEditableTextBox)
-				.HintText(LOCTEXT("DocsPathHint", "Path to documentation folder..."))
-				.Text(FText::FromString(FPaths::ProjectDir() / TEXT("Docs")))
-			]
-
-			+ SHorizontalBox::Slot()
-			.AutoWidth()
-			[
-				SNew(SButton)
-				.Text(LOCTEXT("BrowseDocsButton", "Browse..."))
-				.OnClicked(this, &SAdastreaDirectorPanel::OnBrowseDocsPathClicked)
-			]
-		]
-
-		// Database Path Section
-		+ SVerticalBox::Slot()
-		.AutoHeight()
-		.Padding(10.0f, 0.0f, 10.0f, 5.0f)
-		[
-			SNew(STextBlock)
-			.Text(LOCTEXT("DbPathLabel", "Database Path:"))
-			.Font(FCoreStyle::GetDefaultFontStyle("Bold", 10))
-		]
-
-		+ SVerticalBox::Slot()
-		.AutoHeight()
-		.Padding(10.0f, 0.0f, 10.0f, 10.0f)
-		[
-			SNew(SHorizontalBox)
-			
-			+ SHorizontalBox::Slot()
-			.FillWidth(1.0f)
-			.Padding(0.0f, 0.0f, 5.0f, 0.0f)
-			[
-				SAssignNew(DbPathBox, SEditableTextBox)
-				.HintText(LOCTEXT("DbPathHint", "Path to ChromaDB database (can select existing database)..."))
-				.Text(FText::FromString(FPaths::ProjectDir() / TEXT("chroma_db_adastrea")))
-			]
-
-			+ SHorizontalBox::Slot()
-			.AutoWidth()
-			[
-				SNew(SButton)
-				.Text(LOCTEXT("BrowseDbButton", "Browse..."))
-				.OnClicked(this, &SAdastreaDirectorPanel::OnBrowseDbPathClicked)
-			]
-		]
-
-		// Database Status Section
-		+ SVerticalBox::Slot()
-		.AutoHeight()
-		.Padding(10.0f, 10.0f, 10.0f, 5.0f)
-		[
-			SNew(STextBlock)
-			.Text(LOCTEXT("DbStatusLabel", "Database Status:"))
-			.Font(FCoreStyle::GetDefaultFontStyle("Bold", 10))
-		]
-
-		+ SVerticalBox::Slot()
-		.AutoHeight()
-		.Padding(10.0f, 0.0f, 10.0f, 10.0f)
-		[
-			SNew(SHorizontalBox)
-			
-			+ SHorizontalBox::Slot()
-			.FillWidth(1.0f)
-			[
-				SAssignNew(DatabaseStatusText, STextBlock)
-				.Text_Lambda([this]() { return DatabaseStatusMessage; })
-				.AutoWrapText(true)
-			]
-
-			+ SHorizontalBox::Slot()
-			.AutoWidth()
-			.Padding(5.0f, 0.0f, 0.0f, 0.0f)
-			[
-				SNew(SButton)
-				.Text(LOCTEXT("RefreshDbStatusButton", "Refresh"))
-				.OnClicked(this, &SAdastreaDirectorPanel::OnRefreshDbStatusClicked)
-				.IsEnabled_Lambda([this]() { return CanRefreshDbStatus(); })
-			]
-		]
-
-		// Control Buttons
-		+ SVerticalBox::Slot()
-		.AutoHeight()
-		.Padding(10.0f, 10.0f, 10.0f, 10.0f)
-		[
-			SNew(SHorizontalBox)
-			
-			+ SHorizontalBox::Slot()
-			.AutoWidth()
-			.Padding(0.0f, 0.0f, 5.0f, 0.0f)
-			[
-				SNew(SButton)
-				.Text(LOCTEXT("StartIngestionButton", "Start Ingestion"))
-				.OnClicked(this, &SAdastreaDirectorPanel::OnStartIngestionClicked)
-				.IsEnabled_Lambda([this]() { return CanStartIngestion(); })
-			]
-
-			+ SHorizontalBox::Slot()
-			.AutoWidth()
-			[
-				SNew(SButton)
-				.Text(LOCTEXT("StopIngestionButton", "Stop"))
-				.OnClicked(this, &SAdastreaDirectorPanel::OnStopIngestionClicked)
-				.IsEnabled_Lambda([this]() { return CanStopIngestion(); })
-			]
-		]
-
-		+ SVerticalBox::Slot()
-		.AutoHeight()
-		.Padding(10.0f, 0.0f, 10.0f, 10.0f)
-		[
-			SNew(SSeparator)
-			.Orientation(Orient_Horizontal)
-		]
-
-		// Progress Section
-		+ SVerticalBox::Slot()
-		.AutoHeight()
-		.Padding(10.0f, 5.0f, 10.0f, 5.0f)
-		[
-			SAssignNew(IngestionStatusText, STextBlock)
-			.Text_Lambda([this]() { return IngestionStatusMessage; })
-			.Font(FCoreStyle::GetDefaultFontStyle("Bold", 10))
-		]
-
-		+ SVerticalBox::Slot()
-		.AutoHeight()
-		.Padding(10.0f, 0.0f, 10.0f, 5.0f)
-		[
-			SAssignNew(IngestionProgressBar, SProgressBar)
-			.Percent_Lambda([this]() { return IngestionProgress; })
-		]
-
-		+ SVerticalBox::Slot()
-		.AutoHeight()
-		.Padding(10.0f, 0.0f, 10.0f, 10.0f)
-		[
-			SAssignNew(IngestionDetailsText, STextBlock)
-			.Text_Lambda([this]() { return IngestionDetailsMessage; })
-			.AutoWrapText(true)
-		]
-
-		+ SVerticalBox::Slot()
-		.AutoHeight()
-		.Padding(10.0f, 10.0f, 10.0f, 5.0f)
-		[
-			SNew(SSeparator)
-			.Orientation(Orient_Horizontal)
-		]
-
-		// Debug Log Section
-		+ SVerticalBox::Slot()
-		.AutoHeight()
-		.Padding(10.0f, 5.0f, 10.0f, 5.0f)
-		[
-			SNew(STextBlock)
-			.Text(LOCTEXT("IngestionDebugLogLabel", "Debug Log:"))
-			.Font(FCoreStyle::GetDefaultFontStyle("Bold", 10))
-		]
-
-		+ SVerticalBox::Slot()
-		.FillHeight(1.0f)
-		.Padding(10.0f, 0.0f, 10.0f, 10.0f)
-		[
-			SNew(SBox)
-			.MinDesiredHeight(150.0f)
-			[
-				SNew(SScrollBox)
-				.Orientation(Orient_Vertical)
-				
-				+ SScrollBox::Slot()
-				[
-					SAssignNew(IngestionDebugLogDisplay, SMultiLineEditableTextBox)
-					.Text_Lambda([this]() { return CachedIngestionDebugLogText; })
-					.IsReadOnly(true)
-					.AutoWrapText(true)
-				]
-			]
-		];
-}
-
 TSharedRef<SWidget> SAdastreaDirectorPanel::CreateDashboardTab()
 {
 	return SNew(SVerticalBox)
@@ -606,7 +358,7 @@ TSharedRef<SWidget> SAdastreaDirectorPanel::CreateDashboardTab()
 		.Padding(10.0f, 10.0f, 10.0f, 5.0f)
 		[
 			SNew(STextBlock)
-			.Text(LOCTEXT("StatusIndicatorsLabel", "System Status Indicators:"))
+			.Text(LOCTEXT("StatusIndicatorsLabel", "VibeUE Component Status:"))
 			.Font(FCoreStyle::GetDefaultFontStyle("Bold", 12))
 		]
 
@@ -621,64 +373,38 @@ TSharedRef<SWidget> SAdastreaDirectorPanel::CreateDashboardTab()
 				SNew(SGridPanel)
 				.FillColumn(0, 1.0f)
 				.FillColumn(1, 1.0f)
-				.FillColumn(2, 1.0f)
 				
-				// Row 0: Python Process, IPC Connection, & API Key Status
+				// Row 0: API Key & LLM Client
 				+ SGridPanel::Slot(0, 0)
 				.Padding(5.0f)
 				[
-					SAssignNew(PythonProcessStatusLight, SStatusIndicator)
-					.StatusText(LOCTEXT("PythonProcessStatus", "Python Process"))
+					SAssignNew(APIKeyStatusLight, SStatusIndicator)
+					.StatusText(LOCTEXT("APIKeyStatus", "API Key Configuration"))
 					.InitialStatus(SStatusIndicator::EStatus::Unknown)
 				]
 				
 				+ SGridPanel::Slot(1, 0)
 				.Padding(5.0f)
 				[
-					SAssignNew(IPCConnectionStatusLight, SStatusIndicator)
-					.StatusText(LOCTEXT("IPCConnectionStatus", "IPC Connection"))
+					SAssignNew(LLMClientStatusLight, SStatusIndicator)
+					.StatusText(LOCTEXT("LLMClientStatus", "LLM Client"))
 					.InitialStatus(SStatusIndicator::EStatus::Unknown)
 				]
 				
-				+ SGridPanel::Slot(2, 0)
-				.Padding(5.0f)
-				[
-					SAssignNew(APIKeyStatusLight, SStatusIndicator)
-					.StatusText(LOCTEXT("APIKeyStatus", "API Key Validation"))
-					.InitialStatus(SStatusIndicator::EStatus::Unknown)
-				]
-				
-				// Row 1: Python Bridge & Backend Health
+				// Row 1: Script Service & Asset Service
 				+ SGridPanel::Slot(0, 1)
 				.Padding(5.0f)
 				[
-					SAssignNew(BridgeReadyStatusLight, SStatusIndicator)
-					.StatusText(LOCTEXT("BridgeReadyStatus", "Python Bridge Ready"))
+					SAssignNew(ScriptServiceStatusLight, SStatusIndicator)
+					.StatusText(LOCTEXT("ScriptServiceStatus", "Python Script Service"))
 					.InitialStatus(SStatusIndicator::EStatus::Unknown)
 				]
 				
 				+ SGridPanel::Slot(1, 1)
 				.Padding(5.0f)
 				[
-					SAssignNew(BackendHealthStatusLight, SStatusIndicator)
-					.StatusText(LOCTEXT("BackendHealthStatus", "Backend Health"))
-					.InitialStatus(SStatusIndicator::EStatus::Unknown)
-				]
-				
-				// Row 2: Query Processing & Ingestion
-				+ SGridPanel::Slot(0, 2)
-				.Padding(5.0f)
-				[
-					SAssignNew(QueryProcessingStatusLight, SStatusIndicator)
-					.StatusText(LOCTEXT("QueryProcessingStatus", "Query Processing"))
-					.InitialStatus(SStatusIndicator::EStatus::Unknown)
-				]
-				
-				+ SGridPanel::Slot(1, 2)
-				.Padding(5.0f)
-				[
-					SAssignNew(IngestionStatusLight, SStatusIndicator)
-					.StatusText(LOCTEXT("IngestionStatus", "Document Ingestion"))
+					SAssignNew(AssetServiceStatusLight, SStatusIndicator)
+					.StatusText(LOCTEXT("AssetServiceStatus", "Asset Discovery Service"))
 					.InitialStatus(SStatusIndicator::EStatus::Unknown)
 				]
 			]
@@ -732,17 +458,8 @@ TSharedRef<SWidget> SAdastreaDirectorPanel::CreateDashboardTab()
 					[
 						SNew(SButton)
 						.Text(LOCTEXT("RefreshStatusButton", "Refresh Status"))
-						.ToolTipText(LOCTEXT("RefreshStatusTooltip", "Update connection status and indicators"))
+						.ToolTipText(LOCTEXT("RefreshStatusTooltip", "Update component status and indicators"))
 						.OnClicked(this, &SAdastreaDirectorPanel::OnRefreshDashboardClicked)
-					]
-
-					+ SHorizontalBox::Slot()
-					.AutoWidth()
-					[
-						SNew(SButton)
-						.Text(LOCTEXT("ReconnectButton", "Reconnect"))
-						.ToolTipText(LOCTEXT("ReconnectTooltip", "Attempt to reconnect to Python backend"))
-						.OnClicked(this, &SAdastreaDirectorPanel::OnReconnectClicked)
 					]
 				]
 			]
@@ -850,16 +567,196 @@ FReply SAdastreaDirectorPanel::OnSendQueryClicked()
 
 void SAdastreaDirectorPanel::SendQueryToPython(const FString& Query)
 {
-	// Legacy IPC system has been removed in Phase 3 migration to VibeUE architecture
-	// This feature is no longer available - use VibeUE components instead
-	UE_LOG(LogAdastreaDirectorEditor, Warning, TEXT("Legacy IPC query feature is no longer available - migrated to VibeUE architecture"));
-	UpdateResults(TEXT("Notice: Legacy IPC query system has been removed.\n\n")
-		TEXT("The Adastrea Director plugin has migrated to the VibeUE architecture which provides:\n")
-		TEXT("• Direct LLM integration via AdastreaLLMClient\n")
-		TEXT("• In-process Python execution via AdastreaScriptService\n")
-		TEXT("• Runtime asset discovery via AdastreaAssetService\n\n")
-		TEXT("See MIGRATION_GUIDE.md for updated usage examples."));
-	return;
+	// Get settings for API configuration
+	FAdastreaSettings& Settings = FAdastreaSettings::Get();
+	
+	// Validate settings
+	FString ErrorMessage;
+	if (!Settings.ValidateSettings(ErrorMessage))
+	{
+		UpdateResults(FString::Printf(TEXT("❌ Configuration Error\n\n%s\n\nPlease configure your API key in Settings."), *ErrorMessage));
+		bIsProcessing = false;
+		return;
+	}
+	
+	// Store query for streaming context
+	CurrentQueryString = Query;
+	StreamingContent = TEXT("");
+	
+	// Show initial "Thinking..." message
+	UpdateResults(FString::Printf(
+		TEXT("═══════════════════════════════════════════\n")
+		TEXT("🤖 AI Response\n")
+		TEXT("═══════════════════════════════════════════\n\n")
+		TEXT("⏳ Thinking...\n\n")
+		TEXT("═══════════════════════════════════════════\n")
+		TEXT("Query: %s\n")
+		TEXT("═══════════════════════════════════════════"),
+		*Query
+	));
+	
+	// Create LLM client
+	TSharedPtr<FAdastreaLLMClient> LLMClient = MakeShared<FAdastreaLLMClient>();
+	
+	// Configure client from settings
+	FString Provider = Settings.GetLLMProvider();
+	FString APIKey = Settings.GetAPIKey();
+	FString ModelName = Settings.GetModelName();
+	float Temperature = Settings.GetTemperature();
+	
+	if (Provider == TEXT("Gemini"))
+	{
+		LLMClient->SetProvider(ELLMProvider::Gemini, APIKey);
+		// Use configured model or default for provider
+		if (ModelName.IsEmpty())
+		{
+			ModelName = TEXT("gemini-1.5-flash");
+		}
+		LLMClient->SetModel(ModelName);
+	}
+	else if (Provider == TEXT("OpenAI"))
+	{
+		LLMClient->SetProvider(ELLMProvider::OpenAI, APIKey);
+		// Use configured model or default for provider
+		if (ModelName.IsEmpty())
+		{
+			ModelName = TEXT("gpt-4-turbo");
+		}
+		LLMClient->SetModel(ModelName);
+	}
+	else
+	{
+		UpdateResults(FString::Printf(TEXT("Unknown provider: %s\n\nSupported providers: Gemini, OpenAI"), *Provider));
+		bIsProcessing = false;
+		return;
+	}
+	
+	// Set temperature
+	LLMClient->SetTemperature(Temperature);
+	
+	// Prepare messages
+	TArray<FChatMessage> Messages;
+	
+	// System message
+	FChatMessage SystemMsg;
+	SystemMsg.Role = TEXT("system");
+	SystemMsg.Content = TEXT("You are an AI assistant integrated into Unreal Engine. Help developers with their questions about Unreal Engine, game development, and project-specific queries. Be concise and practical.");
+	Messages.Add(SystemMsg);
+	
+	// User query
+	FChatMessage UserMsg;
+	UserMsg.Role = TEXT("user");
+	UserMsg.Content = Query;
+	Messages.Add(UserMsg);
+	
+	// Send request with streaming callbacks
+	FOnStreamChunk OnStreamChunk;
+	OnStreamChunk.BindLambda([this](const FString& Chunk) {
+		// Append chunk to streaming content
+		StreamingContent += Chunk;
+		
+		// Update display progressively
+		FString FormattedResponse = FString::Printf(
+			TEXT("═══════════════════════════════════════════\n")
+			TEXT("🤖 AI Response\n")
+			TEXT("═══════════════════════════════════════════\n\n")
+			TEXT("%s\n\n")
+			TEXT("═══════════════════════════════════════════\n")
+			TEXT("Query: %s\n")
+			TEXT("═══════════════════════════════════════════"),
+			*StreamingContent,
+			*CurrentQueryString
+		);
+		UpdateResults(FormattedResponse);
+	});
+	
+	FOnLLMComplete OnComplete;
+	OnComplete.BindLambda([this](bool bSuccess, const FString& Content, const TArray<FToolCall>& ToolCalls) {
+		bIsProcessing = false;
+		
+		if (bSuccess)
+		{
+			// Final update with complete content (in case streaming missed anything)
+			FString FormattedResponse = FString::Printf(
+				TEXT("═══════════════════════════════════════════\n")
+				TEXT("🤖 AI Response\n")
+				TEXT("═══════════════════════════════════════════\n\n")
+				TEXT("%s\n\n")
+				TEXT("═══════════════════════════════════════════\n")
+				TEXT("Query: %s\n")
+				TEXT("═══════════════════════════════════════════"),
+				Content.IsEmpty() ? *StreamingContent : *Content,
+				*CurrentQueryString
+			);
+			UpdateResults(FormattedResponse);
+		}
+		else
+		{
+			// Enhanced error handling with specific error types
+			FString ErrorType = TEXT("Unknown Error");
+			FString ErrorDetails = Content;
+			FString TroubleshootingSteps;
+			
+			// Parse error message to provide specific guidance
+			if (ErrorDetails.Contains(TEXT("401")) || ErrorDetails.Contains(TEXT("unauthorized")) || (ErrorDetails.Contains(TEXT("invalid")) && ErrorDetails.Contains(TEXT("key"))))
+			{
+				ErrorType = TEXT("Authentication Error");
+				TroubleshootingSteps = TEXT("• Verify your API key in Settings\n")
+					TEXT("• Check if your API key has expired\n")
+					TEXT("• Ensure you're using the correct provider (Gemini/OpenAI)");
+			}
+			else if (ErrorDetails.Contains(TEXT("429")) || ErrorDetails.Contains(TEXT("quota")) || ErrorDetails.Contains(TEXT("rate limit")))
+			{
+				ErrorType = TEXT("Rate Limit Exceeded");
+				TroubleshootingSteps = TEXT("• Wait a few moments and try again\n")
+					TEXT("• Check your API usage quota\n")
+					TEXT("• Consider upgrading your API plan");
+			}
+			else if (ErrorDetails.Contains(TEXT("timeout")) || ErrorDetails.Contains(TEXT("timed out")))
+			{
+				ErrorType = TEXT("Request Timeout");
+				TroubleshootingSteps = TEXT("• Check your internet connection\n")
+					TEXT("• Try a shorter or simpler query\n")
+					TEXT("• The API service may be experiencing issues");
+			}
+			else if (ErrorDetails.Contains(TEXT("network")) || ErrorDetails.Contains(TEXT("connection")))
+			{
+				ErrorType = TEXT("Network Error");
+				TroubleshootingSteps = TEXT("• Verify your internet connection is active\n")
+					TEXT("• Check if firewall is blocking the request\n")
+					TEXT("• Try again in a few moments");
+			}
+			else if (ErrorDetails.Contains(TEXT("500")) || ErrorDetails.Contains(TEXT("503")))
+			{
+				ErrorType = TEXT("Server Error");
+				TroubleshootingSteps = TEXT("• The API service is temporarily unavailable\n")
+					TEXT("• Wait a few minutes and try again\n")
+					TEXT("• Check the provider's status page");
+			}
+			else
+			{
+				ErrorType = TEXT("Error");
+				TroubleshootingSteps = TEXT("• Check that your API key is correct and has not expired\n")
+					TEXT("• Verify that you have an active internet connection\n")
+					TEXT("• Confirm that the selected provider is correctly configured and available");
+			}
+			
+			FString ErrorResponse = FString::Printf(
+				TEXT("%s\n\n")
+				TEXT("Details: %s\n\n")
+				TEXT("Troubleshooting:\n%s"),
+				*ErrorType,
+				*ErrorDetails,
+				*TroubleshootingSteps
+			);
+			UpdateResults(ErrorResponse);
+		}
+	});
+	
+	// Send the request
+	LLMClient->SendChatRequest(Messages, TArray<FToolDefinition>(), OnStreamChunk, OnComplete);
+	
+	UE_LOG(LogAdastreaDirectorEditor, Log, TEXT("Sending query to LLM: %s"), *Query);
 }
 
 
@@ -880,22 +777,8 @@ bool SAdastreaDirectorPanel::IsSendButtonEnabled() const
 
 FReply SAdastreaDirectorPanel::OnClearHistoryClicked()
 {
-	// Show confirmation dialog
-	const FText Title = LOCTEXT("ClearHistoryTitle", "Clear Conversation History");
-	const FText Message = LOCTEXT("ClearHistoryMessage", "Are you sure you want to clear the conversation history?\n\nThis action cannot be undone.");
-	
-	EAppReturnType::Type UserResponse = FMessageDialog::Open(EAppMsgType::YesNo, Message, Title);
-	
-	if (UserResponse != EAppReturnType::Yes)
-	{
-		return FReply::Handled();
-	}
-
-	// Legacy IPC system has been removed in Phase 3 migration
-	UpdateResults(TEXT("Notice: Legacy conversation history feature is no longer available.\n\n")
-		TEXT("The IPC-based query system has been replaced with VibeUE architecture.\n")
-		TEXT("See MIGRATION_GUIDE.md for updated approaches."));
-	// Removed legacy code - previously cleared conversation history via FPythonBridge IPC
+	// Clear the results display
+	CurrentResults = LOCTEXT("WelcomeMessage", "Welcome to Adastrea Director!\n\nEnter a query above and click 'Send Query' or press Enter to get started.\n\nExample: \"What is Unreal Engine?\"");
 	return FReply::Handled();
 }
 
@@ -905,268 +788,24 @@ FReply SAdastreaDirectorPanel::OnSettingsClicked()
 	return FReply::Handled();
 }
 
-FReply SAdastreaDirectorPanel::OnBrowseDocsPathClicked()
-{
-	IDesktopPlatform* DesktopPlatform = FDesktopPlatformModule::Get();
-	if (DesktopPlatform)
-	{
-		FString FolderPath;
-		const void* ParentWindowHandle = FSlateApplication::Get().FindBestParentWindowHandleForDialogs(nullptr);
-		
-		if (DesktopPlatform->OpenDirectoryDialog(
-			ParentWindowHandle,
-			TEXT("Select Documentation Folder"),
-			FPaths::ProjectDir(),
-			FolderPath))
-		{
-			DocsPathBox->SetText(FText::FromString(FolderPath));
-		}
-	}
-
-	return FReply::Handled();
-}
-
-FReply SAdastreaDirectorPanel::OnBrowseDbPathClicked()
-{
-	IDesktopPlatform* DesktopPlatform = FDesktopPlatformModule::Get();
-	if (DesktopPlatform)
-	{
-		FString FolderPath;
-		const void* ParentWindowHandle = FSlateApplication::Get().FindBestParentWindowHandleForDialogs(nullptr);
-		
-		if (DesktopPlatform->OpenDirectoryDialog(
-			ParentWindowHandle,
-			TEXT("Select Database Path"),
-			FPaths::ProjectDir(),
-			FolderPath))
-		{
-			DbPathBox->SetText(FText::FromString(FolderPath));
-		}
-	}
-
-	return FReply::Handled();
-}
-
-FReply SAdastreaDirectorPanel::OnStartIngestionClicked()
-{
-	if (!CanStartIngestion())
-	{
-		return FReply::Handled();
-	}
-
-	FString DocsPath = DocsPathBox->GetText().ToString().TrimStartAndEnd();
-	FString DbPath = DbPathBox->GetText().ToString().TrimStartAndEnd();
-
-	// Validate paths before clearing the log to preserve context on error
-	if (DocsPath.IsEmpty() || DbPath.IsEmpty())
-	{
-		IngestionStatusMessage = LOCTEXT("IngestionErrorPathsEmpty", "Error: Please specify both paths");
-		AppendIngestionDebugLog(TEXT("❌ Error: Both documentation path and database path must be specified\n"));
-		return FReply::Handled();
-	}
-
-	// Validate docs directory exists
-	if (!FPaths::DirectoryExists(DocsPath))
-	{
-		IngestionStatusMessage = LOCTEXT("IngestionErrorDocsNotFound", "Error: Documentation folder does not exist");
-		AppendIngestionDebugLog(TEXT("❌ Error: Documentation folder does not exist\n"));
-		return FReply::Handled();
-	}
-
-	// Clear debug log and add initial message after validation passes
-	CurrentIngestionDebugLog = TEXT("");
-	CachedIngestionDebugLogText = FText::FromString(CurrentIngestionDebugLog);
-	AppendIngestionDebugLog(TEXT("🚀 Ingestion started\n"));
-
-	AppendIngestionDebugLog(FString::Printf(TEXT("📁 Documentation path: %s\n"), *DocsPath));
-	AppendIngestionDebugLog(FString::Printf(TEXT("💾 Database path: %s\n"), *DbPath));
-
-	AppendIngestionDebugLog(TEXT("✅ Documentation folder exists\n"));
-
-	// Sanitize paths (resolve to absolute paths)
-	DocsPath = FPaths::ConvertRelativePathToFull(DocsPath);
-	DbPath = FPaths::ConvertRelativePathToFull(DbPath);
-
-	AppendIngestionDebugLog(TEXT("🔄 Converting paths to absolute format\n"));
-	AppendIngestionDebugLog(FString::Printf(TEXT("  → Docs: %s\n"), *DocsPath));
-	AppendIngestionDebugLog(FString::Printf(TEXT("  → DB: %s\n"), *DbPath));
-
-	// Create progress file directory if it doesn't exist
-	FString ProgressDir = FPaths::GetPath(ProgressFilePath);
-	if (!FPaths::DirectoryExists(ProgressDir))
-	{
-		IFileManager::Get().MakeDirectory(*ProgressDir, true);
-		AppendIngestionDebugLog(FString::Printf(TEXT("📂 Created progress directory: %s\n"), *ProgressDir));
-	}
-
-	AppendIngestionDebugLog(FString::Printf(TEXT("📝 Progress file: %s\n"), *ProgressFilePath));
-
-	bIsIngesting = true;
-	IngestionProgress = 0.0f;
-	IngestionStatusMessage = LOCTEXT("IngestionStarting", "Starting ingestion...");
-	IngestionDetailsMessage = FText::GetEmpty();
-
-	AppendIngestionDebugLog(TEXT("🔌 Connecting to Python backend...\n"));
-
-	// Start ingestion
-	StartIngestion(DocsPath, DbPath);
-
-	return FReply::Handled();
-}
-
-FReply SAdastreaDirectorPanel::OnStopIngestionClicked()
-{
-	// For now, just mark as not ingesting
-	// TODO: Send stop signal to Python backend (e.g., via IPC stop_ingest request or process interruption).
-	//       This will require adding a cancellation mechanism to the Python ingestion loop.
-	//       The ingestion will continue in Python but UI will stop monitoring progress.
-	bIsIngesting = false;
-	IngestionStatusMessage = LOCTEXT("IngestionStopped", "Ingestion stopped by user");
-	
-	return FReply::Handled();
-}
-
-bool SAdastreaDirectorPanel::CanStartIngestion() const
-{
-	return !bIsIngesting;
-}
-
-bool SAdastreaDirectorPanel::CanStopIngestion() const
-{
-	return bIsIngesting;
-}
-
-FReply SAdastreaDirectorPanel::OnRefreshDbStatusClicked()
-{
-	// Legacy IPC system has been removed in Phase 3 migration
-	DatabaseStatusMessage = FText::FromString(TEXT("Legacy database ingestion feature is no longer available.\n\n")
-		TEXT("The VibeUE architecture uses runtime asset discovery instead:\n")
-		TEXT("• AdastreaAssetService provides instant asset queries\n")
-		TEXT("• No document ingestion needed\n\n")
-		TEXT("See MIGRATION_GUIDE.md for details."));
-	// Removed legacy code - previously queried ChromaDB status via FPythonBridge IPC
-	return FReply::Handled();
-}
-
-bool SAdastreaDirectorPanel::CanRefreshDbStatus() const
-{
-	// Can always refresh status
-	return true;
-}
-
-void SAdastreaDirectorPanel::StartIngestion(const FString& DocsPath, const FString& DbPath)
-{
-	// Legacy IPC ingestion system has been removed in Phase 3 migration
-	IngestionStatusMessage = LOCTEXT("IngestionNotAvailable", "Legacy ingestion feature is no longer available");
-	AppendIngestionDebugLog(TEXT("❌ Legacy document ingestion feature has been removed\n\n"));
-	AppendIngestionDebugLog(TEXT("The VibeUE architecture uses runtime asset discovery instead of document ingestion:\n"));
-	AppendIngestionDebugLog(TEXT("• AdastreaAssetService provides instant asset queries via Unreal's Asset Registry\n"));
-	AppendIngestionDebugLog(TEXT("• No ChromaDB or vector database ingestion needed\n"));
-	AppendIngestionDebugLog(TEXT("• See MIGRATION_GUIDE.md for updated asset query examples\n\n"));
-	bIsIngesting = false;
-	return;
-}
 
 
-void SAdastreaDirectorPanel::UpdateIngestionProgress()
-{
-	if (!bIsIngesting)
-	{
-		return;
-	}
 
-	// Read progress file
-	if (!FPaths::FileExists(ProgressFilePath))
-	{
-		// Log once per ingestion session to avoid spam
-		if (IngestionProgress == 0.0f)
-		{
-			AppendIngestionDebugLog(TEXT("⏳ Waiting for progress file to be created...\n"));
-		}
-		return;
-	}
 
-	FString JsonString;
-	if (!FFileHelper::LoadFileToString(JsonString, *ProgressFilePath))
-	{
-		AppendIngestionDebugLog(TEXT("⚠️ Warning: Could not read progress file\n"));
-		return;
-	}
 
-	// Parse JSON
-	TSharedPtr<FJsonObject> JsonObject;
-	TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(JsonString);
-	
-	if (!FJsonSerializer::Deserialize(Reader, JsonObject) || !JsonObject.IsValid())
-	{
-		AppendIngestionDebugLog(TEXT("⚠️ Warning: Could not parse progress JSON\n"));
-		return;
-	}
 
-	// Extract progress data
-	double Percent = 0.0;
-	if (JsonObject->TryGetNumberField(TEXT("percent"), Percent))
-	{
-		float OldProgress = IngestionProgress;
-		IngestionProgress = static_cast<float>(Percent / 100.0);
-		
-		// Only log significant progress changes (every 5% - calculated as 100/20 = 5)
-		// This prevents flooding the debug log with excessive updates
-		if (FMath::FloorToInt(OldProgress * 20.0f) != FMath::FloorToInt(IngestionProgress * 20.0f))
-		{
-			AppendIngestionDebugLog(FString::Printf(TEXT("📊 Progress: %.0f%%\n"), Percent));
-		}
-	}
 
-	FString Label;
-	if (JsonObject->TryGetStringField(TEXT("label"), Label))
-	{
-		// Only update if changed to avoid spam
-		if (IngestionStatusMessage.ToString() != Label)
-		{
-			IngestionStatusMessage = FText::FromString(Label);
-			AppendIngestionDebugLog(FString::Printf(TEXT("📝 Status: %s\n"), *Label));
-		}
-	}
 
-	FString Details;
-	if (JsonObject->TryGetStringField(TEXT("details"), Details))
-	{
-		// Only update if changed to avoid spam
-		if (IngestionDetailsMessage.ToString() != Details && !Details.IsEmpty())
-		{
-			IngestionDetailsMessage = FText::FromString(Details);
-			AppendIngestionDebugLog(FString::Printf(TEXT("  → %s\n"), *Details));
-		}
-	}
 
-	FString Status;
-	if (JsonObject->TryGetStringField(TEXT("status"), Status))
-	{
-		if (Status == TEXT("complete"))
-		{
-			bIsIngesting = false;
-			IngestionProgress = 1.0f;
-			AppendIngestionDebugLog(TEXT("✅ Ingestion completed successfully!\n"));
-			
-			// Log final stats if available
-			FString FinalDetails = IngestionDetailsMessage.ToString();
-			if (!FinalDetails.IsEmpty())
-			{
-				AppendIngestionDebugLog(FString::Printf(TEXT("  → Final stats: %s\n"), *FinalDetails));
-			}
-		}
-		else if (Status == TEXT("error"))
-		{
-			bIsIngesting = false;
-			AppendIngestionDebugLog(TEXT("❌ Ingestion failed with error\n"));
-			if (!Details.IsEmpty())
-			{
-				AppendIngestionDebugLog(FString::Printf(TEXT("  → Error details: %s\n"), *Details));
-			}
-		}
-	}
-}
+
+
+
+
+
+
+
+
+
 
 FReply SAdastreaDirectorPanel::OnRefreshDashboardClicked()
 {
@@ -1174,29 +813,6 @@ FReply SAdastreaDirectorPanel::OnRefreshDashboardClicked()
 	UpdateConnectionStatus();
 	UpdateStatusLights();
 	LastDashboardRefreshTime = RefreshTimerReset; // Reset timer to prevent immediate auto-refresh
-	return FReply::Handled();
-}
-
-FReply SAdastreaDirectorPanel::OnReconnectClicked()
-{
-	// Legacy IPC reconnection feature has been removed in Phase 3 migration
-	FAdastreaDirectorModule* RuntimeModule = FModuleManager::GetModulePtr<FAdastreaDirectorModule>("AdastreaDirector");
-	
-	if (!RuntimeModule)
-	{
-		AppendLogEntry(TEXT("Error: Runtime module not available\n"));
-		return FReply::Handled();
-	}
-
-	FString LogEntry = TEXT("Legacy IPC reconnection feature is no longer available.\n");
-	LogEntry += TEXT("The VibeUE architecture does not use IPC connections.\n");
-	LogEntry += TEXT("See MIGRATION_GUIDE.md for updated architecture.\n");
-	
-	AppendLogEntry(LogEntry);
-	UpdateConnectionStatus();
-	UpdateStatusLights();
-	
-	// Removed legacy code - previously reconnected to Python IPC server via FPythonBridge
 	return FReply::Handled();
 }
 
@@ -1222,118 +838,80 @@ void SAdastreaDirectorPanel::AppendLogEntry(const FString& Entry)
 	CachedLogContentText = FText::FromString(CurrentLogContent);
 }
 
-void SAdastreaDirectorPanel::AppendIngestionDebugLog(const FString& Entry)
-{
-	// Prepend new entry with timestamp
-	FString Timestamp = FDateTime::Now().ToString(TEXT("[%H:%M:%S] "));
-	FString NewEntry = Timestamp + Entry;
-	
-	// Keep only last MaxIngestionDebugLogCharacters characters to prevent unbounded growth
-	if (CurrentIngestionDebugLog.Len() + NewEntry.Len() > MaxIngestionDebugLogCharacters)
-	{
-		// Truncate at a newline boundary to preserve message integrity.
-		// The log buffer is stored in reverse chronological order: newest entries are at the beginning,
-		// and the oldest entries are at the end of CurrentIngestionDebugLog. To preserve the newest
-		// messages, we discard characters from the end (removing the oldest messages).
-		int32 TargetLength = MaxIngestionDebugLogCharacters - NewEntry.Len();
-		if (TargetLength > 0)
-		{
-			// Within the portion we keep (up to TargetLength), find the last newline so we keep
-			// only complete messages while preserving the newest entries at the beginning.
-			int32 LastNewlinePos = CurrentIngestionDebugLog.Left(TargetLength).Find(TEXT("\n"), ESearchCase::CaseSensitive, ESearchDir::FromEnd);
-			if (LastNewlinePos != INDEX_NONE && LastNewlinePos > 0)
-			{
-				CurrentIngestionDebugLog = CurrentIngestionDebugLog.Left(LastNewlinePos + 1);
-			}
-			else
-			{
-				// If no newline found, just truncate to target length
-				CurrentIngestionDebugLog = CurrentIngestionDebugLog.Left(TargetLength);
-			}
-		}
-		else
-		{
-			// New entry alone exceeds max, clear the log
-			CurrentIngestionDebugLog = TEXT("");
-		}
-	}
-	
-	// Prepend new entry to existing logs (newest first, like a console log viewer)
-	// This allows users to see the most recent updates without scrolling down
-	CurrentIngestionDebugLog = NewEntry + CurrentIngestionDebugLog;
-	
-	// Update cached FText version
-	CachedIngestionDebugLogText = FText::FromString(CurrentIngestionDebugLog);
-}
+
 
 void SAdastreaDirectorPanel::UpdateConnectionStatus()
 {
-	// Legacy IPC connection status has been removed in Phase 3 migration
-	CachedConnectionStatus = FText::FromString(TEXT("ℹ️ Legacy IPC system removed - migrated to VibeUE architecture"));
-	// Removed legacy code - previously checked FPythonBridge IPC connection status
-	return;
+	// Build status message based on VibeUE component states
+	FString StatusMessage;
+	
+	FAdastreaSettings& Settings = FAdastreaSettings::Get();
+	FString ErrorMessage;
+	bool bSettingsValid = Settings.ValidateSettings(ErrorMessage);
+	
+	if (bSettingsValid)
+	{
+		StatusMessage = FString::Printf(
+			TEXT("✅ VibeUE Architecture Ready\n")
+			TEXT("• LLM Provider: %s\n")
+			TEXT("• Python: %s\n")
+			TEXT("• Asset Registry: %s"),
+			*Settings.GetLLMProvider(),
+			FAdastreaScriptService::IsPythonAvailable() ? TEXT("Available") : TEXT("Not Available"),
+			FAdastreaAssetService::IsAssetRegistryReady() ? TEXT("Ready") : TEXT("Loading...")
+		);
+	}
+	else
+	{
+		StatusMessage = FString::Printf(
+			TEXT("⚠️ Configuration Required\n")
+			TEXT("• %s\n\n")
+			TEXT("Please configure your API key in Settings."),
+			*ErrorMessage
+		);
+	}
+	
+	CachedConnectionStatus = FText::FromString(StatusMessage);
 }
 
 void SAdastreaDirectorPanel::UpdateDashboardLogs()
 {
-	// Legacy IPC dashboard logs have been removed in Phase 3 migration
 	FString NewLogEntry = FString::Printf(
 		TEXT("=== Dashboard Status Update ===\n")
 		TEXT("Timestamp: %s\n")
-		TEXT("Architecture: VibeUE (native C++)\n")
-		TEXT("Legacy IPC: Removed (Phase 3)\n")
+		TEXT("Architecture: VibeUE (Native C++)\n")
+		TEXT("LLM Provider: %s\n")
+		TEXT("Python Service: %s\n")
+		TEXT("Asset Service: %s\n")
 		TEXT("===============================\n\n"),
-		*FDateTime::Now().ToString(TEXT("%Y-%m-%d %H:%M:%S"))
+		*FDateTime::Now().ToString(TEXT("%Y-%m-%d %H:%M:%S")),
+		*FAdastreaSettings::Get().GetLLMProvider(),
+		FAdastreaScriptService::IsPythonAvailable() ? TEXT("Available") : TEXT("Not Available"),
+		FAdastreaAssetService::IsAssetRegistryReady() ? TEXT("Ready") : TEXT("Loading...")
 	);
 	
 	AppendLogEntry(NewLogEntry);
-	// Removed legacy code - previously fetched Python process logs via FPythonBridge IPC
-}
-
-void SAdastreaDirectorPanel::SetAllStatusLightsToError(const FText& Reason)
-{
-	// Helper method to set all status lights to error state with the same reason
-	if (PythonProcessStatusLight.IsValid())
-		PythonProcessStatusLight->SetStatus(SStatusIndicator::EStatus::Error, FText::Format(LOCTEXT("PythonProcessErrorFmt", "Python Process: {0}"), Reason));
-	if (IPCConnectionStatusLight.IsValid())
-		IPCConnectionStatusLight->SetStatus(SStatusIndicator::EStatus::Error, FText::Format(LOCTEXT("IPCConnectionErrorFmt", "IPC Connection: {0}"), Reason));
-	if (BridgeReadyStatusLight.IsValid())
-		BridgeReadyStatusLight->SetStatus(SStatusIndicator::EStatus::Error, FText::Format(LOCTEXT("BridgeReadyErrorFmt", "Python Bridge: {0}"), Reason));
-	if (BackendHealthStatusLight.IsValid())
-		BackendHealthStatusLight->SetStatus(SStatusIndicator::EStatus::Error, FText::Format(LOCTEXT("BackendHealthErrorFmt", "Backend Health: {0}"), Reason));
-	if (APIKeyStatusLight.IsValid())
-		APIKeyStatusLight->SetStatus(SStatusIndicator::EStatus::Error, FText::Format(LOCTEXT("APIKeyErrorFmt", "API Key: {0}"), Reason));
-	if (QueryProcessingStatusLight.IsValid())
-		QueryProcessingStatusLight->SetStatus(SStatusIndicator::EStatus::Error, FText::Format(LOCTEXT("QueryProcessingErrorFmt", "Query Processing: {0}"), Reason));
-	if (IngestionStatusLight.IsValid())
-		IngestionStatusLight->SetStatus(SStatusIndicator::EStatus::Error, FText::Format(LOCTEXT("IngestionErrorFmt", "Document Ingestion: {0}"), Reason));
 }
 
 void SAdastreaDirectorPanel::UpdateStatusLights()
 {
-	// Legacy IPC status lights have been removed in Phase 3 migration
-	// Set all lights to indicate the migration to VibeUE architecture
-	
 	FAdastreaDirectorModule* RuntimeModule = FModuleManager::GetModulePtr<FAdastreaDirectorModule>("AdastreaDirector");
 	
 	if (!RuntimeModule)
 	{
 		// Runtime module not available - all systems down
-		SetAllStatusLightsToError(LOCTEXT("RuntimeModuleNotAvailable", "Runtime module not available"));
+		if (APIKeyStatusLight.IsValid())
+			APIKeyStatusLight->SetStatus(SStatusIndicator::EStatus::Error, LOCTEXT("RuntimeModuleNotAvailable", "Runtime module not available"));
+		if (LLMClientStatusLight.IsValid())
+			LLMClientStatusLight->SetStatus(SStatusIndicator::EStatus::Error, LOCTEXT("RuntimeModuleNotAvailable", "Runtime module not available"));
+		if (ScriptServiceStatusLight.IsValid())
+			ScriptServiceStatusLight->SetStatus(SStatusIndicator::EStatus::Error, LOCTEXT("RuntimeModuleNotAvailable", "Runtime module not available"));
+		if (AssetServiceStatusLight.IsValid())
+			AssetServiceStatusLight->SetStatus(SStatusIndicator::EStatus::Error, LOCTEXT("RuntimeModuleNotAvailable", "Runtime module not available"));
 		return;
 	}
 
-	// Legacy Python Process and IPC are no longer used
-	if (PythonProcessStatusLight.IsValid())
-		PythonProcessStatusLight->SetStatus(SStatusIndicator::EStatus::Unknown, LOCTEXT("PythonProcessRemoved", "Python Process: N/A (VibeUE)"));
-	if (IPCConnectionStatusLight.IsValid())
-		IPCConnectionStatusLight->SetStatus(SStatusIndicator::EStatus::Unknown, LOCTEXT("IPCRemoved", "IPC Connection: N/A (VibeUE)"));
-	if (BridgeReadyStatusLight.IsValid())
-		BridgeReadyStatusLight->SetStatus(SStatusIndicator::EStatus::Unknown, LOCTEXT("BridgeRemoved", "Python Bridge: Removed (Phase 3)"));
-	if (BackendHealthStatusLight.IsValid())
-		BackendHealthStatusLight->SetStatus(SStatusIndicator::EStatus::Good, LOCTEXT("BackendVibeUE", "Backend: VibeUE (Native C++)"));
-	
-	// Check API key configuration (VibeUE Phase 3 - settings only, no backend validation)
+	// Check API key configuration
 	if (APIKeyStatusLight.IsValid())
 	{
 		FStartupValidationResult SettingsResult = FAdastreaStartupValidator::ValidateSettings();
@@ -1344,34 +922,82 @@ void SAdastreaDirectorPanel::UpdateStatusLights()
 			
 			APIKeyStatusLight->SetStatus(
 				SStatusIndicator::EStatus::Good,
-				FText::Format(LOCTEXT("APIKeyConfigured", "API Key: {0} configured"), FText::FromString(Provider))
+				FText::Format(LOCTEXT("APIKeyConfigured", "{0} configured"), FText::FromString(Provider))
 			);
 		}
 		else
 		{
-			// Show validation error
 			FString ErrorMsg = SettingsResult.ErrorMessage;
-			if (ErrorMsg.Len() > 50)
+			if (ErrorMsg.Len() > 40)
 			{
-				// Truncate long error messages
-				ErrorMsg = ErrorMsg.Left(47) + TEXT("...");
+				ErrorMsg = ErrorMsg.Left(37) + TEXT("...");
 			}
 			APIKeyStatusLight->SetStatus(
 				SStatusIndicator::EStatus::Error,
-				FText::Format(LOCTEXT("APIKeyInvalid", "API Key: {0}"), FText::FromString(ErrorMsg))
+				FText::FromString(ErrorMsg)
 			);
 		}
 	}
 
-	// Legacy query processing is no longer available
-	if (QueryProcessingStatusLight.IsValid())
-		QueryProcessingStatusLight->SetStatus(SStatusIndicator::EStatus::Unknown, LOCTEXT("QueryProcessingRemoved", "Query Processing: N/A (legacy)"));
+	// Check LLM Client
+	if (LLMClientStatusLight.IsValid())
+	{
+		FAdastreaSettings& Settings = FAdastreaSettings::Get();
+		FString ErrorMessage;
+		if (Settings.ValidateSettings(ErrorMessage))
+		{
+			LLMClientStatusLight->SetStatus(
+				SStatusIndicator::EStatus::Good,
+				LOCTEXT("LLMClientReady", "Ready for queries")
+			);
+		}
+		else
+		{
+			LLMClientStatusLight->SetStatus(
+				SStatusIndicator::EStatus::Error,
+				LOCTEXT("LLMClientNotConfigured", "Not configured")
+			);
+		}
+	}
 
-	// Legacy ingestion is no longer available
-	if (IngestionStatusLight.IsValid())
-		IngestionStatusLight->SetStatus(SStatusIndicator::EStatus::Unknown, LOCTEXT("IngestionRemoved", "Document Ingestion: N/A (use Asset Registry)"));
-		
-	// Removed legacy code - previously checked FPythonBridge and IPC connection status
+	// Check Python Script Service
+	if (ScriptServiceStatusLight.IsValid())
+	{
+		if (FAdastreaScriptService::IsPythonAvailable())
+		{
+			FString PythonInfo = FAdastreaScriptService::GetPythonInfo();
+			ScriptServiceStatusLight->SetStatus(
+				SStatusIndicator::EStatus::Good,
+				FText::FromString(PythonInfo)
+			);
+		}
+		else
+		{
+			ScriptServiceStatusLight->SetStatus(
+				SStatusIndicator::EStatus::Error,
+				LOCTEXT("PythonNotAvailable", "Python plugin not available")
+			);
+		}
+	}
+
+	// Check Asset Service
+	if (AssetServiceStatusLight.IsValid())
+	{
+		if (FAdastreaAssetService::IsAssetRegistryReady())
+		{
+			AssetServiceStatusLight->SetStatus(
+				SStatusIndicator::EStatus::Good,
+				LOCTEXT("AssetServiceReady", "Asset registry ready")
+			);
+		}
+		else
+		{
+			AssetServiceStatusLight->SetStatus(
+				SStatusIndicator::EStatus::Warning,
+				LOCTEXT("AssetServiceLoading", "Loading assets...")
+			);
+		}
+	}
 }
 
 
@@ -1379,19 +1005,8 @@ void SAdastreaDirectorPanel::Tick(const FGeometry& AllottedGeometry, const doubl
 {
 	SCompoundWidget::Tick(AllottedGeometry, InCurrentTime, InDeltaTime);
 
-	// Update ingestion progress if ingesting (throttled to every 100ms)
-	if (bIsIngesting)
-	{
-		const double TimeSinceLastUpdate = InCurrentTime - LastProgressUpdateTime;
-		if (TimeSinceLastUpdate >= 0.1) // 100ms throttle
-		{
-			UpdateIngestionProgress();
-			LastProgressUpdateTime = InCurrentTime;
-		}
-	}
-
 	// Update dashboard if on dashboard tab (throttled intervals)
-	if (CurrentTabIndex == 2)
+	if (CurrentTabIndex == 1) // Dashboard is now index 1
 	{
 		const double TimeSinceLastRefresh = InCurrentTime - LastDashboardRefreshTime;
 		if (TimeSinceLastRefresh >= DashboardRefreshInterval)
@@ -1433,12 +1048,12 @@ FReply SAdastreaDirectorPanel::OnKeyDown(const FGeometry& MyGeometry, const FKey
 
 FReply SAdastreaDirectorPanel::OnTabButtonClicked(int32 TabIndex)
 {
-	if (TabIndex >= 0 && TabIndex <= 3)
+	if (TabIndex >= 0 && TabIndex <= 2) // Only 3 tabs now: Query(0), Dashboard(1), Tests(2)
 	{
 		CurrentTabIndex = TabIndex;
 		
 		// If switching to dashboard, refresh it immediately
-		if (TabIndex == 2)
+		if (TabIndex == 1) // Dashboard is now index 1
 		{
 			UpdateDashboardLogs();
 			UpdateConnectionStatus();
@@ -1446,7 +1061,7 @@ FReply SAdastreaDirectorPanel::OnTabButtonClicked(int32 TabIndex)
 			LastDashboardRefreshTime = RefreshTimerReset; // Reset timer to prevent immediate auto-refresh
 		}
 		// If switching to tests tab, update test output
-		else if (TabIndex == 3)
+		else if (TabIndex == 2) // Tests is now index 2
 		{
 			UpdateTestOutput();
 		}
@@ -1469,7 +1084,7 @@ TSharedRef<SWidget> SAdastreaDirectorPanel::CreateTestsTab()
 		.Padding(10.0f, 10.0f, 10.0f, 5.0f)
 		[
 			SNew(STextBlock)
-			.Text(LOCTEXT("TestsLabel", "🧪 Plugin Self-Test Suite:"))
+			.Text(LOCTEXT("TestsLabel", "🧪 VibeUE Component Self-Check:"))
 			.Font(FCoreStyle::GetDefaultFontStyle("Bold", 12))
 		]
 
@@ -1485,42 +1100,9 @@ TSharedRef<SWidget> SAdastreaDirectorPanel::CreateTestsTab()
 			.Padding(0.0f, 0.0f, 5.0f, 0.0f)
 			[
 				SNew(SButton)
-				.Text(LOCTEXT("SelfCheckButton", "🔍 Self-Check"))
-				.ToolTipText(LOCTEXT("SelfCheckTooltip", "Run quick self-check of all plugin components"))
+				.Text(LOCTEXT("SelfCheckButton", "🔍 Run Self-Check"))
+				.ToolTipText(LOCTEXT("SelfCheckTooltip", "Run quick self-check of all VibeUE plugin components"))
 				.OnClicked(this, &SAdastreaDirectorPanel::OnRunSelfCheckClicked)
-				.IsEnabled_Lambda([this]() { return CanRunTests(); })
-			]
-
-			+ SHorizontalBox::Slot()
-			.AutoWidth()
-			.Padding(0.0f, 0.0f, 5.0f, 0.0f)
-			[
-				SNew(SButton)
-				.Text(LOCTEXT("IPCTestsButton", "📡 IPC Tests"))
-				.ToolTipText(LOCTEXT("IPCTestsTooltip", "Test IPC connection and communication"))
-				.OnClicked(this, &SAdastreaDirectorPanel::OnRunIPCTestsClicked)
-				.IsEnabled_Lambda([this]() { return CanRunTests(); })
-			]
-
-			+ SHorizontalBox::Slot()
-			.AutoWidth()
-			.Padding(0.0f, 0.0f, 5.0f, 0.0f)
-			[
-				SNew(SButton)
-				.Text(LOCTEXT("PluginTestsButton", "🔌 Plugin Tests"))
-				.ToolTipText(LOCTEXT("PluginTestsTooltip", "Run plugin-specific unit tests"))
-				.OnClicked(this, &SAdastreaDirectorPanel::OnRunPluginTestsClicked)
-				.IsEnabled_Lambda([this]() { return CanRunTests(); })
-			]
-
-			+ SHorizontalBox::Slot()
-			.AutoWidth()
-			.Padding(0.0f, 0.0f, 5.0f, 0.0f)
-			[
-				SNew(SButton)
-				.Text(LOCTEXT("AllTestsButton", "🚀 All Tests"))
-				.ToolTipText(LOCTEXT("AllTestsTooltip", "Run all available tests via Python backend"))
-				.OnClicked(this, &SAdastreaDirectorPanel::OnRunAllTestsClicked)
 				.IsEnabled_Lambda([this]() { return CanRunTests(); })
 			]
 
@@ -1621,65 +1203,14 @@ FReply SAdastreaDirectorPanel::OnRunSelfCheckClicked()
 	return FReply::Handled();
 }
 
-FReply SAdastreaDirectorPanel::OnRunIPCTestsClicked()
-{
-	RunTests(TEXT("ipc"));
-	return FReply::Handled();
-}
-
-FReply SAdastreaDirectorPanel::OnRunPluginTestsClicked()
-{
-	RunTests(TEXT("plugin"));
-	return FReply::Handled();
-}
-
-FReply SAdastreaDirectorPanel::OnRunAllTestsClicked()
-{
-	RunTests(TEXT("all"));
-	return FReply::Handled();
-}
-
 FReply SAdastreaDirectorPanel::OnClearTestOutputClicked()
 {
-	CurrentTestOutput = TEXT("🧪 Test output cleared.\n\nClick a test button to run tests.\n");
+	CurrentTestOutput = TEXT("🧪 Test output cleared.\n\nClick 'Run Self-Check' to run tests.\n");
 	CachedTestOutputText = FText::FromString(CurrentTestOutput);
 	TestProgress = 0.0f;
 	TestStatusMessage = LOCTEXT("TestsIdle", "Ready to run tests");
 	return FReply::Handled();
 }
-
-void SAdastreaDirectorPanel::RunTests(const FString& TestType)
-{
-	if (!CanRunTests())
-	{
-		return;
-	}
-
-	bIsTestRunning = true;
-	TestProgress = 0.0f;
-	CurrentTestOutput = TEXT("");
-	CachedTestOutputText = FText::FromString(CurrentTestOutput);
-
-	// Get the Python bridge
-	FAdastreaDirectorModule* RuntimeModule = FModuleManager::GetModulePtr<FAdastreaDirectorModule>("AdastreaDirector");
-	
-	if (!RuntimeModule)
-	{
-		AppendTestOutput(TEXT("❌ Error: Runtime module not available\n"));
-		bIsTestRunning = false;
-		TestStatusMessage = LOCTEXT("TestsFailed", "Tests failed - module not available");
-		return;
-	}
-
-	// Legacy IPC tests are no longer available
-	AppendTestOutput(TEXT("❌ Error: Legacy IPC test system has been removed\n"));
-	AppendTestOutput(TEXT("The plugin has migrated to VibeUE architecture which does not use IPC.\n"));
-	AppendTestOutput(TEXT("See MIGRATION_GUIDE.md for information about the new architecture.\n"));
-	bIsTestRunning = false;
-	TestStatusMessage = LOCTEXT("TestsNotAvailable", "Legacy tests not available");
-	return;
-}
-
 
 void SAdastreaDirectorPanel::PerformSelfCheck()
 {

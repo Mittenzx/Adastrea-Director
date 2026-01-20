@@ -35,6 +35,15 @@ public:
 	/** Get current embedding provider */
 	FString GetEmbeddingProvider() const { return EmbeddingProvider; }
 
+	/** Get model name */
+	FString GetModelName() const { return ModelName; }
+
+	/** Get temperature */
+	float GetTemperature() const { return Temperature; }
+
+	/** Get max tokens */
+	int32 GetMaxTokens() const { return MaxTokens; }
+
 	/** Set Gemini API key */
 	void SetGeminiAPIKey(const FString& Key) { GeminiAPIKey = Key; }
 
@@ -46,6 +55,15 @@ public:
 
 	/** Set embedding provider */
 	void SetEmbeddingProvider(const FString& Provider) { EmbeddingProvider = Provider; }
+
+	/** Set model name */
+	void SetModelName(const FString& Model) { ModelName = Model; }
+
+	/** Set temperature */
+	void SetTemperature(float Temp) { Temperature = Temp; }
+
+	/** Set max tokens */
+	void SetMaxTokens(int32 Tokens) { MaxTokens = Tokens; }
 
 	/** Validate current settings */
 	bool ValidateSettings(FString& OutErrorMessage) const;
@@ -99,6 +117,9 @@ private:
 	FString OpenAIAPIKey;
 	FString LLMProvider;
 	FString EmbeddingProvider;
+	FString ModelName;
+	float Temperature = 0.7f;
+	int32 MaxTokens = 2000;
 	int32 DefaultFontSize;
 	bool bAutoSaveSettings;
 	bool bShowTimestamps;

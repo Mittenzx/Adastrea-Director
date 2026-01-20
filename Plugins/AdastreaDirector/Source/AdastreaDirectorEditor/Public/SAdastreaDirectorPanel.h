@@ -40,7 +40,7 @@ public:
 
 private:
 	// Tab management
-	/** Current active tab (0 = Query, 1 = Ingestion, 2 = Dashboard, 3 = Tests) */
+	/** Current active tab (0 = Query, 1 = Dashboard, 2 = Tests) */
 	int32 CurrentTabIndex;
 
 	/** Content switcher widget to hold tab contents */
@@ -62,59 +62,13 @@ private:
 	/** Is a query currently being processed */
 	bool bIsProcessing;
 
-	// Ingestion tab widgets
-	/** Docs directory path text box */
-	TSharedPtr<SEditableTextBox> DocsPathBox;
+	/** Streaming response content */
+	FString StreamingContent;
 
-	/** Database path text box */
-	TSharedPtr<SEditableTextBox> DbPathBox;
+	/** Original query for streaming context */
+	FString CurrentQueryString;
 
-	/** Ingestion progress bar */
-	TSharedPtr<SProgressBar> IngestionProgressBar;
-
-	/** Ingestion status text */
-	TSharedPtr<STextBlock> IngestionStatusText;
-
-	/** Ingestion details text */
-	TSharedPtr<STextBlock> IngestionDetailsText;
-
-	/** Database status text */
-	TSharedPtr<STextBlock> DatabaseStatusText;
-
-	/** Ingestion debug log display */
-	TSharedPtr<SMultiLineEditableTextBox> IngestionDebugLogDisplay;
-
-	/** Current ingestion debug log content */
-	FString CurrentIngestionDebugLog;
-
-	/** Cached FText version of ingestion debug log for display */
-	FText CachedIngestionDebugLogText;
-
-	/** Maximum ingestion debug log size in characters */
-	static constexpr int32 MaxIngestionDebugLogCharacters = 5000;
-
-	/** Is ingestion currently running */
-	bool bIsIngesting;
-
-	/** Ingestion progress (0-1) */
-	float IngestionProgress;
-
-	/** Ingestion status message */
-	FText IngestionStatusMessage;
-
-	/** Ingestion details message */
-	FText IngestionDetailsMessage;
-
-	/** Database status message */
-	FText DatabaseStatusMessage;
-
-	/** Path to progress file for ingestion updates */
-	FString ProgressFilePath;
-
-	/** Time since last progress update check */
-	double LastProgressUpdateTime;
-
-	// Query tab methods
+	// Dashboard tab widgets
 	/** Called when the Send Query button is clicked */
 	FReply OnSendQueryClicked();
 
@@ -143,47 +97,6 @@ private:
 	FReply OnSettingsClicked();
 
 	// Tab switching methods
-	/** Called when a tab button is clicked */
-	FReply OnTabButtonClicked(int32 TabIndex);
-
-	/** Get the checked state for a tab button */
-	ECheckBoxState GetTabButtonCheckedState(int32 TabIndex) const;
-
-	// Ingestion tab methods
-	/** Called when Browse button is clicked for docs path */
-	FReply OnBrowseDocsPathClicked();
-
-	/** Called when Browse button is clicked for database path */
-	FReply OnBrowseDbPathClicked();
-
-	/** Called when Start Ingestion button is clicked */
-	FReply OnStartIngestionClicked();
-
-	/** Called when Stop Ingestion button is clicked */
-	FReply OnStopIngestionClicked();
-
-	/** Helper to check if ingestion can start */
-	bool CanStartIngestion() const;
-
-	/** Helper to check if ingestion can be stopped */
-	bool CanStopIngestion() const;
-
-	/** Called when Refresh Database Status button is clicked */
-	FReply OnRefreshDbStatusClicked();
-
-	/** Helper to check if database status can be refreshed */
-	bool CanRefreshDbStatus() const;
-
-	/** Update ingestion progress from progress file */
-	void UpdateIngestionProgress();
-
-	/** Helper to send ingestion request to Python backend */
-	void StartIngestion(const FString& DocsPath, const FString& DbPath);
-
-	/** Append entry to ingestion debug log with truncation */
-	void AppendIngestionDebugLog(const FString& Entry);
-
-	// Dashboard tab widgets
 	/** Connection status text */
 	TSharedPtr<STextBlock> ConnectionStatusText;
 
@@ -217,27 +130,18 @@ private:
 	/** Timer reset value to prevent immediate auto-refresh */
 	static constexpr double RefreshTimerReset = -10.0;
 
-	// Status indicator widgets
-	/** Python process status indicator */
-	TSharedPtr<SStatusIndicator> PythonProcessStatusLight;
-	
-	/** IPC connection status indicator */
-	TSharedPtr<SStatusIndicator> IPCConnectionStatusLight;
-	
-	/** Python bridge ready status indicator */
-	TSharedPtr<SStatusIndicator> BridgeReadyStatusLight;
-	
-	/** Query processing status indicator */
-	TSharedPtr<SStatusIndicator> QueryProcessingStatusLight;
-	
-	/** Ingestion status indicator */
-	TSharedPtr<SStatusIndicator> IngestionStatusLight;
-	
-	/** Backend health status indicator */
-	TSharedPtr<SStatusIndicator> BackendHealthStatusLight;
-	
+	// Status indicator widgets (VibeUE architecture)
 	/** API Key validation status indicator */
 	TSharedPtr<SStatusIndicator> APIKeyStatusLight;
+	
+	/** LLM Client status indicator */
+	TSharedPtr<SStatusIndicator> LLMClientStatusLight;
+	
+	/** Script Service status indicator */
+	TSharedPtr<SStatusIndicator> ScriptServiceStatusLight;
+	
+	/** Asset Service status indicator */
+	TSharedPtr<SStatusIndicator> AssetServiceStatusLight;
 
 	/** Status lights update interval in seconds */
 	static constexpr double StatusLightsUpdateInterval = 0.5;
@@ -248,9 +152,6 @@ private:
 	// Dashboard tab methods
 	/** Called when Refresh Dashboard button is clicked */
 	FReply OnRefreshDashboardClicked();
-
-	/** Called when Reconnect button is clicked */
-	FReply OnReconnectClicked();
 
 	/** Called when Clear Logs button is clicked */
 	FReply OnClearLogsClicked();
@@ -267,21 +168,22 @@ private:
 	/** Update all status indicator lights */
 	void UpdateStatusLights();
 
-	/** Helper to set all status lights to error state */
-	void SetAllStatusLightsToError(const FText& Reason);
-
 	// Utility methods
 	/** Create the Query tab content */
 	TSharedRef<SWidget> CreateQueryTab();
-
-	/** Create the Ingestion tab content */
-	TSharedRef<SWidget> CreateIngestionTab();
 
 	/** Create the Dashboard tab content */
 	TSharedRef<SWidget> CreateDashboardTab();
 
 	/** Create the Tests tab content */
 	TSharedRef<SWidget> CreateTestsTab();
+
+	// Tab switching methods
+	/** Called when a tab button is clicked */
+	FReply OnTabButtonClicked(int32 TabIndex);
+
+	/** Get the checked state for a tab button */
+	ECheckBoxState GetTabButtonCheckedState(int32 TabIndex) const;
 
 	// Tests tab widgets
 	/** Test output display text box */
@@ -318,15 +220,6 @@ private:
 	static constexpr int32 MaxTestOutputCharacters = 10000;
 
 	// Tests tab methods
-	/** Called when Run All Tests button is clicked */
-	FReply OnRunAllTestsClicked();
-
-	/** Called when Run IPC Tests button is clicked */
-	FReply OnRunIPCTestsClicked();
-
-	/** Called when Run Plugin Tests button is clicked */
-	FReply OnRunPluginTestsClicked();
-
 	/** Called when Run Self-Check button is clicked */
 	FReply OnRunSelfCheckClicked();
 
@@ -336,8 +229,8 @@ private:
 	/** Called when Save Log button is clicked */
 	FReply OnSaveTestLogClicked();
 
-	/** Run a specific test type via Python backend */
-	void RunTests(const FString& TestType);
+	/** Perform self-check of plugin components */
+	void PerformSelfCheck();
 
 	/** Update test output display */
 	void UpdateTestOutput();
