@@ -73,7 +73,7 @@ mypy>=1.13.0,<2.0.0
 requests>=2.31.0,<3.0.0  # HTTP client for REST API calls
 websocket-client>=1.6.0,<2.0.0  # WebSocket client for real-time events
 websockets>=12.0,<13.0.0  # Async WebSocket support (future enhancement)
-GitPython>=3.1.40,<4.0.0  # Git operations for version control integration
+GitPython>=3.1.41,<4.0.0  # Git operations for version control integration
 PyYAML>=6.0.1,<7.0.0  # YAML configuration file parsing
 
 # Auto-ingestion and GitHub integration (optional but recommended)
