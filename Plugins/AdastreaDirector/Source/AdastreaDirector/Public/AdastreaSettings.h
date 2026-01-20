@@ -56,6 +56,27 @@ public:
 	/** Get config file path */
 	static FString GetConfigFilePath();
 
+	// VibeUE Migration Feature Flags
+	/** Enable built-in Python execution (VibeUE) vs external process */
+	bool UseBuiltInPython() const { return bUseBuiltInPython; }
+	void SetUseBuiltInPython(bool bEnable) { bUseBuiltInPython = bEnable; }
+
+	/** Enable direct C++ LLM client (VibeUE) vs Python IPC */
+	bool UseDirectLLM() const { return bUseDirectLLM; }
+	void SetUseDirectLLM(bool bEnable) { bUseDirectLLM = bEnable; }
+
+	/** Enable runtime asset discovery (VibeUE) vs document ingestion */
+	bool UseRuntimeDiscovery() const { return bUseRuntimeDiscovery; }
+	void SetUseRuntimeDiscovery(bool bEnable) { bUseRuntimeDiscovery = bEnable; }
+
+	/** Enable MCP server for external clients */
+	bool EnableMCPServer() const { return bEnableMCPServer; }
+	void SetEnableMCPServer(bool bEnable) { bEnableMCPServer = bEnable; }
+
+	/** Get MCP server port */
+	int32 GetMCPServerPort() const { return MCPServerPort; }
+	void SetMCPServerPort(int32 Port) { MCPServerPort = Port; }
+
 private:
 	FAdastreaSettings();
 	~FAdastreaSettings() = default;
@@ -81,4 +102,11 @@ private:
 	int32 DefaultFontSize;
 	bool bAutoSaveSettings;
 	bool bShowTimestamps;
+
+	// VibeUE Migration Feature Flags (default to true for new architecture)
+	bool bUseBuiltInPython = true;
+	bool bUseDirectLLM = true;
+	bool bUseRuntimeDiscovery = true;
+	bool bEnableMCPServer = true;
+	int32 MCPServerPort = 8088;
 };
