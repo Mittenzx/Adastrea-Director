@@ -67,9 +67,15 @@ void FAdastreaSettings::LoadSettings()
 
 	FString MCPServerPortStr = GetValue(TEXT("MCPServerPort"), TEXT("8088"));
 	MCPServerPort = FCString::Atoi(*MCPServerPortStr);
-	if (MCPServerPort < 1024 || MCPServerPort > 65535)
+	
+	// Validate port range (well-known ports 0-1023 are reserved)
+	const int32 MinUserPort = 1024;
+	const int32 MaxPort = 65535;
+	const int32 DefaultMCPPort = 8088;
+	
+	if (MCPServerPort < MinUserPort || MCPServerPort > MaxPort)
 	{
-		MCPServerPort = 8088;
+		MCPServerPort = DefaultMCPPort;
 	}
 }
 

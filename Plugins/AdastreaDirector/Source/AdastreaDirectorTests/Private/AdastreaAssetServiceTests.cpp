@@ -84,9 +84,13 @@ bool FAdastreaAssetServiceBlueprintTest::RunTest(const FString& Parameters)
 	for (const FAssetInfo& Blueprint : Blueprints)
 	{
 		TestFalse(TEXT("Blueprint name should not be empty"), Blueprint.Name.IsEmpty());
-		TestTrue(TEXT("Blueprint path should start with /Game"), Blueprint.Path.StartsWith(TEXT("/Game")) || Blueprint.Path.StartsWith(TEXT("/Engine")));
-		TestTrue(TEXT("Blueprint class should be Blueprint or related"), 
-			Blueprint.Class.Contains(TEXT("Blueprint")) || Blueprint.Class.Equals(TEXT("Blueprint")));
+		
+		bool bIsValidPath = Blueprint.Path.StartsWith(TEXT("/Game")) || Blueprint.Path.StartsWith(TEXT("/Engine"));
+		TestTrue(TEXT("Blueprint path should start with /Game or /Engine"), bIsValidPath);
+		
+		bool bIsBlueprint = Blueprint.Class.Contains(TEXT("Blueprint")) || Blueprint.Class.Equals(TEXT("Blueprint"));
+		TestTrue(TEXT("Blueprint class should be Blueprint or related"), bIsBlueprint);
+		
 		AddInfo(FString::Printf(TEXT("  Blueprint: %s (%s)"), *Blueprint.Name, *Blueprint.Path));
 		
 		// Only check first few to avoid spam

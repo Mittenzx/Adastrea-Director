@@ -214,7 +214,8 @@ bool FAdastreaToolSystemGetAllToolsTest::RunTest(const FString& Parameters)
 		AddInfo(FString::Printf(TEXT("  Tool: %s - %s"), *Tool.Name, *Tool.Description));
 		
 		// Only log first few to avoid spam
-		if (AllTools.Find(Tool) >= 5)
+		const int32 MaxToolsToLog = 5;
+		if (AllTools.Find(Tool) >= MaxToolsToLog)
 		{
 			AddInfo(TEXT("  ... and more"));
 			break;
