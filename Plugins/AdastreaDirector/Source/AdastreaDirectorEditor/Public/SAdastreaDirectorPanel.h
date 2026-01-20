@@ -40,7 +40,7 @@ public:
 
 private:
 	// Tab management
-	/** Current active tab (0 = Query, 1 = Dashboard, 2 = Tests) */
+	/** Current active tab (0 = Query, 1 = Assets, 2 = Console, 3 = Dashboard, 4 = Tests) */
 	int32 CurrentTabIndex;
 
 	/** Content switcher widget to hold tab contents */
@@ -67,6 +67,35 @@ private:
 
 	/** Original query for streaming context */
 	FString CurrentQueryString;
+
+	// Assets tab widgets
+	/** Asset search input */
+	TSharedPtr<SEditableTextBox> AssetSearchBox;
+
+	/** Asset type filter */
+	FString AssetTypeFilter;
+
+	/** Asset results display */
+	TSharedPtr<SMultiLineEditableTextBox> AssetResultsDisplay;
+
+	/** Current asset results */
+	FText CurrentAssetResults;
+
+	// Console tab widgets
+	/** Python console input */
+	TSharedPtr<SEditableTextBox> ConsoleInputBox;
+
+	/** Console output display */
+	TSharedPtr<SMultiLineEditableTextBox> ConsoleOutputDisplay;
+
+	/** Console output content */
+	FString ConsoleOutput;
+
+	/** Console history */
+	TArray<FString> ConsoleHistory;
+
+	/** Console history index for up/down navigation */
+	int32 ConsoleHistoryIndex;
 
 	// Dashboard tab widgets
 	/** Called when the Send Query button is clicked */
@@ -172,11 +201,40 @@ private:
 	/** Create the Query tab content */
 	TSharedRef<SWidget> CreateQueryTab();
 
+	/** Create the Assets tab content */
+	TSharedRef<SWidget> CreateAssetsTab();
+
+	/** Create the Console tab content */
+	TSharedRef<SWidget> CreateConsoleTab();
+
 	/** Create the Dashboard tab content */
 	TSharedRef<SWidget> CreateDashboardTab();
 
 	/** Create the Tests tab content */
 	TSharedRef<SWidget> CreateTestsTab();
+
+	// Assets tab methods
+	/** Called when asset search text changes */
+	void OnAssetSearchTextChanged(const FString& SearchText);
+
+	/** Called when asset type filter changes */
+	void OnAssetTypeFilterChanged(FString NewFilter);
+
+	/** Search and display assets */
+	void SearchAssets();
+
+	// Console tab methods
+	/** Called when console input is committed */
+	void OnConsoleInputCommitted(const FText& Text, ETextCommit::Type CommitType);
+
+	/** Execute Python command in console */
+	void ExecuteConsoleCommand(const FString& Command);
+
+	/** Append to console output */
+	void AppendConsoleOutput(const FString& Output);
+
+	/** Clear console output */
+	FReply OnClearConsoleClicked();
 
 	// Tab switching methods
 	/** Called when a tab button is clicked */
