@@ -214,15 +214,6 @@ private:
 	static constexpr int32 MaxTestOutputCharacters = 10000;
 
 	// Tests tab methods
-	/** Called when Run All Tests button is clicked */
-	FReply OnRunAllTestsClicked();
-
-	/** Called when Run IPC Tests button is clicked */
-	FReply OnRunIPCTestsClicked();
-
-	/** Called when Run Plugin Tests button is clicked */
-	FReply OnRunPluginTestsClicked();
-
 	/** Called when Run Self-Check button is clicked */
 	FReply OnRunSelfCheckClicked();
 
@@ -232,8 +223,8 @@ private:
 	/** Called when Save Log button is clicked */
 	FReply OnSaveTestLogClicked();
 
-	/** Run a specific test type via Python backend */
-	void RunTests(const FString& TestType);
+	/** Perform self-check of plugin components */
+	void PerformSelfCheck();
 
 	/** Update test output display */
 	void UpdateTestOutput();

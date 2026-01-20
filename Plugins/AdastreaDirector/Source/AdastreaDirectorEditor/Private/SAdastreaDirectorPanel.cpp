@@ -987,7 +987,7 @@ TSharedRef<SWidget> SAdastreaDirectorPanel::CreateTestsTab()
 		.Padding(10.0f, 10.0f, 10.0f, 5.0f)
 		[
 			SNew(STextBlock)
-			.Text(LOCTEXT("TestsLabel", "🧪 Plugin Self-Test Suite:"))
+			.Text(LOCTEXT("TestsLabel", "🧪 VibeUE Component Self-Check:"))
 			.Font(FCoreStyle::GetDefaultFontStyle("Bold", 12))
 		]
 
@@ -1003,42 +1003,9 @@ TSharedRef<SWidget> SAdastreaDirectorPanel::CreateTestsTab()
 			.Padding(0.0f, 0.0f, 5.0f, 0.0f)
 			[
 				SNew(SButton)
-				.Text(LOCTEXT("SelfCheckButton", "🔍 Self-Check"))
-				.ToolTipText(LOCTEXT("SelfCheckTooltip", "Run quick self-check of all plugin components"))
+				.Text(LOCTEXT("SelfCheckButton", "🔍 Run Self-Check"))
+				.ToolTipText(LOCTEXT("SelfCheckTooltip", "Run quick self-check of all VibeUE plugin components"))
 				.OnClicked(this, &SAdastreaDirectorPanel::OnRunSelfCheckClicked)
-				.IsEnabled_Lambda([this]() { return CanRunTests(); })
-			]
-
-			+ SHorizontalBox::Slot()
-			.AutoWidth()
-			.Padding(0.0f, 0.0f, 5.0f, 0.0f)
-			[
-				SNew(SButton)
-				.Text(LOCTEXT("IPCTestsButton", "📡 IPC Tests"))
-				.ToolTipText(LOCTEXT("IPCTestsTooltip", "Test IPC connection and communication"))
-				.OnClicked(this, &SAdastreaDirectorPanel::OnRunIPCTestsClicked)
-				.IsEnabled_Lambda([this]() { return CanRunTests(); })
-			]
-
-			+ SHorizontalBox::Slot()
-			.AutoWidth()
-			.Padding(0.0f, 0.0f, 5.0f, 0.0f)
-			[
-				SNew(SButton)
-				.Text(LOCTEXT("PluginTestsButton", "🔌 Plugin Tests"))
-				.ToolTipText(LOCTEXT("PluginTestsTooltip", "Run plugin-specific unit tests"))
-				.OnClicked(this, &SAdastreaDirectorPanel::OnRunPluginTestsClicked)
-				.IsEnabled_Lambda([this]() { return CanRunTests(); })
-			]
-
-			+ SHorizontalBox::Slot()
-			.AutoWidth()
-			.Padding(0.0f, 0.0f, 5.0f, 0.0f)
-			[
-				SNew(SButton)
-				.Text(LOCTEXT("AllTestsButton", "🚀 All Tests"))
-				.ToolTipText(LOCTEXT("AllTestsTooltip", "Run all available tests via Python backend"))
-				.OnClicked(this, &SAdastreaDirectorPanel::OnRunAllTestsClicked)
 				.IsEnabled_Lambda([this]() { return CanRunTests(); })
 			]
 
@@ -1139,65 +1106,14 @@ FReply SAdastreaDirectorPanel::OnRunSelfCheckClicked()
 	return FReply::Handled();
 }
 
-FReply SAdastreaDirectorPanel::OnRunIPCTestsClicked()
-{
-	RunTests(TEXT("ipc"));
-	return FReply::Handled();
-}
-
-FReply SAdastreaDirectorPanel::OnRunPluginTestsClicked()
-{
-	RunTests(TEXT("plugin"));
-	return FReply::Handled();
-}
-
-FReply SAdastreaDirectorPanel::OnRunAllTestsClicked()
-{
-	RunTests(TEXT("all"));
-	return FReply::Handled();
-}
-
 FReply SAdastreaDirectorPanel::OnClearTestOutputClicked()
 {
-	CurrentTestOutput = TEXT("🧪 Test output cleared.\n\nClick a test button to run tests.\n");
+	CurrentTestOutput = TEXT("🧪 Test output cleared.\n\nClick 'Run Self-Check' to run tests.\n");
 	CachedTestOutputText = FText::FromString(CurrentTestOutput);
 	TestProgress = 0.0f;
 	TestStatusMessage = LOCTEXT("TestsIdle", "Ready to run tests");
 	return FReply::Handled();
 }
-
-void SAdastreaDirectorPanel::RunTests(const FString& TestType)
-{
-	if (!CanRunTests())
-	{
-		return;
-	}
-
-	bIsTestRunning = true;
-	TestProgress = 0.0f;
-	CurrentTestOutput = TEXT("");
-	CachedTestOutputText = FText::FromString(CurrentTestOutput);
-
-	// Get the Python bridge
-	FAdastreaDirectorModule* RuntimeModule = FModuleManager::GetModulePtr<FAdastreaDirectorModule>("AdastreaDirector");
-	
-	if (!RuntimeModule)
-	{
-		AppendTestOutput(TEXT("❌ Error: Runtime module not available\n"));
-		bIsTestRunning = false;
-		TestStatusMessage = LOCTEXT("TestsFailed", "Tests failed - module not available");
-		return;
-	}
-
-	// Legacy IPC tests are no longer available
-	AppendTestOutput(TEXT("❌ Error: Legacy IPC test system has been removed\n"));
-	AppendTestOutput(TEXT("The plugin has migrated to VibeUE architecture which does not use IPC.\n"));
-	AppendTestOutput(TEXT("See MIGRATION_GUIDE.md for information about the new architecture.\n"));
-	bIsTestRunning = false;
-	TestStatusMessage = LOCTEXT("TestsNotAvailable", "Legacy tests not available");
-	return;
-}
-
 
 void SAdastreaDirectorPanel::PerformSelfCheck()
 {
