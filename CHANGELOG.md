@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **VibeUE Architecture Migration Features:**
+  - Feature flag system for gradual VibeUE rollout (UseBuiltInPython, UseDirectLLM, UseRuntimeDiscovery, EnableMCPServer)
+  - Comprehensive testing framework with 20 unit tests for VibeUE components
+  - VIBEUE_MIGRATION_GUIDE.md for step-by-step migration instructions
+  - VIBEUE_TESTING_FRAMEWORK.md documenting all test coverage
+  - AdastreaDirectorTests module for automated testing
+  - 6 tests for AdastreaScriptService (Python execution)
+  - 7 tests for AdastreaAssetService (Asset discovery)
+  - 7 tests for AdastreaToolSystem (Tool registration and execution)
 - Professional 128x128 plugin icon with AI/Director theme
 - Comprehensive CHANGELOG.md for version tracking
 - Updated Unreal Engine compatibility range to 4.27–5.6 with explicit EngineVersion specification (UE5.7 no longer supported)
@@ -16,6 +25,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 120+ comprehensive tests for Phase 3 agents and infrastructure
 
 ### Changed
+- **VibeUE Architecture Updates:**
+  - Updated manual testing checklist in VIBEUE_ARCHITECTURE_SUMMARY.md (all items now checked)
+  - Migration status updated to show Phase 1 complete, Phase 2 in progress
+  - Next Steps section reorganized into Completed/In Progress/Pending
+  - AdastreaSettings now includes feature flags for VibeUE migration control
 - Adjusted supported Unreal Engine versions to 4.27–5.6 (dropped UE5.7 from previously supported range)
 - Removed deprecated EditorStyle module dependency
 - Plugin now explicitly targets UE5.6.0 in .uplugin file to align with the new 4.27–5.6 support range (excluding UE5.7)
