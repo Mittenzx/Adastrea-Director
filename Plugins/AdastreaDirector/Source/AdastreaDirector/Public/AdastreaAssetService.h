@@ -16,6 +16,12 @@ struct FAdastreaAssetInfo
 	int64 DiskSize;
 	
 	TSharedPtr<FJsonObject> ToJson() const;
+	
+	/** Equality operator for container operations */
+	bool operator==(const FAdastreaAssetInfo& Other) const
+	{
+		return Name == Other.Name && Path == Other.Path && Class == Other.Class;
+	}
 };
 
 /**
