@@ -6,7 +6,7 @@
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAdastreaAssetServiceAvailabilityTest,
 	"Adastrea.VibeUE.Assets.RegistryAvailability",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FAdastreaAssetServiceAvailabilityTest::RunTest(const FString& Parameters)
 {
@@ -29,7 +29,7 @@ bool FAdastreaAssetServiceAvailabilityTest::RunTest(const FString& Parameters)
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAdastreaAssetServiceSearchTest,
 	"Adastrea.VibeUE.Assets.SearchAssets",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FAdastreaAssetServiceSearchTest::RunTest(const FString& Parameters)
 {
@@ -40,16 +40,16 @@ bool FAdastreaAssetServiceSearchTest::RunTest(const FString& Parameters)
 	}
 	
 	// Test 1: Search all assets (wildcard)
-	TArray<FAssetInfo> AllAssets = FAdastreaAssetService::SearchAssets(TEXT("*"), TEXT(""), 50);
+	TArray<FAdastreaAssetInfo> AllAssets = FAdastreaAssetService::SearchAssets(TEXT("*"), TEXT(""), 50);
 	TestTrue(TEXT("Should find at least some assets"), AllAssets.Num() >= 0);
 	AddInfo(FString::Printf(TEXT("Found %d assets with wildcard search"), AllAssets.Num()));
 	
 	// Test 2: Search with pattern
-	TArray<FAssetInfo> PatternAssets = FAdastreaAssetService::SearchAssets(TEXT("Player"), TEXT(""), 50);
+	TArray<FAdastreaAssetInfo> PatternAssets = FAdastreaAssetService::SearchAssets(TEXT("Player"), TEXT(""), 50);
 	AddInfo(FString::Printf(TEXT("Found %d assets matching 'Player'"), PatternAssets.Num()));
 	
 	// Verify pattern matching works
-	for (const FAssetInfo& Asset : PatternAssets)
+	for (const FAdastreaAssetInfo& Asset : PatternAssets)
 	{
 		TestTrue(TEXT("Asset name should contain pattern"), Asset.Name.Contains(TEXT("Player")));
 		TestFalse(TEXT("Asset name should not be empty"), Asset.Name.IsEmpty());
@@ -58,7 +58,7 @@ bool FAdastreaAssetServiceSearchTest::RunTest(const FString& Parameters)
 	}
 	
 	// Test 3: Empty pattern
-	TArray<FAssetInfo> EmptyPatternAssets = FAdastreaAssetService::SearchAssets(TEXT(""), TEXT(""), 10);
+	TArray<FAdastreaAssetInfo> EmptyPatternAssets = FAdastreaAssetService::SearchAssets(TEXT(""), TEXT(""), 10);
 	AddInfo(FString::Printf(TEXT("Found %d assets with empty pattern"), EmptyPatternAssets.Num()));
 	
 	return true;
@@ -66,7 +66,7 @@ bool FAdastreaAssetServiceSearchTest::RunTest(const FString& Parameters)
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAdastreaAssetServiceBlueprintTest,
 	"Adastrea.VibeUE.Assets.GetBlueprints",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FAdastreaAssetServiceBlueprintTest::RunTest(const FString& Parameters)
 {
@@ -77,11 +77,11 @@ bool FAdastreaAssetServiceBlueprintTest::RunTest(const FString& Parameters)
 	}
 	
 	// Get all Blueprints
-	TArray<FAssetInfo> Blueprints = FAdastreaAssetService::GetBlueprints();
+	TArray<FAdastreaAssetInfo> Blueprints = FAdastreaAssetService::GetBlueprints();
 	AddInfo(FString::Printf(TEXT("Found %d Blueprints"), Blueprints.Num()));
 	
 	// Verify Blueprint results
-	for (const FAssetInfo& Blueprint : Blueprints)
+	for (const FAdastreaAssetInfo& Blueprint : Blueprints)
 	{
 		TestFalse(TEXT("Blueprint name should not be empty"), Blueprint.Name.IsEmpty());
 		
@@ -101,10 +101,10 @@ bool FAdastreaAssetServiceBlueprintTest::RunTest(const FString& Parameters)
 	}
 	
 	// Test with path prefix
-	TArray<FAssetInfo> GameBlueprints = FAdastreaAssetService::GetBlueprints(TEXT("/Game"));
+	TArray<FAdastreaAssetInfo> GameBlueprints = FAdastreaAssetService::GetBlueprints(TEXT("/Game"));
 	AddInfo(FString::Printf(TEXT("Found %d Blueprints in /Game"), GameBlueprints.Num()));
 	
-	for (const FAssetInfo& Blueprint : GameBlueprints)
+	for (const FAdastreaAssetInfo& Blueprint : GameBlueprints)
 	{
 		TestTrue(TEXT("Blueprint should be in /Game path"), Blueprint.Path.StartsWith(TEXT("/Game")));
 	}
@@ -114,7 +114,7 @@ bool FAdastreaAssetServiceBlueprintTest::RunTest(const FString& Parameters)
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAdastreaAssetServiceMaterialTest,
 	"Adastrea.VibeUE.Assets.GetMaterials",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FAdastreaAssetServiceMaterialTest::RunTest(const FString& Parameters)
 {
@@ -125,11 +125,11 @@ bool FAdastreaAssetServiceMaterialTest::RunTest(const FString& Parameters)
 	}
 	
 	// Get all Materials
-	TArray<FAssetInfo> Materials = FAdastreaAssetService::GetMaterials();
+	TArray<FAdastreaAssetInfo> Materials = FAdastreaAssetService::GetMaterials();
 	AddInfo(FString::Printf(TEXT("Found %d Materials"), Materials.Num()));
 	
 	// Verify Material results
-	for (const FAssetInfo& Material : Materials)
+	for (const FAdastreaAssetInfo& Material : Materials)
 	{
 		TestFalse(TEXT("Material name should not be empty"), Material.Name.IsEmpty());
 		TestTrue(TEXT("Material class should be Material"), Material.Class.Equals(TEXT("Material")));
@@ -147,7 +147,7 @@ bool FAdastreaAssetServiceMaterialTest::RunTest(const FString& Parameters)
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAdastreaAssetServiceWidgetTest,
 	"Adastrea.VibeUE.Assets.GetWidgets",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FAdastreaAssetServiceWidgetTest::RunTest(const FString& Parameters)
 {
@@ -158,11 +158,11 @@ bool FAdastreaAssetServiceWidgetTest::RunTest(const FString& Parameters)
 	}
 	
 	// Get all Widgets
-	TArray<FAssetInfo> Widgets = FAdastreaAssetService::GetWidgets();
+	TArray<FAdastreaAssetInfo> Widgets = FAdastreaAssetService::GetWidgets();
 	AddInfo(FString::Printf(TEXT("Found %d UMG Widgets"), Widgets.Num()));
 	
 	// Verify Widget results
-	for (const FAssetInfo& Widget : Widgets)
+	for (const FAdastreaAssetInfo& Widget : Widgets)
 	{
 		TestFalse(TEXT("Widget name should not be empty"), Widget.Name.IsEmpty());
 		TestTrue(TEXT("Widget class should be WidgetBlueprint"), Widget.Class.Equals(TEXT("WidgetBlueprint")));
@@ -180,12 +180,12 @@ bool FAdastreaAssetServiceWidgetTest::RunTest(const FString& Parameters)
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAdastreaAssetServiceJsonSerializationTest,
 	"Adastrea.VibeUE.Assets.JsonSerialization",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FAdastreaAssetServiceJsonSerializationTest::RunTest(const FString& Parameters)
 {
 	// Create a test asset info
-	FAssetInfo TestAsset;
+	FAdastreaAssetInfo TestAsset;
 	TestAsset.Name = TEXT("TestAsset");
 	TestAsset.Path = TEXT("/Game/Test/TestAsset");
 	TestAsset.Class = TEXT("Blueprint");
@@ -217,7 +217,7 @@ bool FAdastreaAssetServiceJsonSerializationTest::RunTest(const FString& Paramete
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAdastreaAssetServiceMaxResultsTest,
 	"Adastrea.VibeUE.Assets.MaxResults",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FAdastreaAssetServiceMaxResultsTest::RunTest(const FString& Parameters)
 {
@@ -228,12 +228,12 @@ bool FAdastreaAssetServiceMaxResultsTest::RunTest(const FString& Parameters)
 	}
 	
 	// Test with max results limit
-	TArray<FAssetInfo> LimitedAssets = FAdastreaAssetService::SearchAssets(TEXT("*"), TEXT(""), 5);
+	TArray<FAdastreaAssetInfo> LimitedAssets = FAdastreaAssetService::SearchAssets(TEXT("*"), TEXT(""), 5);
 	TestTrue(TEXT("Should respect max results limit"), LimitedAssets.Num() <= 5);
 	AddInfo(FString::Printf(TEXT("Limited search returned %d assets (max 5)"), LimitedAssets.Num()));
 	
 	// Test with higher limit
-	TArray<FAssetInfo> MoreAssets = FAdastreaAssetService::SearchAssets(TEXT("*"), TEXT(""), 50);
+	TArray<FAdastreaAssetInfo> MoreAssets = FAdastreaAssetService::SearchAssets(TEXT("*"), TEXT(""), 50);
 	AddInfo(FString::Printf(TEXT("Larger search returned %d assets (max 50)"), MoreAssets.Num()));
 	
 	return true;

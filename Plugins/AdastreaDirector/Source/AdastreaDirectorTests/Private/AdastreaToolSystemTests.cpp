@@ -7,7 +7,7 @@
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAdastreaToolSystemRegistrationTest,
 	"Adastrea.VibeUE.Tools.Registration",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FAdastreaToolSystemRegistrationTest::RunTest(const FString& Parameters)
 {
@@ -52,7 +52,7 @@ bool FAdastreaToolSystemRegistrationTest::RunTest(const FString& Parameters)
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAdastreaToolSystemExecutionTest,
 	"Adastrea.VibeUE.Tools.Execution",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FAdastreaToolSystemExecutionTest::RunTest(const FString& Parameters)
 {
@@ -113,7 +113,7 @@ bool FAdastreaToolSystemExecutionTest::RunTest(const FString& Parameters)
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAdastreaToolSystemNotFoundTest,
 	"Adastrea.VibeUE.Tools.NotFound",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FAdastreaToolSystemNotFoundTest::RunTest(const FString& Parameters)
 {
@@ -131,7 +131,7 @@ bool FAdastreaToolSystemNotFoundTest::RunTest(const FString& Parameters)
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAdastreaToolSystemCategoryFilterTest,
 	"Adastrea.VibeUE.Tools.CategoryFilter",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FAdastreaToolSystemCategoryFilterTest::RunTest(const FString& Parameters)
 {
@@ -194,7 +194,7 @@ bool FAdastreaToolSystemCategoryFilterTest::RunTest(const FString& Parameters)
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAdastreaToolSystemGetAllToolsTest,
 	"Adastrea.VibeUE.Tools.GetAllTools",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FAdastreaToolSystemGetAllToolsTest::RunTest(const FString& Parameters)
 {
@@ -227,7 +227,7 @@ bool FAdastreaToolSystemGetAllToolsTest::RunTest(const FString& Parameters)
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAdastreaToolSystemResultSerializationTest,
 	"Adastrea.VibeUE.Tools.ResultSerialization",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FAdastreaToolSystemResultSerializationTest::RunTest(const FString& Parameters)
 {
@@ -265,7 +265,7 @@ bool FAdastreaToolSystemResultSerializationTest::RunTest(const FString& Paramete
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAdastreaToolSystemOverwriteTest,
 	"Adastrea.VibeUE.Tools.OverwriteTool",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FAdastreaToolSystemOverwriteTest::RunTest(const FString& Parameters)
 {

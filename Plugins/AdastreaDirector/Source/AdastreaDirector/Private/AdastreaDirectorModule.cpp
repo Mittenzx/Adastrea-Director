@@ -95,14 +95,14 @@ void FAdastreaDirectorModule::RegisterAssetTools()
 		FString ClassName;
 		Args->TryGetStringField(TEXT("class"), ClassName);
 		
-		TArray<FAssetInfo> Assets = FAdastreaAssetService::SearchAssets(Pattern, ClassName, 100);
+		TArray<FAdastreaAssetInfo> Assets = FAdastreaAssetService::SearchAssets(Pattern, ClassName, 100);
 		
 		// Build JSON response
 		TSharedPtr<FJsonObject> Data = MakeShared<FJsonObject>();
 		Data->SetNumberField(TEXT("count"), Assets.Num());
 		
 		TArray<TSharedPtr<FJsonValue>> AssetsArray;
-		for (const FAssetInfo& Asset : Assets)
+		for (const FAdastreaAssetInfo& Asset : Assets)
 		{
 			AssetsArray.Add(MakeShared<FJsonValueObject>(Asset.ToJson()));
 		}

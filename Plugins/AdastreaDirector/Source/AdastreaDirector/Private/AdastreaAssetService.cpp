@@ -16,12 +16,12 @@ bool FAdastreaAssetService::IsAssetRegistryReady()
 	return !GetAssetRegistry().IsLoadingAssets();
 }
 
-TArray<FAssetInfo> FAdastreaAssetService::SearchAssets(
+TArray<FAdastreaAssetInfo> FAdastreaAssetService::SearchAssets(
 	const FString& SearchPattern,
 	const FString& ClassName,
 	int32 MaxResults)
 {
-	TArray<FAssetInfo> Results;
+	TArray<FAdastreaAssetInfo> Results;
 	IAssetRegistry& AssetRegistry = GetAssetRegistry();
 
 	// Build filter
@@ -88,7 +88,7 @@ TArray<FAssetInfo> FAdastreaAssetService::SearchAssets(
 	return Results;
 }
 
-TArray<FAssetInfo> FAdastreaAssetService::GetBlueprints(const FString& PathPrefix)
+TArray<FAdastreaAssetInfo> FAdastreaAssetService::GetBlueprints(const FString& PathPrefix)
 {
 	IAssetRegistry& AssetRegistry = GetAssetRegistry();
 	
@@ -100,7 +100,7 @@ TArray<FAssetInfo> FAdastreaAssetService::GetBlueprints(const FString& PathPrefi
 	TArray<FAssetData> AssetDataList;
 	AssetRegistry.GetAssets(Filter, AssetDataList);
 
-	TArray<FAssetInfo> Results;
+	TArray<FAdastreaAssetInfo> Results;
 	for (const FAssetData& AssetData : AssetDataList)
 	{
 		Results.Add(ConvertAssetData(AssetData));
@@ -109,7 +109,7 @@ TArray<FAssetInfo> FAdastreaAssetService::GetBlueprints(const FString& PathPrefi
 	return Results;
 }
 
-TArray<FAssetInfo> FAdastreaAssetService::GetMaterials(const FString& PathPrefix)
+TArray<FAdastreaAssetInfo> FAdastreaAssetService::GetMaterials(const FString& PathPrefix)
 {
 	IAssetRegistry& AssetRegistry = GetAssetRegistry();
 	
@@ -121,7 +121,7 @@ TArray<FAssetInfo> FAdastreaAssetService::GetMaterials(const FString& PathPrefix
 	TArray<FAssetData> AssetDataList;
 	AssetRegistry.GetAssets(Filter, AssetDataList);
 
-	TArray<FAssetInfo> Results;
+	TArray<FAdastreaAssetInfo> Results;
 	for (const FAssetData& AssetData : AssetDataList)
 	{
 		Results.Add(ConvertAssetData(AssetData));
@@ -130,7 +130,7 @@ TArray<FAssetInfo> FAdastreaAssetService::GetMaterials(const FString& PathPrefix
 	return Results;
 }
 
-TArray<FAssetInfo> FAdastreaAssetService::GetWidgets(const FString& PathPrefix)
+TArray<FAdastreaAssetInfo> FAdastreaAssetService::GetWidgets(const FString& PathPrefix)
 {
 	IAssetRegistry& AssetRegistry = GetAssetRegistry();
 	
@@ -143,7 +143,7 @@ TArray<FAssetInfo> FAdastreaAssetService::GetWidgets(const FString& PathPrefix)
 	TArray<FAssetData> AssetDataList;
 	AssetRegistry.GetAssets(Filter, AssetDataList);
 
-	TArray<FAssetInfo> Results;
+	TArray<FAdastreaAssetInfo> Results;
 	for (const FAssetData& AssetData : AssetDataList)
 	{
 		Results.Add(ConvertAssetData(AssetData));
@@ -152,7 +152,7 @@ TArray<FAssetInfo> FAdastreaAssetService::GetWidgets(const FString& PathPrefix)
 	return Results;
 }
 
-TOptional<FAssetInfo> FAdastreaAssetService::GetAssetByPath(const FString& AssetPath)
+TOptional<FAdastreaAssetInfo> FAdastreaAssetService::GetAssetByPath(const FString& AssetPath)
 {
 	IAssetRegistry& AssetRegistry = GetAssetRegistry();
 	
@@ -165,12 +165,12 @@ TOptional<FAssetInfo> FAdastreaAssetService::GetAssetByPath(const FString& Asset
 		return ConvertAssetData(AssetData);
 	}
 	
-	return TOptional<FAssetInfo>();
+	return TOptional<FAdastreaAssetInfo>();
 }
 
-FAssetInfo FAdastreaAssetService::ConvertAssetData(const FAssetData& AssetData)
+FAdastreaAssetInfo FAdastreaAssetService::ConvertAssetData(const FAssetData& AssetData)
 {
-	FAssetInfo Info;
+	FAdastreaAssetInfo Info;
 	Info.Name = AssetData.AssetName.ToString();
 	Info.Path = AssetData.GetObjectPathString();
 	Info.Class = AssetData.AssetClassPath.GetAssetName().ToString();
@@ -187,7 +187,7 @@ FAssetInfo FAdastreaAssetService::ConvertAssetData(const FAssetData& AssetData)
 	return Info;
 }
 
-TSharedPtr<FJsonObject> FAssetInfo::ToJson() const
+TSharedPtr<FJsonObject> FAdastreaAssetInfo::ToJson() const
 {
 	TSharedPtr<FJsonObject> Json = MakeShared<FJsonObject>();
 	Json->SetStringField(TEXT("name"), Name);

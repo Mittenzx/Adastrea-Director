@@ -8,7 +8,7 @@
 #include "Materials/Material.h"
 #include "Dom/JsonObject.h"
 
-struct FAssetInfo
+struct FAdastreaAssetInfo
 {
 	FString Name;
 	FString Path;
@@ -31,7 +31,7 @@ public:
 	 * @param MaxResults Maximum number of results
 	 * @return Array of matching assets
 	 */
-	static TArray<FAssetInfo> SearchAssets(
+	static TArray<FAdastreaAssetInfo> SearchAssets(
 		const FString& SearchPattern = TEXT("*"),
 		const FString& ClassName = TEXT(""),
 		int32 MaxResults = 100
@@ -42,28 +42,28 @@ public:
 	 * @param PathPrefix Optional path filter (e.g., "/Game/Characters/")
 	 * @return Array of Blueprint assets
 	 */
-	static TArray<FAssetInfo> GetBlueprints(const FString& PathPrefix = TEXT(""));
+	static TArray<FAdastreaAssetInfo> GetBlueprints(const FString& PathPrefix = TEXT(""));
 
 	/**
 	 * Get all Materials in the project
 	 * @param PathPrefix Optional path filter
 	 * @return Array of Material assets
 	 */
-	static TArray<FAssetInfo> GetMaterials(const FString& PathPrefix = TEXT(""));
+	static TArray<FAdastreaAssetInfo> GetMaterials(const FString& PathPrefix = TEXT(""));
 
 	/**
 	 * Get all UMG Widgets in the project
 	 * @param PathPrefix Optional path filter
 	 * @return Array of Widget Blueprint assets
 	 */
-	static TArray<FAssetInfo> GetWidgets(const FString& PathPrefix = TEXT(""));
+	static TArray<FAdastreaAssetInfo> GetWidgets(const FString& PathPrefix = TEXT(""));
 
 	/**
 	 * Get asset information by path
 	 * @param AssetPath Full asset path
 	 * @return Asset info or empty if not found
 	 */
-	static TOptional<FAssetInfo> GetAssetByPath(const FString& AssetPath);
+	static TOptional<FAdastreaAssetInfo> GetAssetByPath(const FString& AssetPath);
 
 	/**
 	 * Check if asset registry is ready
@@ -73,5 +73,5 @@ public:
 
 private:
 	static IAssetRegistry& GetAssetRegistry();
-	static FAssetInfo ConvertAssetData(const FAssetData& AssetData);
+	static FAdastreaAssetInfo ConvertAssetData(const FAssetData& AssetData);
 };
