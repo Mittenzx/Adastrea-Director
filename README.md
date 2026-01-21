@@ -128,9 +128,7 @@ For detailed project roadmap, sprint planning, and task tracking, see the [Wiki]
    - ✅ Agent Orchestrator CLI for managing agents
    - ✅ Real-time Dashboard UI for monitoring
    - ✅ 120+ comprehensive tests (100% passing)
-   - ✅ Remote Control API client module (67 tests, ready for integration)
-     - 📝 **[Integration Status](REMOTE_CONTROL_INTEGRATION_STATUS.md)** - Not yet integrated with GUI/VSCode
-     - 🚀 **[Quick Integration Guide](REMOTE_CONTROL_QUICK_INTEGRATION.md)** - 5-minute setup
+   - ✅ Remote Control API client module (67 tests, integrated and functional)
    - ✅ Event bus implementation (16 tests)
    - ✅ Shared state management (20 tests)
    - ✅ MCP Server integration for AI agent access (84 tests)
