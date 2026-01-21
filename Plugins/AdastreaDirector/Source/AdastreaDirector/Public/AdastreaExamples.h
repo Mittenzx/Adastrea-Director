@@ -130,28 +130,28 @@ for asset in assets:
 		}
 
 		// Search for assets by pattern
-		TArray<FAssetInfo> Results = FAdastreaAssetService::SearchAssets(TEXT("Character"), TEXT(""), 10);
+		TArray<FAdastreaAssetInfo> Results = FAdastreaAssetService::SearchAssets(TEXT("Character"), TEXT(""), 10);
 		UE_LOG(LogAdastreaDirector, Log, TEXT("Found %d assets matching 'Character'"), Results.Num());
-		for (const FAssetInfo& Asset : Results)
+		for (const FAdastreaAssetInfo& Asset : Results)
 		{
 			UE_LOG(LogAdastreaDirector, Log, TEXT("  - %s (%s) at %s"), 
 				*Asset.Name, *Asset.Class, *Asset.Path);
 		}
 
 		// Get all Blueprints
-		TArray<FAssetInfo> Blueprints = FAdastreaAssetService::GetBlueprints();
+		TArray<FAdastreaAssetInfo> Blueprints = FAdastreaAssetService::GetBlueprints();
 		UE_LOG(LogAdastreaDirector, Log, TEXT("Total blueprints in project: %d"), Blueprints.Num());
 
 		// Get all Materials
-		TArray<FAssetInfo> Materials = FAdastreaAssetService::GetMaterials(TEXT("/Game/Materials"));
+		TArray<FAdastreaAssetInfo> Materials = FAdastreaAssetService::GetMaterials(TEXT("/Game/Materials"));
 		UE_LOG(LogAdastreaDirector, Log, TEXT("Materials in /Game/Materials: %d"), Materials.Num());
 
 		// Get all UMG Widgets
-		TArray<FAssetInfo> Widgets = FAdastreaAssetService::GetWidgets();
+		TArray<FAdastreaAssetInfo> Widgets = FAdastreaAssetService::GetWidgets();
 		UE_LOG(LogAdastreaDirector, Log, TEXT("Total widgets in project: %d"), Widgets.Num());
 
 		// Get specific asset by path
-		TOptional<FAssetInfo> Asset = FAdastreaAssetService::GetAssetByPath(TEXT("/Game/MyBlueprint"));
+		TOptional<FAdastreaAssetInfo> Asset = FAdastreaAssetService::GetAssetByPath(TEXT("/Game/MyBlueprint"));
 		if (Asset.IsSet())
 		{
 			UE_LOG(LogAdastreaDirector, Log, TEXT("Found asset: %s"), *Asset->Name);

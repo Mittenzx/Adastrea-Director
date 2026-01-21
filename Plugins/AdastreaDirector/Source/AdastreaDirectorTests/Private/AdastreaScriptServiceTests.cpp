@@ -6,7 +6,7 @@
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAdastreaScriptServiceAvailabilityTest, 
 	"Adastrea.VibeUE.Python.Availability",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FAdastreaScriptServiceAvailabilityTest::RunTest(const FString& Parameters)
 {
@@ -34,7 +34,7 @@ bool FAdastreaScriptServiceAvailabilityTest::RunTest(const FString& Parameters)
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAdastreaScriptServiceExpressionTest,
 	"Adastrea.VibeUE.Python.EvaluateExpression",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FAdastreaScriptServiceExpressionTest::RunTest(const FString& Parameters)
 {
@@ -67,7 +67,7 @@ bool FAdastreaScriptServiceExpressionTest::RunTest(const FString& Parameters)
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAdastreaScriptServiceExecuteCodeTest,
 	"Adastrea.VibeUE.Python.ExecuteCode",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FAdastreaScriptServiceExecuteCodeTest::RunTest(const FString& Parameters)
 {
@@ -111,7 +111,7 @@ print(message)
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAdastreaScriptServiceUnrealAccessTest,
 	"Adastrea.VibeUE.Python.UnrealModuleAccess",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FAdastreaScriptServiceUnrealAccessTest::RunTest(const FString& Parameters)
 {
@@ -138,7 +138,7 @@ print(f'Project directory: {unreal.SystemLibrary.get_project_directory()}')
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAdastreaScriptServiceErrorHandlingTest,
 	"Adastrea.VibeUE.Python.ErrorHandling",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FAdastreaScriptServiceErrorHandlingTest::RunTest(const FString& Parameters)
 {
@@ -169,7 +169,7 @@ bool FAdastreaScriptServiceErrorHandlingTest::RunTest(const FString& Parameters)
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAdastreaScriptServiceScopeTest,
 	"Adastrea.VibeUE.Python.Scope",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
 
 bool FAdastreaScriptServiceScopeTest::RunTest(const FString& Parameters)
 {
