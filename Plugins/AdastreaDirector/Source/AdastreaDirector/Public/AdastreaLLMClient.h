@@ -42,6 +42,12 @@ struct FToolDefinition
 	TSharedPtr<FJsonObject> Parameters;
 	
 	TSharedPtr<FJsonObject> ToJson() const;
+	
+	/** Equality operator for container operations */
+	bool operator==(const FToolDefinition& Other) const
+	{
+		return Name == Other.Name && Description == Other.Description;
+	}
 };
 
 /**

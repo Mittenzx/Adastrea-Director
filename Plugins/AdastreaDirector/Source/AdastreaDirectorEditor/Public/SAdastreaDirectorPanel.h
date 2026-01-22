@@ -241,9 +241,6 @@ private:
 	/** Check if tests can be run */
 	bool CanRunTests() const;
 
-	/** Perform self-check of plugin components */
-	void PerformSelfCheck();
-
 	/** Save test output to a log file */
 	bool SaveTestLogToFile(const FString& FilePath);
 };

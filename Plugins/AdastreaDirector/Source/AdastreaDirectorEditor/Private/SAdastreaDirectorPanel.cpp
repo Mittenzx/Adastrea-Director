@@ -600,12 +600,12 @@ void SAdastreaDirectorPanel::SendQueryToPython(const FString& Query)
 	
 	// Configure client from settings
 	FString Provider = Settings.GetLLMProvider();
-	FString APIKey = Settings.GetAPIKey();
 	FString ModelName = Settings.GetModelName();
 	float Temperature = Settings.GetTemperature();
 	
 	if (Provider == TEXT("Gemini"))
 	{
+		FString APIKey = Settings.GetGeminiAPIKey();
 		LLMClient->SetProvider(ELLMProvider::Gemini, APIKey);
 		// Use configured model or default for provider
 		if (ModelName.IsEmpty())
@@ -616,6 +616,7 @@ void SAdastreaDirectorPanel::SendQueryToPython(const FString& Query)
 	}
 	else if (Provider == TEXT("OpenAI"))
 	{
+		FString APIKey = Settings.GetOpenAIAPIKey();
 		LLMClient->SetProvider(ELLMProvider::OpenAI, APIKey);
 		// Use configured model or default for provider
 		if (ModelName.IsEmpty())

@@ -6,6 +6,7 @@
 #include "HttpServerModule.h"
 #include "HttpServerResponse.h"
 #include "HttpServerRequest.h"
+#include "HttpRequestHandler.h"
 
 #include "Serialization/JsonSerializer.h"
 #include "Serialization/JsonWriter.h"
@@ -39,30 +40,36 @@ bool FAdastreaMCPServer::Start(int32 Port)
 	}
 
 	// Register routes
+	FHttpRequestHandler ListToolsHandler = [this](const FHttpServerRequest& Request, const FHttpResultCallback& OnComplete)
+	{
+		return HandleListTools(Request, OnComplete);
+	};
 	FHttpRouteHandle ListToolsHandle = HttpRouter->BindRoute(
 		FHttpPath(TEXT("/mcp/tools/list")),
 		EHttpServerRequestVerbs::VERB_POST,
-		[this](const FHttpServerRequest& Request, const FHttpResultCallback& OnComplete) {
-			return HandleListTools(Request, OnComplete);
-		}
+		ListToolsHandler
 	);
 	RouteHandles.Add(ListToolsHandle);
 
+	FHttpRequestHandler ExecuteToolHandler = [this](const FHttpServerRequest& Request, const FHttpResultCallback& OnComplete)
+	{
+		return HandleExecuteTool(Request, OnComplete);
+	};
 	FHttpRouteHandle ExecuteToolHandle = HttpRouter->BindRoute(
 		FHttpPath(TEXT("/mcp/tools/call")),
 		EHttpServerRequestVerbs::VERB_POST,
-		[this](const FHttpServerRequest& Request, const FHttpResultCallback& OnComplete) {
-			return HandleExecuteTool(Request, OnComplete);
-		}
+		ExecuteToolHandler
 	);
 	RouteHandles.Add(ExecuteToolHandle);
 
+	FHttpRequestHandler GetResourcesHandler = [this](const FHttpServerRequest& Request, const FHttpResultCallback& OnComplete)
+	{
+		return HandleGetResources(Request, OnComplete);
+	};
 	FHttpRouteHandle GetResourcesHandle = HttpRouter->BindRoute(
 		FHttpPath(TEXT("/mcp/resources")),
 		EHttpServerRequestVerbs::VERB_POST,
-		[this](const FHttpServerRequest& Request, const FHttpResultCallback& OnComplete) {
-			return HandleGetResources(Request, OnComplete);
-		}
+		GetResourcesHandler
 	);
 	RouteHandles.Add(GetResourcesHandle);
 
