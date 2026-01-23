@@ -741,33 +741,61 @@ FReply SSettingsDialog::OnTestAPIKeyClicked()
 		TestStatusText->SetText(LOCTEXT("TestStatusTesting", "Testing..."));
 	}
 
-	// Test the API key by making a simple request
-	// Note: This would need the LLM client implementation
-	// For now, just validate that a key is present
+	// Reload settings to get latest .env values
+	FAdastreaSettings::Get().LoadSettings();
+	
+	// Test the API key by checking if it's present in the loaded settings
 	FString APIKey;
-	if (LLMProvider == TEXT("Gemini"))
+	FString Provider = LLMProvider.ToLower();
+	
+	if (Provider == TEXT("gemini"))
 	{
-		APIKey = GeminiAPIKey;
+		APIKey = FAdastreaSettings::Get().GetGeminiAPIKey();
 	}
-	else if (LLMProvider == TEXT("OpenAI"))
+	else if (Provider == TEXT("openai"))
 	{
-		APIKey = OpenAIAPIKey;
+		APIKey = FAdastreaSettings::Get().GetOpenAIAPIKey();
+	}
+	else
+	{
+		if (TestStatusText.IsValid())
+		{
+			TestStatusText->SetText(FText::FromString(
+				FString::Printf(TEXT("⚠️ Unknown provider: %s"), *LLMProvider)
+			));
+		}
+		return FReply::Handled();
 	}
 
 	if (APIKey.IsEmpty())
 	{
 		if (TestStatusText.IsValid())
 		{
-			TestStatusText->SetText(LOCTEXT("TestStatusNoKey", "No API key configured"));
+			TestStatusText->SetText(FText::FromString(
+				FString::Printf(
+					TEXT("❌ No API key found for %s\n\n")
+					TEXT("Please add %s to your .env file\n")
+					TEXT("and restart Unreal Engine."),
+					*Provider.ToUpper(),
+					Provider == TEXT("gemini") ? TEXT("GEMINI_API_KEY") : TEXT("OPENAI_API_KEY")
+				)
+			));
 		}
 	}
 	else
 	{
-		// In a real implementation, we would make a test API call here
-		// For now, just show success if a key is present
+		// API key is present - show partial key for verification
+		FString MaskedKey = APIKey.Left(8) + TEXT("...") + APIKey.Right(4);
 		if (TestStatusText.IsValid())
 		{
-			TestStatusText->SetText(LOCTEXT("TestStatusSuccess", "API key format valid (not tested with provider)"));
+			TestStatusText->SetText(FText::FromString(
+				FString::Printf(
+					TEXT("✓ API key loaded: %s\n\n")
+					TEXT("Key format appears valid.\n")
+					TEXT("Test with a query to verify it works with the API."),
+					*MaskedKey
+				)
+			));
 		}
 	}
 

@@ -603,7 +603,10 @@ void SAdastreaDirectorPanel::SendQueryToPython(const FString& Query)
 	FString ModelName = Settings.GetModelName();
 	float Temperature = Settings.GetTemperature();
 	
-	if (Provider == TEXT("Gemini"))
+	// Use case-insensitive comparison for provider
+	FString LowerProvider = Provider.ToLower();
+	
+	if (LowerProvider == TEXT("gemini"))
 	{
 		FString APIKey = Settings.GetGeminiAPIKey();
 		LLMClient->SetProvider(ELLMProvider::Gemini, APIKey);
@@ -614,7 +617,7 @@ void SAdastreaDirectorPanel::SendQueryToPython(const FString& Query)
 		}
 		LLMClient->SetModel(ModelName);
 	}
-	else if (Provider == TEXT("OpenAI"))
+	else if (LowerProvider == TEXT("openai"))
 	{
 		FString APIKey = Settings.GetOpenAIAPIKey();
 		LLMClient->SetProvider(ELLMProvider::OpenAI, APIKey);
@@ -627,7 +630,7 @@ void SAdastreaDirectorPanel::SendQueryToPython(const FString& Query)
 	}
 	else
 	{
-		UpdateResults(FString::Printf(TEXT("Unknown provider: %s\n\nSupported providers: Gemini, OpenAI"), *Provider));
+		UpdateResults(FString::Printf(TEXT("Unknown provider: %s\n\nSupported providers: gemini, openai"), *Provider));
 		bIsProcessing = false;
 		return;
 	}

@@ -112,6 +112,9 @@ private:
 	/** Helper to save a single config value */
 	void SaveConfigValue(const FString& Key, const FString& Value);
 
+	/** Load API keys from .env file */
+	void LoadAPIKeysFromEnv();
+
 	// Settings
 	FString GeminiAPIKey;
 	FString OpenAIAPIKey;
