@@ -311,50 +311,33 @@ void FAdastreaSettings::SaveConfigValue(const FString& Key, const FString& Value
 
 void FAdastreaSettings::LoadAPIKeysFromEnv()
 {
-// Load API keys from .env file in project root
-FString EnvFilePath = FPaths::Combine(FPaths::ProjectDir(), TEXT(".env"));
-
-if (!FPaths::FileExists(EnvFilePath))
-{
-// No .env file - keys remain empty
-GeminiAPIKey = TEXT("");
-OpenAIAPIKey = TEXT("");
-return;
-}
-
-TMap<FString, FString> EnvMap = LoadConfigMap(EnvFilePath);
-
-// Load Gemini API key with priority:
-// GEMINI_API_KEY > GEMINI_KEY > GOOGLE_API_KEY
-const FString* GeminiKey1 = EnvMap.Find(TEXT("GEMINI_API_KEY"));
-const FString* GeminiKey2 = EnvMap.Find(TEXT("GEMINI_KEY"));
-const FString* GeminiKey3 = EnvMap.Find(TEXT("GOOGLE_API_KEY"));
-
-if (GeminiKey1 && !GeminiKey1->IsEmpty())
-{
-GeminiAPIKey = GeminiKey1->TrimStartAndEnd();
-}
-else if (GeminiKey2 && !GeminiKey2->IsEmpty())
-{
-GeminiAPIKey = GeminiKey2->TrimStartAndEnd();
-}
-else if (GeminiKey3 && !GeminiKey3->IsEmpty())
-{
-GeminiAPIKey = GeminiKey3->TrimStartAndEnd();
-}
-else
-{
-GeminiAPIKey = TEXT("");
-}
-
-// Load OpenAI API key
-const FString* OpenAIKey = EnvMap.Find(TEXT("OPENAI_API_KEY"));
-if (OpenAIKey && !OpenAIKey->IsEmpty())
-{
-OpenAIAPIKey = OpenAIKey->TrimStartAndEnd();
-}
-else
-{
-OpenAIAPIKey = TEXT("");
-}
+	// Load API keys from .env file in project root
+	FString EnvFilePath = FPaths::Combine(FPaths::ProjectDir(), TEXT(".env"));
+	
+	if (!FPaths::FileExists(EnvFilePath))
+	{
+		// No .env file - keys remain empty
+		GeminiAPIKey = TEXT("");
+		OpenAIAPIKey = TEXT("");
+		return;
+	}
+	
+	TMap<FString, FString> EnvMap = LoadConfigMap(EnvFilePath);
+	
+	// Load Gemini API key with priority: GEMINI_API_KEY > GEMINI_KEY > GOOGLE_API_KEY
+	TArray<FString> GeminiKeyNames = { TEXT("GEMINI_API_KEY"), TEXT("GEMINI_KEY"), TEXT("GOOGLE_API_KEY") };
+	GeminiAPIKey = TEXT("");
+	for (const FString& KeyName : GeminiKeyNames)
+	{
+		const FString* KeyValue = EnvMap.Find(KeyName);
+		if (KeyValue && !KeyValue->IsEmpty())
+		{
+			GeminiAPIKey = KeyValue->TrimStartAndEnd();
+			break;
+		}
+	}
+	
+	// Load OpenAI API key
+	const FString* OpenAIKey = EnvMap.Find(TEXT("OPENAI_API_KEY"));
+	OpenAIAPIKey = (OpenAIKey && !OpenAIKey->IsEmpty()) ? OpenAIKey->TrimStartAndEnd() : TEXT("");
 }

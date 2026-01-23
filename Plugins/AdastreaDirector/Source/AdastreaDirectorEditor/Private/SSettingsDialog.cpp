@@ -785,7 +785,18 @@ FReply SSettingsDialog::OnTestAPIKeyClicked()
 	else
 	{
 		// API key is present - show partial key for verification
-		FString MaskedKey = APIKey.Left(8) + TEXT("...") + APIKey.Right(4);
+		FString MaskedKey;
+		if (APIKey.Len() <= 12)
+		{
+			// For short keys, just show first few characters
+			MaskedKey = APIKey.Left(FMath::Min(4, APIKey.Len())) + TEXT("...");
+		}
+		else
+		{
+			// For normal length keys, show first 8 and last 4
+			MaskedKey = APIKey.Left(8) + TEXT("...") + APIKey.Right(4);
+		}
+		
 		if (TestStatusText.IsValid())
 		{
 			TestStatusText->SetText(FText::FromString(
