@@ -40,10 +40,9 @@ bool FAdastreaMCPServer::Start(int32 Port)
 	}
 
 	// Register routes
-	FHttpRequestHandler ListToolsHandler = [this](const FHttpServerRequest& Request, const FHttpResultCallback& OnComplete)
-	{
-		return HandleListTools(Request, OnComplete);
-	};
+	FHttpRequestHandler ListToolsHandler = FHttpRequestHandler::CreateRaw(
+		this, &FAdastreaMCPServer::HandleListTools
+	);
 	FHttpRouteHandle ListToolsHandle = HttpRouter->BindRoute(
 		FHttpPath(TEXT("/mcp/tools/list")),
 		EHttpServerRequestVerbs::VERB_POST,
@@ -51,10 +50,9 @@ bool FAdastreaMCPServer::Start(int32 Port)
 	);
 	RouteHandles.Add(ListToolsHandle);
 
-	FHttpRequestHandler ExecuteToolHandler = [this](const FHttpServerRequest& Request, const FHttpResultCallback& OnComplete)
-	{
-		return HandleExecuteTool(Request, OnComplete);
-	};
+	FHttpRequestHandler ExecuteToolHandler = FHttpRequestHandler::CreateRaw(
+		this, &FAdastreaMCPServer::HandleExecuteTool
+	);
 	FHttpRouteHandle ExecuteToolHandle = HttpRouter->BindRoute(
 		FHttpPath(TEXT("/mcp/tools/call")),
 		EHttpServerRequestVerbs::VERB_POST,
@@ -62,10 +60,9 @@ bool FAdastreaMCPServer::Start(int32 Port)
 	);
 	RouteHandles.Add(ExecuteToolHandle);
 
-	FHttpRequestHandler GetResourcesHandler = [this](const FHttpServerRequest& Request, const FHttpResultCallback& OnComplete)
-	{
-		return HandleGetResources(Request, OnComplete);
-	};
+	FHttpRequestHandler GetResourcesHandler = FHttpRequestHandler::CreateRaw(
+		this, &FAdastreaMCPServer::HandleGetResources
+	);
 	FHttpRouteHandle GetResourcesHandle = HttpRouter->BindRoute(
 		FHttpPath(TEXT("/mcp/resources")),
 		EHttpServerRequestVerbs::VERB_POST,

@@ -15,7 +15,15 @@ struct FAdastreaAssetInfo
 	FString Class;
 	int64 DiskSize;
 	
-	TSharedPtr<FJsonObject> ToJson() const;
+	TSharedPtr<FJsonObject> ToJson() const
+	{
+		TSharedPtr<FJsonObject> Json = MakeShared<FJsonObject>();
+		Json->SetStringField(TEXT("name"), Name);
+		Json->SetStringField(TEXT("path"), Path);
+		Json->SetStringField(TEXT("class"), Class);
+		Json->SetNumberField(TEXT("diskSize"), DiskSize);
+		return Json;
+	}
 	
 	/** Equality operator for container operations */
 	bool operator==(const FAdastreaAssetInfo& Other) const

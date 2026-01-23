@@ -186,13 +186,3 @@ FAdastreaAssetInfo FAdastreaAssetService::ConvertAssetData(const FAssetData& Ass
 	
 	return Info;
 }
-
-TSharedPtr<FJsonObject> FAdastreaAssetInfo::ToJson() const
-{
-	TSharedPtr<FJsonObject> Json = MakeShared<FJsonObject>();
-	Json->SetStringField(TEXT("name"), Name);
-	Json->SetStringField(TEXT("path"), Path);
-	Json->SetStringField(TEXT("class"), Class);
-	Json->SetNumberField(TEXT("diskSize"), DiskSize);
-	return Json;
-}
