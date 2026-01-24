@@ -746,13 +746,12 @@ FReply SSettingsDialog::OnTestAPIKeyClicked()
 	
 	// Test the API key by checking if it's present in the loaded settings
 	FString APIKey;
-	FString Provider = LLMProvider.ToLower();
 	
-	if (Provider == TEXT("gemini"))
+	if (LLMProvider.Equals(TEXT("gemini"), ESearchCase::IgnoreCase))
 	{
 		APIKey = FAdastreaSettings::Get().GetGeminiAPIKey();
 	}
-	else if (Provider == TEXT("openai"))
+	else if (LLMProvider.Equals(TEXT("openai"), ESearchCase::IgnoreCase))
 	{
 		APIKey = FAdastreaSettings::Get().GetOpenAIAPIKey();
 	}
@@ -776,8 +775,8 @@ FReply SSettingsDialog::OnTestAPIKeyClicked()
 					TEXT("❌ No API key found for %s\n\n")
 					TEXT("Please add %s to your .env file\n")
 					TEXT("and restart Unreal Engine."),
-					*Provider.ToUpper(),
-					Provider == TEXT("gemini") ? TEXT("GEMINI_API_KEY") : TEXT("OPENAI_API_KEY")
+					*LLMProvider,
+					LLMProvider.Equals(TEXT("gemini"), ESearchCase::IgnoreCase) ? TEXT("GEMINI_API_KEY") : TEXT("OPENAI_API_KEY")
 				)
 			));
 		}

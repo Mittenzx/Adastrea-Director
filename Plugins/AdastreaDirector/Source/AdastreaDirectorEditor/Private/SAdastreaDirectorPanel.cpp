@@ -604,9 +604,7 @@ void SAdastreaDirectorPanel::SendQueryToPython(const FString& Query)
 	float Temperature = Settings.GetTemperature();
 	
 	// Use case-insensitive comparison for provider
-	FString LowerProvider = Provider.ToLower();
-	
-	if (LowerProvider == TEXT("gemini"))
+	if (Provider.Equals(TEXT("gemini"), ESearchCase::IgnoreCase))
 	{
 		FString APIKey = Settings.GetGeminiAPIKey();
 		LLMClient->SetProvider(ELLMProvider::Gemini, APIKey);
@@ -617,7 +615,7 @@ void SAdastreaDirectorPanel::SendQueryToPython(const FString& Query)
 		}
 		LLMClient->SetModel(ModelName);
 	}
-	else if (LowerProvider == TEXT("openai"))
+	else if (Provider.Equals(TEXT("openai"), ESearchCase::IgnoreCase))
 	{
 		FString APIKey = Settings.GetOpenAIAPIKey();
 		LLMClient->SetProvider(ELLMProvider::OpenAI, APIKey);

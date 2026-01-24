@@ -166,15 +166,15 @@ bool FAdastreaSettings::ValidateSettings(FString& OutErrorMessage) const
 	}
 	
 	// Provider must be valid (case-insensitive comparison)
-	FString LowerProvider = LLMProvider.ToLower();
-	if (LowerProvider != TEXT("gemini") && LowerProvider != TEXT("openai"))
+	if (!LLMProvider.Equals(TEXT("gemini"), ESearchCase::IgnoreCase) && 
+	    !LLMProvider.Equals(TEXT("openai"), ESearchCase::IgnoreCase))
 	{
 		OutErrorMessage = FString::Printf(TEXT("Invalid LLM provider '%s'. Must be 'gemini' or 'openai'."), *LLMProvider);
 		return false;
 	}
 	
 	// Check if API key is configured for the selected provider
-	if (LowerProvider == TEXT("gemini"))
+	if (LLMProvider.Equals(TEXT("gemini"), ESearchCase::IgnoreCase))
 	{
 		if (GeminiAPIKey.IsEmpty())
 		{
@@ -186,7 +186,7 @@ bool FAdastreaSettings::ValidateSettings(FString& OutErrorMessage) const
 			return false;
 		}
 	}
-	else if (LowerProvider == TEXT("openai"))
+	else if (LLMProvider.Equals(TEXT("openai"), ESearchCase::IgnoreCase))
 	{
 		if (OpenAIAPIKey.IsEmpty())
 		{
@@ -205,12 +205,11 @@ bool FAdastreaSettings::ValidateSettings(FString& OutErrorMessage) const
 bool FAdastreaSettings::HasAPIKey() const
 {
 	// Check if API key is configured for the selected provider
-	FString LowerProvider = LLMProvider.ToLower();
-	if (LowerProvider == TEXT("gemini"))
+	if (LLMProvider.Equals(TEXT("gemini"), ESearchCase::IgnoreCase))
 	{
 		return !GeminiAPIKey.IsEmpty();
 	}
-	else if (LowerProvider == TEXT("openai"))
+	else if (LLMProvider.Equals(TEXT("openai"), ESearchCase::IgnoreCase))
 	{
 		return !OpenAIAPIKey.IsEmpty();
 	}
@@ -332,12 +331,12 @@ void FAdastreaSettings::LoadAPIKeysFromEnv()
 		const FString* KeyValue = EnvMap.Find(KeyName);
 		if (KeyValue && !KeyValue->IsEmpty())
 		{
-			GeminiAPIKey = KeyValue->TrimStartAndEnd();
+			GeminiAPIKey = *KeyValue;
 			break;
 		}
 	}
 	
 	// Load OpenAI API key
 	const FString* OpenAIKey = EnvMap.Find(TEXT("OPENAI_API_KEY"));
-	OpenAIAPIKey = (OpenAIKey && !OpenAIKey->IsEmpty()) ? OpenAIKey->TrimStartAndEnd() : TEXT("");
+	OpenAIAPIKey = (OpenAIKey && !OpenAIKey->IsEmpty()) ? *OpenAIKey : TEXT("");
 }
