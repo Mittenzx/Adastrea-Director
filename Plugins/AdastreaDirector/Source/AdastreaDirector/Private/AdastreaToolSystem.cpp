@@ -100,22 +100,3 @@ bool FAdastreaToolSystem::HasTool(const FString& ToolName) const
 {
 	return RegisteredTools.Contains(ToolName);
 }
-
-TSharedPtr<FJsonObject> FToolExecutionResult::ToJson() const
-{
-	TSharedPtr<FJsonObject> Json = MakeShared<FJsonObject>();
-	Json->SetBoolField(TEXT("success"), bSuccess);
-	Json->SetStringField(TEXT("output"), Output);
-	
-	if (!ErrorMessage.IsEmpty())
-	{
-		Json->SetStringField(TEXT("error"), ErrorMessage);
-	}
-	
-	if (Data.IsValid())
-	{
-		Json->SetObjectField(TEXT("data"), Data);
-	}
-	
-	return Json;
-}

@@ -16,7 +16,24 @@ struct FToolExecutionResult
 	FString ErrorMessage;
 	TSharedPtr<FJsonObject> Data;
 	
-	TSharedPtr<FJsonObject> ToJson() const;
+	TSharedPtr<FJsonObject> ToJson() const
+	{
+		TSharedPtr<FJsonObject> Json = MakeShared<FJsonObject>();
+		Json->SetBoolField(TEXT("success"), bSuccess);
+		Json->SetStringField(TEXT("output"), Output);
+		
+		if (!ErrorMessage.IsEmpty())
+		{
+			Json->SetStringField(TEXT("error"), ErrorMessage);
+		}
+		
+		if (Data.IsValid())
+		{
+			Json->SetObjectField(TEXT("data"), Data);
+		}
+		
+		return Json;
+	}
 };
 
 /**
