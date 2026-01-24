@@ -170,7 +170,10 @@ def get_llm(model_name: Optional[str] = None, temperature: float = 0.7):
             if api_key:
                 logger.debug("Using OpenRouter API key from environment variable")
         
-        if not api_key:
+        # Strip whitespace from API key (handles copy-paste errors)
+        if api_key:
+            api_key = api_key.strip()
+        else:
             logger.warning("No OpenRouter API key found in config or environment")
         
         kwargs = {

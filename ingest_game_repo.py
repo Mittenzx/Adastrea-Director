@@ -331,12 +331,11 @@ def ingest_game_repository(
     
     if success:
         logger.info(f"Successfully ingested game repository in {duration:.2f}s - Docs: {len(all_documents)}, Chunks: {len(chunks)}")
-        console.print(f"\n[bold green]✓ Successfully ingested game repository![/bold green]")
+        console.print(f"\n[bold green]✓ Successfully ingested game repository (took {duration:.2f}s)![/bold green]")
         console.print(f"  Documents: {len(all_documents)}")
         console.print(f"  Chunks: {len(chunks)}")
         console.print(f"  Collection: {collection_name}")
         console.print(f"  Storage: {persist_directory}")
-        console.print(f"  Duration: {duration:.2f}s")
         return True, len(all_documents), len(chunks)
     else:
         logger.error(f"Failed to ingest game repository after {duration:.2f}s")
