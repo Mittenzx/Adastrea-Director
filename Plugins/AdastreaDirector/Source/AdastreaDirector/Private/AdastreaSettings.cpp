@@ -60,11 +60,8 @@ void FAdastreaSettings::LoadSettings()
 		MaxTokens = 2000;
 	}
 	
-	// API keys are no longer stored in config.ini - they're configured via .env file
-	// The Python backend reads them from environment variables
-	// For validation purposes, we'll mark them as empty here
-	GeminiAPIKey = TEXT("");
-	OpenAIAPIKey = TEXT("");
+	// Load API keys from .env file
+	LoadAPIKeysFromEnv();
 	
 	FString FontSizeStr = GetValue(TEXT("DefaultFontSize"), TEXT("10"));
 	DefaultFontSize = FCString::Atoi(*FontSizeStr);
@@ -161,22 +158,45 @@ void FAdastreaSettings::SaveSettings()
 
 bool FAdastreaSettings::ValidateSettings(FString& OutErrorMessage) const
 {
-	// Note: API keys are now configured via .env file, not in plugin settings
-	// We skip local validation and rely on the Python backend validation
-	// which will check if the .env file has the required keys
-	
-	// Just validate that a provider is selected
+	// Validate that a provider is selected
 	if (LLMProvider.IsEmpty())
 	{
 		OutErrorMessage = TEXT("No LLM provider selected. Please select a provider in Settings.");
 		return false;
 	}
 	
-	// Provider must be valid
-	if (LLMProvider != TEXT("gemini") && LLMProvider != TEXT("openai"))
+	// Provider must be valid (case-insensitive comparison)
+	if (!LLMProvider.Equals(TEXT("gemini"), ESearchCase::IgnoreCase) && 
+	    !LLMProvider.Equals(TEXT("openai"), ESearchCase::IgnoreCase))
 	{
 		OutErrorMessage = FString::Printf(TEXT("Invalid LLM provider '%s'. Must be 'gemini' or 'openai'."), *LLMProvider);
 		return false;
+	}
+	
+	// Check if API key is configured for the selected provider
+	if (LLMProvider.Equals(TEXT("gemini"), ESearchCase::IgnoreCase))
+	{
+		if (GeminiAPIKey.IsEmpty())
+		{
+			OutErrorMessage = TEXT("Gemini API key not found.\n\n")
+				TEXT("Please create a .env file in your project root with:\n")
+				TEXT("  GEMINI_API_KEY=your-api-key-here\n\n")
+				TEXT("Or use the 'Create .env from Template' button in Settings.\n")
+				TEXT("Restart Unreal Engine after adding the key.");
+			return false;
+		}
+	}
+	else if (LLMProvider.Equals(TEXT("openai"), ESearchCase::IgnoreCase))
+	{
+		if (OpenAIAPIKey.IsEmpty())
+		{
+			OutErrorMessage = TEXT("OpenAI API key not found.\n\n")
+				TEXT("Please create a .env file in your project root with:\n")
+				TEXT("  OPENAI_API_KEY=your-api-key-here\n\n")
+				TEXT("Or use the 'Create .env from Template' button in Settings.\n")
+				TEXT("Restart Unreal Engine after adding the key.");
+			return false;
+		}
 	}
 
 	return true;
@@ -184,11 +204,17 @@ bool FAdastreaSettings::ValidateSettings(FString& OutErrorMessage) const
 
 bool FAdastreaSettings::HasAPIKey() const
 {
-	// API keys are configured via .env file
-	// We can't check them from the plugin side
-	// The Python backend will validate them during startup
-	// Return true here to allow the validation to proceed to backend checks
-	return true;
+	// Check if API key is configured for the selected provider
+	if (LLMProvider.Equals(TEXT("gemini"), ESearchCase::IgnoreCase))
+	{
+		return !GeminiAPIKey.IsEmpty();
+	}
+	else if (LLMProvider.Equals(TEXT("openai"), ESearchCase::IgnoreCase))
+	{
+		return !OpenAIAPIKey.IsEmpty();
+	}
+	
+	return false;
 }
 
 FString FAdastreaSettings::GetConfigFilePath()
@@ -280,4 +306,37 @@ void FAdastreaSettings::SaveConfigValue(const FString& Key, const FString& Value
 	{
 		UE_LOG(LogAdastreaDirector, Error, TEXT("Failed to save settings to: %s"), *ConfigPath);
 	}
+}
+
+void FAdastreaSettings::LoadAPIKeysFromEnv()
+{
+	// Load API keys from .env file in project root
+	FString EnvFilePath = FPaths::Combine(FPaths::ProjectDir(), TEXT(".env"));
+	
+	if (!FPaths::FileExists(EnvFilePath))
+	{
+		// No .env file - keys remain empty
+		GeminiAPIKey = TEXT("");
+		OpenAIAPIKey = TEXT("");
+		return;
+	}
+	
+	TMap<FString, FString> EnvMap = LoadConfigMap(EnvFilePath);
+	
+	// Load Gemini API key with priority: GEMINI_API_KEY > GEMINI_KEY > GOOGLE_API_KEY
+	TArray<FString> GeminiKeyNames = { TEXT("GEMINI_API_KEY"), TEXT("GEMINI_KEY"), TEXT("GOOGLE_API_KEY") };
+	GeminiAPIKey = TEXT("");
+	for (const FString& KeyName : GeminiKeyNames)
+	{
+		const FString* KeyValue = EnvMap.Find(KeyName);
+		if (KeyValue && !KeyValue->IsEmpty())
+		{
+			GeminiAPIKey = *KeyValue;
+			break;
+		}
+	}
+	
+	// Load OpenAI API key
+	const FString* OpenAIKey = EnvMap.Find(TEXT("OPENAI_API_KEY"));
+	OpenAIAPIKey = (OpenAIKey && !OpenAIKey->IsEmpty()) ? *OpenAIKey : TEXT("");
 }
