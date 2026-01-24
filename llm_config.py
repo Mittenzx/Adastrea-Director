@@ -20,11 +20,18 @@ Environment Variables:
 
 import os
 from typing import Optional, Tuple
+
+from logging_config import get_logger
+
+logger = get_logger(__name__)
+
 try:
     from config_manager import get_api_key as get_stored_api_key
     CONFIG_MANAGER_AVAILABLE = True
+    logger.debug("Config manager available for API key storage")
 except ImportError:
     CONFIG_MANAGER_AVAILABLE = False
+    logger.debug("Config manager not available, using environment variables only")
 
 
 def _build_dependency_error_message(provider: str, error: ImportError) -> str:
@@ -102,26 +109,35 @@ def get_llm(model_name: Optional[str] = None, temperature: float = 0.7):
         >>> llm = get_llm(model_name="openai/gpt-3.5-turbo")  # If LLM_PROVIDER=openrouter
     """
     provider = os.environ.get("LLM_PROVIDER", "gemini").lower()
+    logger.debug(f"Initializing LLM with provider: {provider}, temperature: {temperature}")
     
     if provider == "openai":
         # Legacy OpenAI support
         try:
             from langchain_openai import ChatOpenAI
         except ImportError as e:
+            logger.error(f"Failed to import OpenAI dependencies: {e}")
             raise ImportError(_build_dependency_error_message("openai", e)) from e
         
         model = model_name or os.environ.get("OPENAI_MODEL", "gpt-3.5-turbo")
+        logger.info(f"Using OpenAI provider with model: {model}")
         
         # Priority: stored config -> OPENAI_API_KEY env var
         api_key = None
         if CONFIG_MANAGER_AVAILABLE:
             api_key = get_stored_api_key("openai")
+            if api_key:
+                logger.debug("Using stored OpenAI API key from config")
         if not api_key:
             api_key = os.environ.get("OPENAI_API_KEY")
+            if api_key:
+                logger.debug("Using OpenAI API key from environment variable")
         
         # Strip whitespace from API key (handles copy-paste errors)
         if api_key:
             api_key = api_key.strip()
+        else:
+            logger.warning("No OpenAI API key found in config or environment")
         
         kwargs = {
             "model_name": model,
@@ -136,17 +152,26 @@ def get_llm(model_name: Optional[str] = None, temperature: float = 0.7):
         try:
             from langchain_openai import ChatOpenAI
         except ImportError as e:
+            logger.error(f"Failed to import OpenRouter dependencies: {e}")
             raise ImportError(_build_dependency_error_message("openrouter", e)) from e
         
         # Default to free Mistral model, but users can specify any OpenRouter model
         model = model_name or os.environ.get("OPENROUTER_MODEL", "mistralai/mistral-7b-instruct:free")
+        logger.info(f"Using OpenRouter provider with model: {model}")
         
         # Priority: stored config -> OPENROUTER_API_KEY env var
         api_key = None
         if CONFIG_MANAGER_AVAILABLE:
             api_key = get_stored_api_key("openrouter")
+            if api_key:
+                logger.debug("Using stored OpenRouter API key from config")
         if not api_key:
             api_key = os.environ.get("OPENROUTER_API_KEY")
+            if api_key:
+                logger.debug("Using OpenRouter API key from environment variable")
+        
+        if not api_key:
+            logger.warning("No OpenRouter API key found in config or environment")
         
         kwargs = {
             "model_name": model,
@@ -162,22 +187,30 @@ def get_llm(model_name: Optional[str] = None, temperature: float = 0.7):
         try:
             from langchain_google_genai import ChatGoogleGenerativeAI
         except ImportError as e:
+            logger.error(f"Failed to import Gemini dependencies: {e}")
             raise ImportError(_build_dependency_error_message("gemini", e)) from e
         
         # Use gemini-1.5-flash for best value (73% cheaper than GPT-3.5, excellent quality)
         # Use gemini-1.5-pro for complex planning tasks
         model = model_name or os.environ.get("GEMINI_MODEL", "gemini-1.5-flash")
+        logger.info(f"Using Gemini provider with model: {model}")
         
         # Priority: stored config -> GEMINI_API_KEY -> GEMINI_KEY (legacy) -> GOOGLE_API_KEY (fallback)
         api_key = None
         if CONFIG_MANAGER_AVAILABLE:
             api_key = get_stored_api_key("gemini")
+            if api_key:
+                logger.debug("Using stored Gemini API key from config")
         if not api_key:
             api_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GEMINI_KEY") or os.environ.get("GOOGLE_API_KEY")
+            if api_key:
+                logger.debug("Using Gemini API key from environment variable")
         
         # Strip whitespace from API key (handles copy-paste errors)
         if api_key:
             api_key = api_key.strip()
+        else:
+            logger.warning("No Gemini API key found in config or environment")
         
         return ChatGoogleGenerativeAI(
             model=model,
@@ -196,18 +229,23 @@ def check_dependencies_available() -> Tuple[bool, Optional[str]]:
         If available is False, error_message contains helpful installation instructions.
     """
     provider = os.environ.get("LLM_PROVIDER", "gemini").lower()
+    logger.debug(f"Checking dependencies for provider: {provider}")
     
     try:
         if provider == "openai":
             import langchain_openai  # noqa: F401
+            logger.debug("OpenAI dependencies available")
             return (True, None)
         elif provider == "openrouter":
             import langchain_openai  # noqa: F401
+            logger.debug("OpenRouter dependencies available")
             return (True, None)
         else:
             import langchain_google_genai  # noqa: F401
+            logger.debug("Gemini dependencies available")
             return (True, None)
     except ImportError as e:
+        logger.error(f"Missing dependencies for provider {provider}: {e}")
         return (False, _build_dependency_error_message(provider, e))
 
 

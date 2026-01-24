@@ -61,7 +61,9 @@ from typing import Optional, Dict, Any, Tuple, List
 
 from ingest import DocumentIngestionAgent
 from rich.console import Console
+from logging_config import get_logger
 
+logger = get_logger(__name__)
 console = Console(legacy_windows=False)
 
 # Configuration
@@ -93,17 +95,23 @@ class GameRepoIngestionTracker:
         """Load tracking state from file."""
         if self.tracking_file.exists():
             try:
-                return json.loads(self.tracking_file.read_text())
+                state = json.loads(self.tracking_file.read_text())
+                logger.debug(f"Loaded ingestion tracking state from: {self.tracking_file}")
+                return state
             except Exception as e:
+                logger.warning(f"Could not load tracking state from {self.tracking_file}: {e}")
                 console.print(f"[yellow]Warning: Could not load tracking state: {e}[/yellow]")
                 return {}
+        logger.debug(f"No tracking file found at: {self.tracking_file}")
         return {}
     
     def _save_state(self):
         """Save tracking state to file."""
         try:
             self.tracking_file.write_text(json.dumps(self.state, indent=2))
+            logger.info(f"Saved ingestion tracking state to: {self.tracking_file}")
         except Exception as e:
+            logger.error(f"Could not save tracking state to {self.tracking_file}: {e}")
             console.print(f"[yellow]Warning: Could not save tracking state: {e}[/yellow]")
     
     def get_last_commit(self) -> Optional[str]:
@@ -123,6 +131,7 @@ class GameRepoIngestionTracker:
             "chunk_count": chunk_count,
         })
         self._save_state()
+        logger.info(f"Updated ingestion tracking - Commit: {commit_hash}, Docs: {document_count}, Chunks: {chunk_count}")
     
     def get_stats(self) -> Dict[str, Any]:
         """Get ingestion statistics."""
@@ -144,8 +153,11 @@ def get_current_commit_hash(repo_dir: Path) -> Optional[str]:
             encoding='utf-8',
             check=True,
         )
-        return result.stdout.strip()
-    except subprocess.CalledProcessError:
+        commit_hash = result.stdout.strip()
+        logger.debug(f"Current commit hash for {repo_dir}: {commit_hash}")
+        return commit_hash
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Failed to get commit hash for {repo_dir}: {e}")
         return None
 
 
@@ -161,6 +173,7 @@ def clone_repository(repo_url: str, clone_dir: Path, github_token: Optional[str]
     Returns:
         bool: True if successful
     """
+    logger.info(f"Starting repository clone - URL: {repo_url}, Destination: {clone_dir}")
     console.print(f"\n[cyan]Cloning repository...[/cyan]")
     console.print(f"  URL: {repo_url}")
     console.print(f"  Destination: {clone_dir}")
@@ -168,13 +181,16 @@ def clone_repository(repo_url: str, clone_dir: Path, github_token: Optional[str]
     # Add token to URL if provided
     if github_token:
         repo_url = repo_url.replace("https://", f"https://{github_token}@")
+        logger.debug("Using GitHub token for authentication")
     
     # Remove existing directory if it exists
     if clone_dir.exists():
         console.print(f"  [yellow]Removing existing directory...[/yellow]")
+        logger.debug(f"Removing existing directory: {clone_dir}")
         shutil.rmtree(clone_dir)
     
     # Clone the repository
+    start_time = datetime.now()
     try:
         result = subprocess.run(
             ["git", "clone", "--depth", "1", repo_url, str(clone_dir)],
@@ -185,18 +201,24 @@ def clone_repository(repo_url: str, clone_dir: Path, github_token: Optional[str]
             timeout=300,  # 5 minute timeout
         )
         
+        duration = (datetime.now() - start_time).total_seconds()
+        
         if result.returncode != 0:
+            logger.error(f"Repository clone failed (took {duration:.2f}s): {result.stderr}")
             console.print(f"[red]Failed to clone repository:[/red]")
             console.print(f"[red]{result.stderr}[/red]")
             return False
         
+        logger.info(f"Repository cloned successfully in {duration:.2f}s")
         console.print(f"[green]✓ Repository cloned successfully[/green]")
         return True
         
     except subprocess.TimeoutExpired:
+        logger.error("Repository clone timed out after 5 minutes")
         console.print(f"[red]Clone operation timed out after 5 minutes[/red]")
         return False
     except Exception as e:
+        logger.error(f"Error during repository clone: {e}", exc_info=True)
         console.print(f"[red]Error cloning repository: {e}[/red]")
         return False
 
@@ -254,7 +276,10 @@ def ingest_game_repository(
     if ingest_dirs is None:
         ingest_dirs = INGEST_DIRS
     
+    logger.info(f"Starting game repository ingestion - Collection: {collection_name}, Persist: {persist_directory}")
     console.print(f"\n[cyan]Ingesting documents from game repository...[/cyan]")
+    
+    start_time = datetime.now()
     
     # Create agent
     agent = DocumentIngestionAgent(
@@ -270,22 +295,28 @@ def ingest_game_repository(
     for dir_name in ingest_dirs:
         dir_path = clone_dir / dir_name
         if dir_path.exists():
+            logger.debug(f"Loading documents from: {dir_path}")
             console.print(f"  Loading from: {dir_name}/")
             docs = agent.load_documents_from_directory(str(dir_path))
             all_documents.extend(docs)
+            logger.info(f"Loaded {len(docs)} documents from {dir_name}/")
             console.print(f"    [green]✓ Loaded {len(docs)} documents[/green]")
         else:
+            logger.debug(f"Directory not found, skipping: {dir_path}")
             console.print(f"    [dim]  Skipping {dir_name}/ (not found)[/dim]")
     
     if not all_documents:
+        logger.warning("No documents found to ingest")
         console.print("[yellow]No documents found to ingest[/yellow]")
         return False, 0, 0
     
+    logger.info(f"Total documents loaded: {len(all_documents)}")
     console.print(f"\n[green]Total documents loaded: {len(all_documents)}[/green]")
     
     # Chunk documents
     console.print("\n[cyan]Chunking documents...[/cyan]")
     chunks = agent.chunk_documents(all_documents)
+    logger.info(f"Created {len(chunks)} chunks from {len(all_documents)} documents")
     console.print(f"[green]Created {len(chunks)} chunks[/green]")
     
     # Ingest documents
@@ -296,14 +327,19 @@ def ingest_game_repository(
         delay_between_batches=2.0
     )
     
+    duration = (datetime.now() - start_time).total_seconds()
+    
     if success:
+        logger.info(f"Successfully ingested game repository in {duration:.2f}s - Docs: {len(all_documents)}, Chunks: {len(chunks)}")
         console.print(f"\n[bold green]✓ Successfully ingested game repository![/bold green]")
         console.print(f"  Documents: {len(all_documents)}")
         console.print(f"  Chunks: {len(chunks)}")
         console.print(f"  Collection: {collection_name}")
         console.print(f"  Storage: {persist_directory}")
+        console.print(f"  Duration: {duration:.2f}s")
         return True, len(all_documents), len(chunks)
     else:
+        logger.error(f"Failed to ingest game repository after {duration:.2f}s")
         console.print(f"\n[bold red]✗ Failed to ingest game repository[/bold red]")
         return False, 0, 0
 
@@ -373,6 +409,8 @@ Examples:
     )
     
     args = parser.parse_args()
+    
+    logger.info("Starting game repository ingestion script")
     
     # Print banner
     console.print("\n[bold cyan]🎮 Adastrea Director - Game Repository Ingestion[/bold cyan]\n")
