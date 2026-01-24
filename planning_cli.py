@@ -11,6 +11,10 @@ import argparse
 from typing import Optional
 from pathlib import Path
 
+from logging_config import get_logger
+
+logger = get_logger(__name__)
+
 try:
     from dotenv import load_dotenv
     load_dotenv()
@@ -24,14 +28,18 @@ try:
     from agents.task_decomposition_agent import TaskDecompositionAgent
     from agents.models import ActionPlan
     
+    logger.debug("Successfully imported all planning CLI dependencies")
+    
 except ImportError as e:
     # Only exit if this module is being run directly, not imported
     if __name__ == '__main__':
+        logger.error(f"Missing required dependencies: {e}")
         print(f"Error: Missing required dependencies: {e}")
         print("Please install requirements.txt")
         sys.exit(1)
     else:
         # Re-raise the ImportError if imported as a module
+        logger.error(f"Import error when loading planning CLI: {e}")
         raise
 
 console = Console(legacy_windows=False)
@@ -42,9 +50,12 @@ class PlanningCLI:
     
     def __init__(self, debug: bool = False):
         """Initialize the planning CLI."""
+        logger.info("Initializing Planning CLI")
         self.goal_agent = GoalAnalysisAgent()
         self.task_agent = TaskDecompositionAgent()
         self.debug = debug
+        if debug:
+            logger.debug("Debug mode enabled")
     
     def print_banner(self):
         """Print the application banner."""
@@ -70,10 +81,13 @@ class PlanningCLI:
         Returns:
             Complete ActionPlan
         """
+        logger.info(f"Starting goal analysis for: {goal_description[:100]}...")
+        
         with console.status("[cyan]Analyzing goal...[/cyan]", spinner="dots"):
             # Parse and analyze the goal
             goal = self.goal_agent.parse_goal(goal_description)
         
+        logger.info(f"Goal analysis complete - Type: {goal.goal_type}, Priority: {goal.priority}")
         console.print("[green]✓ Goal analysis complete[/green]\n")
         
         # Display goal analysis
@@ -83,6 +97,7 @@ class PlanningCLI:
             # Create action plan with tasks
             action_plan = self.task_agent.create_action_plan(goal)
         
+        logger.info(f"Task decomposition complete - Generated {len(action_plan.tasks) if hasattr(action_plan, 'tasks') else 0} tasks")
         console.print("[green]✓ Task decomposition complete[/green]\n")
         
         return action_plan
