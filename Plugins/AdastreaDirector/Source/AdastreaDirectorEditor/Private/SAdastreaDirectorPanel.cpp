@@ -133,7 +133,10 @@ void SAdastreaDirectorPanel::Construct(const FArguments& InArgs)
 					.Padding(0.0f, 4.0f, 0.0f, 0.0f)
 					[
 						SNew(STextBlock)
-						.Text(FText::FromString(FString::Printf(TEXT("Version %s • VibeUE Phase 2 Architecture"), *GetPluginVersion())))
+						.Text(FText::Format(
+							LOCTEXT("PanelSubtitle", "Version {0} • VibeUE Phase 2 Architecture"),
+							FText::FromString(GetPluginVersion())
+						))
 						.Font(FCoreStyle::GetDefaultFontStyle("Regular", 9))
 						.ColorAndOpacity(FSlateColor(FLinearColor(0.6f, 0.7f, 0.9f, 1.0f)))
 					]
@@ -218,7 +221,7 @@ void SAdastreaDirectorPanel::Construct(const FArguments& InArgs)
 				[
 					SNew(STextBlock)
 					.Text(LOCTEXT("TestsTabButton", "🧪 Tests"))
-					.Font(FCoreStyle::GetDefaultFontStyle("Bold", 10))
+					.Font(FCoreStyle::GetDefaultFontStyle("Bold", 11))
 				]
 			]
 		]
@@ -1763,7 +1766,7 @@ void SAdastreaDirectorPanel::ShowNotification(const FText& Message, const FText&
 	Info.FadeOutDuration = 0.5f;
 	Info.ExpireDuration = Duration;
 	Info.bUseThrobber = false;
-	Info.bUseSuccessFailIcons = true;
+	Info.bUseSuccessFailIcons = false;  // Disabled for fire-and-forget toasts
 	Info.bUseLargeFont = false;
 	Info.bFireAndForget = true;
 	

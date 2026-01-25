@@ -1,7 +1,7 @@
 # Adastrea Director Plugin UI Upgrades
 
 **Date:** January 2026  
-**Version:** 1.0.1  
+**Version:** 1.0.0  
 **Status:** Completed Phase 2 Enhancements
 
 ---
@@ -19,7 +19,7 @@ This document details the UI/UX improvements made to the Adastrea Director Unrea
 **Implementation:**
 - Converted all major Dashboard sections to use `SExpandableArea` widgets
 - Sections can be expanded/collapsed individually
-- Maintains state within session
+- Initial state configured per section
 
 **Sections Updated:**
 - 🔌 VibeUE Component Status (initially expanded)
@@ -61,13 +61,13 @@ This document details the UI/UX improvements made to the Adastrea Director Unrea
 **Implementation:**
 - Created new collapsible "Performance Monitoring" section
 - Grid layout with 4 metric cards:
-  - 🎮 FPS (green accent)
-  - 💾 Memory (blue accent)
-  - 🖥️ CPU (orange accent)
-  - 🎨 GPU (pink accent)
+  - 🎮 FPS (green text)
+  - 💾 Memory (blue text)
+  - 🖥️ CPU (orange text)
+  - 🎨 GPU (pink text)
 - Each card uses `SBorder` with dark background
 - Large, bold numbers for easy reading
-- Color-coded for quick recognition
+- Color-coded metric values for quick recognition
 
 **Current State:**
 - Shows "N/A" placeholders (Phase 3 feature)
