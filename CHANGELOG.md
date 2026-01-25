@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Plugin UI Enhancements (Phase 2):**
+  - Collapsible sections using SExpandableArea for better space management
+  - Toast notification system using FSlateNotificationManager
+  - Agent Performance Monitoring dashboard with 4 metric cards (FPS, Memory, CPU, GPU)
+  - Enhanced visual hierarchy with emoji icons throughout
+  - Modern header styling with dark border background
+  - Color-coded metric cards for quick visual recognition
+  - PLUGIN_UI_UPGRADES.md documentation for all UI improvements
 - **VibeUE Architecture Migration Features:**
   - Feature flag system for gradual VibeUE rollout (UseBuiltInPython, UseDirectLLM, UseRuntimeDiscovery, EnableMCPServer)
   - Comprehensive testing framework with 20 unit tests for VibeUE components
@@ -25,6 +33,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 120+ comprehensive tests for Phase 3 agents and infrastructure
 
 ### Changed
+- **Plugin UI Improvements:**
+  - Dashboard sections now use expandable/collapsible design
+  - All section headers enhanced with emoji icons (🔌 🎮 💾 🖥️ 🎨 📊 📝)
+  - Tab buttons enhanced with larger fonts and emoji icons (💬 📊 🧪)
+  - Action buttons now use emoji icons for better recognition (🔄 ⚙️ 🗑️ 💾)
+  - Header title increased from 16pt to 18pt for better prominence
+  - Settings button uses flat button style for consistency
+  - User actions now trigger toast notifications for immediate feedback
 - **VibeUE Architecture Updates:**
   - Updated manual testing checklist in VIBEUE_ARCHITECTURE_SUMMARY.md (all items now checked)
   - Migration status updated to show Phase 1 complete, Phase 2 in progress
