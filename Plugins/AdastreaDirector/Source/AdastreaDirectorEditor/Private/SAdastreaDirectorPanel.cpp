@@ -24,6 +24,9 @@
 #include "Widgets/Notifications/SProgressBar.h"
 #include "Widgets/Layout/SWidgetSwitcher.h"
 #include "Widgets/Input/SCheckBox.h"
+#include "Widgets/Layout/SExpandableArea.h"
+#include "Framework/Notifications/NotificationManager.h"
+#include "Widgets/Notifications/SNotificationList.h"
 #include "Styling/AppStyle.h"
 #include "Styling/SlateTypes.h"
 #include "Dom/JsonObject.h"
@@ -99,56 +102,60 @@ void SAdastreaDirectorPanel::Construct(const FArguments& InArgs)
 	[
 		SNew(SVerticalBox)
 		
-		// Header
+		// Header with enhanced styling
 		+ SVerticalBox::Slot()
 		.AutoHeight()
-		.Padding(10.0f, 10.0f, 10.0f, 5.0f)
+		.Padding(0.0f)
 		[
-			SNew(SHorizontalBox)
-			
-			+ SHorizontalBox::Slot()
-			.FillWidth(1.0f)
+			SNew(SBorder)
+			.BorderImage(FAppStyle::GetBrush("DetailsView.CategoryTop"))
+			.BorderBackgroundColor(FLinearColor(0.1f, 0.1f, 0.15f, 1.0f))
+			.Padding(10.0f, 10.0f, 10.0f, 10.0f)
 			[
-				SNew(SVerticalBox)
+				SNew(SHorizontalBox)
 				
-				+ SVerticalBox::Slot()
-				.AutoHeight()
+				+ SHorizontalBox::Slot()
+				.FillWidth(1.0f)
 				[
-					SNew(STextBlock)
-					.Text(LOCTEXT("PanelTitle", "Adastrea Director - AI Assistant"))
-					.Font(FCoreStyle::GetDefaultFontStyle("Bold", 16))
+					SNew(SVerticalBox)
+					
+					+ SVerticalBox::Slot()
+					.AutoHeight()
+					[
+						SNew(STextBlock)
+						.Text(LOCTEXT("PanelTitle", "⚡ Adastrea Director - AI Assistant"))
+						.Font(FCoreStyle::GetDefaultFontStyle("Bold", 18))
+						.ColorAndOpacity(FLinearColor(0.95f, 0.95f, 1.0f, 1.0f))
+					]
+					
+					+ SVerticalBox::Slot()
+					.AutoHeight()
+					.Padding(0.0f, 4.0f, 0.0f, 0.0f)
+					[
+						SNew(STextBlock)
+						.Text(FText::Format(
+							LOCTEXT("PanelSubtitle", "Version {0} • VibeUE Phase 2 Architecture"),
+							FText::FromString(GetPluginVersion())
+						))
+						.Font(FCoreStyle::GetDefaultFontStyle("Regular", 9))
+						.ColorAndOpacity(FSlateColor(FLinearColor(0.6f, 0.7f, 0.9f, 1.0f)))
+					]
 				]
 				
-				+ SVerticalBox::Slot()
-				.AutoHeight()
-				.Padding(0.0f, 2.0f, 0.0f, 0.0f)
+				+ SHorizontalBox::Slot()
+				.AutoWidth()
+				.VAlign(VAlign_Center)
 				[
-					SNew(STextBlock)
-					.Text(FText::FromString(FString::Printf(TEXT("Version %s"), *GetPluginVersion())))
-					.Font(FCoreStyle::GetDefaultFontStyle("Regular", 9))
-					.ColorAndOpacity(FSlateColor(FLinearColor(0.7f, 0.7f, 0.7f, 1.0f)))
+					SNew(SButton)
+					.Text(LOCTEXT("SettingsButton", "⚙️ Settings"))
+					.ToolTipText(LOCTEXT("SettingsTooltip", "Open Settings (Ctrl+, - requires panel focus)"))
+					.OnClicked(this, &SAdastreaDirectorPanel::OnSettingsClicked)
+					.ButtonStyle(FAppStyle::Get(), "FlatButton.Default")
 				]
-			]
-			
-			+ SHorizontalBox::Slot()
-			.AutoWidth()
-			[
-				SNew(SButton)
-				.Text(LOCTEXT("SettingsButton", "Settings"))
-				.ToolTipText(LOCTEXT("SettingsTooltip", "Open Settings (Ctrl+, - requires panel focus)"))
-				.OnClicked(this, &SAdastreaDirectorPanel::OnSettingsClicked)
 			]
 		]
 
-		+ SVerticalBox::Slot()
-		.AutoHeight()
-		.Padding(10.0f, 0.0f, 10.0f, 10.0f)
-		[
-			SNew(SSeparator)
-			.Orientation(Orient_Horizontal)
-		]
-
-		// Tab buttons
+		// Tab buttons with improved styling
 		+ SVerticalBox::Slot()
 		.AutoHeight()
 		.Padding(10.0f, 5.0f, 10.0f, 5.0f)
@@ -171,8 +178,8 @@ void SAdastreaDirectorPanel::Construct(const FArguments& InArgs)
 				})
 				[
 					SNew(STextBlock)
-					.Text(LOCTEXT("QueryTabButton", "Query"))
-					.Font(FCoreStyle::GetDefaultFontStyle("Bold", 10))
+					.Text(LOCTEXT("QueryTabButton", "💬 Query"))
+					.Font(FCoreStyle::GetDefaultFontStyle("Bold", 11))
 				]
 			]
 
@@ -192,8 +199,8 @@ void SAdastreaDirectorPanel::Construct(const FArguments& InArgs)
 				})
 				[
 					SNew(STextBlock)
-					.Text(LOCTEXT("DashboardTabButton", "Dashboard"))
-					.Font(FCoreStyle::GetDefaultFontStyle("Bold", 10))
+					.Text(LOCTEXT("DashboardTabButton", "📊 Dashboard"))
+					.Font(FCoreStyle::GetDefaultFontStyle("Bold", 11))
 				]
 			]
 
@@ -213,8 +220,8 @@ void SAdastreaDirectorPanel::Construct(const FArguments& InArgs)
 				})
 				[
 					SNew(STextBlock)
-					.Text(LOCTEXT("TestsTabButton", "Tests"))
-					.Font(FCoreStyle::GetDefaultFontStyle("Bold", 10))
+					.Text(LOCTEXT("TestsTabButton", "🧪 Tests"))
+					.Font(FCoreStyle::GetDefaultFontStyle("Bold", 11))
 				]
 			]
 		]
@@ -352,114 +359,66 @@ TSharedRef<SWidget> SAdastreaDirectorPanel::CreateDashboardTab()
 {
 	return SNew(SVerticalBox)
 		
-		// Status Indicators Section
+		// Status Indicators Section - Now Collapsible
 		+ SVerticalBox::Slot()
 		.AutoHeight()
 		.Padding(10.0f, 10.0f, 10.0f, 5.0f)
 		[
-			SNew(STextBlock)
-			.Text(LOCTEXT("StatusIndicatorsLabel", "VibeUE Component Status:"))
-			.Font(FCoreStyle::GetDefaultFontStyle("Bold", 12))
-		]
-
-		+ SVerticalBox::Slot()
-		.AutoHeight()
-		.Padding(10.0f, 0.0f, 10.0f, 10.0f)
-		[
-			SNew(SBorder)
-			.BorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
-			.Padding(10.0f)
+			SNew(SExpandableArea)
+			.InitiallyCollapsed(false)
+			.BorderImage(FAppStyle::GetBrush("DetailsView.CategoryTop"))
+			.BorderBackgroundColor(FLinearColor(0.6f, 0.6f, 0.6f, 1.0f))
+			.HeaderPadding(FMargin(8.0f, 4.0f))
+			.Padding(FMargin(10.0f, 5.0f))
+			.HeaderContent()
 			[
-				SNew(SGridPanel)
-				.FillColumn(0, 1.0f)
-				.FillColumn(1, 1.0f)
-				
-				// Row 0: API Key & LLM Client
-				+ SGridPanel::Slot(0, 0)
-				.Padding(5.0f)
-				[
-					SAssignNew(APIKeyStatusLight, SStatusIndicator)
-					.StatusText(LOCTEXT("APIKeyStatus", "API Key Configuration"))
-					.InitialStatus(SStatusIndicator::EStatus::Unknown)
-				]
-				
-				+ SGridPanel::Slot(1, 0)
-				.Padding(5.0f)
-				[
-					SAssignNew(LLMClientStatusLight, SStatusIndicator)
-					.StatusText(LOCTEXT("LLMClientStatus", "LLM Client"))
-					.InitialStatus(SStatusIndicator::EStatus::Unknown)
-				]
-				
-				// Row 1: Script Service & Asset Service
-				+ SGridPanel::Slot(0, 1)
-				.Padding(5.0f)
-				[
-					SAssignNew(ScriptServiceStatusLight, SStatusIndicator)
-					.StatusText(LOCTEXT("ScriptServiceStatus", "Python Script Service"))
-					.InitialStatus(SStatusIndicator::EStatus::Unknown)
-				]
-				
-				+ SGridPanel::Slot(1, 1)
-				.Padding(5.0f)
-				[
-					SAssignNew(AssetServiceStatusLight, SStatusIndicator)
-					.StatusText(LOCTEXT("AssetServiceStatus", "Asset Discovery Service"))
-					.InitialStatus(SStatusIndicator::EStatus::Unknown)
-				]
+				SNew(STextBlock)
+				.Text(LOCTEXT("StatusIndicatorsLabel", "🔌 VibeUE Component Status"))
+				.Font(FCoreStyle::GetDefaultFontStyle("Bold", 12))
+				.ColorAndOpacity(FLinearColor(0.9f, 0.9f, 0.9f, 1.0f))
 			]
-		]
-
-		+ SVerticalBox::Slot()
-		.AutoHeight()
-		.Padding(10.0f, 5.0f, 10.0f, 10.0f)
-		[
-			SNew(SSeparator)
-			.Orientation(Orient_Horizontal)
-		]
-
-		// Connection Status Section
-		+ SVerticalBox::Slot()
-		.AutoHeight()
-		.Padding(10.0f, 5.0f, 10.0f, 5.0f)
-		[
-			SNew(STextBlock)
-			.Text(LOCTEXT("ConnectionStatusLabel", "Detailed Status:"))
-			.Font(FCoreStyle::GetDefaultFontStyle("Bold", 12))
-		]
-
-		+ SVerticalBox::Slot()
-		.AutoHeight()
-		.Padding(10.0f, 0.0f, 10.0f, 10.0f)
-		[
-			SNew(SBorder)
-			.BorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
-			.Padding(10.0f)
+			.BodyContent()
 			[
-				SNew(SVerticalBox)
-				
-				+ SVerticalBox::Slot()
-				.AutoHeight()
-				.Padding(0.0f, 0.0f, 0.0f, 10.0f)
+				SNew(SBorder)
+				.BorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
+				.Padding(10.0f)
 				[
-					SAssignNew(ConnectionStatusText, STextBlock)
-					.Text_Lambda([this]() { return CachedConnectionStatus; })
-					.AutoWrapText(true)
-				]
-
-				+ SVerticalBox::Slot()
-				.AutoHeight()
-				[
-					SNew(SHorizontalBox)
+					SNew(SGridPanel)
+					.FillColumn(0, 1.0f)
+					.FillColumn(1, 1.0f)
 					
-					+ SHorizontalBox::Slot()
-					.AutoWidth()
-					.Padding(0.0f, 0.0f, 5.0f, 0.0f)
+					// Row 0: API Key & LLM Client
+					+ SGridPanel::Slot(0, 0)
+					.Padding(5.0f)
 					[
-						SNew(SButton)
-						.Text(LOCTEXT("RefreshStatusButton", "Refresh Status"))
-						.ToolTipText(LOCTEXT("RefreshStatusTooltip", "Update component status and indicators"))
-						.OnClicked(this, &SAdastreaDirectorPanel::OnRefreshDashboardClicked)
+						SAssignNew(APIKeyStatusLight, SStatusIndicator)
+						.StatusText(LOCTEXT("APIKeyStatus", "🔑 API Key Configuration"))
+						.InitialStatus(SStatusIndicator::EStatus::Unknown)
+					]
+					
+					+ SGridPanel::Slot(1, 0)
+					.Padding(5.0f)
+					[
+						SAssignNew(LLMClientStatusLight, SStatusIndicator)
+						.StatusText(LOCTEXT("LLMClientStatus", "🤖 LLM Client"))
+						.InitialStatus(SStatusIndicator::EStatus::Unknown)
+					]
+					
+					// Row 1: Script Service & Asset Service
+					+ SGridPanel::Slot(0, 1)
+					.Padding(5.0f)
+					[
+						SAssignNew(ScriptServiceStatusLight, SStatusIndicator)
+						.StatusText(LOCTEXT("ScriptServiceStatus", "🐍 Python Script Service"))
+						.InitialStatus(SStatusIndicator::EStatus::Unknown)
+					]
+					
+					+ SGridPanel::Slot(1, 1)
+					.Padding(5.0f)
+					[
+						SAssignNew(AssetServiceStatusLight, SStatusIndicator)
+						.StatusText(LOCTEXT("AssetServiceStatus", "📦 Asset Discovery Service"))
+						.InitialStatus(SStatusIndicator::EStatus::Unknown)
 					]
 				]
 			]
@@ -473,47 +432,302 @@ TSharedRef<SWidget> SAdastreaDirectorPanel::CreateDashboardTab()
 			.Orientation(Orient_Horizontal)
 		]
 
-		// Logs Section
+		// Agent Metrics Section - Performance Monitoring
 		+ SVerticalBox::Slot()
 		.AutoHeight()
 		.Padding(10.0f, 5.0f, 10.0f, 5.0f)
 		[
-			SNew(SHorizontalBox)
-			
-			+ SHorizontalBox::Slot()
-			.FillWidth(1.0f)
+			SNew(SExpandableArea)
+			.InitiallyCollapsed(true)
+			.BorderImage(FAppStyle::GetBrush("DetailsView.CategoryTop"))
+			.BorderBackgroundColor(FLinearColor(0.4f, 0.6f, 0.8f, 1.0f))
+			.HeaderPadding(FMargin(8.0f, 4.0f))
+			.Padding(FMargin(10.0f, 5.0f))
+			.HeaderContent()
 			[
 				SNew(STextBlock)
-				.Text(LOCTEXT("LogsLabel", "System Logs:"))
+				.Text(LOCTEXT("AgentMetricsLabel", "⚡ Performance Monitoring (Phase 3)"))
 				.Font(FCoreStyle::GetDefaultFontStyle("Bold", 12))
+				.ColorAndOpacity(FLinearColor(0.9f, 0.9f, 0.9f, 1.0f))
 			]
-
-			+ SHorizontalBox::Slot()
-			.AutoWidth()
+			.BodyContent()
 			[
-				SNew(SButton)
-				.Text(LOCTEXT("ClearLogsButton", "Clear Logs"))
-				.ToolTipText(LOCTEXT("ClearLogsTooltip", "Clear the log display"))
-				.OnClicked(this, &SAdastreaDirectorPanel::OnClearLogsClicked)
+				SNew(SBorder)
+				.BorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
+				.Padding(10.0f)
+				[
+					SNew(SVerticalBox)
+					
+					// Info text
+					+ SVerticalBox::Slot()
+					.AutoHeight()
+					.Padding(0.0f, 0.0f, 0.0f, 10.0f)
+					[
+						SNew(STextBlock)
+						.Text(LOCTEXT("AgentMetricsInfo", "Real-time performance metrics from autonomous agents (when available)"))
+						.AutoWrapText(true)
+						.ColorAndOpacity(FSlateColor(FLinearColor(0.7f, 0.7f, 0.7f, 1.0f)))
+					]
+					
+					// Metrics grid
+					+ SVerticalBox::Slot()
+					.AutoHeight()
+					[
+						SNew(SGridPanel)
+						.FillColumn(0, 1.0f)
+						.FillColumn(1, 1.0f)
+						.FillColumn(2, 1.0f)
+						.FillColumn(3, 1.0f)
+						
+						// Row 0: Metric labels and values
+						+ SGridPanel::Slot(0, 0)
+						.Padding(5.0f)
+						[
+							SNew(SBorder)
+							.BorderImage(FAppStyle::GetBrush("ToolPanel.DarkGroupBorder"))
+							.Padding(10.0f)
+							[
+								SNew(SVerticalBox)
+								
+								+ SVerticalBox::Slot()
+								.AutoHeight()
+								[
+									SNew(STextBlock)
+									.Text(LOCTEXT("MetricFPSLabel", "🎮 FPS"))
+									.Font(FCoreStyle::GetDefaultFontStyle("Bold", 10))
+									.Justification(ETextJustify::Center)
+								]
+								
+								+ SVerticalBox::Slot()
+								.AutoHeight()
+								.Padding(0.0f, 5.0f, 0.0f, 0.0f)
+								[
+									SAssignNew(AgentMetricsFPSText, STextBlock)
+									.Text(LOCTEXT("MetricFPSValue", "N/A"))
+									.Font(FCoreStyle::GetDefaultFontStyle("Bold", 16))
+									.Justification(ETextJustify::Center)
+									.ColorAndOpacity(FSlateColor(FLinearColor(0.3f, 0.8f, 0.3f, 1.0f)))
+								]
+							]
+						]
+						
+						+ SGridPanel::Slot(1, 0)
+						.Padding(5.0f)
+						[
+							SNew(SBorder)
+							.BorderImage(FAppStyle::GetBrush("ToolPanel.DarkGroupBorder"))
+							.Padding(10.0f)
+							[
+								SNew(SVerticalBox)
+								
+								+ SVerticalBox::Slot()
+								.AutoHeight()
+								[
+									SNew(STextBlock)
+									.Text(LOCTEXT("MetricMemoryLabel", "💾 Memory"))
+									.Font(FCoreStyle::GetDefaultFontStyle("Bold", 10))
+									.Justification(ETextJustify::Center)
+								]
+								
+								+ SVerticalBox::Slot()
+								.AutoHeight()
+								.Padding(0.0f, 5.0f, 0.0f, 0.0f)
+								[
+									SAssignNew(AgentMetricsMemoryText, STextBlock)
+									.Text(LOCTEXT("MetricMemoryValue", "N/A"))
+									.Font(FCoreStyle::GetDefaultFontStyle("Bold", 16))
+									.Justification(ETextJustify::Center)
+									.ColorAndOpacity(FSlateColor(FLinearColor(0.3f, 0.6f, 0.9f, 1.0f)))
+								]
+							]
+						]
+						
+						+ SGridPanel::Slot(2, 0)
+						.Padding(5.0f)
+						[
+							SNew(SBorder)
+							.BorderImage(FAppStyle::GetBrush("ToolPanel.DarkGroupBorder"))
+							.Padding(10.0f)
+							[
+								SNew(SVerticalBox)
+								
+								+ SVerticalBox::Slot()
+								.AutoHeight()
+								[
+									SNew(STextBlock)
+									.Text(LOCTEXT("MetricCPULabel", "🖥️ CPU"))
+									.Font(FCoreStyle::GetDefaultFontStyle("Bold", 10))
+									.Justification(ETextJustify::Center)
+								]
+								
+								+ SVerticalBox::Slot()
+								.AutoHeight()
+								.Padding(0.0f, 5.0f, 0.0f, 0.0f)
+								[
+									SAssignNew(AgentMetricsCPUText, STextBlock)
+									.Text(LOCTEXT("MetricCPUValue", "N/A"))
+									.Font(FCoreStyle::GetDefaultFontStyle("Bold", 16))
+									.Justification(ETextJustify::Center)
+									.ColorAndOpacity(FSlateColor(FLinearColor(0.9f, 0.6f, 0.3f, 1.0f)))
+								]
+							]
+						]
+						
+						+ SGridPanel::Slot(3, 0)
+						.Padding(5.0f)
+						[
+							SNew(SBorder)
+							.BorderImage(FAppStyle::GetBrush("ToolPanel.DarkGroupBorder"))
+							.Padding(10.0f)
+							[
+								SNew(SVerticalBox)
+								
+								+ SVerticalBox::Slot()
+								.AutoHeight()
+								[
+									SNew(STextBlock)
+									.Text(LOCTEXT("MetricGPULabel", "🎨 GPU"))
+									.Font(FCoreStyle::GetDefaultFontStyle("Bold", 10))
+									.Justification(ETextJustify::Center)
+								]
+								
+								+ SVerticalBox::Slot()
+								.AutoHeight()
+								.Padding(0.0f, 5.0f, 0.0f, 0.0f)
+								[
+									SAssignNew(AgentMetricsGPUText, STextBlock)
+									.Text(LOCTEXT("MetricGPUValue", "N/A"))
+									.Font(FCoreStyle::GetDefaultFontStyle("Bold", 16))
+									.Justification(ETextJustify::Center)
+									.ColorAndOpacity(FSlateColor(FLinearColor(0.9f, 0.3f, 0.6f, 1.0f)))
+								]
+							]
+						]
+					]
+				]
 			]
 		]
 
 		+ SVerticalBox::Slot()
-		.FillHeight(1.0f)
-		.Padding(10.0f, 0.0f, 10.0f, 10.0f)
+		.AutoHeight()
+		.Padding(10.0f, 5.0f, 10.0f, 10.0f)
 		[
-			SNew(SBox)
-			.MinDesiredHeight(300.0f)
+			SNew(SSeparator)
+			.Orientation(Orient_Horizontal)
+		]
+
+		// Connection Status Section - Now Collapsible
+		+ SVerticalBox::Slot()
+		.AutoHeight()
+		.Padding(10.0f, 5.0f, 10.0f, 5.0f)
+		[
+			SNew(SExpandableArea)
+			.InitiallyCollapsed(false)
+			.BorderImage(FAppStyle::GetBrush("DetailsView.CategoryTop"))
+			.BorderBackgroundColor(FLinearColor(0.6f, 0.6f, 0.6f, 1.0f))
+			.HeaderPadding(FMargin(8.0f, 4.0f))
+			.Padding(FMargin(10.0f, 5.0f))
+			.HeaderContent()
 			[
-				SNew(SScrollBox)
-				.Orientation(Orient_Vertical)
-				
-				+ SScrollBox::Slot()
+				SNew(STextBlock)
+				.Text(LOCTEXT("ConnectionStatusLabel", "📊 Detailed Status & Diagnostics"))
+				.Font(FCoreStyle::GetDefaultFontStyle("Bold", 12))
+				.ColorAndOpacity(FLinearColor(0.9f, 0.9f, 0.9f, 1.0f))
+			]
+			.BodyContent()
+			[
+				SNew(SBorder)
+				.BorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
+				.Padding(10.0f)
 				[
-					SAssignNew(LogDisplay, SMultiLineEditableTextBox)
-					.Text_Lambda([this]() { return CachedLogContentText; })
-					.IsReadOnly(true)
-					.AutoWrapText(true)
+					SNew(SVerticalBox)
+					
+					+ SVerticalBox::Slot()
+					.AutoHeight()
+					.Padding(0.0f, 0.0f, 0.0f, 10.0f)
+					[
+						SAssignNew(ConnectionStatusText, STextBlock)
+						.Text_Lambda([this]() { return CachedConnectionStatus; })
+						.AutoWrapText(true)
+					]
+
+					+ SVerticalBox::Slot()
+					.AutoHeight()
+					[
+						SNew(SHorizontalBox)
+						
+						+ SHorizontalBox::Slot()
+						.AutoWidth()
+						.Padding(0.0f, 0.0f, 5.0f, 0.0f)
+						[
+							SNew(SButton)
+							.Text(LOCTEXT("RefreshStatusButton", "🔄 Refresh Status"))
+							.ToolTipText(LOCTEXT("RefreshStatusTooltip", "Update component status and indicators"))
+							.OnClicked(this, &SAdastreaDirectorPanel::OnRefreshDashboardClicked)
+						]
+					]
+				]
+			]
+		]
+
+		+ SVerticalBox::Slot()
+		.AutoHeight()
+		.Padding(10.0f, 5.0f, 10.0f, 10.0f)
+		[
+			SNew(SSeparator)
+			.Orientation(Orient_Horizontal)
+		]
+
+		// Logs Section - Now Collapsible
+		+ SVerticalBox::Slot()
+		.FillHeight(1.0f)
+		.Padding(10.0f, 5.0f, 10.0f, 10.0f)
+		[
+			SNew(SExpandableArea)
+			.InitiallyCollapsed(false)
+			.BorderImage(FAppStyle::GetBrush("DetailsView.CategoryTop"))
+			.BorderBackgroundColor(FLinearColor(0.6f, 0.6f, 0.6f, 1.0f))
+			.HeaderPadding(FMargin(8.0f, 4.0f))
+			.Padding(FMargin(10.0f, 5.0f))
+			.HeaderContent()
+			[
+				SNew(SHorizontalBox)
+				
+				+ SHorizontalBox::Slot()
+				.FillWidth(1.0f)
+				[
+					SNew(STextBlock)
+					.Text(LOCTEXT("LogsLabel", "📝 System Logs"))
+					.Font(FCoreStyle::GetDefaultFontStyle("Bold", 12))
+					.ColorAndOpacity(FLinearColor(0.9f, 0.9f, 0.9f, 1.0f))
+				]
+
+				+ SHorizontalBox::Slot()
+				.AutoWidth()
+				.Padding(10.0f, 0.0f, 0.0f, 0.0f)
+				[
+					SNew(SButton)
+					.Text(LOCTEXT("ClearLogsButton", "Clear"))
+					.ToolTipText(LOCTEXT("ClearLogsTooltip", "Clear the log display"))
+					.OnClicked(this, &SAdastreaDirectorPanel::OnClearLogsClicked)
+					.ButtonStyle(FAppStyle::Get(), "FlatButton.Success")
+				]
+			]
+			.BodyContent()
+			[
+				SNew(SBox)
+				.MinDesiredHeight(300.0f)
+				[
+					SNew(SScrollBox)
+					.Orientation(Orient_Vertical)
+					
+					+ SScrollBox::Slot()
+					[
+						SAssignNew(LogDisplay, SMultiLineEditableTextBox)
+						.Text_Lambda([this]() { return CachedLogContentText; })
+						.IsReadOnly(true)
+						.AutoWrapText(true)
+					]
 				]
 			]
 		];
@@ -815,6 +1029,14 @@ FReply SAdastreaDirectorPanel::OnRefreshDashboardClicked()
 	UpdateConnectionStatus();
 	UpdateStatusLights();
 	LastDashboardRefreshTime = RefreshTimerReset; // Reset timer to prevent immediate auto-refresh
+	
+	// Show notification that refresh was successful
+	ShowNotification(
+		LOCTEXT("RefreshSuccess", "Dashboard Refreshed"),
+		LOCTEXT("RefreshSuccessSub", "All status indicators and logs have been updated"),
+		2.0f
+	);
+	
 	return FReply::Handled();
 }
 
@@ -822,6 +1044,14 @@ FReply SAdastreaDirectorPanel::OnClearLogsClicked()
 {
 	CurrentLogContent = TEXT("Logs cleared.\n");
 	CachedLogContentText = FText::FromString(CurrentLogContent);
+	
+	// Show notification that logs were cleared
+	ShowNotification(
+		LOCTEXT("LogsCleared", "Logs Cleared"),
+		LOCTEXT("LogsClearedSub", "System logs have been cleared"),
+		2.0f
+	);
+	
 	return FReply::Handled();
 }
 
@@ -1211,6 +1441,14 @@ FReply SAdastreaDirectorPanel::OnClearTestOutputClicked()
 	CachedTestOutputText = FText::FromString(CurrentTestOutput);
 	TestProgress = 0.0f;
 	TestStatusMessage = LOCTEXT("TestsIdle", "Ready to run tests");
+	
+	// Show notification
+	ShowNotification(
+		LOCTEXT("TestOutputCleared", "Test Output Cleared"),
+		LOCTEXT("TestOutputClearedSub", "Test results have been cleared"),
+		2.0f
+	);
+	
 	return FReply::Handled();
 }
 
@@ -1399,6 +1637,24 @@ void SAdastreaDirectorPanel::PerformSelfCheck()
 
 	TestProgress = 1.0f;
 	bIsTestRunning = false;
+	
+	// Show completion notification
+	if (FailCount == 0)
+	{
+		ShowNotification(
+			LOCTEXT("SelfCheckSuccess", "Self-Check Complete"),
+			FText::Format(LOCTEXT("SelfCheckSuccessSub", "✅ All {0} checks passed"), FText::AsNumber(TotalChecks)),
+			3.0f
+		);
+	}
+	else
+	{
+		ShowNotification(
+			LOCTEXT("SelfCheckFailed", "Self-Check Complete"),
+			FText::Format(LOCTEXT("SelfCheckFailedSub", "❌ {0} of {1} checks failed"), FText::AsNumber(FailCount), FText::AsNumber(TotalChecks)),
+			4.0f
+		);
+	}
 }
 
 void SAdastreaDirectorPanel::UpdateTestOutput()
@@ -1499,6 +1755,23 @@ bool SAdastreaDirectorPanel::SaveTestLogToFile(const FString& FilePath)
 	
 	// Write to file
 	return FFileHelper::SaveStringToFile(LogContent, *FilePath, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM);
+}
+
+void SAdastreaDirectorPanel::ShowNotification(const FText& Message, const FText& SubText, float Duration)
+{
+	// Create a notification info structure
+	FNotificationInfo Info(Message);
+	Info.SubText = SubText;
+	Info.FadeInDuration = 0.3f;
+	Info.FadeOutDuration = 0.5f;
+	Info.ExpireDuration = Duration;
+	Info.bUseThrobber = false;
+	Info.bUseSuccessFailIcons = false;  // Disabled for fire-and-forget toasts
+	Info.bUseLargeFont = false;
+	Info.bFireAndForget = true;
+	
+	// Add the notification to the notification list
+	FSlateNotificationManager::Get().AddNotification(Info);
 }
 
 #undef LOCTEXT_NAMESPACE

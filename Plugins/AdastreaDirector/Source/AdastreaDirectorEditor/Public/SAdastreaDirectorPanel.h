@@ -149,6 +149,19 @@ private:
 	/** Time since last status lights update */
 	double LastStatusLightsUpdateTime;
 
+	// Agent metrics display widgets
+	/** Agent metrics FPS text */
+	TSharedPtr<STextBlock> AgentMetricsFPSText;
+	
+	/** Agent metrics memory text */
+	TSharedPtr<STextBlock> AgentMetricsMemoryText;
+	
+	/** Agent metrics CPU text */
+	TSharedPtr<STextBlock> AgentMetricsCPUText;
+	
+	/** Agent metrics GPU text */
+	TSharedPtr<STextBlock> AgentMetricsGPUText;
+
 	// Dashboard tab methods
 	/** Called when Refresh Dashboard button is clicked */
 	FReply OnRefreshDashboardClicked();
@@ -243,4 +256,7 @@ private:
 
 	/** Save test output to a log file */
 	bool SaveTestLogToFile(const FString& FilePath);
+
+	/** Show a toast notification to the user */
+	void ShowNotification(const FText& Message, const FText& SubText, float Duration = 3.0f);
 };
