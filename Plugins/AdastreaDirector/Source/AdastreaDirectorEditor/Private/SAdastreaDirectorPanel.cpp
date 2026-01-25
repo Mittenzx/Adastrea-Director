@@ -102,56 +102,57 @@ void SAdastreaDirectorPanel::Construct(const FArguments& InArgs)
 	[
 		SNew(SVerticalBox)
 		
-		// Header
+		// Header with enhanced styling
 		+ SVerticalBox::Slot()
 		.AutoHeight()
-		.Padding(10.0f, 10.0f, 10.0f, 5.0f)
+		.Padding(0.0f)
 		[
-			SNew(SHorizontalBox)
-			
-			+ SHorizontalBox::Slot()
-			.FillWidth(1.0f)
+			SNew(SBorder)
+			.BorderImage(FAppStyle::GetBrush("DetailsView.CategoryTop"))
+			.BorderBackgroundColor(FLinearColor(0.1f, 0.1f, 0.15f, 1.0f))
+			.Padding(10.0f, 10.0f, 10.0f, 10.0f)
 			[
-				SNew(SVerticalBox)
+				SNew(SHorizontalBox)
 				
-				+ SVerticalBox::Slot()
-				.AutoHeight()
+				+ SHorizontalBox::Slot()
+				.FillWidth(1.0f)
 				[
-					SNew(STextBlock)
-					.Text(LOCTEXT("PanelTitle", "Adastrea Director - AI Assistant"))
-					.Font(FCoreStyle::GetDefaultFontStyle("Bold", 16))
+					SNew(SVerticalBox)
+					
+					+ SVerticalBox::Slot()
+					.AutoHeight()
+					[
+						SNew(STextBlock)
+						.Text(LOCTEXT("PanelTitle", "⚡ Adastrea Director - AI Assistant"))
+						.Font(FCoreStyle::GetDefaultFontStyle("Bold", 18))
+						.ColorAndOpacity(FLinearColor(0.95f, 0.95f, 1.0f, 1.0f))
+					]
+					
+					+ SVerticalBox::Slot()
+					.AutoHeight()
+					.Padding(0.0f, 4.0f, 0.0f, 0.0f)
+					[
+						SNew(STextBlock)
+						.Text(FText::FromString(FString::Printf(TEXT("Version %s • VibeUE Phase 2 Architecture"), *GetPluginVersion())))
+						.Font(FCoreStyle::GetDefaultFontStyle("Regular", 9))
+						.ColorAndOpacity(FSlateColor(FLinearColor(0.6f, 0.7f, 0.9f, 1.0f)))
+					]
 				]
 				
-				+ SVerticalBox::Slot()
-				.AutoHeight()
-				.Padding(0.0f, 2.0f, 0.0f, 0.0f)
+				+ SHorizontalBox::Slot()
+				.AutoWidth()
+				.VAlign(VAlign_Center)
 				[
-					SNew(STextBlock)
-					.Text(FText::FromString(FString::Printf(TEXT("Version %s"), *GetPluginVersion())))
-					.Font(FCoreStyle::GetDefaultFontStyle("Regular", 9))
-					.ColorAndOpacity(FSlateColor(FLinearColor(0.7f, 0.7f, 0.7f, 1.0f)))
+					SNew(SButton)
+					.Text(LOCTEXT("SettingsButton", "⚙️ Settings"))
+					.ToolTipText(LOCTEXT("SettingsTooltip", "Open Settings (Ctrl+, - requires panel focus)"))
+					.OnClicked(this, &SAdastreaDirectorPanel::OnSettingsClicked)
+					.ButtonStyle(FAppStyle::Get(), "FlatButton.Default")
 				]
-			]
-			
-			+ SHorizontalBox::Slot()
-			.AutoWidth()
-			[
-				SNew(SButton)
-				.Text(LOCTEXT("SettingsButton", "Settings"))
-				.ToolTipText(LOCTEXT("SettingsTooltip", "Open Settings (Ctrl+, - requires panel focus)"))
-				.OnClicked(this, &SAdastreaDirectorPanel::OnSettingsClicked)
 			]
 		]
 
-		+ SVerticalBox::Slot()
-		.AutoHeight()
-		.Padding(10.0f, 0.0f, 10.0f, 10.0f)
-		[
-			SNew(SSeparator)
-			.Orientation(Orient_Horizontal)
-		]
-
-		// Tab buttons
+		// Tab buttons with improved styling
 		+ SVerticalBox::Slot()
 		.AutoHeight()
 		.Padding(10.0f, 5.0f, 10.0f, 5.0f)
@@ -174,8 +175,8 @@ void SAdastreaDirectorPanel::Construct(const FArguments& InArgs)
 				})
 				[
 					SNew(STextBlock)
-					.Text(LOCTEXT("QueryTabButton", "Query"))
-					.Font(FCoreStyle::GetDefaultFontStyle("Bold", 10))
+					.Text(LOCTEXT("QueryTabButton", "💬 Query"))
+					.Font(FCoreStyle::GetDefaultFontStyle("Bold", 11))
 				]
 			]
 
@@ -195,8 +196,8 @@ void SAdastreaDirectorPanel::Construct(const FArguments& InArgs)
 				})
 				[
 					SNew(STextBlock)
-					.Text(LOCTEXT("DashboardTabButton", "Dashboard"))
-					.Font(FCoreStyle::GetDefaultFontStyle("Bold", 10))
+					.Text(LOCTEXT("DashboardTabButton", "📊 Dashboard"))
+					.Font(FCoreStyle::GetDefaultFontStyle("Bold", 11))
 				]
 			]
 
@@ -216,7 +217,7 @@ void SAdastreaDirectorPanel::Construct(const FArguments& InArgs)
 				})
 				[
 					SNew(STextBlock)
-					.Text(LOCTEXT("TestsTabButton", "Tests"))
+					.Text(LOCTEXT("TestsTabButton", "🧪 Tests"))
 					.Font(FCoreStyle::GetDefaultFontStyle("Bold", 10))
 				]
 			]
@@ -415,6 +416,190 @@ TSharedRef<SWidget> SAdastreaDirectorPanel::CreateDashboardTab()
 						SAssignNew(AssetServiceStatusLight, SStatusIndicator)
 						.StatusText(LOCTEXT("AssetServiceStatus", "📦 Asset Discovery Service"))
 						.InitialStatus(SStatusIndicator::EStatus::Unknown)
+					]
+				]
+			]
+		]
+
+		+ SVerticalBox::Slot()
+		.AutoHeight()
+		.Padding(10.0f, 5.0f, 10.0f, 10.0f)
+		[
+			SNew(SSeparator)
+			.Orientation(Orient_Horizontal)
+		]
+
+		// Agent Metrics Section - Performance Monitoring
+		+ SVerticalBox::Slot()
+		.AutoHeight()
+		.Padding(10.0f, 5.0f, 10.0f, 5.0f)
+		[
+			SNew(SExpandableArea)
+			.InitiallyCollapsed(true)
+			.BorderImage(FAppStyle::GetBrush("DetailsView.CategoryTop"))
+			.BorderBackgroundColor(FLinearColor(0.4f, 0.6f, 0.8f, 1.0f))
+			.HeaderPadding(FMargin(8.0f, 4.0f))
+			.Padding(FMargin(10.0f, 5.0f))
+			.HeaderContent()
+			[
+				SNew(STextBlock)
+				.Text(LOCTEXT("AgentMetricsLabel", "⚡ Performance Monitoring (Phase 3)"))
+				.Font(FCoreStyle::GetDefaultFontStyle("Bold", 12))
+				.ColorAndOpacity(FLinearColor(0.9f, 0.9f, 0.9f, 1.0f))
+			]
+			.BodyContent()
+			[
+				SNew(SBorder)
+				.BorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
+				.Padding(10.0f)
+				[
+					SNew(SVerticalBox)
+					
+					// Info text
+					+ SVerticalBox::Slot()
+					.AutoHeight()
+					.Padding(0.0f, 0.0f, 0.0f, 10.0f)
+					[
+						SNew(STextBlock)
+						.Text(LOCTEXT("AgentMetricsInfo", "Real-time performance metrics from autonomous agents (when available)"))
+						.AutoWrapText(true)
+						.ColorAndOpacity(FSlateColor(FLinearColor(0.7f, 0.7f, 0.7f, 1.0f)))
+					]
+					
+					// Metrics grid
+					+ SVerticalBox::Slot()
+					.AutoHeight()
+					[
+						SNew(SGridPanel)
+						.FillColumn(0, 1.0f)
+						.FillColumn(1, 1.0f)
+						.FillColumn(2, 1.0f)
+						.FillColumn(3, 1.0f)
+						
+						// Row 0: Metric labels and values
+						+ SGridPanel::Slot(0, 0)
+						.Padding(5.0f)
+						[
+							SNew(SBorder)
+							.BorderImage(FAppStyle::GetBrush("ToolPanel.DarkGroupBorder"))
+							.Padding(10.0f)
+							[
+								SNew(SVerticalBox)
+								
+								+ SVerticalBox::Slot()
+								.AutoHeight()
+								[
+									SNew(STextBlock)
+									.Text(LOCTEXT("MetricFPSLabel", "🎮 FPS"))
+									.Font(FCoreStyle::GetDefaultFontStyle("Bold", 10))
+									.Justification(ETextJustify::Center)
+								]
+								
+								+ SVerticalBox::Slot()
+								.AutoHeight()
+								.Padding(0.0f, 5.0f, 0.0f, 0.0f)
+								[
+									SAssignNew(AgentMetricsFPSText, STextBlock)
+									.Text(LOCTEXT("MetricFPSValue", "N/A"))
+									.Font(FCoreStyle::GetDefaultFontStyle("Bold", 16))
+									.Justification(ETextJustify::Center)
+									.ColorAndOpacity(FSlateColor(FLinearColor(0.3f, 0.8f, 0.3f, 1.0f)))
+								]
+							]
+						]
+						
+						+ SGridPanel::Slot(1, 0)
+						.Padding(5.0f)
+						[
+							SNew(SBorder)
+							.BorderImage(FAppStyle::GetBrush("ToolPanel.DarkGroupBorder"))
+							.Padding(10.0f)
+							[
+								SNew(SVerticalBox)
+								
+								+ SVerticalBox::Slot()
+								.AutoHeight()
+								[
+									SNew(STextBlock)
+									.Text(LOCTEXT("MetricMemoryLabel", "💾 Memory"))
+									.Font(FCoreStyle::GetDefaultFontStyle("Bold", 10))
+									.Justification(ETextJustify::Center)
+								]
+								
+								+ SVerticalBox::Slot()
+								.AutoHeight()
+								.Padding(0.0f, 5.0f, 0.0f, 0.0f)
+								[
+									SAssignNew(AgentMetricsMemoryText, STextBlock)
+									.Text(LOCTEXT("MetricMemoryValue", "N/A"))
+									.Font(FCoreStyle::GetDefaultFontStyle("Bold", 16))
+									.Justification(ETextJustify::Center)
+									.ColorAndOpacity(FSlateColor(FLinearColor(0.3f, 0.6f, 0.9f, 1.0f)))
+								]
+							]
+						]
+						
+						+ SGridPanel::Slot(2, 0)
+						.Padding(5.0f)
+						[
+							SNew(SBorder)
+							.BorderImage(FAppStyle::GetBrush("ToolPanel.DarkGroupBorder"))
+							.Padding(10.0f)
+							[
+								SNew(SVerticalBox)
+								
+								+ SVerticalBox::Slot()
+								.AutoHeight()
+								[
+									SNew(STextBlock)
+									.Text(LOCTEXT("MetricCPULabel", "🖥️ CPU"))
+									.Font(FCoreStyle::GetDefaultFontStyle("Bold", 10))
+									.Justification(ETextJustify::Center)
+								]
+								
+								+ SVerticalBox::Slot()
+								.AutoHeight()
+								.Padding(0.0f, 5.0f, 0.0f, 0.0f)
+								[
+									SAssignNew(AgentMetricsCPUText, STextBlock)
+									.Text(LOCTEXT("MetricCPUValue", "N/A"))
+									.Font(FCoreStyle::GetDefaultFontStyle("Bold", 16))
+									.Justification(ETextJustify::Center)
+									.ColorAndOpacity(FSlateColor(FLinearColor(0.9f, 0.6f, 0.3f, 1.0f)))
+								]
+							]
+						]
+						
+						+ SGridPanel::Slot(3, 0)
+						.Padding(5.0f)
+						[
+							SNew(SBorder)
+							.BorderImage(FAppStyle::GetBrush("ToolPanel.DarkGroupBorder"))
+							.Padding(10.0f)
+							[
+								SNew(SVerticalBox)
+								
+								+ SVerticalBox::Slot()
+								.AutoHeight()
+								[
+									SNew(STextBlock)
+									.Text(LOCTEXT("MetricGPULabel", "🎨 GPU"))
+									.Font(FCoreStyle::GetDefaultFontStyle("Bold", 10))
+									.Justification(ETextJustify::Center)
+								]
+								
+								+ SVerticalBox::Slot()
+								.AutoHeight()
+								.Padding(0.0f, 5.0f, 0.0f, 0.0f)
+								[
+									SAssignNew(AgentMetricsGPUText, STextBlock)
+									.Text(LOCTEXT("MetricGPUValue", "N/A"))
+									.Font(FCoreStyle::GetDefaultFontStyle("Bold", 16))
+									.Justification(ETextJustify::Center)
+									.ColorAndOpacity(FSlateColor(FLinearColor(0.9f, 0.3f, 0.6f, 1.0f)))
+								]
+							]
+						]
 					]
 				]
 			]

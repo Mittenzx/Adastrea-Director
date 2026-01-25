@@ -149,6 +149,19 @@ private:
 	/** Time since last status lights update */
 	double LastStatusLightsUpdateTime;
 
+	// Agent metrics display widgets
+	/** Agent metrics FPS text */
+	TSharedPtr<STextBlock> AgentMetricsFPSText;
+	
+	/** Agent metrics memory text */
+	TSharedPtr<STextBlock> AgentMetricsMemoryText;
+	
+	/** Agent metrics CPU text */
+	TSharedPtr<STextBlock> AgentMetricsCPUText;
+	
+	/** Agent metrics GPU text */
+	TSharedPtr<STextBlock> AgentMetricsGPUText;
+
 	// Dashboard tab methods
 	/** Called when Refresh Dashboard button is clicked */
 	FReply OnRefreshDashboardClicked();
