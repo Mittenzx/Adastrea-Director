@@ -243,4 +243,7 @@ private:
 
 	/** Save test output to a log file */
 	bool SaveTestLogToFile(const FString& FilePath);
+
+	/** Show a toast notification to the user */
+	void ShowNotification(const FText& Message, const FText& SubText, float Duration = 3.0f);
 };
