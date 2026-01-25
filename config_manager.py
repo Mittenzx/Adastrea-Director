@@ -26,6 +26,10 @@ from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
+from logging_config import get_logger
+
+logger = get_logger(__name__)
+
 
 def _get_config_dir() -> Path:
     """
@@ -120,8 +124,9 @@ def _decrypt_value(encrypted_value: str) -> str:
         decrypted = f.decrypt(encrypted)
         # Strip whitespace to handle copy-paste errors
         return decrypted.decode().strip()
-    except Exception:
-        # If decryption fails, return empty string
+    except Exception as e:
+        # If decryption fails, log the error and return empty string
+        logger.error(f"Failed to decrypt configuration value: {e}")
         return ""
 
 
@@ -134,13 +139,15 @@ def _ensure_config_dir() -> None:
     """
     config_dir = _get_config_dir()
     config_dir.mkdir(parents=True, exist_ok=True)
+    logger.debug(f"Configuration directory ensured: {config_dir}")
 
     # Set secure permissions on Unix-like systems
     if os.name != 'nt':  # Not Windows
         try:
             os.chmod(config_dir, stat.S_IRWXU)  # 700
-        except Exception:
-            pass  # Ignore permission errors
+            logger.debug(f"Set secure permissions (700) on: {config_dir}")
+        except Exception as e:
+            logger.warning(f"Failed to set secure permissions on {config_dir}: {e}")
 
 
 def _ensure_config_file_permissions() -> None:
@@ -153,8 +160,9 @@ def _ensure_config_file_permissions() -> None:
     if config_file.exists() and os.name != 'nt':  # Not Windows
         try:
             os.chmod(config_file, stat.S_IRUSR | stat.S_IWUSR)  # 600
-        except Exception:
-            pass  # Ignore permission errors
+            logger.debug(f"Set secure permissions (600) on: {config_file}")
+        except Exception as e:
+            logger.warning(f"Failed to set secure permissions on {config_file}: {e}")
 
 
 def load_config() -> Dict[str, Any]:
@@ -167,13 +175,16 @@ def load_config() -> Dict[str, Any]:
     config_file = _get_config_file()
 
     if not config_file.exists():
+        logger.debug(f"Configuration file not found: {config_file}")
         return {}
 
     try:
         with open(config_file, 'r') as f:
             config = json.load(f)
+        logger.debug(f"Configuration loaded successfully from: {config_file}")
         return config
-    except Exception:
+    except Exception as e:
+        logger.error(f"Failed to load configuration from {config_file}: {e}")
         return {}
 
 
@@ -191,7 +202,9 @@ def save_config(config: Dict[str, Any]) -> None:
         with open(config_file, 'w') as f:
             json.dump(config, f, indent=2)
         _ensure_config_file_permissions()
+        logger.info(f"Configuration saved successfully to: {config_file}")
     except Exception as e:
+        logger.error(f"Failed to save configuration to {config_file}: {e}")
         raise RuntimeError(f"Failed to save configuration: {e}")
 
 
@@ -212,8 +225,10 @@ def get_api_key(provider: str = "gemini") -> Optional[str]:
     encrypted_key = encrypted_keys.get(provider)
 
     if encrypted_key:
+        logger.debug(f"Retrieved API key for provider: {provider}")
         return _decrypt_value(encrypted_key)
 
+    logger.debug(f"No API key found for provider: {provider}")
     return None
 
 
@@ -240,6 +255,7 @@ def set_api_key(provider: str, api_key: str) -> None:
     # Encrypt the API key before storing
     config["api_keys"][provider] = _encrypt_value(api_key)
     save_config(config)
+    logger.info(f"API key set successfully for provider: {provider}")
 
 
 def clear_api_key(provider: str) -> None:
@@ -255,6 +271,9 @@ def clear_api_key(provider: str) -> None:
     if "api_keys" in config and provider in config["api_keys"]:
         del config["api_keys"][provider]
         save_config(config)
+        logger.info(f"API key cleared for provider: {provider}")
+    else:
+        logger.debug(f"No API key to clear for provider: {provider}")
 
 
 def clear_all_config() -> None:
@@ -267,8 +286,12 @@ def clear_all_config() -> None:
     if config_file.exists():
         try:
             config_file.unlink()
+            logger.info(f"Configuration cleared: {config_file}")
         except Exception as e:
+            logger.error(f"Failed to clear configuration {config_file}: {e}")
             raise RuntimeError(f"Failed to clear configuration: {e}")
+    else:
+        logger.debug(f"No configuration file to clear: {config_file}")
 
 
 def get_config_location() -> str:

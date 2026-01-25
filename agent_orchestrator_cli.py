@@ -10,6 +10,10 @@ import sys
 import argparse
 from typing import Any, Dict, List
 
+from logging_config import get_logger
+
+logger = get_logger(__name__)
+
 try:
     from rich.console import Console
     from rich.table import Table
@@ -23,9 +27,11 @@ try:
         CodeQualityAgent,
         ProjectInfo
     )
+    logger.debug("Successfully imported agent orchestrator dependencies")
 except ImportError as e:
     # Only exit if this module is being run directly, not imported
     if __name__ == '__main__':
+        logger.error(f"Missing required dependencies: {e}")
         print(f"Error: Missing required dependencies")
         print(f"Details: {e}")
         print(f"\nTo install dependencies, run:")
@@ -35,6 +41,7 @@ except ImportError as e:
         sys.exit(1)
     else:
         # Re-raise the ImportError if imported as a module
+        logger.error(f"Import error when loading agent orchestrator: {e}")
         raise
 
 console = Console()
@@ -45,6 +52,7 @@ class AgentOrchestrator:
     
     def __init__(self):
         """Initialize the orchestrator."""
+        logger.info("Initializing Agent Orchestrator")
         self.event_bus = EventBus()
         self.shared_context = SharedContext()
         self.agents: Dict[str, Any] = {}
@@ -52,6 +60,7 @@ class AgentOrchestrator:
         
         # Initialize agents (not started yet)
         self._init_agents()
+        logger.debug(f"Initialized {len(self.agents)} agents")
     
     def _init_agents(self):
         """Initialize all available agents."""
@@ -83,19 +92,23 @@ class AgentOrchestrator:
             True if successful, False otherwise
         """
         if agent_name not in self.agents:
+            logger.warning(f"Attempted to start unknown agent: {agent_name}")
             console.print(f"[red]Error:[/red] Unknown agent '{agent_name}'")
             return False
         
         agent = self.agents[agent_name]
         if agent.is_running():
+            logger.debug(f"Agent '{agent_name}' is already running")
             console.print(f"[yellow]Warning:[/yellow] Agent '{agent_name}' is already running")
             return False
         
         try:
             agent.start()
+            logger.info(f"Successfully started agent: {agent_name}")
             console.print(f"[green]✓[/green] Started agent: {agent_name}")
             return True
         except Exception as e:
+            logger.error(f"Failed to start agent '{agent_name}': {e}", exc_info=True)
             console.print(f"[red]Error starting agent '{agent_name}':[/red] {e}")
             return False
     
@@ -110,19 +123,23 @@ class AgentOrchestrator:
             True if successful, False otherwise
         """
         if agent_name not in self.agents:
+            logger.warning(f"Attempted to stop unknown agent: {agent_name}")
             console.print(f"[red]Error:[/red] Unknown agent '{agent_name}'")
             return False
         
         agent = self.agents[agent_name]
         if not agent.is_running():
+            logger.debug(f"Agent '{agent_name}' is not running")
             console.print(f"[yellow]Warning:[/yellow] Agent '{agent_name}' is not running")
             return False
         
         try:
             agent.stop()
+            logger.info(f"Successfully stopped agent: {agent_name}")
             console.print(f"[green]✓[/green] Stopped agent: {agent_name}")
             return True
         except Exception as e:
+            logger.error(f"Failed to stop agent '{agent_name}': {e}", exc_info=True)
             console.print(f"[red]Error stopping agent '{agent_name}':[/red] {e}")
             return False
     
