@@ -339,11 +339,15 @@ void FAdastreaLLMClient::OnResponseReceived(
 		const TArray<TSharedPtr<FJsonValue>>* Parts;
 		if (ContentObj->TryGetArrayField(TEXT("parts"), Parts))
 		{
-			for (const TSharedPtr<FJsonValue>& PartValue : *Parts)
+			UE_LOG(LogAdastreaDirector, Log, TEXT("Processing %d parts in Gemini response"), Parts->Num());
+			
+			for (int32 PartIndex = 0; PartIndex < Parts->Num(); ++PartIndex)
 			{
+				const TSharedPtr<FJsonValue>& PartValue = (*Parts)[PartIndex];
 				TSharedPtr<FJsonObject> Part = PartValue->AsObject();
 				if (!Part.IsValid())
 				{
+					UE_LOG(LogAdastreaDirector, Warning, TEXT("Part %d is not a valid object"), PartIndex);
 					continue;
 				}
 				
@@ -351,7 +355,20 @@ void FAdastreaLLMClient::OnResponseReceived(
 				FString Text;
 				if (Part->TryGetStringField(TEXT("text"), Text))
 				{
+					UE_LOG(LogAdastreaDirector, Verbose, TEXT("Part %d: Found text field (%d chars)"), PartIndex, Text.Len());
 					Content += Text;
+				}
+				
+				// Thought part (for Gemini 2.0 Flash Thinking and extended thinking)
+				// Use thinking content only as a fallback when no text has been extracted
+				FString Thought;
+				if (Part->TryGetStringField(TEXT("thought"), Thought))
+				{
+					UE_LOG(LogAdastreaDirector, Verbose, TEXT("Part %d: Found thought field (%d chars)"), PartIndex, Thought.Len());
+					if (Content.IsEmpty())
+					{
+						Content = Thought;
+					}
 				}
 				
 				// Function call part
@@ -362,6 +379,8 @@ void FAdastreaLLMClient::OnResponseReceived(
 					FToolCall ToolCall;
 					ToolCall.Id = FGuid::NewGuid().ToString();
 					FunctionCall->TryGetStringField(TEXT("name"), ToolCall.ToolName);
+					
+					UE_LOG(LogAdastreaDirector, Log, TEXT("Part %d: Found function call: %s"), PartIndex, *ToolCall.ToolName);
 					
 					// Safely get args object
 					const TSharedPtr<FJsonObject>* ArgsObjectPtr;
@@ -376,7 +395,26 @@ void FAdastreaLLMClient::OnResponseReceived(
 					
 					ToolCalls.Add(ToolCall);
 				}
+				
+				// Log any unrecognized fields in this part for API compatibility tracking
+				TArray<FString> UnrecognizedFields;
+				for (const auto& Field : Part->Values)
+				{
+					const FString& Key = Field.Key;
+					if (Key != TEXT("text") && Key != TEXT("thought") && Key != TEXT("functionCall"))
+					{
+						UnrecognizedFields.Add(Key);
+					}
+				}
+				if (UnrecognizedFields.Num() > 0)
+				{
+					UE_LOG(LogAdastreaDirector, Warning, TEXT("Part %d contains unrecognized fields: %s"), 
+						PartIndex, *FString::Join(UnrecognizedFields, TEXT(", ")));
+				}
 			}
+			
+			UE_LOG(LogAdastreaDirector, Log, TEXT("Total content extracted: %d chars, %d tool calls"), 
+				Content.Len(), ToolCalls.Num());
 		}
 	}
 	// Try OpenAI format: choices[0].message
@@ -454,8 +492,15 @@ void FAdastreaLLMClient::OnResponseReceived(
 		}
 	}
 
-	UE_LOG(LogAdastreaDirector, Log, TEXT("Extracted content: %s, Tool calls: %d"), 
-		*Content, ToolCalls.Num());
+	UE_LOG(LogAdastreaDirector, Log, TEXT("Extracted content: %d chars, Tool calls: %d"), 
+		Content.Len(), ToolCalls.Num());
+	
+	// If content is empty and no tool calls, log a warning but still return success
+	// (Some models may return empty responses legitimately)
+	if (Content.IsEmpty() && ToolCalls.Num() == 0)
+	{
+		UE_LOG(LogAdastreaDirector, Warning, TEXT("Response contained no content or tool calls"));
+	}
 
 	OnComplete.ExecuteIfBound(true, Content, ToolCalls);
 }

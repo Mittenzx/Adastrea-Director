@@ -463,6 +463,65 @@ du -sh chroma_db/
    - Test API latency: `ping generativelanguage.googleapis.com`
    - Consider local LLM solutions for offline use
 
+### Director Only Shows "Thinking..." Then Stops
+
+**Symptoms:**
+- Query is sent successfully
+- UI shows "Thinking..." status
+- Response never appears or is empty
+- No error messages shown
+- Particularly occurs with Gemini 2.0 models
+
+**Cause:**
+This issue was caused by incomplete parsing of Gemini API responses. When using Gemini models with extended thinking capabilities (like gemini-2.0-flash-thinking), the API returns response parts with a "thought" field containing the reasoning process, in addition to or instead of the regular "text" field. Previous versions only extracted "text" fields, causing thinking-only responses to be ignored.
+
+**Fixed In:** v1.1+ (January 2026)
+
+**Solution:**
+
+1. **Update to Latest Version**
+   - The fix is included in v1.1 and later
+   - Update your plugin to the latest version
+   - The LLM client now properly extracts both "text" and "thought" fields from responses
+
+2. **Check Logs for Detailed Information**
+   ```bash
+   # Check UE Editor logs for response parsing details
+   tail -f Saved/Logs/MyProject.log | grep AdastreaDirector
+   
+   # Look for messages like:
+   # "Processing N parts in Gemini response"
+   # "Total content extracted: X chars, Y tool calls"
+   ```
+   
+   **For verbose per-part diagnostics**, enable verbose logging:
+   ```bash
+   # Add to your project's DefaultEngine.ini or ConsoleVariables.ini:
+   [Core.Log]
+   LogAdastreaDirector=Verbose
+   
+   # Then look for detailed part-level messages:
+   # "Part N: Found text field (X chars)"
+   # "Part N: Found thought field (X chars)"
+   ```
+
+3. **Verify API Configuration**
+   - Ensure your Gemini API key is valid
+   - Check that the model name is correct in settings
+   - Supported models: gemini-1.5-flash, gemini-1.5-pro, gemini-2.0-flash, gemini-2.0-flash-thinking
+
+4. **Enable Verbose Logging** (if issue persists)
+   - The updated LLM client includes detailed logging
+   - Check logs for warnings about unrecognized response fields
+   - Report any unrecognized field names as they may indicate new API features
+
+**Technical Details:**
+The fix modifies `AdastreaLLMClient.cpp` to:
+- Check for both "text" and "thought" fields in Gemini response parts
+- Use thinking content as a fallback when no text is available
+- Log detailed information about each part being processed
+- Warn when parts contain unrecognized fields (fields beyond text/thought/functionCall)
+
 ### Ingestion Fails or Hangs
 
 **Symptoms:**
