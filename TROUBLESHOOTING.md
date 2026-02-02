@@ -491,6 +491,16 @@ This issue was caused by incomplete parsing of Gemini API responses. When using 
    
    # Look for messages like:
    # "Processing N parts in Gemini response"
+   # "Total content extracted: X chars, Y tool calls"
+   ```
+   
+   **For verbose per-part diagnostics**, enable verbose logging:
+   ```bash
+   # Add to your project's DefaultEngine.ini or ConsoleVariables.ini:
+   [Core.Log]
+   LogAdastreaDirector=Verbose
+   
+   # Then look for detailed part-level messages:
    # "Part N: Found text field (X chars)"
    # "Part N: Found thought field (X chars)"
    ```
@@ -508,9 +518,9 @@ This issue was caused by incomplete parsing of Gemini API responses. When using 
 **Technical Details:**
 The fix modifies `AdastreaLLMClient.cpp` to:
 - Check for both "text" and "thought" fields in Gemini response parts
+- Use thinking content as a fallback when no text is available
 - Log detailed information about each part being processed
-- Concatenate thinking content with regular text content
-- Warn when parts contain unrecognized fields for future compatibility
+- Warn when parts contain unrecognized fields (fields beyond text/thought/functionCall)
 
 ### Ingestion Fails or Hangs
 

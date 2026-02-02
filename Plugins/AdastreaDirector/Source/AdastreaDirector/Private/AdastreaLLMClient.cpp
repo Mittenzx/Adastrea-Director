@@ -360,17 +360,15 @@ void FAdastreaLLMClient::OnResponseReceived(
 				}
 				
 				// Thought part (for Gemini 2.0 Flash Thinking and extended thinking)
+				// Use thinking content only as a fallback when no text has been extracted
 				FString Thought;
 				if (Part->TryGetStringField(TEXT("thought"), Thought))
 				{
-					UE_LOG(LogAdastreaDirector, Log, TEXT("Part %d: Found thought field (%d chars)"), PartIndex, Thought.Len());
-					// Include thinking content in the response
-					// Add a separator if we already have content
-					if (!Content.IsEmpty())
+					UE_LOG(LogAdastreaDirector, Verbose, TEXT("Part %d: Found thought field (%d chars)"), PartIndex, Thought.Len());
+					if (Content.IsEmpty())
 					{
-						Content += TEXT("\n\n");
+						Content = Thought;
 					}
-					Content += Thought;
 				}
 				
 				// Function call part
@@ -398,17 +396,20 @@ void FAdastreaLLMClient::OnResponseReceived(
 					ToolCalls.Add(ToolCall);
 				}
 				
-				// Log if part contained no recognized fields
-				if (!Part->HasField(TEXT("text")) && !Part->HasField(TEXT("thought")) && !Part->HasField(TEXT("functionCall")))
+				// Log any unrecognized fields in this part for API compatibility tracking
+				TArray<FString> UnrecognizedFields;
+				for (const auto& Field : Part->Values)
 				{
-					// Get all field names for debugging
-					TArray<FString> FieldNames;
-					for (const auto& Field : Part->Values)
+					const FString& Key = Field.Key;
+					if (Key != TEXT("text") && Key != TEXT("thought") && Key != TEXT("functionCall"))
 					{
-						FieldNames.Add(Field.Key);
+						UnrecognizedFields.Add(Key);
 					}
-					UE_LOG(LogAdastreaDirector, Warning, TEXT("Part %d has unrecognized fields: %s"), 
-						PartIndex, *FString::Join(FieldNames, TEXT(", ")));
+				}
+				if (UnrecognizedFields.Num() > 0)
+				{
+					UE_LOG(LogAdastreaDirector, Warning, TEXT("Part %d contains unrecognized fields: %s"), 
+						PartIndex, *FString::Join(UnrecognizedFields, TEXT(", ")));
 				}
 			}
 			
