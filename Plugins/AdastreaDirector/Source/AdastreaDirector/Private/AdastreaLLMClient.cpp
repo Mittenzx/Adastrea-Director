@@ -11,6 +11,8 @@ namespace
 {
 	// Maximum length of JSON string to include in log messages for debugging
 	constexpr int32 MAX_LOG_JSON_LENGTH = 100;
+	// Maximum length of response body to include in error logs
+	constexpr int32 MAX_LOG_RESPONSE_LENGTH = 500;
 }
 
 FAdastreaLLMClient::FAdastreaLLMClient()
@@ -330,7 +332,7 @@ void FAdastreaLLMClient::OnResponseReceived(
 	if (!FJsonSerializer::Deserialize(Reader, JsonResponse) || !JsonResponse.IsValid())
 	{
 		UE_LOG(LogAdastreaDirector, Error, TEXT("Failed to parse JSON response. Raw response: %s"), 
-			*ResponseBody.Left(500));
+			*ResponseBody.Left(MAX_LOG_RESPONSE_LENGTH));
 		OnComplete.ExecuteIfBound(false, TEXT("Invalid JSON response"), TArray<FToolCall>());
 		return;
 	}
