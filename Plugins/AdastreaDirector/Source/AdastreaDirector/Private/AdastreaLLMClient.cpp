@@ -7,6 +7,12 @@
 #include "Serialization/JsonSerializer.h"
 #include "Serialization/JsonWriter.h"
 
+namespace
+{
+	// Maximum length of JSON string to include in log messages for debugging
+	constexpr int32 MAX_LOG_JSON_LENGTH = 100;
+}
+
 FAdastreaLLMClient::FAdastreaLLMClient()
 	: Provider(ELLMProvider::Gemini)
 	, ModelName(TEXT("gemini-1.5-flash"))
@@ -561,8 +567,8 @@ void FAdastreaLLMClient::OnStreamDataReceived(
 	// Get current response content
 	FString ResponseSoFar = Response->GetContentAsString();
 	
-	UE_LOG(LogAdastreaDirector, Verbose, TEXT("OnStreamDataReceived - BytesReceived: %llu, Response length: %d, Buffer length: %d"), 
-		BytesReceived, ResponseSoFar.Len(), StreamBuffer.Len());
+	UE_LOG(LogAdastreaDirector, Verbose, TEXT("OnStreamDataReceived - BytesReceived: %d, Response length: %d, Buffer length: %d"), 
+		static_cast<int32>(BytesReceived), ResponseSoFar.Len(), StreamBuffer.Len());
 	
 	// Process only new data since last call (incremental parsing)
 	if (ResponseSoFar.Len() > StreamBuffer.Len())
@@ -626,7 +632,7 @@ void FAdastreaLLMClient::ParseSSEChunk(const FString& Chunk, FOnStreamChunk OnSt
 			}
 			else
 			{
-				UE_LOG(LogAdastreaDirector, Warning, TEXT("Failed to parse SSE JSON: %s"), *JsonStr.Left(100));
+				UE_LOG(LogAdastreaDirector, Warning, TEXT("Failed to parse SSE JSON: %s"), *JsonStr.Left(MAX_LOG_JSON_LENGTH));
 			}
 		}
 	}
