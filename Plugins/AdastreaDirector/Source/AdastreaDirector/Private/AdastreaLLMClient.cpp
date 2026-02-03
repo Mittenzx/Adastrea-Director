@@ -316,8 +316,9 @@ void FAdastreaLLMClient::OnResponseReceived(
 
 	if (StatusCode != 200)
 	{
-		UE_LOG(LogAdastreaDirector, Error, TEXT("LLM API error - Status: %d, Response: %s"), 
-			StatusCode, *ResponseBody);
+		const FString TruncatedResponseBody = ResponseBody.Left(MAX_LOG_RESPONSE_LENGTH);
+		UE_LOG(LogAdastreaDirector, Error, TEXT("LLM API error - Status: %d, Body length: %d, Response (truncated to %d chars): %s"),
+			StatusCode, ResponseBody.Len(), TruncatedResponseBody.Len(), *TruncatedResponseBody);
 		OnComplete.ExecuteIfBound(false, FString::Printf(TEXT("API error: %d"), StatusCode), 
 			TArray<FToolCall>());
 		return;
