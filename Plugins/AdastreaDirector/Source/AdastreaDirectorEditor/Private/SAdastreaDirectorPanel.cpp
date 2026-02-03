@@ -824,8 +824,8 @@ void SAdastreaDirectorPanel::SendQueryToPython(const FString& Query)
 	if (Provider.Equals(TEXT("gemini"), ESearchCase::IgnoreCase))
 	{
 		FString APIKey = Settings.GetGeminiAPIKey();
-		UE_LOG(LogAdastreaDirectorEditor, Log, TEXT("Using Gemini provider with API key: %s"), 
-			APIKey.IsEmpty() ? TEXT("EMPTY") : TEXT("SET"));
+		UE_LOG(LogAdastreaDirectorEditor, Log, TEXT("Using Gemini provider - API key length: %d"), 
+			APIKey.Len());
 		LLMClient->SetProvider(ELLMProvider::Gemini, APIKey);
 		// Use configured model or default for provider
 		if (ModelName.IsEmpty())
@@ -838,8 +838,8 @@ void SAdastreaDirectorPanel::SendQueryToPython(const FString& Query)
 	else if (Provider.Equals(TEXT("openai"), ESearchCase::IgnoreCase))
 	{
 		FString APIKey = Settings.GetOpenAIAPIKey();
-		UE_LOG(LogAdastreaDirectorEditor, Log, TEXT("Using OpenAI provider with API key: %s"), 
-			APIKey.IsEmpty() ? TEXT("EMPTY") : TEXT("SET"));
+		UE_LOG(LogAdastreaDirectorEditor, Log, TEXT("Using OpenAI provider - API key length: %d"), 
+			APIKey.Len());
 		LLMClient->SetProvider(ELLMProvider::OpenAI, APIKey);
 		// Use configured model or default for provider
 		if (ModelName.IsEmpty())
