@@ -7,6 +7,14 @@
 #include "Serialization/JsonSerializer.h"
 #include "Serialization/JsonWriter.h"
 
+namespace
+{
+	// Maximum length of JSON string to include in log messages for debugging
+	constexpr int32 MAX_LOG_JSON_LENGTH = 100;
+	// Maximum length of response body to include in error logs
+	constexpr int32 MAX_LOG_RESPONSE_LENGTH = 500;
+}
+
 FAdastreaLLMClient::FAdastreaLLMClient()
 	: Provider(ELLMProvider::Gemini)
 	, ModelName(TEXT("gemini-1.5-flash"))
@@ -62,6 +70,9 @@ void FAdastreaLLMClient::SendGeminiRequest(
 	FOnStreamChunk OnStreamChunk,
 	FOnLLMComplete OnComplete)
 {
+	UE_LOG(LogAdastreaDirector, Log, TEXT("Preparing Gemini API request with %d messages, %d tools"), 
+		Messages.Num(), Tools.Num());
+	
 	// Create HTTP request
 	TSharedRef<IHttpRequest> Request = FHttpModule::Get().CreateRequest();
 	
@@ -71,6 +82,9 @@ void FAdastreaLLMClient::SendGeminiRequest(
 		*ModelName,
 		*ApiKey
 	);
+	
+	UE_LOG(LogAdastreaDirector, Log, TEXT("Gemini API endpoint set for model: %s (key length: %d)"), 
+		*ModelName, ApiKey.Len());
 	
 	Request->SetURL(Endpoint);
 	Request->SetVerb(TEXT("POST"));
@@ -166,7 +180,8 @@ void FAdastreaLLMClient::SendGeminiRequest(
 	CurrentRequest = Request;
 	Request->ProcessRequest();
 
-	UE_LOG(LogAdastreaDirector, Log, TEXT("Sent Gemini API request"));
+	UE_LOG(LogAdastreaDirector, Log, TEXT("Sent Gemini API request (model: %s, temperature: %.2f)"), 
+		*ModelName, Temperature);
 }
 
 void FAdastreaLLMClient::SendOpenAIRequest(
@@ -175,6 +190,9 @@ void FAdastreaLLMClient::SendOpenAIRequest(
 	FOnStreamChunk OnStreamChunk,
 	FOnLLMComplete OnComplete)
 {
+	UE_LOG(LogAdastreaDirector, Log, TEXT("Preparing OpenAI API request with %d messages, %d tools"), 
+		Messages.Num(), Tools.Num());
+	
 	// Create HTTP request
 	TSharedRef<IHttpRequest> Request = FHttpModule::Get().CreateRequest();
 	
@@ -183,6 +201,8 @@ void FAdastreaLLMClient::SendOpenAIRequest(
 	Request->SetVerb(TEXT("POST"));
 	Request->SetHeader(TEXT("Content-Type"), TEXT("application/json"));
 	Request->SetHeader(TEXT("Authorization"), FString::Printf(TEXT("Bearer %s"), *ApiKey));
+	
+	UE_LOG(LogAdastreaDirector, Log, TEXT("OpenAI API headers set (key length: %d)"), ApiKey.Len());
 
 	// Build JSON payload
 	TSharedPtr<FJsonObject> Payload = MakeShared<FJsonObject>();
@@ -265,7 +285,8 @@ void FAdastreaLLMClient::SendOpenAIRequest(
 	CurrentRequest = Request;
 	Request->ProcessRequest();
 
-	UE_LOG(LogAdastreaDirector, Log, TEXT("Sent OpenAI API request"));
+	UE_LOG(LogAdastreaDirector, Log, TEXT("Sent OpenAI API request (model: %s, temperature: %.2f)"), 
+		*ModelName, Temperature);
 }
 
 void FAdastreaLLMClient::OnResponseReceived(
@@ -276,9 +297,13 @@ void FAdastreaLLMClient::OnResponseReceived(
 {
 	CurrentRequest.Reset();
 
+	UE_LOG(LogAdastreaDirector, Log, TEXT("OnResponseReceived called - Successful: %s"), 
+		bWasSuccessful ? TEXT("true") : TEXT("false"));
+
 	if (!bWasSuccessful || !Response.IsValid())
 	{
-		UE_LOG(LogAdastreaDirector, Error, TEXT("LLM request failed"));
+		UE_LOG(LogAdastreaDirector, Error, TEXT("LLM request failed - Response valid: %s"), 
+			Response.IsValid() ? TEXT("true") : TEXT("false"));
 		OnComplete.ExecuteIfBound(false, TEXT("Request failed"), TArray<FToolCall>());
 		return;
 	}
@@ -286,16 +311,20 @@ void FAdastreaLLMClient::OnResponseReceived(
 	int32 StatusCode = Response->GetResponseCode();
 	FString ResponseBody = Response->GetContentAsString();
 
-	UE_LOG(LogAdastreaDirector, Log, TEXT("LLM response: %d, Body length: %d"), 
+	UE_LOG(LogAdastreaDirector, Log, TEXT("LLM response received - Status: %d, Body length: %d"), 
 		StatusCode, ResponseBody.Len());
 
 	if (StatusCode != 200)
 	{
-		UE_LOG(LogAdastreaDirector, Error, TEXT("LLM API error: %s"), *ResponseBody);
+		const FString TruncatedResponseBody = ResponseBody.Left(MAX_LOG_RESPONSE_LENGTH);
+		UE_LOG(LogAdastreaDirector, Error, TEXT("LLM API error - Status: %d, Body length: %d, Response (truncated to %d chars): %s"),
+			StatusCode, ResponseBody.Len(), TruncatedResponseBody.Len(), *TruncatedResponseBody);
 		OnComplete.ExecuteIfBound(false, FString::Printf(TEXT("API error: %d"), StatusCode), 
 			TArray<FToolCall>());
 		return;
 	}
+
+	UE_LOG(LogAdastreaDirector, Log, TEXT("Parsing JSON response..."));
 
 	// Parse JSON response
 	TSharedPtr<FJsonObject> JsonResponse;
@@ -303,10 +332,13 @@ void FAdastreaLLMClient::OnResponseReceived(
 	
 	if (!FJsonSerializer::Deserialize(Reader, JsonResponse) || !JsonResponse.IsValid())
 	{
-		UE_LOG(LogAdastreaDirector, Error, TEXT("Failed to parse JSON response"));
+		UE_LOG(LogAdastreaDirector, Error, TEXT("Failed to parse JSON response. Raw response: %s"), 
+			*ResponseBody.Left(MAX_LOG_RESPONSE_LENGTH));
 		OnComplete.ExecuteIfBound(false, TEXT("Invalid JSON response"), TArray<FToolCall>());
 		return;
 	}
+
+	UE_LOG(LogAdastreaDirector, Log, TEXT("JSON parsed successfully, extracting content..."));
 
 	// Extract content and tool calls
 	FString Content;
@@ -420,9 +452,13 @@ void FAdastreaLLMClient::OnResponseReceived(
 	// Try OpenAI format: choices[0].message
 	else
 	{
+		UE_LOG(LogAdastreaDirector, Log, TEXT("Trying OpenAI response format..."));
+		
 		const TArray<TSharedPtr<FJsonValue>>* Choices;
 		if (JsonResponse->TryGetArrayField(TEXT("choices"), Choices) && Choices->Num() > 0)
 		{
+			UE_LOG(LogAdastreaDirector, Log, TEXT("Processing %d choices in OpenAI response"), Choices->Num());
+			
 			// OpenAI API response format
 			TSharedPtr<FJsonObject> Choice = (*Choices)[0]->AsObject();
 			if (!Choice.IsValid())
@@ -440,6 +476,7 @@ void FAdastreaLLMClient::OnResponseReceived(
 				FString MessageContent;
 				if (Message->TryGetStringField(TEXT("content"), MessageContent))
 				{
+					UE_LOG(LogAdastreaDirector, Log, TEXT("Found message content: %d chars"), MessageContent.Len());
 					Content = MessageContent;
 				}
 				
@@ -447,6 +484,8 @@ void FAdastreaLLMClient::OnResponseReceived(
 				const TArray<TSharedPtr<FJsonValue>>* ToolCallsArray;
 				if (Message->TryGetArrayField(TEXT("tool_calls"), ToolCallsArray))
 				{
+					UE_LOG(LogAdastreaDirector, Log, TEXT("Found %d tool calls in message"), ToolCallsArray->Num());
+					
 					for (const TSharedPtr<FJsonValue>& ToolCallValue : *ToolCallsArray)
 					{
 						TSharedPtr<FJsonObject> ToolCallObj = ToolCallValue->AsObject();
@@ -463,6 +502,8 @@ void FAdastreaLLMClient::OnResponseReceived(
 						{
 							const TSharedPtr<FJsonObject>& FunctionObj = *FunctionObjPtr;
 							FunctionObj->TryGetStringField(TEXT("name"), ToolCall.ToolName);
+							
+							UE_LOG(LogAdastreaDirector, Log, TEXT("Tool call: %s (id: %s)"), *ToolCall.ToolName, *ToolCall.Id);
 							
 							// Parse arguments from JSON string
 							FString ArgsString;
@@ -502,6 +543,7 @@ void FAdastreaLLMClient::OnResponseReceived(
 		UE_LOG(LogAdastreaDirector, Warning, TEXT("Response contained no content or tool calls"));
 	}
 
+	UE_LOG(LogAdastreaDirector, Log, TEXT("Calling OnComplete callback with success=true"));
 	OnComplete.ExecuteIfBound(true, Content, ToolCalls);
 }
 
@@ -528,11 +570,16 @@ void FAdastreaLLMClient::OnStreamDataReceived(
 	// Get current response content
 	FString ResponseSoFar = Response->GetContentAsString();
 	
+	UE_LOG(LogAdastreaDirector, Verbose, TEXT("OnStreamDataReceived - BytesReceived: %d, Response length: %d, Buffer length: %d"), 
+		static_cast<int32>(BytesReceived), ResponseSoFar.Len(), StreamBuffer.Len());
+	
 	// Process only new data since last call (incremental parsing)
 	if (ResponseSoFar.Len() > StreamBuffer.Len())
 	{
 		// Extract only the new portion to avoid reprocessing
 		FString NewData = ResponseSoFar.Mid(StreamBuffer.Len());
+		
+		UE_LOG(LogAdastreaDirector, Verbose, TEXT("Processing new data chunk of length: %d"), NewData.Len());
 		
 		// Update buffer to current position
 		StreamBuffer = ResponseSoFar;
@@ -547,8 +594,12 @@ void FAdastreaLLMClient::ParseSSEChunk(const FString& Chunk, FOnStreamChunk OnSt
 	// SSE format: data: {...}\n\n
 	// Parse JSON from each data: line
 	
+	UE_LOG(LogAdastreaDirector, Verbose, TEXT("ParseSSEChunk called with chunk length: %d"), Chunk.Len());
+	
 	TArray<FString> Lines;
 	Chunk.ParseIntoArray(Lines, TEXT("\n"), true);
+	
+	UE_LOG(LogAdastreaDirector, Verbose, TEXT("Parsed %d lines from chunk"), Lines.Num());
 	
 	for (const FString& Line : Lines)
 	{
@@ -559,6 +610,7 @@ void FAdastreaLLMClient::ParseSSEChunk(const FString& Chunk, FOnStreamChunk OnSt
 			// Skip [DONE] marker
 			if (JsonStr == TEXT("[DONE]"))
 			{
+				UE_LOG(LogAdastreaDirector, Verbose, TEXT("Received [DONE] marker"));
 				continue;
 			}
 			
@@ -573,8 +625,17 @@ void FAdastreaLLMClient::ParseSSEChunk(const FString& Chunk, FOnStreamChunk OnSt
 				FString Text;
 				if (JsonObj->TryGetStringField(TEXT("text"), Text))
 				{
+					UE_LOG(LogAdastreaDirector, Verbose, TEXT("Extracted text from SSE chunk: %d chars"), Text.Len());
 					OnStreamChunk.ExecuteIfBound(Text);
 				}
+				else
+				{
+					UE_LOG(LogAdastreaDirector, Verbose, TEXT("No text field found in SSE JSON chunk"));
+				}
+			}
+			else
+			{
+				UE_LOG(LogAdastreaDirector, Warning, TEXT("Failed to parse SSE JSON: %s"), *JsonStr.Left(MAX_LOG_JSON_LENGTH));
 			}
 		}
 	}

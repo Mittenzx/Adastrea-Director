@@ -817,31 +817,41 @@ void SAdastreaDirectorPanel::SendQueryToPython(const FString& Query)
 	FString ModelName = Settings.GetModelName();
 	float Temperature = Settings.GetTemperature();
 	
+	UE_LOG(LogAdastreaDirectorEditor, Log, TEXT("Configuring LLM Client - Provider: %s, Model: %s, Temperature: %.2f"), 
+		*Provider, *ModelName, Temperature);
+	
 	// Use case-insensitive comparison for provider
 	if (Provider.Equals(TEXT("gemini"), ESearchCase::IgnoreCase))
 	{
 		FString APIKey = Settings.GetGeminiAPIKey();
+		UE_LOG(LogAdastreaDirectorEditor, Log, TEXT("Using Gemini provider - API key length: %d"), 
+			APIKey.Len());
 		LLMClient->SetProvider(ELLMProvider::Gemini, APIKey);
 		// Use configured model or default for provider
 		if (ModelName.IsEmpty())
 		{
 			ModelName = TEXT("gemini-1.5-flash");
+			UE_LOG(LogAdastreaDirectorEditor, Log, TEXT("No model specified, using default: %s"), *ModelName);
 		}
 		LLMClient->SetModel(ModelName);
 	}
 	else if (Provider.Equals(TEXT("openai"), ESearchCase::IgnoreCase))
 	{
 		FString APIKey = Settings.GetOpenAIAPIKey();
+		UE_LOG(LogAdastreaDirectorEditor, Log, TEXT("Using OpenAI provider - API key length: %d"), 
+			APIKey.Len());
 		LLMClient->SetProvider(ELLMProvider::OpenAI, APIKey);
 		// Use configured model or default for provider
 		if (ModelName.IsEmpty())
 		{
 			ModelName = TEXT("gpt-4-turbo");
+			UE_LOG(LogAdastreaDirectorEditor, Log, TEXT("No model specified, using default: %s"), *ModelName);
 		}
 		LLMClient->SetModel(ModelName);
 	}
 	else
 	{
+		UE_LOG(LogAdastreaDirectorEditor, Error, TEXT("Unknown LLM provider: %s. Supported: gemini, openai"), *Provider);
 		UpdateResults(FString::Printf(TEXT("Unknown provider: %s\n\nSupported providers: gemini, openai"), *Provider));
 		bIsProcessing = false;
 		return;
@@ -868,6 +878,8 @@ void SAdastreaDirectorPanel::SendQueryToPython(const FString& Query)
 	// Send request with streaming callbacks
 	FOnStreamChunk OnStreamChunk;
 	OnStreamChunk.BindLambda([this](const FString& Chunk) {
+		UE_LOG(LogAdastreaDirectorEditor, Verbose, TEXT("Received stream chunk: %d chars"), Chunk.Len());
+		
 		// Append chunk to streaming content
 		StreamingContent += Chunk;
 		
@@ -888,6 +900,9 @@ void SAdastreaDirectorPanel::SendQueryToPython(const FString& Query)
 	
 	FOnLLMComplete OnComplete;
 	OnComplete.BindLambda([this](bool bSuccess, const FString& Content, const TArray<FToolCall>& ToolCalls) {
+		UE_LOG(LogAdastreaDirectorEditor, Log, TEXT("LLM request completed - Success: %s, Content length: %d, Tool calls: %d"), 
+			bSuccess ? TEXT("true") : TEXT("false"), Content.Len(), ToolCalls.Num());
+		
 		bIsProcessing = false;
 		
 		if (bSuccess)
