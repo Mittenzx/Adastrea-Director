@@ -179,7 +179,7 @@ if __name__ == "__main__":
     if not multicast_success and not direct_success:
         print("1. Ensure Unreal Engine is running")
         print("2. Enable Python Editor Script Plugin in Unreal Engine")
-        print("3. Enable Remote Execution in Project Settings → Python")
+        print("3. Enable Remote Execution in Project Settings -> Python")
         print("4. Check firewall settings for multicast traffic")
     elif multicast_success and not direct_success:
         print("1. Unreal Engine is discoverable but command endpoint not accessible")

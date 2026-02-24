@@ -77,10 +77,10 @@ class EnhancedUnrealMCPServer(OriginalUnrealMCPServer):
             
             # Log connection status
             if self.is_connected():
-                logger.info("✅ Connected to Unreal Engine")
+                logger.info("[OK] Connected to Unreal Engine")
                 self._log_connection_info()
             else:
-                logger.warning("⚠️  MCP server started but not connected to Unreal Engine")
+                logger.warning("[WARNING]  MCP server started but not connected to Unreal Engine")
                 if self.enhanced_config.show_connection_help:
                     self._show_connection_help()
         
@@ -98,10 +98,10 @@ class EnhancedUnrealMCPServer(OriginalUnrealMCPServer):
             # Check if we can import the test module
             test_script = os.path.join(os.path.dirname(__file__), "..", "test_unreal_connection.py")
             if os.path.exists(test_script):
-                logger.info("✅ Found connection test script")
+                logger.info("[OK] Found connection test script")
                 self._diagnostic_info["test_script"] = test_script
             else:
-                logger.warning("⚠️  Connection test script not found")
+                logger.warning("[WARNING]  Connection test script not found")
                 
         except Exception as e:
             logger.debug(f"Configuration check error: {e}")
@@ -117,14 +117,14 @@ class EnhancedUnrealMCPServer(OriginalUnrealMCPServer):
     def _show_connection_help(self):
         """Show helpful connection information."""
         help_text = """
-        🔧 CONNECTION HELP 🔧
+        [TOOL] CONNECTION HELP [TOOL]
         
         The MCP server is running but not connected to Unreal Engine.
         
         QUICK SETUP:
         1. Ensure Unreal Engine Editor is running
-        2. Enable Python Editor Script Plugin (Edit → Plugins)
-        3. Enable Remote Execution (Edit → Project Settings → Python)
+        2. Enable Python Editor Script Plugin (Edit -> Plugins)
+        3. Enable Remote Execution (Edit -> Project Settings -> Python)
         4. Set Multicast Bind Address to "0.0.0.0"
         
         DIAGNOSE:
@@ -163,7 +163,7 @@ class EnhancedUnrealMCPServer(OriginalUnrealMCPServer):
                 "content": [{
                     "type": "text",
                     "text": f"❓ Unknown tool: {tool_name}\n\nAvailable tools:\n" + 
-                           "\n".join([f"  • {t.name}" for t in get_all_tools()])
+                           "\n".join([f"  - {t.name}" for t in get_all_tools()])
                 }]
             }
         
@@ -192,22 +192,22 @@ class EnhancedUnrealMCPServer(OriginalUnrealMCPServer):
     
     def _get_enhanced_connection_error(self) -> Dict[str, Any]:
         """Get enhanced connection error message."""
-        error_text = """🚫 Not connected to Unreal Engine
+        error_text = """[NO] Not connected to Unreal Engine
 
 The Adastrea Director MCP server cannot connect to Unreal Engine.
 
 REQUIREMENTS:
-• Unreal Engine 5.0+ must be RUNNING (not just the project file)
-• Python Editor Script Plugin must be ENABLED
-• Remote Execution must be ENABLED in Project Settings
+- Unreal Engine 5.0+ must be RUNNING (not just the project file)
+- Python Editor Script Plugin must be ENABLED
+- Remote Execution must be ENABLED in Project Settings
 
 QUICK FIX:
 1. Launch Unreal Engine Editor
 2. Open your project
 3. Enable Python Remote Execution:
-   • Edit → Plugins → Enable "Python Editor Script Plugin"
-   • Edit → Project Settings → Python → Check "Enable Remote Execution"
-   • Set "Multicast Bind Address" to "0.0.0.0"
+   - Edit -> Plugins -> Enable "Python Editor Script Plugin"
+   - Edit -> Project Settings -> Python -> Check "Enable Remote Execution"
+   - Set "Multicast Bind Address" to "0.0.0.0"
 
 DIAGNOSE:
 Run: python test_unreal_connection.py
@@ -228,7 +228,7 @@ The server will automatically reconnect when Unreal Engine becomes available.
     
     def _get_enhanced_tool_error(self, tool_name: str, error: Exception) -> Dict[str, Any]:
         """Get enhanced tool execution error message."""
-        error_text = f"""🔧 Tool execution failed: {tool_name}
+        error_text = f"""[TOOL] Tool execution failed: {tool_name}
 
 Error: {error}
 
@@ -360,23 +360,23 @@ For Unreal Engine setup:
     
     # Configuration check mode
     if args.check:
-        print("🔧 Enhanced MCP Server Configuration Check")
+        print("[TOOL] Enhanced MCP Server Configuration Check")
         print("=" * 50)
         
         # Check for test script
         import os
         test_script = os.path.join(os.path.dirname(__file__), "..", "test_unreal_connection.py")
         if os.path.exists(test_script):
-            print("✅ Connection test script: Found")
+            print("[OK] Connection test script: Found")
         else:
-            print("⚠️  Connection test script: Not found")
+            print("[WARNING]  Connection test script: Not found")
         
         # Check for configuration helper
         config_script = os.path.join(os.path.dirname(__file__), "..", "configure_unreal_python.py")
         if os.path.exists(config_script):
-            print("✅ Configuration helper: Found")
+            print("[OK] Configuration helper: Found")
         else:
-            print("⚠️  Configuration helper: Not found")
+            print("[WARNING]  Configuration helper: Not found")
         
         print("\nRecommended next steps:")
         print("1. Run: python configure_unreal_python.py --check")
@@ -392,42 +392,42 @@ For Unreal Engine setup:
     )
     
     # Create and start enhanced server
-    print("🚀 Starting Enhanced Adastrea Director MCP Server")
+    print("[ROCKET] Starting Enhanced Adastrea Director MCP Server")
     print("=" * 50)
     
     server = EnhancedUnrealMCPServer(config)
     
     try:
         if server.start():
-            print("✅ Enhanced MCP server started")
+            print("[OK] Enhanced MCP server started")
             
             if server.is_connected():
-                print("✅ Connected to Unreal Engine")
+                print("[OK] Connected to Unreal Engine")
             else:
-                print("⚠️  Not connected to Unreal Engine")
+                print("[WARNING]  Not connected to Unreal Engine")
                 print("   Run: python test_unreal_connection.py to diagnose")
                 print("   Run: python configure_unreal_python.py --instructions for setup help")
             
             # Keep server running
-            print("\n📡 Server is running. Press Ctrl+C to stop.")
+            print("\n[SERVER] Server is running. Press Ctrl+C to stop.")
             print("   Tools available:", len(server.list_tools_enhanced()))
             
             try:
                 while True:
                     time.sleep(1)
             except KeyboardInterrupt:
-                print("\n🛑 Stopping server...")
+                print("\n[STOP] Stopping server...")
         
         else:
-            print("❌ Failed to start enhanced MCP server")
+            print("[ERROR] Failed to start enhanced MCP server")
             
     except Exception as e:
-        print(f"❌ Error: {e}")
+        print(f"[ERROR] Error: {e}")
         if args.debug:
             import traceback
             traceback.print_exc()
         
-        print("\n💡 Troubleshooting:")
+        print("\n[IDEA] Troubleshooting:")
         print("1. Check if port", args.port, "is available")
         print("2. Run with --debug for more information")
         print("3. Check Unreal Engine Python configuration")

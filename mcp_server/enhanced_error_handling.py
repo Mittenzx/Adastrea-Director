@@ -17,7 +17,7 @@ def get_enhanced_connection_error() -> Dict[str, Any]:
     Returns:
         Dictionary with detailed error information and troubleshooting steps.
     """
-    error_message = """🚫 Not connected to Unreal Engine
+    error_message = """[NO] Not connected to Unreal Engine
 
 The Adastrea Director MCP server cannot connect to Unreal Engine's Python Remote Execution.
 
@@ -27,8 +27,8 @@ REQUIREMENTS:
 3. Remote Execution must be enabled in Project Settings
 
 QUICK SETUP:
-1. In Unreal Editor: Edit → Plugins → Enable "Python Editor Script Plugin"
-2. Edit → Project Settings → Python → Check "Enable Remote Execution"
+1. In Unreal Editor: Edit -> Plugins -> Enable "Python Editor Script Plugin"
+2. Edit -> Project Settings -> Python -> Check "Enable Remote Execution"
 3. Set "Multicast Bind Address" to "0.0.0.0"
 4. Restart Unreal Editor
 
@@ -41,10 +41,10 @@ Or use the configuration helper:
   python configure_unreal_python.py --instructions
 
 COMMON SOLUTIONS:
-• Ensure Unreal Editor is running (not just the project file)
-• Check firewall settings for ports 6766 and 6776
-• Verify Python plugin is installed (via Epic Games Launcher)
-• Try the automatic configuration:
+- Ensure Unreal Editor is running (not just the project file)
+- Check firewall settings for ports 6766 and 6776
+- Verify Python plugin is installed (via Epic Games Launcher)
+- Try the automatic configuration:
   python configure_unreal_python.py --create-config
 
 For detailed instructions, see: UNREAL_PYTHON_SETUP.md
@@ -69,7 +69,7 @@ def get_tool_execution_error(tool_name: str, error: Exception) -> Dict[str, Any]
     Returns:
         Dictionary with error information.
     """
-    error_message = f"""🔧 Tool execution failed: {tool_name}
+    error_message = f"""[TOOL] Tool execution failed: {tool_name}
 
 Error: {error}
 
@@ -114,13 +114,13 @@ python configure_unreal_python.py --create-config
 
 #### Step 1: Enable Python Plugin
 1. Launch Unreal Engine Editor
-2. Go to **Edit → Plugins**
+2. Go to **Edit -> Plugins**
 3. Search for "Python"
 4. Enable **"Python Editor Script Plugin"**
 5. Restart the editor if prompted
 
 #### Step 2: Enable Remote Execution
-1. Go to **Edit → Project Settings**
+1. Go to **Edit -> Project Settings**
 2. Search for "Python"
 3. Check **"Enable Remote Execution"**
 4. Set **"Multicast Bind Address"** to `0.0.0.0`
@@ -148,18 +148,18 @@ python unreal_mcp_cli.py
 
 ### Connection Failed
 1. **Check if Unreal Editor is running** (not just the project file)
-2. **Verify Python plugin is enabled** (Edit → Plugins)
+2. **Verify Python plugin is enabled** (Edit -> Plugins)
 3. **Check firewall settings** for ports 6766 and 6776
 4. **Restart Unreal Editor** after configuration changes
 
 ### Plugin Not Found
-1. Install via Epic Games Launcher → Unreal Engine → Library → Engine Versions
+1. Install via Epic Games Launcher -> Unreal Engine -> Library -> Engine Versions
 2. Click the dropdown arrow next to your engine version
-3. Select "Options" → "Python Editor Script Plugin"
+3. Select "Options" -> "Python Editor Script Plugin"
 
 ### Port Conflicts
 If ports 6766 or 6776 are already in use:
-1. Change ports in Project Settings → Python
+1. Change ports in Project Settings -> Python
 2. Update MCP server configuration accordingly
 
 ## Advanced Configuration
@@ -191,9 +191,9 @@ def create_installation_guide_file():
     try:
         with open("UNREAL_PYTHON_INSTALLATION_GUIDE.md", "w", encoding="utf-8") as f:
             f.write(guide)
-        print("✅ Created installation guide: UNREAL_PYTHON_INSTALLATION_GUIDE.md")
+        print("[OK] Created installation guide: UNREAL_PYTHON_INSTALLATION_GUIDE.md")
     except Exception as e:
-        print(f"❌ Error creating installation guide: {e}")
+        print(f"[ERROR] Error creating installation guide: {e}")
 
 if __name__ == "__main__":
     # Create installation guide when run directly

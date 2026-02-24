@@ -25,7 +25,7 @@ except ImportError:
     try:
         from mcp_server import UnrealMCPServer as EnhancedUnrealMCPServer
         from mcp_server import MCPServerConfig as EnhancedMCPServerConfig
-        print("⚠️  Using original MCP server (enhanced version not available)")
+        print("[WARNING]  Using original MCP server (enhanced version not available)")
     except ImportError:
         # Only exit if this module is being run directly, not imported
         if __name__ == '__main__':
@@ -41,7 +41,7 @@ def print_enhanced_result(result: dict, pretty: bool = True) -> None:
     """Print a tool result with enhanced formatting."""
     if result.get("isError"):
         print("\n" + "=" * 60)
-        print("❌ ERROR")
+        print("[ERROR] ERROR")
         print("=" * 60)
         for content in result.get("content", []):
             if content["type"] == "text":
@@ -66,7 +66,7 @@ def print_enhanced_result(result: dict, pretty: bool = True) -> None:
 def show_setup_help():
     """Show setup help for Unreal Engine Python Remote Execution."""
     help_text = """
-    🚀 Adastrea Director - Unreal Engine Setup Help
+    [ROCKET] Adastrea Director - Unreal Engine Setup Help
     ==============================================
 
     The MCP server requires Unreal Engine Python Remote Execution to be enabled.
@@ -74,22 +74,22 @@ def show_setup_help():
     QUICK SETUP:
     1. Launch Unreal Engine Editor
     2. Enable Python Plugin:
-       • Edit → Plugins → Search "Python" → Enable "Python Editor Script Plugin"
+       - Edit -> Plugins -> Search "Python" -> Enable "Python Editor Script Plugin"
     3. Enable Remote Execution:
-       • Edit → Project Settings → Search "Python" → Check "Enable Remote Execution"
-       • Set "Multicast Bind Address" to "0.0.0.0"
+       - Edit -> Project Settings -> Search "Python" -> Check "Enable Remote Execution"
+       - Set "Multicast Bind Address" to "0.0.0.0"
     4. Restart Unreal Editor
 
     DIAGNOSTIC TOOLS:
-    • Check connection: python test_unreal_connection.py
-    • Configure automatically: python configure_unreal_python.py --create-config
-    • Get instructions: python configure_unreal_python.py --instructions
+    - Check connection: python test_unreal_connection.py
+    - Configure automatically: python configure_unreal_python.py --create-config
+    - Get instructions: python configure_unreal_python.py --instructions
 
     TROUBLESHOOTING:
-    • Ensure Unreal Editor is RUNNING (not just the project file)
-    • Check firewall settings for ports 6766 and 6776
-    • Verify Python plugin is installed (via Epic Games Launcher)
-    • Try restarting Unreal Editor after configuration changes
+    - Ensure Unreal Editor is RUNNING (not just the project file)
+    - Check firewall settings for ports 6766 and 6776
+    - Verify Python plugin is installed (via Epic Games Launcher)
+    - Try restarting Unreal Editor after configuration changes
 
     Once configured, run: python unreal_mcp_cli_enhanced.py
     """
@@ -100,18 +100,18 @@ def show_setup_help():
 def show_diagnostics(server: EnhancedUnrealMCPServer):
     """Show diagnostic information."""
     print("\n" + "=" * 60)
-    print("🔧 MCP Server Diagnostics")
+    print("[TOOL] MCP Server Diagnostics")
     print("=" * 60)
     
     # Get basic diagnostics
     if hasattr(server, 'get_diagnostics'):
         diag = server.get_diagnostics()
-        print(f"Server running: {'✅' if diag['server_running'] else '❌'}")
-        print(f"Connected to UE: {'✅' if diag['connected_to_ue'] else '❌'}")
+        print(f"Server running: {'[OK]' if diag['server_running'] else '[ERROR]'}")
+        print(f"Connected to UE: {'[OK]' if diag['connected_to_ue'] else '[ERROR]'}")
         print(f"Connection errors: {diag['connection_errors']}")
         print(f"Multicast port: {diag['config']['multicast_port']}")
     else:
-        print(f"Connected to UE: {'✅' if server.is_connected() else '❌'}")
+        print(f"Connected to UE: {'[OK]' if server.is_connected() else '[ERROR]'}")
     
     # List available tools
     tools = server.list_tools()
@@ -119,7 +119,7 @@ def show_diagnostics(server: EnhancedUnrealMCPServer):
     
     # Show connection test command
     print("\n" + "=" * 60)
-    print("💡 Quick Tests")
+    print("[IDEA] Quick Tests")
     print("=" * 60)
     print("Test connection: python test_unreal_connection.py")
     print("Get project info: python unreal_mcp_cli_enhanced.py project-info")
@@ -129,14 +129,14 @@ def show_diagnostics(server: EnhancedUnrealMCPServer):
 def interactive_mode_enhanced(server: EnhancedUnrealMCPServer) -> None:
     """Run in enhanced interactive mode."""
     print("\n" + "=" * 60)
-    print("  🚀 Enhanced Adastrea Director - Unreal Engine MCP CLI")
+    print("  [ROCKET] Enhanced Adastrea Director - Unreal Engine MCP CLI")
     print("=" * 60)
     
     # Show connection status
     if server.is_connected():
-        print("✅ Connected to Unreal Engine!")
+        print("[OK] Connected to Unreal Engine!")
     else:
-        print("⚠️  Not connected to Unreal Engine")
+        print("[WARNING]  Not connected to Unreal Engine")
         print("   Type 'setup' for setup instructions")
         print("   Type 'diagnostics' for diagnostic information")
     
@@ -156,7 +156,7 @@ def interactive_mode_enhanced(server: EnhancedUnrealMCPServer) -> None:
         try:
             user_input = input("unreal> ").strip()
         except (EOFError, KeyboardInterrupt):
-            print("\n👋 Goodbye!")
+            print("\n[WAVE] Goodbye!")
             break
         
         if not user_input:
@@ -167,7 +167,7 @@ def interactive_mode_enhanced(server: EnhancedUnrealMCPServer) -> None:
         arg = parts[1] if len(parts) > 1 else ""
         
         if cmd in ("quit", "exit", "q"):
-            print("👋 Goodbye!")
+            print("[WAVE] Goodbye!")
             break
         elif cmd in ("help", "?"):
             print("\nEnhanced commands:")
@@ -192,7 +192,7 @@ def interactive_mode_enhanced(server: EnhancedUnrealMCPServer) -> None:
             tools = server.list_tools()
             print(f"\nAvailable tools ({len(tools)}):")
             for tool in tools:
-                print(f"  • {tool['name']}: {tool['description'][:60]}...")
+                print(f"  - {tool['name']}: {tool['description'][:60]}...")
         elif cmd == "project":
             result = server.handle_tool_call("editor_project_info", {})
             print_enhanced_result(result)
@@ -322,13 +322,13 @@ Setup Tools:
         logging.basicConfig(level=logging.DEBUG)
     
     # Create and connect server
-    print("🔌 Connecting to Unreal Engine...")
+    print("[PLUG] Connecting to Unreal Engine...")
     
     try:
         config = EnhancedMCPServerConfig()
         with EnhancedUnrealMCPServer(config) as server:
             if not server.is_connected():
-                print("\n⚠️  Warning: Not connected to Unreal Engine.")
+                print("\n[WARNING]  Warning: Not connected to Unreal Engine.")
                 print("   Make sure Unreal Editor is running with Python Remote Execution enabled.")
                 print("   Run with --setup-help for instructions.")
                 print()
@@ -395,17 +395,17 @@ Setup Tools:
                 print_enhanced_result(result, not args.json)
     
     except KeyboardInterrupt:
-        print("\n🛑 Interrupted.")
+        print("\n[STOP] Interrupted.")
     except Exception as e:
         if hasattr(args, "command") and args.command:
-            print(f"❌ Error while executing '{args.command}': {e}")
+            print(f"[ERROR] Error while executing '{args.command}': {e}")
         else:
-            print(f"❌ Error during operation: {e}")
+            print(f"[ERROR] Error during operation: {e}")
         if args.debug:
             import traceback
             traceback.print_exc()
         
-        print("\n💡 Troubleshooting:")
+        print("\n[IDEA] Troubleshooting:")
         print("1. Run: python test_unreal_connection.py")
         print("2. Run: python configure_unreal_python.py --instructions")
         print("3. Check if Unreal Engine is running")

@@ -85,24 +85,25 @@ def check_python_remote_execution() -> Dict[str, Any]:
     unreal_paths = get_unreal_engine_paths()
     if unreal_paths:
         results["unreal_engine_found"] = True
-        print(f"✅ Found Unreal Engine at: {unreal_paths[0]}")
+        print(f"[OK] Found Unreal Engine at: {unreal_paths[0]}")
     else:
         results["recommendations"].append("Install Unreal Engine 5.6 or later")
-        print("❌ Unreal Engine not found in standard locations")
+        print("[ERROR] Unreal Engine not found in standard locations")
     
     # Check for Python plugin
     for unreal_path in unreal_paths:
         python_plugin_path = unreal_path / "Engine" / "Plugins" / "Experimental" / "PythonScriptPlugin"
         if python_plugin_path.exists():
             results["python_plugin_available"] = True
-            print("✅ Python Editor Script Plugin is available")
+            print("[OK] Python Editor Script Plugin is available")
             break
     else:
         results["recommendations"].append("Install Python Editor Script Plugin via Epic Games Launcher")
-        print("❌ Python Editor Script Plugin not found")
+        print("[ERROR] Python Editor Script Plugin not found")
     
     # Check for common config files
     config_locations = []
+    system = get_platform()
     if system == "Windows":
         config_locations.append(Path(os.environ.get("LOCALAPPDATA", "")) / "UnrealEngine" / "Common")
         config_locations.append(Path.home() / "AppData" / "Local" / "UnrealEngine" / "Common")
@@ -110,7 +111,7 @@ def check_python_remote_execution() -> Dict[str, Any]:
     for config_loc in config_locations:
         if config_loc.exists():
             results["config_files_exist"] = True
-            print(f"✅ Found Unreal Engine config directory: {config_loc}")
+            print(f"[OK] Found Unreal Engine config directory: {config_loc}")
             break
     
     print("\n" + "=" * 60)
@@ -124,7 +125,7 @@ def check_python_remote_execution() -> Dict[str, Any]:
     ]
     
     for item, status in status_items:
-        symbol = "✅" if status else "❌"
+        symbol = "[OK]" if status else "[ERROR]"
         print(f"{symbol} {item}")
     
     if results["recommendations"]:
@@ -202,7 +203,7 @@ bAllowUnverifiedPythonPackages=True
         try:
             # Check if file already exists
             if config_path.exists():
-                print(f"⚠️  Config file already exists: {config_path}")
+                print(f"[WARNING] Config file already exists: {config_path}")
                 print("   Backing up existing file...")
                 backup_path = config_path.with_suffix(".ini.backup")
                 config_path.rename(backup_path)
@@ -210,20 +211,20 @@ bAllowUnverifiedPythonPackages=True
             
             # Write new config
             config_path.write_text(config_content, encoding="utf-8")
-            print(f"✅ Created Python configuration at: {config_path}")
+            print(f"[OK] Created Python configuration at: {config_path}")
             print("\nConfiguration includes:")
-            print("  • Python Remote Execution enabled")
-            print("  • Bind address: 0.0.0.0 (all interfaces)")
-            print("  • Multicast port: 6766")
-            print("  • Command endpoint: 127.0.0.1:6776")
-            print("  • Developer mode enabled")
+            print("  - Python Remote Execution enabled")
+            print("  - Bind address: 0.0.0.0 (all interfaces)")
+            print("  - Multicast port: 6766")
+            print("  - Command endpoint: 127.0.0.1:6776")
+            print("  - Developer mode enabled")
             return True
             
         except Exception as e:
-            print(f"❌ Error creating config file: {e}")
+            print(f"[ERROR] Error creating config file: {e}")
             return False
     else:
-        print("❌ Could not determine config directory for your platform")
+        print("[ERROR] Could not determine config directory for your platform")
         return False
 
 def generate_setup_instructions() -> None:
@@ -237,22 +238,22 @@ MANUAL SETUP (Recommended):
 
 1. Launch Unreal Engine Editor
 2. Enable Python Plugin:
-   • Go to Edit → Plugins
-   • Search for "Python"
-   • Enable "Python Editor Script Plugin"
-   • Restart the editor if prompted
+   - Go to Edit -> Plugins
+   - Search for "Python"
+   - Enable "Python Editor Script Plugin"
+   - Restart the editor if prompted
 
 3. Enable Remote Execution:
-   • Go to Edit → Project Settings
-   • Search for "Python"
-   • Check "Enable Remote Execution"
-   • Set "Multicast Bind Address" to "0.0.0.0"
-   • Set "Multicast Endpoint Port" to 6766
-   • Set "Remote Execution Command Endpoint" to "127.0.0.1:6776"
+   - Go to Edit -> Project Settings
+   - Search for "Python"
+   - Check "Enable Remote Execution"
+   - Set "Multicast Bind Address" to "0.0.0.0"
+   - Set "Multicast Endpoint Port" to 6766
+   - Set "Remote Execution Command Endpoint" to "127.0.0.1:6776"
 
 4. Verify Configuration:
-   • Run: python test_unreal_connection.py
-   • Should show: [SUCCESS] Connected to Unreal Engine
+   - Run: python test_unreal_connection.py
+   - Should show: [SUCCESS] Connected to Unreal Engine
 
 AUTOMATIC SETUP:
 
@@ -287,13 +288,13 @@ For Adastrea Director MCP Server:
 
 ### 1. Enable Python Plugin
 1. Launch Unreal Engine Editor
-2. Go to **Edit → Plugins**
+2. Go to **Edit -> Plugins**
 3. Search for "Python"
 4. Enable **"Python Editor Script Plugin"**
 5. Restart the editor if prompted
 
 ### 2. Enable Remote Execution
-1. Go to **Edit → Project Settings**
+1. Go to **Edit -> Project Settings**
 2. Search for "Python"
 3. Check **"Enable Remote Execution"**
 4. Set **"Multicast Bind Address"** to `0.0.0.0`
@@ -323,7 +324,7 @@ python unreal_mcp_cli.py
 ### Connection Failed
 1. **Ensure Unreal Editor is running**
 2. **Check firewall settings** for ports 6766 and 6776
-3. **Verify Python plugin is enabled** (Edit → Plugins)
+3. **Verify Python plugin is enabled** (Edit -> Plugins)
 4. **Try restarting Unreal Editor**
 
 ### Plugin Not Found
@@ -332,7 +333,7 @@ python unreal_mcp_cli.py
 
 ### Port Already in Use
 1. Check if another application is using port 6766 or 6776
-2. Change ports in Project Settings → Python
+2. Change ports in Project Settings -> Python
 
 ## Testing
 Use the included test script:
@@ -349,9 +350,9 @@ This will diagnose:
     try:
         with open("UNREAL_PYTHON_SETUP.md", "w", encoding="utf-8") as f:
             f.write(md_content)
-        print(f"✅ Created documentation: UNREAL_PYTHON_SETUP.md")
+        print(f"[OK] Created documentation: UNREAL_PYTHON_SETUP.md")
     except Exception as e:
-        print(f"⚠️  Could not create documentation file: {e}")
+        print(f"[WARNING]  Could not create documentation file: {e}")
 
 def main():
     parser = argparse.ArgumentParser(
@@ -394,10 +395,10 @@ Examples:
     
     if args.create_config:
         if create_python_config():
-            print("\n✅ Configuration created successfully!")
+            print("\n[OK] Configuration created successfully!")
             print("   Launch Unreal Engine Editor to apply the settings.")
         else:
-            print("\n❌ Failed to create configuration.")
+            print("\n[ERROR] Failed to create configuration.")
             print("   Please use manual setup instructions.")
     
     if args.instructions:
