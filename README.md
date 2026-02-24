@@ -178,6 +178,19 @@ For detailed progress tracking and future plans, see [Q1_2026_PROGRESS_SUMMARY.m
 
 ## Getting Started
 
+### 🚀 Quick Start (5 Minutes)
+
+**New to Adastrea Director?** Start with our updated quick start guide:
+
+👉 **[QUICK_START_GUIDE.md](QUICK_START_GUIDE.md)** - Get started in 5 minutes with either:
+- **Standalone Python tools** (no Unreal Engine required)
+- **Unreal Engine integration** (full MCP server control)
+
+**Recent Updates (2026-02-24):**
+- Added connection diagnostic tool: `test_unreal_connection.py`
+- Created comprehensive work session summary: `WORK_SESSION_SUMMARY_2026-02-24.md`
+- Simplified setup instructions for new users
+
 ### Prerequisites
 
 - Python 3.9 or higher (Python 3.12+ recommended for best compatibility)
